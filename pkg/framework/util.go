@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	defaultApiVersion string = "test"
+	defaultAPIVersion string = "0.1.0"
 )
 
 var (
@@ -41,7 +41,8 @@ var (
 	lastUUID uuid.UUID
 )
 
-func LoadCRIClient() (*InternalApiClient, error) {
+// LoadCRIClient creates a InternalAPIClient.
+func LoadCRIClient() (*InternalAPIClient, error) {
 	rService, err := remote.NewRemoteRuntimeService(TestContext.RuntimeServiceAddr, TestContext.RuntimeServiceTimeout)
 	if err != nil {
 		return nil, err
@@ -52,7 +53,7 @@ func LoadCRIClient() (*InternalApiClient, error) {
 		return nil, err
 	}
 
-	return &InternalApiClient{
+	return &InternalAPIClient{
 		CRIRuntimeClient: rService,
 		CRIImageClient:   iService,
 	}, nil
@@ -66,16 +67,19 @@ func log(level string, format string, args ...interface{}) {
 	fmt.Fprintf(GinkgoWriter, nowStamp()+": "+level+": "+format+"\n", args...)
 }
 
+// Logf prints a info message.
 func Logf(format string, args ...interface{}) {
 	log("INFO", format, args...)
 }
 
+// Failf prints an error message.
 func Failf(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	log("INFO", msg)
 	Fail(nowStamp()+": "+msg, 1)
 }
 
+// ExpectNoError reports error if err is not nil.
 func ExpectNoError(err error, explain ...interface{}) {
 	if err != nil {
 		Logf("Unexpected error occurred: %v", err)
@@ -83,6 +87,7 @@ func ExpectNoError(err error, explain ...interface{}) {
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), explain...)
 }
 
+// NewUUID creates a new UUID string.
 func NewUUID() string {
 	uuidLock.Lock()
 	defer uuidLock.Unlock()
@@ -100,7 +105,7 @@ func NewUUID() string {
 
 // TestGetVersion test if we can get runtime name.
 func TestGetVersion(c internalapi.RuntimeService) {
-	version, err := c.Version(defaultApiVersion)
+	version, err := c.Version(defaultAPIVersion)
 	ExpectNoError(err, "failed to get version: %v", err)
 	Logf("Get version runtime name " + version.RuntimeName)
 }

@@ -26,10 +26,11 @@ import (
 // Framework will keep a client for you.
 type Framework struct {
 	// CRI client
-	CRIClient *InternalApiClient
+	CRIClient *InternalAPIClient
 }
 
-type InternalApiClient struct {
+// InternalAPIClient is the CRI client.
+type InternalAPIClient struct {
 	CRIRuntimeClient internalapi.RuntimeService
 	CRIImageClient   internalapi.ImageManagerService
 }
@@ -40,7 +41,8 @@ func NewDefaultCRIFramework() *Framework {
 	return NewCRIFramework(nil)
 }
 
-func NewCRIFramework(client *InternalApiClient) *Framework {
+// NewCRIFramework creates a new Framework.
+func NewCRIFramework(client *InternalAPIClient) *Framework {
 	f := &Framework{
 		CRIClient: client,
 	}
@@ -65,6 +67,7 @@ func (f *Framework) AfterEach() {
 	f.CRIClient = nil
 }
 
+// KubeDescribe is a wrapper on Describe.
 func KubeDescribe(text string, body func()) bool {
 	return Describe("[k8s.io] "+text, body)
 }
