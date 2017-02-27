@@ -7,9 +7,16 @@ go:
   - 1.8.x
   - tip
 
-install:
+
+before_install:
   - go get -u github.com/alecthomas/gometalinter
+
+
+install:
   - gometalinter --install
 
+
 script:
-  - hack/verify-all.sh -v
+  - hack/repo-infra/verify/verify-go-src.sh -r $(pwd) -v
+  - hack/repo-infra/verify/verify-boilerplate.sh 
+
