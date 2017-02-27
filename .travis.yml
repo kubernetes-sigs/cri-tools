@@ -1,0 +1,15 @@
+language: go
+sudo: required
+dist: trusty
+
+go:
+  - 1.7.x
+  - 1.8.x
+  - tip
+
+install:
+  - go get -u github.com/alecthomas/gometalinter
+  - gometalinter --install
+
+script:
+  - hack/verify-all.sh -v
