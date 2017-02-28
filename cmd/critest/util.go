@@ -29,7 +29,7 @@ import (
 
 var buildTargets = []string{
 	"github.com/kubernetes-incubator/cri-tools/pkg/validate",
-	"github.com/onsi/ginkgo/ginkgo",
+	"github.com/kubernetes-incubator/cri-tools/vendor/github.com/onsi/ginkgo/ginkgo",
 }
 
 // build cri-tools binaries.
