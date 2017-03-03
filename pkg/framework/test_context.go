@@ -23,6 +23,7 @@ import (
 	"github.com/onsi/ginkgo/config"
 )
 
+// TestContextType is the type of test context.
 type TestContextType struct {
 	// Report related settings.
 	ReportDir    string
@@ -35,9 +36,10 @@ type TestContextType struct {
 	RuntimeServiceTimeout time.Duration
 }
 
+// TestContext is a test context.
 var TestContext TestContextType
 
-// Register flags to e2e test suites.
+// RegisterFlags registers flags to e2e test suites.
 func RegisterFlags() {
 	// Turn on verbose by default to get spec names
 	config.DefaultReporterConfig.Verbose = true

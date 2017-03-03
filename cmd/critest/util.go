@@ -72,7 +72,7 @@ func getRootDir() (string, error) {
 		return filepath.Join(splitPath[0], "github.com/kubernetes-incubator/cri-tools/"), nil
 	}
 
-	return "", fmt.Errorf("could not find cri-tools source root directory.")
+	return "", fmt.Errorf("could not find cri-tools source root directory")
 }
 
 // getBuildOutputDir gets the dir which stores cri-tools binaries.
