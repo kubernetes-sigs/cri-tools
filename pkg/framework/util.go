@@ -216,7 +216,7 @@ func ListPodSanboxForID(c internalapi.RuntimeService, podID string) []*runtimeap
 	return ListPodSandbox(c, filter)
 }
 
-// ListPodSandbox list PodSandbox.
+// ListPodSandbox lists PodSandbox.
 func ListPodSandbox(c internalapi.RuntimeService, filter *runtimeapi.PodSandboxFilter) []*runtimeapi.PodSandbox {
 	By("List PodSandbox")
 	pods, err := c.ListPodSandbox(filter)
