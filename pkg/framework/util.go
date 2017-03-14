@@ -31,7 +31,6 @@ import (
 )
 
 const (
-	defaultAPIVersion      string = "0.1.0"
 	defaultUIDPrefix       string = "e2e-cri-uid"
 	defaultNamespacePrefix string = "e2e-cri-namespace"
 	defaultAttempt         uint32 = 2
@@ -105,17 +104,6 @@ func NewUUID() string {
 	}
 	lastUUID = result
 	return result.String()
-}
-
-// TestGetVersion test if we can get runtime name.
-func TestGetVersion(c internalapi.RuntimeService) {
-	version, err := c.Version(defaultAPIVersion)
-	ExpectNoError(err, "failed to get version: %v", err)
-	Expect(version.Version).To(Not(BeNil()), "Version should not be nil")
-	Expect(version.RuntimeName).To(Not(BeNil()), "RuntimeName should not be nil")
-	Expect(version.RuntimeVersion).To(Not(BeNil()), "RuntimeVersion should not be nil")
-	Expect(version.RuntimeApiVersion).To(Not(BeNil()), "RuntimeApiVersion should not be nil")
-	Logf("Get version info succeed")
 }
 
 // PodSandboxFound returns whether PodSandbox is found.
