@@ -18,6 +18,7 @@ package framework
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -31,9 +32,12 @@ import (
 )
 
 const (
-	defaultUIDPrefix       string = "e2e-cri-uid"
-	defaultNamespacePrefix string = "e2e-cri-namespace"
-	defaultAttempt         uint32 = 2
+	defaultUIDPrefix            string = "e2e-cri-uid"
+	defaultNamespacePrefix      string = "e2e-cri-namespace"
+	defaultAttempt              uint32 = 2
+	defaultContainerImage       string = "gcr.io/google_containers/busybox:1.24"
+	defaultStopContainerTimeout int64  = 60
+	defaultExecSyncTimeout      int64  = 5
 )
 
 var (
@@ -108,8 +112,10 @@ func NewUUID() string {
 
 // PodSandboxFound returns whether PodSandbox is found.
 func PodSandboxFound(podSandboxs []*runtimeapi.PodSandbox, podID string) bool {
-	if len(podSandboxs) == 1 && podSandboxs[0].Id == podID {
-		return true
+	for _, podSandbox := range podSandboxs {
+		if podSandbox.Id == podID {
+			return true
+		}
 	}
 	return false
 }
@@ -132,7 +138,7 @@ func VerifyPodSandboxStatus(c internalapi.RuntimeService, podID string, expected
 
 // RunPodSandbox runs a PodSandbox.
 func RunPodSandbox(c internalapi.RuntimeService, config *runtimeapi.PodSandboxConfig) string {
-	By("run PodSandbox.")
+	By("Run PodSandbox.")
 	podID, err := c.RunPodSandbox(config)
 	ExpectNoError(err, "failed to create PodSandbox: %v", err)
 	Logf("Created PodSandbox %q\n", podID)
@@ -168,13 +174,13 @@ func GetPodSandboxStatus(c internalapi.RuntimeService, podID string) *runtimeapi
 
 // StopPodSandbox stops the PodSandbox for podID.
 func StopPodSandbox(c internalapi.RuntimeService, podID string) {
-	By("Sto PodSandbox for podID: " + podID)
+	By("Stop PodSandbox for podID: " + podID)
 	err := c.StopPodSandbox(podID)
 	ExpectNoError(err, "Failed to stop PodSandbox: %v", err)
 	Logf("Stopped PodSandbox %q\n", podID)
 }
 
-// TestStopPodSandbox stops the PodSandbox for podID and make sure it is not ready.
+// TestStopPodSandbox stops the PodSandbox for podID and make sure it's not ready.
 func TestStopPodSandbox(c internalapi.RuntimeService, podID string) {
 	StopPodSandbox(c, podID)
 	VerifyPodSandboxStatus(c, podID, runtimeapi.PodSandboxState_SANDBOX_NOTREADY, "not ready")
@@ -206,9 +212,205 @@ func ListPodSanboxForID(c internalapi.RuntimeService, podID string) []*runtimeap
 
 // ListPodSandbox lists PodSandbox.
 func ListPodSandbox(c internalapi.RuntimeService, filter *runtimeapi.PodSandboxFilter) []*runtimeapi.PodSandbox {
-	By("List PodSandbox")
+	By("List PodSandbox.")
 	pods, err := c.ListPodSandbox(filter)
 	ExpectNoError(err, "failed to list PodSandbox status: %v", err)
 	Logf("List PodSandbox succeed")
 	return pods
+}
+
+// ContainerFound returns whether containers is found.
+func ContainerFound(containers []*runtimeapi.Container, containerID string) bool {
+	for _, container := range containers {
+		if container.Id == containerID {
+			return true
+		}
+	}
+	return false
+}
+
+// buildContainerMetadata builds containerMetadata.
+func buildContainerMetadata(containerName string, attempt uint32) *runtimeapi.ContainerMetadata {
+	return &runtimeapi.ContainerMetadata{
+		Name:    containerName,
+		Attempt: attempt,
+	}
+}
+
+// GetContainerStatus gets ContainerState for containerID and fails if it gets error.
+func GetContainerStatus(c internalapi.RuntimeService, containerID string) *runtimeapi.ContainerStatus {
+	By("Get container status for containerID: " + containerID)
+	status, err := c.ContainerStatus(containerID)
+	ExpectNoError(err, "failed to get container %q status: %v", containerID, err)
+	return status
+}
+
+// VerifyContainerStatus verifies whether container status for given containerID matches.
+func VerifyContainerStatus(c internalapi.RuntimeService, containerID string, expectedStatus runtimeapi.ContainerState, stateName string) {
+	status := GetContainerStatus(c, containerID)
+	Expect(status.State).To(Equal(expectedStatus), "Container state should be %s", stateName)
+}
+
+// CreateContainer creates a container with the prefix of containerName.
+func CreateContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, config *runtimeapi.ContainerConfig, podID string, podConfig *runtimeapi.PodSandboxConfig) string {
+	// Pull the image if it does not exist.
+	imageName := config.Image.Image
+	if !strings.Contains(imageName, ":") {
+		imageName = imageName + ":latest"
+		Logf("Use latest as default image tag.")
+	}
+
+	images := ListImageForImageName(ic, imageName)
+	if len(images) == 0 {
+		PullPublicImage(ic, imageName)
+	}
+
+	By("Create container.")
+	containerID, err := rc.CreateContainer(podID, config, podConfig)
+	ExpectNoError(err, "failed to create container: %v", err)
+	Logf("Created container %q\n", containerID)
+	return containerID
+}
+
+// CreateDefaultContainer creates a  default container with default options.
+func CreateDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
+	containerName := prefix + NewUUID()
+	containerConfig := &runtimeapi.ContainerConfig{
+		Metadata: buildContainerMetadata(containerName, defaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
+		Command:  []string{"sh", "-c", "top"},
+	}
+
+	return CreateContainer(rc, ic, containerConfig, podID, podConfig)
+}
+
+// TestCreateDefaultContainer creates a container in the pod which ID is podID and make sure it's ready.
+func TestCreateDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig) string {
+	containerID := CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-create-test-")
+	VerifyContainerStatus(rc, containerID, runtimeapi.ContainerState_CONTAINER_CREATED, "created")
+	return containerID
+}
+
+// StartContainer start the container for containerID.
+func StartContainer(c internalapi.RuntimeService, containerID string) {
+	By("Start container for containerID: " + containerID)
+	err := c.StartContainer(containerID)
+	ExpectNoError(err, "failed to start container: %v", err)
+	Logf("Started container %q\n", containerID)
+}
+
+// TestStartContainer starts the container for containerID and make sure it's running.
+func TestStartContainer(c internalapi.RuntimeService, containerID string) {
+	StartContainer(c, containerID)
+	VerifyContainerStatus(c, containerID, runtimeapi.ContainerState_CONTAINER_RUNNING, "running")
+}
+
+// StopContainer stops the container for containerID.
+func StopContainer(c internalapi.RuntimeService, containerID string, timeout int64) {
+	By("Stop container for containerID: " + containerID)
+	stopped := make(chan bool, 1)
+
+	go func() {
+		err := c.StopContainer(containerID, timeout)
+		ExpectNoError(err, "failed to stop container: %v", err)
+		stopped <- true
+	}()
+
+	select {
+	case <-time.After(time.Duration(timeout) * time.Second):
+		Failf("stop container %q timeout.\n", containerID)
+	case <-stopped:
+		Logf("Stopped container %q\n", containerID)
+	}
+}
+
+// TestStopContainer stops the container for containerID and make sure it's exited.
+func TestStopContainer(c internalapi.RuntimeService, containerID string) {
+	StopContainer(c, containerID, defaultStopContainerTimeout)
+	VerifyContainerStatus(c, containerID, runtimeapi.ContainerState_CONTAINER_EXITED, "exited")
+}
+
+// RemoveContainer removes the container for containerID.
+func RemoveContainer(c internalapi.RuntimeService, containerID string) {
+	By("Remove container for containerID: " + containerID)
+	err := c.RemoveContainer(containerID)
+	ExpectNoError(err, "failed to remove container: %v", err)
+	Logf("Removed container %q\n", containerID)
+}
+
+// ListContainerForID lists container for containerID.
+func ListContainerForID(c internalapi.RuntimeService, containerID string) []*runtimeapi.Container {
+	By("List containers for containerID: " + containerID)
+	filter := &runtimeapi.ContainerFilter{
+		Id: containerID,
+	}
+	containers, err := c.ListContainers(filter)
+	ExpectNoError(err, "failed to list containers %q status: %v", containerID, err)
+	return containers
+}
+
+// CreatePodSandboxForContainer creates a PodSandbox for creating containers.
+func CreatePodSandboxForContainer(c internalapi.RuntimeService) (string, *runtimeapi.PodSandboxConfig) {
+	podSandboxName := "create-PodSandbox-for-container-" + NewUUID()
+	uid := defaultUIDPrefix + NewUUID()
+	namespace := defaultNamespacePrefix + NewUUID()
+	config := &runtimeapi.PodSandboxConfig{
+		Metadata: buildPodSandboxMetadata(podSandboxName, uid, namespace, defaultAttempt),
+	}
+
+	podID := RunPodSandbox(c, config)
+	return podID, config
+}
+
+// TestExecSync test execSync for containerID and make sure the response is right.
+func TestExecSync(c internalapi.RuntimeService, containerID string) {
+	By("Test execSync for containerID: " + containerID)
+	cmd := []string{"echo", "hello"}
+	stdout, stderr, err := c.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	ExpectNoError(err, "failed to execSync in container %q", containerID)
+	Expect(string(stdout)).To(Equal("hello\n"), "The stdout output of execSync should be %q", stdout)
+	Expect(stderr).To(BeNil(), "The stderr should be nil.")
+	Logf("Execsync succeed")
+}
+
+// PullPublicImage pulls the public image named imageName.
+func PullPublicImage(c internalapi.ImageManagerService, imageName string) {
+	if !strings.Contains(imageName, ":") {
+		imageName = imageName + ":latest"
+		Logf("Use latest as default image tag.")
+	}
+
+	By("Pull image : " + imageName)
+	imageSpec := &runtimeapi.ImageSpec{
+		Image: imageName,
+	}
+	_, err := c.PullImage(imageSpec, nil)
+	ExpectNoError(err, "failed to pull image: %v", err)
+}
+
+// RemoveImage removes the image named imagesName.
+func RemoveImage(c internalapi.ImageManagerService, imageName string) {
+	By("Remove image : " + imageName)
+	imageSpec := &runtimeapi.ImageSpec{
+		Image: imageName,
+	}
+	err := c.RemoveImage(imageSpec)
+	ExpectNoError(err, "failed to remove image: %v", err)
+}
+
+// ListImageForImageName lists the images named imageName.
+func ListImageForImageName(c internalapi.ImageManagerService, imageName string) []*runtimeapi.Image {
+	By("Get image list for imageName : " + imageName)
+	filter := &runtimeapi.ImageFilter{
+		Image: &runtimeapi.ImageSpec{Image: imageName},
+	}
+	images := ListImage(c, filter)
+	return images
+}
+
+// ListImage list the image filtered by the image filter.
+func ListImage(c internalapi.ImageManagerService, filter *runtimeapi.ImageFilter) []*runtimeapi.Image {
+	images, err := c.ListImages(filter)
+	ExpectNoError(err, "Failed to get image list: %v", err)
+	return images
 }
