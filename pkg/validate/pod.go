@@ -24,20 +24,6 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = framework.KubeDescribe("Version", func() {
-	f := framework.NewDefaultCRIFramework()
-
-	var c internalapi.RuntimeService
-
-	BeforeEach(func() {
-		c = f.CRIClient.CRIRuntimeClient
-	})
-
-	It("runtime should return version info [Conformance]", func() {
-		framework.TestGetVersion(c)
-	})
-})
-
 var _ = framework.KubeDescribe("PodSandbox", func() {
 	f := framework.NewDefaultCRIFramework()
 
