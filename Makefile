@@ -48,6 +48,14 @@ install: check-gopath
 uninstall:
 	rm -f $(BINDIR)/critest
 
+lint:
+	./hack/repo-infra/verify/go-tools/verify-gometalinter.sh
+
+install.tools:
+	go get -u github.com/alecthomas/gometalinter
+	gometalinter --install
+
+
 .PHONY: \
 	help \
 	check-gopath \
@@ -55,4 +63,6 @@ uninstall:
 	clean \
 	binaries \
 	install \
-	uninstall
+	uninstall \
+	lint \
+	install.tools
