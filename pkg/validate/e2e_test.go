@@ -24,12 +24,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
-
 	"github.com/golang/glog"
-	. "github.com/onsi/ginkgo"
+	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
 	"github.com/onsi/ginkgo/config"
 	"github.com/onsi/ginkgo/reporters"
+
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 

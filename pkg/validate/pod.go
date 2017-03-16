@@ -19,9 +19,16 @@ package validate
 import (
 	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
 	internalapi "k8s.io/kubernetes/pkg/kubelet/api"
+	runtimeapi "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+)
+
+const (
+	defaultUIDPrefix       string = "e2e-cri-uid"
+	defaultNamespacePrefix string = "e2e-cri-namespace"
+	defaultAttempt         uint32 = 2
 )
 
 var _ = framework.KubeDescribe("PodSandbox", func() {
@@ -45,30 +52,152 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 		It("runtime should support running PodSandbox [Conformance]", func() {
 			By("test run a default PodSandbox")
-			podID = framework.TestRunDefaultPodSandbox(c)
+			podID = testRunDefaultPodSandbox(c)
 
 			By("test list PodSandbox")
-			pods := framework.ListPodSanboxForID(c, podID)
-			Expect(framework.PodSandboxFound(pods, podID)).To(BeTrue(), "PodSandbox should be listed")
+			pods := listPodSanboxForID(c, podID)
+			Expect(podSandboxFound(pods, podID)).To(BeTrue(), "PodSandbox should be listed")
 		})
 
 		It("runtime should support stopping PodSandbox [Conformance]", func() {
 			By("run PodSandbox")
-			podID = framework.RunDefaultPodSandbox(c, "PodSandbox-for-test-stop-")
+			podID = runDefaultPodSandbox(c, "PodSandbox-for-test-stop-")
 
 			By("test stop PodSandbox")
-			framework.TestStopPodSandbox(c, podID)
+			testStopPodSandbox(c, podID)
 		})
 
 		It("runtime should support removing PodSandbox [Conformance]", func() {
 			By("run PodSandbox")
-			podID = framework.RunDefaultPodSandbox(c, "PodSandbox-for-test-remove-")
+			podID = runDefaultPodSandbox(c, "PodSandbox-for-test-remove-")
 
 			By("stop PodSandbox")
-			framework.StopPodSandbox(c, podID)
+			stopPodSandbox(c, podID)
 
 			By("test remove PodSandbox")
-			framework.TestRemovePodSandbox(c, podID)
+			testRemovePodSandbox(c, podID)
 		})
 	})
 })
+
+// podSandboxFound returns whether PodSandbox is found.
+func podSandboxFound(podSandboxs []*runtimeapi.PodSandbox, podID string) bool {
+	for _, podSandbox := range podSandboxs {
+		if podSandbox.Id == podID {
+			return true
+		}
+	}
+	return false
+}
+
+// buildPodSandboxMetadata builds PodSandboxMetadata.
+func buildPodSandboxMetadata(podSandboxName, uid, namespace string, attempt uint32) *runtimeapi.PodSandboxMetadata {
+	return &runtimeapi.PodSandboxMetadata{
+		Name:      podSandboxName,
+		Uid:       uid,
+		Namespace: namespace,
+		Attempt:   attempt,
+	}
+}
+
+// verifyPodSandboxStatus verifies whether PodSandbox status for given podID matches.
+func verifyPodSandboxStatus(c internalapi.RuntimeService, podID string, expectedStatus runtimeapi.PodSandboxState, statusName string) {
+	status := getPodSandboxStatus(c, podID)
+	Expect(status.State).To(Equal(expectedStatus), "PodSandbox state should be "+statusName)
+}
+
+// runPodSandbox runs a PodSandbox.
+func runPodSandbox(c internalapi.RuntimeService, config *runtimeapi.PodSandboxConfig) string {
+	By("Run PodSandbox.")
+	podID, err := c.RunPodSandbox(config)
+	framework.ExpectNoError(err, "failed to create PodSandbox: %v", err)
+	framework.Logf("Created PodSandbox %q\n", podID)
+	return podID
+}
+
+// runDefaultPodSandbox runs a PodSandbox with default options.
+func runDefaultPodSandbox(c internalapi.RuntimeService, prefix string) string {
+	podSandboxName := prefix + framework.NewUUID()
+	uid := defaultUIDPrefix + framework.NewUUID()
+	namespace := defaultNamespacePrefix + framework.NewUUID()
+
+	config := &runtimeapi.PodSandboxConfig{
+		Metadata: buildPodSandboxMetadata(podSandboxName, uid, namespace, defaultAttempt),
+	}
+	return runPodSandbox(c, config)
+}
+
+// testRunDefaultPodSandbox runs a PodSandbox and make sure it is ready.
+func testRunDefaultPodSandbox(c internalapi.RuntimeService) string {
+	podID := runDefaultPodSandbox(c, "PodSandbox-for-create-test-")
+	verifyPodSandboxStatus(c, podID, runtimeapi.PodSandboxState_SANDBOX_READY, "ready")
+	return podID
+}
+
+// getPodSandboxStatus gets PodSandboxStatus for podID.
+func getPodSandboxStatus(c internalapi.RuntimeService, podID string) *runtimeapi.PodSandboxStatus {
+	By("Get PodSandbox status for podID: " + podID)
+	status, err := c.PodSandboxStatus(podID)
+	framework.ExpectNoError(err, "failed to get PodSandbox %q status: %v", podID, err)
+	return status
+}
+
+// stopPodSandbox stops the PodSandbox for podID.
+func stopPodSandbox(c internalapi.RuntimeService, podID string) {
+	By("Stop PodSandbox for podID: " + podID)
+	err := c.StopPodSandbox(podID)
+	framework.ExpectNoError(err, "Failed to stop PodSandbox: %v", err)
+	framework.Logf("Stopped PodSandbox %q\n", podID)
+}
+
+// testStopPodSandbox stops the PodSandbox for podID and make sure it's not ready.
+func testStopPodSandbox(c internalapi.RuntimeService, podID string) {
+	stopPodSandbox(c, podID)
+	verifyPodSandboxStatus(c, podID, runtimeapi.PodSandboxState_SANDBOX_NOTREADY, "not ready")
+}
+
+// removePodSandbox removes the PodSandbox for podID.
+func removePodSandbox(c internalapi.RuntimeService, podID string) {
+	By("Remove PodSandbox for podID: " + podID)
+	err := c.RemovePodSandbox(podID)
+	framework.ExpectNoError(err, "failed to remove PodSandbox: %v", err)
+	framework.Logf("Removed PodSandbox %q\n", podID)
+}
+
+// testRemovePodSandbox removes a PodSandbox and make sure it is removed.
+func testRemovePodSandbox(c internalapi.RuntimeService, podID string) {
+	removePodSandbox(c, podID)
+	pods := listPodSanboxForID(c, podID)
+	Expect(podSandboxFound(pods, podID)).To(BeFalse(), "PodSandbox should be removed")
+}
+
+// listPodSanboxForID lists PodSandbox for podID.
+func listPodSanboxForID(c internalapi.RuntimeService, podID string) []*runtimeapi.PodSandbox {
+	By("List PodSandbox for podID: " + podID)
+	filter := &runtimeapi.PodSandboxFilter{
+		Id: podID,
+	}
+	return listPodSandbox(c, filter)
+}
+
+// listPodSandbox lists PodSandbox.
+func listPodSandbox(c internalapi.RuntimeService, filter *runtimeapi.PodSandboxFilter) []*runtimeapi.PodSandbox {
+	By("List PodSandbox.")
+	pods, err := c.ListPodSandbox(filter)
+	framework.ExpectNoError(err, "failed to list PodSandbox status: %v", err)
+	framework.Logf("List PodSandbox succeed")
+	return pods
+}
+
+// createPodSandboxForContainer creates a PodSandbox for creating containers.
+func createPodSandboxForContainer(c internalapi.RuntimeService) (string, *runtimeapi.PodSandboxConfig) {
+	podSandboxName := "create-PodSandbox-for-container-" + framework.NewUUID()
+	uid := defaultUIDPrefix + framework.NewUUID()
+	namespace := defaultNamespacePrefix + framework.NewUUID()
+	config := &runtimeapi.PodSandboxConfig{
+		Metadata: buildPodSandboxMetadata(podSandboxName, uid, namespace, defaultAttempt),
+	}
+
+	podID := runPodSandbox(c, config)
+	return podID, config
+}
