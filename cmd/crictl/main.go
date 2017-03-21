@@ -36,6 +36,10 @@ func main() {
 	app.Usage = "client for CRI"
 	app.Version = "0.0.1"
 
+	app.Commands = []cli.Command{
+		runtimeVersionCommand,
+	}
+
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "runtime-endpoint",
