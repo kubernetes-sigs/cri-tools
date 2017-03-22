@@ -36,17 +36,23 @@ critest: check-gopath
 		$(GO) install \
 		$(PROJECT)/cmd/critest
 
+crictl: check-gopath
+		$(GO) install \
+		$(PROJECT)/cmd/crictl
+
 clean:
 	find . -name \*~ -delete
 	find . -name \#\* -delete
 
-binaries: critest
+binaries: critest crictl
 
 install: check-gopath
 	install -D -m 755 $(GOBINDIR)/bin/critest $(BINDIR)/critest
+	install -D -m 755 $(GOBINDIR)/bin/crictl $(BINDIR)/crictl
 
 uninstall:
 	rm -f $(BINDIR)/critest
+	rm -f $(BINDIR)/crictl
 
 lint:
 	./hack/repo-infra/verify/go-tools/verify-gometalinter.sh
@@ -60,6 +66,7 @@ install.tools:
 	help \
 	check-gopath \
 	critest \
+	crictl \
 	clean \
 	binaries \
 	install \
