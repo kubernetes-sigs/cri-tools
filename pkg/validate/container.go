@@ -257,6 +257,7 @@ func createDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageM
 		Metadata: buildContainerMetadata(containerName, defaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
 		Command:  []string{"sh", "-c", "top"},
+		Linux:    &runtimeapi.LinuxContainerConfig{},
 	}
 
 	return createContainer(rc, ic, containerConfig, podID, podConfig)
