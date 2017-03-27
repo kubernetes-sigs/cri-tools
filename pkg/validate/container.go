@@ -17,6 +17,9 @@ limitations under the License.
 package validate
 
 import (
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -107,6 +110,38 @@ var _ = framework.KubeDescribe("Container", func() {
 
 			By("test execSync")
 			testExecSync(rc, containerID)
+		})
+	})
+
+	Context("runtime should support adding volume and device [Conformance]", func() {
+		var podID string
+		var podConfig *runtimeapi.PodSandboxConfig
+
+		BeforeEach(func() {
+			podID, podConfig = createPodSandboxForContainer(rc)
+		})
+
+		AfterEach(func() {
+			By("stop PodSandbox")
+			rc.StopPodSandbox(podID)
+			By("delete PodSandbox")
+			rc.RemovePodSandbox(podID)
+		})
+
+		It("runtime should support starting container with volume [Conformance]", func() {
+			By("create host path and flag file")
+			hostPath, flagFile := createHostPath(podID)
+
+			defer os.RemoveAll(hostPath) // clean up the TempDir
+
+			By("create container with volume")
+			containerID := createVolumeContainer(rc, ic, "container-with-volume-test-", podID, podConfig, hostPath, flagFile)
+
+			By("test start container with volume")
+			testStartContainer(rc, containerID)
+
+			By("test container exit code")
+			Eventually(getContainerStatus(rc, containerID).ExitCode).Should(Equal(int32(0)))
 		})
 	})
 })
@@ -250,4 +285,36 @@ func testExecSync(c internalapi.RuntimeService, containerID string) {
 	Expect(string(stdout)).To(Equal("hello\n"), "The stdout output of execSync should be hello")
 	Expect(stderr).To(BeNil(), "The stderr should be nil.")
 	framework.Logf("Execsync succeed")
+}
+
+// createHostPath creates the hostPath and flagFile for volume.
+func createHostPath(podID string) (string, string) {
+	hostPath, err := ioutil.TempDir("", "/test"+podID)
+	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
+
+	flagFile := "testVolume.file"
+	_, err = os.Create(filepath.Join(hostPath, flagFile))
+	framework.ExpectNoError(err, "failed to create volume file %q: %v", flagFile, err)
+
+	return hostPath, flagFile
+}
+
+// createVolContainerOrFail creates a container with volume and the prefix of containerName and fails if it gets error.
+func createVolumeContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix string, podID string, podConfig *runtimeapi.PodSandboxConfig, hostPath, flagFile string) string {
+	By("create a container with volume and name")
+	containerName := prefix + framework.NewUUID()
+	containerConfig := &runtimeapi.ContainerConfig{
+		Metadata: buildContainerMetadata(containerName, defaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
+		// mount host path to the same directory in container, and check if flag file exists
+		Command: []string{"sh", "-c", "test -f " + filepath.Join(hostPath, flagFile)},
+		Mounts: []*runtimeapi.Mount{
+			{
+				HostPath:      hostPath,
+				ContainerPath: hostPath,
+			},
+		},
+	}
+
+	return createContainer(rc, ic, containerConfig, podID, podConfig)
 }
