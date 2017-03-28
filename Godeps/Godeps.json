@@ -1,12 +1,16 @@
 {
 	"ImportPath": "github.com/kubernetes-incubator/cri-tools",
 	"GoVersion": "go1.7",
-	"GodepVersion": "v78",
+	"GodepVersion": "v79",
 	"Packages": [
-		"./...",
-		"github.com/onsi/ginkgo/ginkgo"
+		"./..."
 	],
 	"Deps": [
+		{
+			"ImportPath": "github.com/docker/docker/pkg/jsonlog",
+			"Comment": "docs-v1.12.0-rc4-2016-07-15-5709-gc497499",
+			"Rev": "c497499cde5b2f3fa408fe4a1b0fdfec4a61d5c5"
+		},
 		{
 			"ImportPath": "github.com/gogo/protobuf/gogoproto",
 			"Comment": "v0.2-33-ge18d7aa",
