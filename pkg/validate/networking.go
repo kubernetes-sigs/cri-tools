@@ -33,11 +33,11 @@ import (
 const (
 	defaultDNSServer   string = "10.10.10.10"
 	defaultDNSSearch   string = "google.com"
+	defaultDNSOption   string = "ndots:8"
 	resolvConfigPath   string = "/etc/resolv.conf"
 	nginxImage         string = "nginx"
 	nginxContainerPort int32  = 80
 	nginxHostPort      int32  = 8000
-	pollTIMEOUT        int64  = 10
 )
 
 var _ = framework.KubeDescribe("Networking", func() {
@@ -76,6 +76,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 			expectedContent := []string{
 				"nameserver " + defaultDNSServer,
 				"search " + defaultDNSSearch,
+				"options " + defaultDNSOption,
 			}
 			checkDNSConfig(rc, containerID, expectedContent)
 		})
@@ -95,9 +96,6 @@ var _ = framework.KubeDescribe("Networking", func() {
 
 			By("start the nginx container")
 			startContainer(rc, containerID)
-
-			// wait container started and check the status.
-			Eventually(verifyContainerStatus(rc, containerID, runtimeapi.ContainerState_CONTAINER_RUNNING, "running"), pollTIMEOUT).Should(BeTrue())
 
 			By("check the port mapping with only container port")
 			checkPortMapping(rc, podID, true)
@@ -120,9 +118,6 @@ var _ = framework.KubeDescribe("Networking", func() {
 			By("start the nginx container")
 			startContainer(rc, containerID)
 
-			// wait container started and check the status.
-			Eventually(verifyContainerStatus(rc, containerID, runtimeapi.ContainerState_CONTAINER_RUNNING, "running"), pollTIMEOUT).Should(BeTrue())
-
 			By("check the port mapping with host port and container port")
 			checkPortMapping(rc, podID, false)
 		})
@@ -139,6 +134,7 @@ func createPodSandWithDNSConfig(c internalapi.RuntimeService) (string, *runtimea
 		DnsConfig: &runtimeapi.DNSConfig{
 			Servers:  []string{defaultDNSServer},
 			Searches: []string{defaultDNSSearch},
+			Options:  []string{defaultDNSOption},
 		},
 		Linux: &runtimeapi.LinuxPodSandboxConfig{},
 	}
@@ -171,7 +167,6 @@ func checkDNSConfig(c internalapi.RuntimeService, containerID string, expectedCo
 	for _, content := range expectedContent {
 		Expect(string(stdout)).To(ContainSubstring(content), "The stdout output of execSync should contain %q", content)
 	}
-	fmt.Println(string(stdout))
 	Expect(stderr).To(BeNil(), "The stderr should be nil.")
 	framework.Logf("check DNS config succeed")
 }
@@ -196,11 +191,10 @@ func checkPortMapping(c internalapi.RuntimeService, podID string, containerPortO
 		Expect(status.GetNetwork()).NotTo(BeNil(), "The network in status should not be nil.")
 		Expect(status.GetNetwork().Ip).NotTo(BeNil(), "The IP should not be nil.")
 		url += status.GetNetwork().Ip + ":" + strconv.Itoa(int(nginxContainerPort))
-		framework.Logf("the IP:port is " + url)
 	} else {
 		url += "localhost:" + strconv.Itoa(int(nginxHostPort))
-		framework.Logf("the IP:port is " + url)
 	}
+	framework.Logf("the IP:port is " + url)
 
 	By("check the content of " + url)
 	resp, err := http.Get(url)
