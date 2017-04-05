@@ -17,6 +17,10 @@ limitations under the License.
 package validate
 
 import (
+	"io/ioutil"
+	"os"
+	"path/filepath"
+
 	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
 	internalapi "k8s.io/kubernetes/pkg/kubelet/api"
 	runtimeapi "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
@@ -200,4 +204,25 @@ func createPodSandboxForContainer(c internalapi.RuntimeService) (string, *runtim
 
 	podID := runPodSandbox(c, config)
 	return podID, config
+}
+
+// createPodSandboxWithLogDirectory creates a PodSandbox with log directory.
+func createPodSandboxWithLogDirectory(c internalapi.RuntimeService) (string, *runtimeapi.PodSandboxConfig, string) {
+	By("create a PodSandbox with log directory")
+	podSandboxName := "PodSandbox-with-log-directory-" + framework.NewUUID()
+	uid := defaultUIDPrefix + framework.NewUUID()
+	namespace := defaultNamespacePrefix + framework.NewUUID()
+
+	hostPath, err := ioutil.TempDir("", "/podLogTest")
+	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
+
+	podLogPath := filepath.Join(hostPath, podSandboxName)
+	err = os.MkdirAll(podLogPath, 0777)
+	framework.ExpectNoError(err, "failed to create host path %s: %v", podLogPath, err)
+
+	podConfig := &runtimeapi.PodSandboxConfig{
+		Metadata:     buildPodSandboxMetadata(podSandboxName, uid, namespace, defaultAttempt),
+		LogDirectory: podLogPath,
+	}
+	return runPodSandbox(c, podConfig), podConfig, hostPath
 }

@@ -17,12 +17,15 @@ limitations under the License.
 package validate
 
 import (
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/docker/docker/pkg/jsonlog"
 	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
 	internalapi "k8s.io/kubernetes/pkg/kubelet/api"
 	runtimeapi "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
@@ -31,11 +34,24 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+// streamType is the type of the stream.
+type streamType string
+
 const (
-	defaultContainerImage       string = "gcr.io/google_containers/busybox:1.24"
-	defaultStopContainerTimeout int64  = 60
-	defaultExecSyncTimeout      int64  = 5
+	defaultContainerImage       string     = "gcr.io/google_containers/busybox:1.24"
+	defaultStopContainerTimeout int64      = 60
+	defaultExecSyncTimeout      int64      = 5
+	defaultLog                  string     = "hello World"
+	stdoutType                  streamType = "stdout"
+	pollTIMEOUT                 int64      = 10
 )
+
+// logMessage is the internal log type.
+type logMessage struct {
+	timestamp time.Time
+	stream    streamType
+	log       []byte
+}
 
 var _ = framework.KubeDescribe("Container", func() {
 	f := framework.NewDefaultCRIFramework()
@@ -144,6 +160,41 @@ var _ = framework.KubeDescribe("Container", func() {
 			Eventually(getContainerStatus(rc, containerID).ExitCode).Should(Equal(int32(0)))
 		})
 	})
+
+	Context("runtime should support log", func() {
+		var podID, hostPath string
+		var podConfig *runtimeapi.PodSandboxConfig
+
+		BeforeEach(func() {
+			podID, podConfig, hostPath = createPodSandboxWithLogDirectory(rc)
+		})
+
+		AfterEach(func() {
+			By("stop PodSandbox")
+			rc.StopPodSandbox(podID)
+			By("delete PodSandbox")
+			rc.RemovePodSandbox(podID)
+			By("clean up the TempDir")
+			os.RemoveAll(hostPath)
+		})
+
+		It("runtime should support starting container with log [Conformance]", func() {
+			By("create container with log")
+			logPath, containerID := createLogContainer(rc, ic, "container-with-log-test-", podID, podConfig)
+
+			By("start container with log")
+			startContainer(rc, containerID)
+			// wait container started and check the status.
+			Eventually(verifyContainerStatus(rc, containerID, runtimeapi.ContainerState_CONTAINER_RUNNING), pollTIMEOUT).Should(BeTrue())
+
+			By("check the log context")
+			expectedLogMessage := &logMessage{
+				log:    []byte(defaultLog + "\n"),
+				stream: stdoutType,
+			}
+			verifyLogContents(podConfig, logPath, expectedLogMessage)
+		})
+	})
 })
 
 // containerFound returns whether containers is found.
@@ -173,9 +224,9 @@ func getContainerStatus(c internalapi.RuntimeService, containerID string) *runti
 }
 
 // verifyContainerStatus verifies whether container status for given containerID matches.
-func verifyContainerStatus(c internalapi.RuntimeService, containerID string, expectedStatus runtimeapi.ContainerState, stateName string) {
+func verifyContainerStatus(c internalapi.RuntimeService, containerID string, expectedStatus runtimeapi.ContainerState) bool {
 	status := getContainerStatus(c, containerID)
-	Expect(status.State).To(Equal(expectedStatus), "Container state should be %s", stateName)
+	return status.State == expectedStatus
 }
 
 // createContainer creates a container with the prefix of containerName.
@@ -214,7 +265,7 @@ func createDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageM
 // testCreateDefaultContainer creates a container in the pod which ID is podID and make sure it's ready.
 func testCreateDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig) string {
 	containerID := createDefaultContainer(rc, ic, podID, podConfig, "container-for-create-test-")
-	verifyContainerStatus(rc, containerID, runtimeapi.ContainerState_CONTAINER_CREATED, "created")
+	Eventually(verifyContainerStatus(rc, containerID, runtimeapi.ContainerState_CONTAINER_CREATED), pollTIMEOUT).Should(BeTrue())
 	return containerID
 }
 
@@ -229,7 +280,7 @@ func startContainer(c internalapi.RuntimeService, containerID string) {
 // testStartContainer starts the container for containerID and make sure it's running.
 func testStartContainer(c internalapi.RuntimeService, containerID string) {
 	startContainer(c, containerID)
-	verifyContainerStatus(c, containerID, runtimeapi.ContainerState_CONTAINER_RUNNING, "running")
+	Eventually(verifyContainerStatus(c, containerID, runtimeapi.ContainerState_CONTAINER_RUNNING), pollTIMEOUT).Should(BeTrue())
 }
 
 // stopContainer stops the container for containerID.
@@ -254,7 +305,7 @@ func stopContainer(c internalapi.RuntimeService, containerID string, timeout int
 // testStopContainer stops the container for containerID and make sure it's exited.
 func testStopContainer(c internalapi.RuntimeService, containerID string) {
 	stopContainer(c, containerID, defaultStopContainerTimeout)
-	verifyContainerStatus(c, containerID, runtimeapi.ContainerState_CONTAINER_EXITED, "exited")
+	Eventually(verifyContainerStatus(c, containerID, runtimeapi.ContainerState_CONTAINER_EXITED), pollTIMEOUT).Should(BeTrue())
 }
 
 // removeContainer removes the container for containerID.
@@ -317,4 +368,74 @@ func createVolumeContainer(rc internalapi.RuntimeService, ic internalapi.ImageMa
 	}
 
 	return createContainer(rc, ic, containerConfig, podID, podConfig)
+}
+
+// createLogContainer creates a container with log and the prefix of containerName.
+func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix string, podID string, podConfig *runtimeapi.PodSandboxConfig) (string, string) {
+	By("create a container with log and name")
+	containerName := prefix + framework.NewUUID()
+	path := fmt.Sprintf("%s.log", containerName)
+	containerConfig := &runtimeapi.ContainerConfig{
+		Metadata: buildContainerMetadata(containerName, defaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
+		Command:  []string{"echo", defaultLog},
+		LogPath:  path,
+	}
+	return containerConfig.LogPath, createContainer(rc, ic, containerConfig, podID, podConfig)
+}
+
+// parseDockerJSONLog parses logs in Docker JSON log format.
+// Docker JSON log format example:
+//   {"log":"content 1","stream":"stdout","time":"2016-10-20T18:39:20.57606443Z"}
+//   {"log":"content 2","stream":"stderr","time":"2016-10-20T18:39:20.57606444Z"}
+func parseDockerJSONLog(log []byte, msg *logMessage) {
+	var l jsonlog.JSONLog
+
+	err := json.Unmarshal(log, &l)
+	framework.ExpectNoError(err, "failed with %v to unmarshal log %q", err, l)
+
+	msg.timestamp = l.Created
+	msg.stream = streamType(l.Stream)
+	msg.log = []byte(l.Log)
+}
+
+// parseCRILog parses logs in Docker JSON log format.
+// CRI log format example :
+//   2016-10-06T00:17:09.669794202Z stdout The content of the log entry 1
+//   2016-10-06T00:17:10.113242941Z stderr The content of the log entry 2
+func parseCRILog(log string, msg *logMessage) {
+	timeStamp, err := time.Parse(time.RFC3339Nano, strings.Fields(log)[0])
+	framework.ExpectNoError(err, "failed to parse timeStamp: %v", err)
+	stream := strings.Fields(log)[1]
+	logMessage := strings.Fields(log)[2:]
+
+	msg.timestamp = timeStamp
+	msg.stream = streamType(stream)
+	msg.log = []byte(strings.Join(logMessage, " ") + "\n")
+}
+
+// verifyLogContents verifies the contents of container log.
+func verifyLogContents(podConfig *runtimeapi.PodSandboxConfig, logPath string, expectedLogMessage *logMessage) {
+	path := filepath.Join(podConfig.LogDirectory, logPath)
+	f, err := os.Open(path)
+	framework.ExpectNoError(err, "failed to open log file: %v", err)
+	framework.Logf("Open log file %s\n", path)
+	defer f.Close()
+
+	log, err := ioutil.ReadAll(f)
+	framework.ExpectNoError(err, "failed to read log file: %v", err)
+	framework.Logf("Log file context is %s\n", log)
+
+	var msg logMessage
+
+	// to determine whether the log is Docker format or CRI format.
+	if strings.Contains(string(log), "{") {
+		parseDockerJSONLog(log, &msg)
+	} else {
+		parseCRILog(string(log), &msg)
+	}
+	framework.Logf("Parse json log succeed")
+
+	Expect(string(msg.log)).To(Equal(string(expectedLogMessage.log)), "Log should be %s", string(expectedLogMessage.log))
+	Expect(string(msg.stream)).To(Equal(string(expectedLogMessage.stream)), "Stream should be %s", string(expectedLogMessage.stream))
 }
