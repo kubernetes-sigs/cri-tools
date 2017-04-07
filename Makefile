@@ -57,6 +57,9 @@ uninstall:
 lint:
 	./hack/repo-infra/verify/go-tools/verify-gometalinter.sh
 
+gofmt:
+	./hack/repo-infra/verify/go-tools/verify-gofmt.sh
+
 install.tools:
 	go get -u github.com/alecthomas/gometalinter
 	gometalinter --install
@@ -72,4 +75,5 @@ install.tools:
 	install \
 	uninstall \
 	lint \
+	gofmt \
 	install.tools
