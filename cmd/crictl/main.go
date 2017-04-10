@@ -38,6 +38,7 @@ func main() {
 
 	app.Commands = []cli.Command{
 		runtimeVersionCommand,
+		runtimePodSandboxCommand,
 	}
 
 	app.Flags = []cli.Flag{
