@@ -17,7 +17,6 @@ limitations under the License.
 package validate
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
