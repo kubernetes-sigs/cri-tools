@@ -56,6 +56,8 @@ uninstall:
 
 lint:
 	./hack/repo-infra/verify/go-tools/verify-gometalinter.sh
+	./hack/repo-infra/verify/verify-go-src.sh -r $(shell pwd) -v
+	./hack/repo-infra/verify/verify-boilerplate.sh
 
 gofmt:
 	./hack/repo-infra/verify/go-tools/verify-gofmt.sh
