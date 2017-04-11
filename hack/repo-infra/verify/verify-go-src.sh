@@ -31,7 +31,7 @@ set -o pipefail
 
 
 SILENT=true
-REPO_ROOT=$(dirname "${BASH_SOURCE}")/../..
+REPO_ROOT=$(dirname "${BASH_SOURCE}")/../../..
 
 # Convert long opts to short ones to read through getopts
 for arg in "$@"; do
