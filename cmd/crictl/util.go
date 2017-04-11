@@ -44,6 +44,19 @@ type listOptions struct {
 	labels map[string]string
 }
 
+type execOptions struct {
+	// id of container
+	id string
+	// timeout to stop command
+	timeout int64
+	// Whether to exec a command in a tty
+	tty bool
+	// Whether to stream stdin
+	stdin bool
+	// Command to exec
+	cmd []string
+}
+
 func getSortedKeys(m map[string]string) []string {
 	var keys []string
 	for k := range m {
