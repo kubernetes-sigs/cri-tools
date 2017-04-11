@@ -1,10 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 	"time"
 
@@ -30,17 +28,9 @@ var runPodSandboxCommand = cli.Command{
 	Usage: "run a pod",
 	Action: func(context *cli.Context) error {
 		sandboxSpec := context.Args().First()
-		spec, err := os.Open(sandboxSpec)
+		podSandboxConfig, err := loadPodSandboxConfig(sandboxSpec)
 		if err != nil {
-			return fmt.Errorf("open spec file failed: %v", err)
-		}
-		defer spec.Close()
-
-		var podSandboxConfig pb.PodSandboxConfig
-		specParser := json.NewDecoder(spec)
-		err = specParser.Decode(&podSandboxConfig)
-		if err != nil {
-			return fmt.Errorf("parser podSandboxConfig failed: %v", err)
+			return fmt.Errorf("load podSandboxConfig failed: %v", err)
 		}
 
 		// Set up a connection to the server.
@@ -52,7 +42,7 @@ var runPodSandboxCommand = cli.Command{
 		client := pb.NewRuntimeServiceClient(conn)
 
 		// Test RuntimeServiceClient.RunPodSandbox
-		err = RunPodSandbox(client, &podSandboxConfig)
+		err = RunPodSandbox(client, podSandboxConfig)
 		if err != nil {
 			return fmt.Errorf("Run pod sandbox failed: %v", err)
 		}
