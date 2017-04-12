@@ -61,6 +61,7 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "runtime-endpoint",
+			Value: "/var/run/dockershim.sock",
 			Usage: "CRI server runtime endpoint",
 		},
 		cli.StringFlag{
