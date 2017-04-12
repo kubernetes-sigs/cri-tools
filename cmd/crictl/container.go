@@ -39,6 +39,8 @@ var runtimeContainerCommand = cli.Command{
 		containerStatusCommand,
 		listContainersCommand,
 	},
+	Before: getConnection,
+	After:  closeConnection,
 }
 
 type createOptions struct {
@@ -69,14 +71,6 @@ var createContainerCommand = cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
-		// Set up a connection to the server.
-		conn, err := getRuntimeClientConnection(context)
-		if err != nil {
-			return fmt.Errorf("failed to connect: %v", err)
-		}
-		defer conn.Close()
-		client := pb.NewRuntimeServiceClient(conn)
-
 		if !context.IsSet("pod") {
 			return fmt.Errorf("Please specify the id of the pod sandbox to which the container belongs via the --pod option")
 		}
@@ -87,7 +81,7 @@ var createContainerCommand = cli.Command{
 			podConfig:  context.String("podconfig"),
 		}
 
-		err = CreateContainer(client, opts)
+		err := CreateContainer(client, opts)
 		if err != nil {
 			return fmt.Errorf("Creating container failed: %v", err)
 		}
@@ -99,16 +93,8 @@ var startContainerCommand = cli.Command{
 	Name:  "start",
 	Usage: "start a container",
 	Action: func(context *cli.Context) error {
-		// Set up a connection to the server.
-		conn, err := getRuntimeClientConnection(context)
-		if err != nil {
-			return fmt.Errorf("failed to connect: %v", err)
-		}
-		defer conn.Close()
-		client := pb.NewRuntimeServiceClient(conn)
-
 		containerID := context.Args().First()
-		err = StartContainer(client, containerID)
+		err := StartContainer(client, containerID)
 		if err != nil {
 			return fmt.Errorf("Starting the container failed: %v", err)
 		}
@@ -120,16 +106,8 @@ var stopContainerCommand = cli.Command{
 	Name:  "stop",
 	Usage: "stop a container",
 	Action: func(context *cli.Context) error {
-		// Set up a connection to the server.
-		conn, err := getRuntimeClientConnection(context)
-		if err != nil {
-			return fmt.Errorf("failed to connect: %v", err)
-		}
-		defer conn.Close()
-		client := pb.NewRuntimeServiceClient(conn)
-
 		containerID := context.Args().First()
-		err = StopContainer(client, containerID)
+		err := StopContainer(client, containerID)
 		if err != nil {
 			return fmt.Errorf("Stopping the container failed: %v", err)
 		}
@@ -141,16 +119,8 @@ var removeContainerCommand = cli.Command{
 	Name:  "remove",
 	Usage: "remove a container",
 	Action: func(context *cli.Context) error {
-		// Set up a connection to the server.
-		conn, err := getRuntimeClientConnection(context)
-		if err != nil {
-			return fmt.Errorf("failed to connect: %v", err)
-		}
-		defer conn.Close()
-		client := pb.NewRuntimeServiceClient(conn)
-
 		containerID := context.Args().First()
-		err = RemoveContainer(client, containerID)
+		err := RemoveContainer(client, containerID)
 		if err != nil {
 			return fmt.Errorf("Removing the container failed: %v", err)
 		}
@@ -162,16 +132,8 @@ var containerStatusCommand = cli.Command{
 	Name:  "status",
 	Usage: "get the status of a container",
 	Action: func(context *cli.Context) error {
-		// Set up a connection to the server.
-		conn, err := getRuntimeClientConnection(context)
-		if err != nil {
-			return fmt.Errorf("failed to connect: %v", err)
-		}
-		defer conn.Close()
-		client := pb.NewRuntimeServiceClient(conn)
-
 		containerID := context.Args().First()
-		err = ContainerStatus(client, containerID)
+		err := ContainerStatus(client, containerID)
 		if err != nil {
 			return fmt.Errorf("Getting the status of the container failed: %v", err)
 		}
@@ -208,13 +170,6 @@ var listContainersCommand = cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
-		// Set up a connection to the server.
-		conn, err := getRuntimeClientConnection(context)
-		if err != nil {
-			return fmt.Errorf("failed to connect: %v", err)
-		}
-		defer conn.Close()
-		client := pb.NewRuntimeServiceClient(conn)
 		opts := listOptions{
 			id:     context.String("id"),
 			podID:  context.String("pod"),
@@ -231,7 +186,7 @@ var listContainersCommand = cli.Command{
 			opts.labels[pair[0]] = pair[1]
 		}
 
-		err = ListContainers(client, opts)
+		err := ListContainers(client, opts)
 		if err != nil {
 			return fmt.Errorf("listing containers failed: %v", err)
 		}

@@ -22,8 +22,13 @@ import (
 	"os"
 	"sort"
 
+	"github.com/urfave/cli"
+	"google.golang.org/grpc"
 	pb "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
 )
+
+var client pb.RuntimeServiceClient
+var conn *grpc.ClientConn
 
 type listOptions struct {
 	// id of container or sandbox
@@ -84,4 +89,19 @@ func openFile(path string) (*os.File, error) {
 		return nil, err
 	}
 	return f, nil
+}
+
+func getConnection(context *cli.Context) error {
+	// Set up a connection to the server.
+	var err error
+	conn, err = getRuntimeClientConnection(context)
+	if err != nil {
+		return fmt.Errorf("failed to connect: %v", err)
+	}
+	client = pb.NewRuntimeServiceClient(conn)
+	return nil
+}
+
+func closeConnection(context *cli.Context) error {
+	return conn.Close()
 }
