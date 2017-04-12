@@ -56,6 +56,7 @@ func main() {
 		runtimeVersionCommand,
 		runtimePodSandboxCommand,
 		runtimeContainerCommand,
+		runtimeStatusCommand,
 	}
 
 	app.Flags = []cli.Flag{
