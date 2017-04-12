@@ -38,12 +38,13 @@ import (
 type streamType string
 
 const (
-	defaultContainerImage       string     = "gcr.io/google_containers/busybox:1.24"
-	defaultStopContainerTimeout int64      = 60
-	defaultExecSyncTimeout      int64      = 5
-	defaultLog                  string     = "hello World"
-	stdoutType                  streamType = "stdout"
-	pollTIMEOUT                 int64      = 10
+	defaultContainerImage       string        = "gcr.io/google_containers/busybox:1.24"
+	defaultStopContainerTimeout int64         = 60
+	defaultExecSyncTimeout      int64         = 5
+	defaultLog                  string        = "hello World"
+	stdoutType                  streamType    = "stdout"
+	stderrType                  streamType    = "stderr"
+	pollTIMEOUT                 time.Duration = time.Minute
 )
 
 // logMessage is the internal log type.
@@ -430,12 +431,12 @@ func verifyLogContents(podConfig *runtimeapi.PodSandboxConfig, logPath string, e
 	path := filepath.Join(podConfig.LogDirectory, logPath)
 	f, err := os.Open(path)
 	framework.ExpectNoError(err, "failed to open log file: %v", err)
-	framework.Logf("Open log file %s\n", path)
+	framework.Logf("Open log file %s", path)
 	defer f.Close()
 
 	log, err := ioutil.ReadAll(f)
 	framework.ExpectNoError(err, "failed to read log file: %v", err)
-	framework.Logf("Log file context is %s\n", log)
+	framework.Logf("Log file context is %s", log)
 
 	var msg logMessage
 
