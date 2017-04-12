@@ -28,22 +28,16 @@ var runtimeVersionCommand = cli.Command{
 	Name:  "version",
 	Usage: "get runtime version information",
 	Action: func(context *cli.Context) error {
-		// Set up a connection to the server.
-		conn, err := getRuntimeClientConnection(context)
-		if err != nil {
-			return fmt.Errorf("failed to connect: %v", err)
-		}
-		defer conn.Close()
-		client := pb.NewRuntimeServiceClient(conn)
-
 		// Test RuntimeServiceClient.Version
 		version := "v1alpha1"
-		err = Version(client, version)
+		err := Version(client, version)
 		if err != nil {
 			return fmt.Errorf("Getting the runtime version failed: %v", err)
 		}
 		return nil
 	},
+	Before: getConnection,
+	After:  closeConnection,
 }
 
 // Version sends a VersionRequest to the server, and parses the returned VersionResponse.
