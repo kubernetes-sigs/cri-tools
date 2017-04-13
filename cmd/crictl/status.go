@@ -28,13 +28,13 @@ var runtimeStatusCommand = cli.Command{
 	Name:  "status",
 	Usage: "get the status of runtime",
 	Action: func(context *cli.Context) error {
-		err := Status(client)
+		err := Status(runtimeClient)
 		if err != nil {
 			return fmt.Errorf("Getting status of runtime failed: %v", err)
 		}
 		return nil
 	},
-	Before: getConnection,
+	Before: getRuntimeClient,
 	After:  closeConnection,
 }
 

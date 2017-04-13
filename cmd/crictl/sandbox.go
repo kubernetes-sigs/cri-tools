@@ -37,7 +37,7 @@ var runtimePodSandboxCommand = cli.Command{
 		podSandboxStatusCommand,
 		listPodSandboxCommand,
 	},
-	Before: getConnection,
+	Before: getRuntimeClient,
 	After:  closeConnection,
 }
 
@@ -52,7 +52,7 @@ var runPodSandboxCommand = cli.Command{
 		}
 
 		// Test RuntimeServiceClient.RunPodSandbox
-		err = RunPodSandbox(client, podSandboxConfig)
+		err = RunPodSandbox(runtimeClient, podSandboxConfig)
 		if err != nil {
 			return fmt.Errorf("Run pod sandbox failed: %v", err)
 		}
@@ -65,7 +65,7 @@ var stopPodSandboxCommand = cli.Command{
 	Usage: "stop a pod sandbox",
 	Action: func(context *cli.Context) error {
 		id := context.Args().First()
-		err := StopPodSandbox(client, id)
+		err := StopPodSandbox(runtimeClient, id)
 		if err != nil {
 			return fmt.Errorf("stopping the pod sandbox failed: %v", err)
 		}
@@ -78,7 +78,7 @@ var removePodSandboxCommand = cli.Command{
 	Usage: "remove a pod sandbox",
 	Action: func(context *cli.Context) error {
 		id := context.Args().First()
-		err := RemovePodSandbox(client, id)
+		err := RemovePodSandbox(runtimeClient, id)
 		if err != nil {
 			return fmt.Errorf("removing the pod sandbox failed: %v", err)
 		}
@@ -91,7 +91,7 @@ var podSandboxStatusCommand = cli.Command{
 	Usage: "return the status of a pod",
 	Action: func(context *cli.Context) error {
 		id := context.Args().First()
-		err := PodSandboxStatus(client, id)
+		err := PodSandboxStatus(runtimeClient, id)
 		if err != nil {
 			return fmt.Errorf("getting the pod sandbox status failed: %v", err)
 		}
@@ -138,7 +138,7 @@ var listPodSandboxCommand = cli.Command{
 			opts.labels[pair[0]] = pair[1]
 		}
 
-		err := ListPodSandboxes(client, opts)
+		err := ListPodSandboxes(runtimeClient, opts)
 		if err != nil {
 			return fmt.Errorf("listing pod sandboxes failed: %v", err)
 		}

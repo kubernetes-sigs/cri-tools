@@ -36,7 +36,24 @@ func getRuntimeClientConnection(context *cli.Context) (*grpc.ClientConn, error) 
 	if runtimeEndpoint == "" {
 		return nil, fmt.Errorf("--runtime-endpoint is not set")
 	}
-	conn, err := grpc.Dial(context.GlobalString("runtime-endpoint"), grpc.WithInsecure(), grpc.WithTimeout(context.GlobalDuration("timeout")),
+	conn, err := grpc.Dial(runtimeEndpoint, grpc.WithInsecure(), grpc.WithTimeout(context.GlobalDuration("timeout")),
+		grpc.WithDialer(func(addr string, timeout time.Duration) (net.Conn, error) {
+			return net.DialTimeout("unix", addr, timeout)
+		}))
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect: %v", err)
+	}
+	return conn, nil
+}
+func getImageClientConnection(context *cli.Context) (*grpc.ClientConn, error) {
+	imageEndpoint := context.GlobalString("image-endpoint")
+	if imageEndpoint == "" {
+		if context.GlobalString("runtime-endpoint") == "" {
+			return nil, fmt.Errorf("--image-endpoint is not set")
+		}
+		imageEndpoint = context.GlobalString("runtime-endpoint")
+	}
+	conn, err := grpc.Dial(imageEndpoint, grpc.WithInsecure(), grpc.WithTimeout(context.GlobalDuration("timeout")),
 		grpc.WithDialer(func(addr string, timeout time.Duration) (net.Conn, error) {
 			return net.DialTimeout("unix", addr, timeout)
 		}))
@@ -57,6 +74,7 @@ func main() {
 		runtimePodSandboxCommand,
 		runtimeContainerCommand,
 		runtimeStatusCommand,
+		imageCommand,
 	}
 
 	app.Flags = []cli.Flag{
