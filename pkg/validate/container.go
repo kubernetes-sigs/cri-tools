@@ -125,7 +125,9 @@ var _ = framework.KubeDescribe("Container", func() {
 			startContainer(rc, containerID)
 
 			By("test execSync")
-			testExecSync(rc, containerID)
+			cmd := []string{"echo", "hello"}
+			expectedLogMessage := []byte("hello" + "\n")
+			execSyncContainer(rc, containerID, cmd, expectedLogMessage)
 		})
 	})
 
@@ -328,13 +330,12 @@ func listContainerForID(c internalapi.RuntimeService, containerID string) []*run
 	return containers
 }
 
-// testExecSync test execSync for containerID and make sure the response is right.
-func testExecSync(c internalapi.RuntimeService, containerID string) {
+// execSyncContainer test execSync for containerID and make sure the response is right.
+func execSyncContainer(c internalapi.RuntimeService, containerID string, command []string, expectedLogMessage []byte) {
 	By("Test execSync for containerID: " + containerID)
-	cmd := []string{"echo", "hello"}
-	stdout, stderr, err := c.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	stdout, stderr, err := c.ExecSync(containerID, command, time.Duration(defaultExecSyncTimeout)*time.Second)
 	framework.ExpectNoError(err, "failed to execSync in container %q", containerID)
-	Expect(string(stdout)).To(Equal("hello\n"), "The stdout output of execSync should be hello")
+	Expect(string(stdout)).To(Equal(string(expectedLogMessage)), "The stdout output of execSync should be %s", string(expectedLogMessage))
 	Expect(stderr).To(BeNil(), "The stderr should be nil.")
 	framework.Logf("Execsync succeed")
 }

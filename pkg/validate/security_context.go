@@ -18,7 +18,6 @@ package validate
 
 import (
 	"strconv"
-	"time"
 
 	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
 	internalapi "k8s.io/kubernetes/pkg/kubelet/api"
@@ -63,8 +62,8 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			Eventually(verifyContainerStatus(rc, containerID, runtimeapi.ContainerState_CONTAINER_RUNNING), pollTIMEOUT).Should(BeTrue())
 
 			By("verify RunAsUser for container")
-			command := "-u"
-			verifyOutputByExecSync(rc, containerID, command, expectedLogMessage)
+			cmd := []string{"id", "-u"}
+			execSyncContainer(rc, containerID, cmd, expectedLogMessage)
 		})
 
 		It("runtime should support RunAsUserName", func() {
@@ -76,8 +75,8 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			Eventually(verifyContainerStatus(rc, containerID, runtimeapi.ContainerState_CONTAINER_RUNNING), pollTIMEOUT).Should(BeTrue())
 
 			By("verify RunAsUserName for container")
-			command := "-nu"
-			verifyOutputByExecSync(rc, containerID, command, expectedLogMessage)
+			cmd := []string{"id", "-nu"}
+			execSyncContainer(rc, containerID, cmd, expectedLogMessage)
 		})
 	})
 
@@ -124,14 +123,4 @@ func createRunAsUserNameContainer(rc internalapi.RuntimeService, ic internalapi.
 		},
 	}
 	return createContainer(rc, ic, containerConfig, podID, podConfig), expectedLogMessage
-}
-
-// verifyOutputByExecSync verifies that the container output is the same as the expected value by ExecSync.
-func verifyOutputByExecSync(rc internalapi.RuntimeService, containerID string, command string, expectedLogMessage []byte) {
-	cmd := []string{"id", command}
-	stdout, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
-	framework.ExpectNoError(err, "failed to execSync in container %q", containerID)
-	Expect(string(stdout)).To(Equal(string(expectedLogMessage)), "The stdout output of execSync should be %s", string(expectedLogMessage))
-	Expect(stderr).To(BeNil(), "The stderr should be nil.")
-	framework.Logf("Execsync succeed")
 }
