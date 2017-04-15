@@ -24,7 +24,7 @@ help:
 	@echo "Usage: make <target>"
 	@echo
 	@echo " * 'install' - Install binaries to system locations."
-	@echo " * 'binaries' - Build critest."
+	@echo " * 'binaries' - Build critest and crictl."
 	@echo " * 'clean' - Clean artifacts."
 
 check-gopath:
