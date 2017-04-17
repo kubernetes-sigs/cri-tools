@@ -30,13 +30,13 @@ var runtimeVersionCommand = cli.Command{
 	Action: func(context *cli.Context) error {
 		// Test RuntimeServiceClient.Version
 		version := "v1alpha1"
-		err := Version(client, version)
+		err := Version(runtimeClient, version)
 		if err != nil {
 			return fmt.Errorf("Getting the runtime version failed: %v", err)
 		}
 		return nil
 	},
-	Before: getConnection,
+	Before: getRuntimeClient,
 	After:  closeConnection,
 }
 

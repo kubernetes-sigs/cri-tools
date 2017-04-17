@@ -39,7 +39,7 @@ var runtimeContainerCommand = cli.Command{
 		containerStatusCommand,
 		listContainersCommand,
 	},
-	Before: getConnection,
+	Before: getRuntimeClient,
 	After:  closeConnection,
 }
 
@@ -81,7 +81,7 @@ var createContainerCommand = cli.Command{
 			podConfig:  context.String("podconfig"),
 		}
 
-		err := CreateContainer(client, opts)
+		err := CreateContainer(runtimeClient, opts)
 		if err != nil {
 			return fmt.Errorf("Creating container failed: %v", err)
 		}
@@ -94,7 +94,7 @@ var startContainerCommand = cli.Command{
 	Usage: "start a container",
 	Action: func(context *cli.Context) error {
 		containerID := context.Args().First()
-		err := StartContainer(client, containerID)
+		err := StartContainer(runtimeClient, containerID)
 		if err != nil {
 			return fmt.Errorf("Starting the container failed: %v", err)
 		}
@@ -107,7 +107,7 @@ var stopContainerCommand = cli.Command{
 	Usage: "stop a container",
 	Action: func(context *cli.Context) error {
 		containerID := context.Args().First()
-		err := StopContainer(client, containerID)
+		err := StopContainer(runtimeClient, containerID)
 		if err != nil {
 			return fmt.Errorf("Stopping the container failed: %v", err)
 		}
@@ -120,7 +120,7 @@ var removeContainerCommand = cli.Command{
 	Usage: "remove a container",
 	Action: func(context *cli.Context) error {
 		containerID := context.Args().First()
-		err := RemoveContainer(client, containerID)
+		err := RemoveContainer(runtimeClient, containerID)
 		if err != nil {
 			return fmt.Errorf("Removing the container failed: %v", err)
 		}
@@ -133,7 +133,7 @@ var containerStatusCommand = cli.Command{
 	Usage: "get the status of a container",
 	Action: func(context *cli.Context) error {
 		containerID := context.Args().First()
-		err := ContainerStatus(client, containerID)
+		err := ContainerStatus(runtimeClient, containerID)
 		if err != nil {
 			return fmt.Errorf("Getting the status of the container failed: %v", err)
 		}
@@ -186,7 +186,7 @@ var listContainersCommand = cli.Command{
 			opts.labels[pair[0]] = pair[1]
 		}
 
-		err := ListContainers(client, opts)
+		err := ListContainers(runtimeClient, opts)
 		if err != nil {
 			return fmt.Errorf("listing containers failed: %v", err)
 		}

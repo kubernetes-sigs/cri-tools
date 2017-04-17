@@ -27,7 +27,8 @@ import (
 	pb "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
 )
 
-var client pb.RuntimeServiceClient
+var runtimeClient pb.RuntimeServiceClient
+var imageClient pb.ImageServiceClient
 var conn *grpc.ClientConn
 
 type listOptions struct {
@@ -91,14 +92,25 @@ func openFile(path string) (*os.File, error) {
 	return f, nil
 }
 
-func getConnection(context *cli.Context) error {
+func getRuntimeClient(context *cli.Context) error {
 	// Set up a connection to the server.
 	var err error
 	conn, err = getRuntimeClientConnection(context)
 	if err != nil {
 		return fmt.Errorf("failed to connect: %v", err)
 	}
-	client = pb.NewRuntimeServiceClient(conn)
+	runtimeClient = pb.NewRuntimeServiceClient(conn)
+	return nil
+}
+
+func getImageClient(context *cli.Context) error {
+	// Set up a connection to the server.
+	var err error
+	conn, err = getImageClientConnection(context)
+	if err != nil {
+		return fmt.Errorf("failed to connect: %v", err)
+	}
+	imageClient = pb.NewImageServiceClient(conn)
 	return nil
 }
 
