@@ -19,6 +19,7 @@ package validate
 import (
 	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
 	internalapi "k8s.io/kubernetes/pkg/kubelet/api"
+	runtimeapi "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -50,8 +51,7 @@ var _ = framework.KubeDescribe("Runtime info", func() {
 
 // TestGetVersion test if we can get runtime version info.
 func TestGetVersion(c internalapi.RuntimeService) {
-	version, err := c.Version(defaultAPIVersion)
-	framework.ExpectNoError(err, "failed to get version: %v", err)
+	version := getVersion(c)
 	Expect(version.Version).To(Not(BeNil()), "Version should not be nil")
 	Expect(version.RuntimeName).To(Not(BeNil()), "RuntimeName should not be nil")
 	Expect(version.RuntimeVersion).To(Not(BeNil()), "RuntimeVersion should not be nil")
@@ -74,4 +74,11 @@ func TestGetRuntimeStatus(c internalapi.RuntimeService) {
 		}
 	}
 	Expect(count >= 2).To(BeTrue(), "should return all the required runtime conditions")
+}
+
+// getVersion gets runtime version info.
+func getVersion(c internalapi.RuntimeService) *runtimeapi.VersionResponse {
+	version, err := c.Version(defaultAPIVersion)
+	framework.ExpectNoError(err, "failed to get version: %v", err)
+	return version
 }
