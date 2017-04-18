@@ -61,7 +61,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 		})
 
 		It("runtime should support DNS config [Conformance]", func() {
-			By("create a PodSandbxo with DNS config")
+			By("create a PodSandbox with DNS config")
 			var podConfig *runtimeapi.PodSandboxConfig
 			podID, podConfig = createPodSandWithDNSConfig(rc)
 
@@ -81,7 +81,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 		})
 
 		It("runtime should support port mapping with only container port [Conformance]", func() {
-			By("create a PodSandbxo with container port port mapping")
+			By("create a PodSandbox with container port port mapping")
 			var podConfig *runtimeapi.PodSandboxConfig
 			portMappings := []*runtimeapi.PortMapping{
 				{
@@ -101,7 +101,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 		})
 
 		It("runtime should support port mapping with host port and container port [Conformance]", func() {
-			By("create a PodSandbxo with host port and container port port mapping")
+			By("create a PodSandbox with host port and container port port mapping")
 			var podConfig *runtimeapi.PodSandboxConfig
 			portMappings := []*runtimeapi.PortMapping{
 				{
@@ -123,7 +123,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 	})
 })
 
-// createPodSandWithDNSConfig create a PodSandbxo with DNS config.
+// createPodSandWithDNSConfig create a PodSandbox with DNS config.
 func createPodSandWithDNSConfig(c internalapi.RuntimeService) (string, *runtimeapi.PodSandboxConfig) {
 	podSandboxName := "create-PodSandbox-with-DNS-config" + framework.NewUUID()
 	uid := defaultUIDPrefix + framework.NewUUID()
@@ -142,7 +142,7 @@ func createPodSandWithDNSConfig(c internalapi.RuntimeService) (string, *runtimea
 	return podID, config
 }
 
-// createPodSandboxWithPortMapping create a PodSandbxo with port mapping.
+// createPodSandboxWithPortMapping create a PodSandbox with port mapping.
 func createPodSandboxWithPortMapping(c internalapi.RuntimeService, portMappings []*runtimeapi.PortMapping) (string, *runtimeapi.PodSandboxConfig) {
 	podSandboxName := "create-PodSandbox-with-port-mapping" + framework.NewUUID()
 	uid := defaultUIDPrefix + framework.NewUUID()
