@@ -258,8 +258,23 @@ func createDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageM
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: buildContainerMetadata(containerName, defaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
-		Command:  []string{"sh", "-c", "top"},
+		Command:  []string{"top"},
 		Linux:    &runtimeapi.LinuxContainerConfig{},
+	}
+
+	return createContainer(rc, ic, containerConfig, podID, podConfig)
+}
+
+// createShellContainer creates a container to run /bin/sh.
+func createShellContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
+	containerName := prefix + framework.NewUUID()
+	containerConfig := &runtimeapi.ContainerConfig{
+		Metadata: buildContainerMetadata(containerName, defaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
+		Command:  []string{"/bin/sh"},
+		Linux:    &runtimeapi.LinuxContainerConfig{},
+		Stdin:    true,
+		Tty:      false,
 	}
 
 	return createContainer(rc, ic, containerConfig, podID, podConfig)
