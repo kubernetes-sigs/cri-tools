@@ -28,7 +28,7 @@ import (
 
 func main() {
 	var buildDependencies bool
-	var ginkgoFlags, testFlags, runtimeServiceAddress, imageServiceAddress string
+	var ginkgoFlags, testFlags, runtimeServiceAddress, imageServiceAddress, focus string
 
 	app := cli.NewApp()
 	app.Name = "critest"
@@ -62,6 +62,11 @@ func main() {
 			Usage:       "CRI image service address which is tested. Same with runtime-address if not specified.",
 			Destination: &imageServiceAddress,
 		},
+		cli.StringFlag{
+			Name:        "focus, f",
+			Usage:       "CRI e2e test will only run the test that match the focus regular expression.",
+			Destination: &focus,
+		},
 	}
 
 	sort.Sort(cli.FlagsByName(app.Flags))
@@ -86,6 +91,11 @@ func main() {
 		if imageServiceAddress == "" {
 			imageServiceAddress = runtimeServiceAddress
 		}
+
+		if focus != "" {
+			ginkgoFlags = ginkgoFlags + " -focus=" + focus
+		}
+
 		runCommand(ginkgo, ginkgoFlags, test, "--", testFlags, "--image-service-address="+runtimeServiceAddress, "--runtime-service-address="+imageServiceAddress)
 
 		return nil
