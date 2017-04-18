@@ -93,7 +93,7 @@ func main() {
 		}
 
 		if focus != "" {
-			ginkgoFlags = ginkgoFlags + " -focus=" + focus
+			ginkgoFlags = ginkgoFlags + " -focus=\"" + focus + "\""
 		}
 
 		runCommand(ginkgo, ginkgoFlags, test, "--", testFlags, "--image-service-address="+runtimeServiceAddress, "--runtime-service-address="+imageServiceAddress)

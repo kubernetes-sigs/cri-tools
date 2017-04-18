@@ -60,4 +60,6 @@ $GOPATH/bin/critest
 
 `--build-dependencies`, `-b`:If we don't need to build dependencies, we can add this flag `--build-dependencies=false` or `-b=false`.
 
-`--ginkgo-flags`,`-g`:Space-separated list of arguments to pass to Ginkgo test runner. If we want to run the test that match the focus regular expression, we can add flag like `-g=-focus="attach"`.
+`--ginkgo-flags`,`-g`:Space-separated list of arguments to pass to Ginkgo test runner.
+
+`--focus`,`-f`:CRI e2e test will only run the test that match the focus regular expression.
