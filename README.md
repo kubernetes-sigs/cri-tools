@@ -53,8 +53,11 @@ Participation in the Kubernetes community is governed by the [Kubernetes Code of
 go get github.com/kubernetes-incubator/cri-tools/cmd/critest
 $GOPATH/bin/critest
 ```
+
 ### Flags
 
 `--runtime-service-address`, `-r`:The default server is dockershim. If we want to test other CRI server such as frakti, we can add flag `--runtime-service-address=/var/run/frakti.sock`. And we can run this test against frakti.
 
 `--build-dependencies`, `-b`:If we don't need to build dependencies, we can add this flag `--build-dependencies=false` or `-b=false`.
+
+`--ginkgo-flags`,`-g`:Space-separated list of arguments to pass to Ginkgo test runner. If we want to run the test that match the focus regular expression, we can add flag like `-g=-focus="attach"`.

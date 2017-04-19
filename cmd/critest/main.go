@@ -42,7 +42,7 @@ func main() {
 			Destination: &buildDependencies,
 		},
 		cli.StringFlag{
-			Name:        "ginkgo-flags",
+			Name:        "ginkgo-flags, g",
 			Usage:       "Space-separated list of arguments to pass to Ginkgo test runner.",
 			Destination: &ginkgoFlags,
 		},
