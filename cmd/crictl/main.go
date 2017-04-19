@@ -74,6 +74,7 @@ func main() {
 		runtimePodSandboxCommand,
 		runtimeContainerCommand,
 		runtimeStatusCommand,
+		runtimeAttachCommand,
 		imageCommand,
 		runtimeExecCommand,
 	}

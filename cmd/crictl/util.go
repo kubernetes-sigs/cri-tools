@@ -56,6 +56,14 @@ type execOptions struct {
 	// Command to exec
 	cmd []string
 }
+type attachOptions struct {
+	// id of container
+	id string
+	// Whether the stdin is TTY
+	tty bool
+	// Whether pass Stdin to container
+	stdin bool
+}
 
 func getSortedKeys(m map[string]string) []string {
 	var keys []string
