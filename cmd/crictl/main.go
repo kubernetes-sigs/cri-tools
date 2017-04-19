@@ -75,6 +75,7 @@ func main() {
 		runtimeContainerCommand,
 		runtimeStatusCommand,
 		imageCommand,
+		runtimeExecCommand,
 	}
 
 	app.Flags = []cli.Flag{
