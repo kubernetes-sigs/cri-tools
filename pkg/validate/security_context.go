@@ -17,8 +17,11 @@ limitations under the License.
 package validate
 
 import (
+	"fmt"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
 	internalapi "k8s.io/kubernetes/pkg/kubelet/api"
@@ -98,12 +101,8 @@ var _ = framework.KubeDescribe("Security Context", func() {
 	})
 
 	Context("runtime should support container with security context", func() {
-		var podID string
+		var podID, hostPath string
 		var podConfig *runtimeapi.PodSandboxConfig
-
-		BeforeEach(func() {
-			podID, podConfig = createPodSandboxForContainer(rc)
-		})
 
 		AfterEach(func() {
 			By("stop PodSandbox")
@@ -113,6 +112,9 @@ var _ = framework.KubeDescribe("Security Context", func() {
 		})
 
 		It("runtime should support RunAsUser", func() {
+			By("create pod")
+			podID, podConfig = createPodSandboxForContainer(rc)
+
 			By("create container for security context RunAsUser")
 			containerID, expectedLogMessage := createRunAsUserContainer(rc, ic, podID, podConfig, "container-with-RunAsUser-test-")
 
@@ -126,6 +128,9 @@ var _ = framework.KubeDescribe("Security Context", func() {
 		})
 
 		It("runtime should support RunAsUserName", func() {
+			By("create pod")
+			podID, podConfig = createPodSandboxForContainer(rc)
+
 			By("create container for security context RunAsUser")
 			containerID, expectedLogMessage := createRunAsUserNameContainer(rc, ic, podID, podConfig, "container-with-RunAsUserName-test-")
 
@@ -136,6 +141,46 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("verify RunAsUserName for container")
 			command := []string{"id", "-nu"}
 			verifyExecSyncOutput(rc, containerID, command, expectedLogMessage)
+		})
+
+		It("runtime should support that ReadOnlyRootfs is false", func() {
+			By("create pod with log")
+			podID, podConfig, hostPath = createPodSandboxWithLogDirectory(rc)
+
+			defer os.RemoveAll(hostPath) //clean up the TempDir
+
+			By("create container with ReadOnlyRootfs_false")
+			readOnlyRootfs := false
+			logPath, containerID := createReadOnlyRootfsContainer(rc, ic, podID, podConfig, "container-with-ReadOnlyRootfs-false-test-", readOnlyRootfs)
+
+			By("start container")
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+			By("Check whether rootfs is writable")
+			checkRootfs(rc, podConfig, containerID, logPath, readOnlyRootfs)
+		})
+
+		It("runtime should support that ReadOnlyRootfs is true", func() {
+			By("create pod with log")
+			podID, podConfig, hostPath = createPodSandboxWithLogDirectory(rc)
+
+			defer os.RemoveAll(hostPath) //clean up the TempDir
+
+			By("create container with ReadOnlyRootfs_true")
+			readOnlyRootfs := true
+			logPath, containerID := createReadOnlyRootfsContainer(rc, ic, podID, podConfig, "container-with-ReadOnlyRootfs-true-test-", readOnlyRootfs)
+
+			By("start container")
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
+
+			By("Check whether rootfs is read-only")
+			checkRootfs(rc, podConfig, containerID, logPath, readOnlyRootfs)
 		})
 	})
 
@@ -223,4 +268,43 @@ func createNamespaceContainer(rc internalapi.RuntimeService, ic internalapi.Imag
 	}
 
 	return createContainer(rc, ic, containerConfig, podID, podConfig), containerName
+
+}
+
+// createReadOnlyRootfsContainer creates creates the container with specified ReadOnlyRootfs in ContainerConfig.
+func createReadOnlyRootfsContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, readonly bool) (string, string) {
+	containerName := prefix + framework.NewUUID()
+	path := fmt.Sprintf("%s.log", containerName)
+	containerConfig := &runtimeapi.ContainerConfig{
+		Metadata: buildContainerMetadata(containerName, defaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
+		Command:  []string{"sh", "-c", "touch test.go && [ -f test.go ] && echo 'Found'"},
+		Linux: &runtimeapi.LinuxContainerConfig{
+			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
+				ReadonlyRootfs: readonly,
+			},
+		},
+		LogPath: path,
+	}
+
+	return containerConfig.LogPath, createContainer(rc, ic, containerConfig, podID, podConfig)
+}
+
+// checkRootfs checks whether the rootfs parameter of the ContainerConfig is working properly.
+func checkRootfs(rc internalapi.RuntimeService, podConfig *runtimeapi.PodSandboxConfig, containerID string, logpath string, readOnlyRootfs bool) {
+	if readOnlyRootfs {
+		failLog := "touch: test.go: Read-only file system"
+		expectedLogMessage := &logMessage{
+			log:    []byte(failLog + "\n"),
+			stream: stderrType,
+		}
+		verifyLogContents(podConfig, logpath, expectedLogMessage)
+	} else {
+		successLog := "Found"
+		expectedLogMessage := &logMessage{
+			log:    []byte(successLog + "\n"),
+			stream: stdoutType,
+		}
+		verifyLogContents(podConfig, logpath, expectedLogMessage)
+	}
 }
