@@ -65,6 +65,13 @@ type attachOptions struct {
 	stdin bool
 }
 
+type portforwardOptions struct {
+	// id of sandbox
+	id string
+	// ports to forward
+	ports []string
+}
+
 func getSortedKeys(m map[string]string) []string {
 	var keys []string
 	for k := range m {
