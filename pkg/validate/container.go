@@ -38,13 +38,12 @@ import (
 type streamType string
 
 const (
-	defaultContainerImage       string        = "gcr.io/google_containers/busybox:1.24"
-	defaultStopContainerTimeout int64         = 60
-	defaultExecSyncTimeout      int64         = 5
-	defaultLog                  string        = "hello World"
-	stdoutType                  streamType    = "stdout"
-	stderrType                  streamType    = "stderr"
-	pollTIMEOUT                 time.Duration = time.Minute
+	defaultContainerImage       string     = "gcr.io/google_containers/busybox:1.24"
+	defaultStopContainerTimeout int64      = 60
+	defaultExecSyncTimeout      int64      = 5
+	defaultLog                  string     = "hello World"
+	stdoutType                  streamType = "stdout"
+	stderrType                  streamType = "stderr"
 )
 
 // logMessage is the internal log type.
@@ -160,7 +159,9 @@ var _ = framework.KubeDescribe("Container", func() {
 			testStartContainer(rc, containerID)
 
 			By("test container exit code")
-			Eventually(getContainerStatus(rc, containerID).ExitCode).Should(Equal(int32(0)))
+			Eventually(func() int32 {
+				return getContainerStatus(rc, containerID).ExitCode
+			}, time.Minute, time.Second*4).Should(Equal(int32(0)))
 		})
 	})
 
@@ -188,7 +189,9 @@ var _ = framework.KubeDescribe("Container", func() {
 			By("start container with log")
 			startContainer(rc, containerID)
 			// wait container started and check the status.
-			Eventually(verifyContainerStatus(rc, containerID, runtimeapi.ContainerState_CONTAINER_RUNNING), pollTIMEOUT).Should(BeTrue())
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("check the log context")
 			expectedLogMessage := &logMessage{
@@ -224,12 +227,6 @@ func getContainerStatus(c internalapi.RuntimeService, containerID string) *runti
 	status, err := c.ContainerStatus(containerID)
 	framework.ExpectNoError(err, "failed to get container %q status: %v", containerID, err)
 	return status
-}
-
-// verifyContainerStatus verifies whether container status for given containerID matches.
-func verifyContainerStatus(c internalapi.RuntimeService, containerID string, expectedStatus runtimeapi.ContainerState) bool {
-	status := getContainerStatus(c, containerID)
-	return status.State == expectedStatus
 }
 
 // createContainer creates a container with the prefix of containerName.
@@ -269,7 +266,9 @@ func createDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageM
 // testCreateDefaultContainer creates a container in the pod which ID is podID and make sure it's ready.
 func testCreateDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig) string {
 	containerID := createDefaultContainer(rc, ic, podID, podConfig, "container-for-create-test-")
-	Eventually(verifyContainerStatus(rc, containerID, runtimeapi.ContainerState_CONTAINER_CREATED), pollTIMEOUT).Should(BeTrue())
+	Eventually(func() runtimeapi.ContainerState {
+		return getContainerStatus(rc, containerID).State
+	}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_CREATED))
 	return containerID
 }
 
@@ -282,9 +281,11 @@ func startContainer(c internalapi.RuntimeService, containerID string) {
 }
 
 // testStartContainer starts the container for containerID and make sure it's running.
-func testStartContainer(c internalapi.RuntimeService, containerID string) {
-	startContainer(c, containerID)
-	Eventually(verifyContainerStatus(c, containerID, runtimeapi.ContainerState_CONTAINER_RUNNING), pollTIMEOUT).Should(BeTrue())
+func testStartContainer(rc internalapi.RuntimeService, containerID string) {
+	startContainer(rc, containerID)
+	Eventually(func() runtimeapi.ContainerState {
+		return getContainerStatus(rc, containerID).State
+	}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 }
 
 // stopContainer stops the container for containerID.
@@ -309,7 +310,9 @@ func stopContainer(c internalapi.RuntimeService, containerID string, timeout int
 // testStopContainer stops the container for containerID and make sure it's exited.
 func testStopContainer(c internalapi.RuntimeService, containerID string) {
 	stopContainer(c, containerID, defaultStopContainerTimeout)
-	Eventually(verifyContainerStatus(c, containerID, runtimeapi.ContainerState_CONTAINER_EXITED), pollTIMEOUT).Should(BeTrue())
+	Eventually(func() runtimeapi.ContainerState {
+		return getContainerStatus(c, containerID).State
+	}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
 }
 
 // removeContainer removes the container for containerID.
