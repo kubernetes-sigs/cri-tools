@@ -669,6 +669,11 @@
 			"Rev": "f215249656a9dff21873a82a87d53ab40eedd9d7"
 		},
 		{
+			"ImportPath": "k8s.io/client-go/tools/portforward",
+			"Comment": "v2.0.0-alpha.0-183-gf215249",
+			"Rev": "f215249656a9dff21873a82a87d53ab40eedd9d7"
+		},
+		{
 			"ImportPath": "k8s.io/client-go/transport",
 			"Comment": "v2.0.0-alpha.0-183-gf215249",
 			"Rev": "f215249656a9dff21873a82a87d53ab40eedd9d7"
