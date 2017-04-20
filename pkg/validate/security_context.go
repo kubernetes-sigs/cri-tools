@@ -62,25 +62,29 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			podID, podConfig = createNamespacePodSandbox(rc, false, true, false)
 
 			By("create nginx container")
-			ContainerID, nginxContainerName := createNamespaceContainer(rc, ic, podID, podConfig, "nginx-container-", nginxContainerImage, true, nil)
+			containerID, nginxContainerName := createNamespaceContainer(rc, ic, podID, podConfig, "nginx-container-", nginxContainerImage, true, nil)
 
 			By("start container")
-			startContainer(rc, ContainerID)
-			Eventually(verifyContainerStatus(rc, ContainerID, runtimeapi.ContainerState_CONTAINER_RUNNING), pollTIMEOUT).Should(BeTrue())
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("get nginx container pid")
 			command := []string{"cat", "/var/run/nginx.pid"}
-			output := execSyncContainer(rc, ContainerID, command)
+			output := execSyncContainer(rc, containerID, command)
 			nginxPid := strings.TrimSpace(string(output))
 			framework.Logf("Nginx's pid is %q", nginxPid)
 
 			By("create busybox container with hostPID")
 			command = []string{"sh", "-c", "sleep 1000"}
-			containerID, _ := createNamespaceContainer(rc, ic, podID, podConfig, "container-with-HostPID-test-", defaultContainerImage, true, command)
+			containerID, _ = createNamespaceContainer(rc, ic, podID, podConfig, "container-with-HostPID-test-", defaultContainerImage, true, command)
 
 			By("start container")
 			startContainer(rc, containerID)
-			Eventually(verifyContainerStatus(rc, containerID, runtimeapi.ContainerState_CONTAINER_RUNNING), pollTIMEOUT).Should(BeTrue())
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("should show its pid in the hostPID namespace container")
 			cmd := []string{"pidof", "nginx", "||", "true"}
@@ -120,7 +124,9 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			By("start container")
 			startContainer(rc, containerID)
-			Eventually(verifyContainerStatus(rc, containerID, runtimeapi.ContainerState_CONTAINER_RUNNING), pollTIMEOUT).Should(BeTrue())
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("verify RunAsUser for container")
 			command := []string{"id", "-u"}
@@ -136,7 +142,9 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			By("start container")
 			startContainer(rc, containerID)
-			Eventually(verifyContainerStatus(rc, containerID, runtimeapi.ContainerState_CONTAINER_RUNNING), pollTIMEOUT).Should(BeTrue())
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("verify RunAsUserName for container")
 			command := []string{"id", "-nu"}
@@ -160,7 +168,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("Check whether rootfs is writable")
-			checkRootfs(rc, podConfig, containerID, logPath, readOnlyRootfs)
+			checkRootfs(podConfig, logPath, readOnlyRootfs)
 		})
 
 		It("runtime should support that ReadOnlyRootfs is true", func() {
@@ -180,7 +188,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
 
 			By("Check whether rootfs is read-only")
-			checkRootfs(rc, podConfig, containerID, logPath, readOnlyRootfs)
+			checkRootfs(podConfig, logPath, readOnlyRootfs)
 		})
 	})
 
@@ -291,7 +299,7 @@ func createReadOnlyRootfsContainer(rc internalapi.RuntimeService, ic internalapi
 }
 
 // checkRootfs checks whether the rootfs parameter of the ContainerConfig is working properly.
-func checkRootfs(rc internalapi.RuntimeService, podConfig *runtimeapi.PodSandboxConfig, containerID string, logpath string, readOnlyRootfs bool) {
+func checkRootfs(podConfig *runtimeapi.PodSandboxConfig, logpath string, readOnlyRootfs bool) {
 	if readOnlyRootfs {
 		failLog := "touch: test.go: Read-only file system"
 		expectedLogMessage := &logMessage{
