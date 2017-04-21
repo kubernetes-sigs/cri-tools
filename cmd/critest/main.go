@@ -86,7 +86,7 @@ func main() {
 		if imageServiceAddress == "" {
 			imageServiceAddress = runtimeServiceAddress
 		}
-		runCommand(ginkgo, ginkgoFlags, test, "--", testFlags, "--image-service-address="+runtimeServiceAddress, "--runtime-service-address="+imageServiceAddress)
+		runCommand(ginkgo, parseFlag(ginkgoFlags), test, "--", testFlags, "--image-service-address="+runtimeServiceAddress, "--runtime-service-address="+imageServiceAddress)
 
 		return nil
 	}
