@@ -87,3 +87,23 @@ func getBuildOutputDir() (string, error) {
 	}
 	return buildOutputDir, nil
 }
+
+func parseFlag(rawFlag string) string {
+	var flags []string
+
+	list := strings.Split(rawFlag, "-")
+	for _, flag := range list {
+		if flag == "" {
+			continue
+		}
+		if strings.Contains(flag, "=") {
+			keyAndValue := strings.Split(flag, "=")
+			flags = append(flags, "-"+strings.TrimSpace(keyAndValue[0])+"=\""+strings.TrimSpace(keyAndValue[1])+"\"")
+		} else {
+			keyAndValue := strings.SplitN(flag, " ", 2)
+			flags = append(flags, "-"+strings.TrimSpace(keyAndValue[0])+"=\""+strings.TrimSpace(keyAndValue[1])+"\"")
+		}
+	}
+	parsedFlag := strings.Join(flags, " ")
+	return parsedFlag
+}
