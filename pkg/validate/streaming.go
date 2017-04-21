@@ -18,6 +18,7 @@ package validate
 
 import (
 	"bytes"
+	"io"
 	"net/url"
 
 	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
@@ -63,7 +64,7 @@ var _ = framework.KubeDescribe("Streaming", func() {
 		})
 
 		It("runtime should support exec [Conformance]", func() {
-			By("test create a default container")
+			By("create a default container")
 			containerID := createDefaultContainer(rc, ic, podID, podConfig, "container-for-exec-test")
 
 			By("start container")
@@ -73,6 +74,19 @@ var _ = framework.KubeDescribe("Streaming", func() {
 
 			By("check the output of exec")
 			checkExec(rc, req)
+		})
+
+		It("runtime should support attach [Conformance]", func() {
+			By("create a default container")
+			containerID := createShellContainer(rc, ic, podID, podConfig, "container-for-attach-test")
+
+			By("start container")
+			startContainer(rc, containerID)
+
+			req := createDefaultAttach(rc, containerID)
+
+			By("check the output of attach")
+			checkAttach(rc, req)
 		})
 	})
 })
@@ -104,8 +118,7 @@ func checkExec(c internalapi.RuntimeService, execServerURL string) {
 	framework.ExpectNoError(err, "failed to create executor for %q", execServerURL)
 
 	err = e.Stream(remotecommand.StreamOptions{
-		SupportedProtocols: []string{remotecommandconsts.StreamProtocolV1Name},
-		Stdin:              nil,
+		SupportedProtocols: remotecommandconsts.SupportedStreamingProtocols,
 		Stdout:             localOut,
 		Stderr:             localErr,
 		Tty:                false,
@@ -117,9 +130,9 @@ func checkExec(c internalapi.RuntimeService, execServerURL string) {
 	framework.Logf("Check exec url %q succeed", execServerURL)
 }
 
-func parseURL(c internalapi.RuntimeService, execServerURL string) *url.URL {
-	url, err := url.Parse(execServerURL)
-	framework.ExpectNoError(err, "failed to parse url:  %q", execServerURL)
+func parseURL(c internalapi.RuntimeService, serverURL string) *url.URL {
+	url, err := url.Parse(serverURL)
+	framework.ExpectNoError(err, "failed to parse url:  %q", serverURL)
 
 	version := getVersion(c)
 	if version.RuntimeName == "docker" {
@@ -132,6 +145,58 @@ func parseURL(c internalapi.RuntimeService, execServerURL string) *url.URL {
 	}
 
 	Expect(url.Host).NotTo(BeEmpty(), "The host of url should not be empty")
-	framework.Logf("Parse url %q succeed", execServerURL)
+	framework.Logf("Parse url %q succeed", serverURL)
 	return url
+}
+
+func createDefaultAttach(c internalapi.RuntimeService, containerID string) string {
+	By("attach container: " + containerID)
+	req := &runtimeapi.AttachRequest{
+		ContainerId: containerID,
+		Stdin:       true,
+		Tty:         false,
+	}
+
+	resp, err := c.Attach(req)
+	framework.ExpectNoError(err, "failed to attach in container %q", containerID)
+	framework.Logf("Get attach url: " + resp.Url)
+	return resp.Url
+}
+
+func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
+	localOut := &bytes.Buffer{}
+	localErr := &bytes.Buffer{}
+	reader, writer := io.Pipe()
+	var out string
+
+	url := parseURL(c, attachServerURL)
+	conf := &rest.Config{
+		// Only http is supported now.
+		// TODO: support streaming APIs via tls.
+		Host: url.Host,
+	}
+	go func() {
+		writer.Write([]byte("echo hello\n"))
+		Eventually(func() string {
+			out = localOut.String()
+			return out
+		}).ShouldNot(BeEmpty())
+		writer.Close()
+	}()
+
+	e, err := remotecommand.NewExecutor(conf, "POST", url)
+	framework.ExpectNoError(err, "failed to create executor for %q", attachServerURL)
+
+	err = e.Stream(remotecommand.StreamOptions{
+		SupportedProtocols: remotecommandconsts.SupportedStreamingProtocols,
+		Stdin:              reader,
+		Stdout:             localOut,
+		Stderr:             localErr,
+		Tty:                false,
+	})
+	framework.ExpectNoError(err, "failed to open streamer for %q", attachServerURL)
+
+	Expect(out).To(Equal("hello\n"), "The stdout of exec should be hello")
+	Expect(localErr.String()).To(BeEmpty(), "The stderr of attach should be empty")
+	framework.Logf("Check attach url %q succeed", attachServerURL)
 }
