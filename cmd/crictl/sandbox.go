@@ -28,8 +28,9 @@ import (
 )
 
 var runtimePodSandboxCommand = cli.Command{
-	Name:  "sandbox",
-	Usage: "Manage sandbox",
+	Name:    "sandbox",
+	Usage:   "Manage sandbox",
+	Aliases: []string{"sb"},
 	Subcommands: []cli.Command{
 		runPodSandboxCommand,
 		stopPodSandboxCommand,
@@ -74,7 +75,7 @@ var stopPodSandboxCommand = cli.Command{
 }
 
 var removePodSandboxCommand = cli.Command{
-	Name:  "remove",
+	Name:  "rm",
 	Usage: "remove a pod sandbox",
 	Action: func(context *cli.Context) error {
 		id := context.Args().First()
@@ -100,7 +101,7 @@ var podSandboxStatusCommand = cli.Command{
 }
 
 var listPodSandboxCommand = cli.Command{
-	Name:  "list",
+	Name:  "ls",
 	Usage: "list pod sandboxes",
 	Flags: []cli.Flag{
 		cli.StringFlag{

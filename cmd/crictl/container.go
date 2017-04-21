@@ -116,7 +116,7 @@ var stopContainerCommand = cli.Command{
 }
 
 var removeContainerCommand = cli.Command{
-	Name:  "remove",
+	Name:  "rm",
 	Usage: "remove a container",
 	Action: func(context *cli.Context) error {
 		containerID := context.Args().First()
@@ -142,7 +142,7 @@ var containerStatusCommand = cli.Command{
 }
 
 var listContainersCommand = cli.Command{
-	Name:  "list",
+	Name:  "ls",
 	Usage: "list containers",
 	Flags: []cli.Flag{
 		cli.BoolFlag{
