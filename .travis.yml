@@ -7,6 +7,15 @@ go:
   - 1.8.x
   - tip
 
+go_import_path: github.com/kubernetes-incubator/cri-tools
+
+services:
+  - docker
+
+before_install:
+  - hack/install-docker.sh
+  - hack/install-kubelet.sh
+
 install:
   - make install.tools
 
@@ -15,4 +24,5 @@ script:
   - make
   - make lint
   - make gofmt
+  - sudo env PATH=$PATH GOPATH=$GOPATH hack/run-critest.sh
 
