@@ -22,6 +22,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
 	remotecommandconsts "k8s.io/apimachinery/pkg/util/remotecommand"
@@ -88,11 +89,14 @@ var runtimeExecCommand = cli.Command{
 // ExecSync sends an ExecSyncRequest to the server, and parses
 // the returned ExecSyncResponse.
 func ExecSync(client pb.RuntimeServiceClient, opts execOptions) error {
-	r, err := client.ExecSync(context.Background(), &pb.ExecSyncRequest{
+	request := &pb.ExecSyncRequest{
 		ContainerId: opts.id,
 		Cmd:         opts.cmd,
 		Timeout:     opts.timeout,
-	})
+	}
+	logrus.Debugf("ExecSyncRequest: %v", request)
+	r, err := client.ExecSync(context.Background(), request)
+	logrus.Debugf("ExecSyncResponse: %v", r)
 	if err != nil {
 		return err
 	}
@@ -107,12 +111,15 @@ func ExecSync(client pb.RuntimeServiceClient, opts execOptions) error {
 
 // Exec sends an ExecRequest to server, and parses the returned ExecResponse
 func Exec(client pb.RuntimeServiceClient, opts execOptions) error {
-	r, err := client.Exec(context.Background(), &pb.ExecRequest{
+	request := &pb.ExecRequest{
 		ContainerId: opts.id,
 		Cmd:         opts.cmd,
 		Tty:         opts.tty,
 		Stdin:       opts.stdin,
-	})
+	}
+	logrus.Debugf("ExecRequest: %v", request)
+	r, err := client.Exec(context.Background(), request)
+	logrus.Debugf("ExecResponse: %v", r)
 	if err != nil {
 		return err
 	}
@@ -127,6 +134,7 @@ func Exec(client pb.RuntimeServiceClient, opts execOptions) error {
 		return err
 	}
 
+	logrus.Debugf("Exec URL: %v", URL)
 	exec, err := remotecommand.NewExecutor(&restclient.Config{}, "POST", URL)
 	if err != nil {
 		return err
@@ -141,5 +149,6 @@ func Exec(client pb.RuntimeServiceClient, opts execOptions) error {
 	if opts.stdin {
 		streamOptions.Stdin = os.Stdin
 	}
+	logrus.Debugf("StreamOptions: %v", streamOptions)
 	return exec.Stream(streamOptions)
 }

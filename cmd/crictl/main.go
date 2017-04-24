@@ -22,7 +22,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/golang/glog"
+	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 	"google.golang.org/grpc"
 )
@@ -101,7 +101,13 @@ func main() {
 		},
 	}
 
+	app.Before = func(context *cli.Context) error {
+		if context.GlobalBool("debug") {
+			logrus.SetLevel(logrus.DebugLevel)
+		}
+		return nil
+	}
 	if err := app.Run(os.Args); err != nil {
-		glog.Fatal(err)
+		logrus.Fatal(err)
 	}
 }

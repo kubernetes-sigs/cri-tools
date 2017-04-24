@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
 	pb "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
@@ -209,11 +210,14 @@ func CreateContainer(client pb.RuntimeServiceClient, opts createOptions) error {
 		}
 	}
 
-	r, err := client.CreateContainer(context.Background(), &pb.CreateContainerRequest{
+	request := &pb.CreateContainerRequest{
 		PodSandboxId:  opts.podID,
 		Config:        config,
 		SandboxConfig: podConfig,
-	})
+	}
+	logrus.Debugf("CreateContainerRequest: %v", request)
+	r, err := client.CreateContainer(context.Background(), request)
+	logrus.Debugf("CreateContainerResponse: %v", r)
 	if err != nil {
 		return err
 	}
@@ -227,9 +231,12 @@ func StartContainer(client pb.RuntimeServiceClient, ID string) error {
 	if ID == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
-	_, err := client.StartContainer(context.Background(), &pb.StartContainerRequest{
+	request := &pb.StartContainerRequest{
 		ContainerId: ID,
-	})
+	}
+	logrus.Debugf("StartContainerRequest: %v", request)
+	r, err := client.StartContainer(context.Background(), request)
+	logrus.Debugf("StartContainerResponse: %v", r)
 	if err != nil {
 		return err
 	}
@@ -243,9 +250,12 @@ func StopContainer(client pb.RuntimeServiceClient, ID string) error {
 	if ID == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
-	_, err := client.StopContainer(context.Background(), &pb.StopContainerRequest{
+	request := &pb.StopContainerRequest{
 		ContainerId: ID,
-	})
+	}
+	logrus.Debugf("StopContainerRequest: %v", request)
+	r, err := client.StopContainer(context.Background(), request)
+	logrus.Debugf("StopContainerResponse: %v", r)
 	if err != nil {
 		return err
 	}
@@ -259,9 +269,12 @@ func RemoveContainer(client pb.RuntimeServiceClient, ID string) error {
 	if ID == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
-	_, err := client.RemoveContainer(context.Background(), &pb.RemoveContainerRequest{
+	request := &pb.RemoveContainerRequest{
 		ContainerId: ID,
-	})
+	}
+	logrus.Debugf("RemoveContainerRequest: %v", request)
+	r, err := client.RemoveContainer(context.Background(), request)
+	logrus.Debugf("RemoveContainerResponse: %v", r)
 	if err != nil {
 		return err
 	}
@@ -275,8 +288,12 @@ func ContainerStatus(client pb.RuntimeServiceClient, ID string) error {
 	if ID == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
-	r, err := client.ContainerStatus(context.Background(), &pb.ContainerStatusRequest{
-		ContainerId: ID})
+	request := &pb.ContainerStatusRequest{
+		ContainerId: ID,
+	}
+	logrus.Debugf("ContainerStatusRequest: %v", request)
+	r, err := client.ContainerStatus(context.Background(), request)
+	logrus.Debugf("ContainerStatusResponse: %v", r)
 	if err != nil {
 		return err
 	}
@@ -329,9 +346,14 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 	if opts.labels != nil {
 		filter.LabelSelector = opts.labels
 	}
+	request := &pb.ListContainersRequest{
+		Filter: filter,
+	}
+	logrus.Debugf("ListContainerRequest: %v", request)
 	r, err := client.ListContainers(context.Background(), &pb.ListContainersRequest{
 		Filter: filter,
 	})
+	logrus.Debugf("ListContainerResponse: %v", r)
 	if err != nil {
 		return err
 	}

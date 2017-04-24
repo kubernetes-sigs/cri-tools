@@ -23,6 +23,7 @@ import (
 	"os/signal"
 	"strings"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
 	restclient "k8s.io/client-go/rest"
@@ -61,9 +62,12 @@ func PortForward(client pb.RuntimeServiceClient, opts portforwardOptions) error 
 		return fmt.Errorf("ID cannot be empty")
 
 	}
-	r, err := client.PortForward(context.Background(), &pb.PortForwardRequest{
+	request := &pb.PortForwardRequest{
 		PodSandboxId: opts.id,
-	})
+	}
+	logrus.Debugf("PortForwardRequest: %v", request)
+	r, err := client.PortForward(context.Background(), request)
+	logrus.Debugf("PortForwardResponse; %v", r)
 	if err != nil {
 		return err
 	}
@@ -76,6 +80,7 @@ func PortForward(client pb.RuntimeServiceClient, opts portforwardOptions) error 
 	if err != nil {
 		return err
 	}
+	logrus.Debugf("PortForward URL: %v", URL)
 	exec, err := remotecommand.NewExecutor(&restclient.Config{}, "POST", URL)
 	if err != nil {
 		return err
@@ -94,7 +99,7 @@ func PortForward(client pb.RuntimeServiceClient, opts portforwardOptions) error 
 			close(stopChan)
 		}
 	}()
-
+	logrus.Debugf("Ports to forword: %v", opts.ports)
 	pf, err := portforward.New(exec, opts.ports, stopChan, readyChan, os.Stdout, os.Stderr)
 	if err != nil {
 		return err

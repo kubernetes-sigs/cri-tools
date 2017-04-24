@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
 	pb "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
@@ -150,7 +151,10 @@ var listPodSandboxCommand = cli.Command{
 // RunPodSandbox sends a RunPodSandboxRequest to the server, and parses
 // the returned RunPodSandboxResponse.
 func RunPodSandbox(client pb.RuntimeServiceClient, config *pb.PodSandboxConfig) error {
-	r, err := client.RunPodSandbox(context.Background(), &pb.RunPodSandboxRequest{Config: config})
+	request := &pb.RunPodSandboxRequest{Config: config}
+	logrus.Debugf("RunPodSandboxRequest: %v", request)
+	r, err := client.RunPodSandbox(context.Background(), request)
+	logrus.Debugf("RunPodSandboxResponse: %v", r)
 	if err != nil {
 		return err
 	}
@@ -164,7 +168,10 @@ func StopPodSandbox(client pb.RuntimeServiceClient, ID string) error {
 	if ID == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
-	_, err := client.StopPodSandbox(context.Background(), &pb.StopPodSandboxRequest{PodSandboxId: ID})
+	request := &pb.StopPodSandboxRequest{PodSandboxId: ID}
+	logrus.Debugf("StopPodSandboxRequest: %v", request)
+	r, err := client.StopPodSandbox(context.Background(), request)
+	logrus.Debugf("StopPodSandboxResponse: %v", r)
 	if err != nil {
 		return err
 	}
@@ -178,7 +185,10 @@ func RemovePodSandbox(client pb.RuntimeServiceClient, ID string) error {
 	if ID == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
-	_, err := client.RemovePodSandbox(context.Background(), &pb.RemovePodSandboxRequest{PodSandboxId: ID})
+	request := &pb.RemovePodSandboxRequest{PodSandboxId: ID}
+	logrus.Debugf("RemovePodSandboxRequest: %v", request)
+	r, err := client.RemovePodSandbox(context.Background(), request)
+	logrus.Debugf("RemovePodSandboxResponse: %v", r)
 	if err != nil {
 		return err
 	}
@@ -192,7 +202,10 @@ func PodSandboxStatus(client pb.RuntimeServiceClient, ID string) error {
 	if ID == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
+	request := &pb.PodSandboxStatusRequest{PodSandboxId: ID}
+	logrus.Debugf("PodSandboxStatusRequest: %v", request)
 	r, err := client.PodSandboxStatus(context.Background(), &pb.PodSandboxStatusRequest{PodSandboxId: ID})
+	logrus.Debugf("PodSandboxStatusResponse: %v", r)
 	if err != nil {
 		return err
 	}
@@ -255,9 +268,12 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 	if opts.labels != nil {
 		filter.LabelSelector = opts.labels
 	}
-	r, err := client.ListPodSandbox(context.Background(), &pb.ListPodSandboxRequest{
+	request := &pb.ListPodSandboxRequest{
 		Filter: filter,
-	})
+	}
+	logrus.Debugf("ListPodSandboxRequest: %v", request)
+	r, err := client.ListPodSandbox(context.Background(), request)
+	logrus.Debugf("ListPodSandboxResponse: %v", r)
 	if err != nil {
 		return err
 	}
