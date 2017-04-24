@@ -97,7 +97,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 			startContainer(rc, containerID)
 
 			By("check the port mapping with only container port")
-			checkPortMapping(rc, podID, true)
+			checkNginxMainPage(rc, podID, false)
 		})
 
 		It("runtime should support port mapping with host port and container port [Conformance]", func() {
@@ -118,7 +118,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 			startContainer(rc, containerID)
 
 			By("check the port mapping with host port and container port")
-			checkPortMapping(rc, podID, false)
+			checkNginxMainPage(rc, "", true)
 		})
 	})
 })
@@ -181,23 +181,30 @@ func createNginxContainer(rc internalapi.RuntimeService, ic internalapi.ImageMan
 	return createContainer(rc, ic, containerConfig, podID, podConfig)
 }
 
-// checkPortMapping check if the given IP:port works fine.
-func checkPortMapping(c internalapi.RuntimeService, podID string, containerPortOnly bool) {
+// checkNginxMainPage check if the we can get the main page of nginx via given IP:port.
+func checkNginxMainPage(c internalapi.RuntimeService, podID string, localHost bool) {
 	By("get the IP:port needed to be checked")
+	var err error
+	var resp *http.Response
+
 	url := "http://"
-	if containerPortOnly {
+	if localHost {
+		url += "localhost:" + strconv.Itoa(int(nginxHostPort))
+	} else {
 		status := getPodSandboxStatus(c, podID)
 		Expect(status.GetNetwork()).NotTo(BeNil(), "The network in status should not be nil.")
 		Expect(status.GetNetwork().Ip).NotTo(BeNil(), "The IP should not be nil.")
 		url += status.GetNetwork().Ip + ":" + strconv.Itoa(int(nginxContainerPort))
-	} else {
-		url += "localhost:" + strconv.Itoa(int(nginxHostPort))
 	}
 	framework.Logf("the IP:port is " + url)
 
 	By("check the content of " + url)
-	resp, err := http.Get(url)
-	framework.ExpectNoError(err, "failed to get the content of %q", url)
+
+	Eventually(func() error {
+		resp, err = http.Get(url)
+		return err
+	}, time.Minute, time.Second).Should(BeNil())
+
 	Expect(resp.StatusCode).To(Equal(200), "The status code of response should be 200.")
 	framework.Logf("check port mapping succeed")
 }
