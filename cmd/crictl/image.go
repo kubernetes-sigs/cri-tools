@@ -51,7 +51,7 @@ var pullImageCommand = cli.Command{
 }
 
 var listImageCommand = cli.Command{
-	Name:  "list",
+	Name:  "ls",
 	Usage: "list images",
 	Flags: []cli.Flag{
 		cli.BoolFlag{
@@ -112,7 +112,7 @@ var imageStatusCommand = cli.Command{
 	},
 }
 var removeImageCommand = cli.Command{
-	Name:  "remove",
+	Name:  "rm",
 	Usage: "remove an image",
 	Action: func(context *cli.Context) error {
 		id := context.Args().First()

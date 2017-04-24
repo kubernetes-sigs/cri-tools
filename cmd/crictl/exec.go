@@ -43,11 +43,6 @@ var runtimeExecCommand = cli.Command{
 			Name:  "sync",
 			Usage: "run a command in a container synchronously",
 		},
-		cli.StringFlag{
-			Name:  "id",
-			Value: "",
-			Usage: "id of the container",
-		},
 		cli.Int64Flag{
 			Name:  "timeout",
 			Value: 0,
@@ -63,12 +58,15 @@ var runtimeExecCommand = cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
+		if len(context.Args()) < 2 {
+			return fmt.Errorf("Please specify both containerID and cmd to exec")
+		}
 		var opts = execOptions{
-			id:      context.String("id"),
+			id:      context.Args().First(),
 			timeout: context.Int64("timeout"),
 			tty:     context.Bool("tty"),
 			stdin:   context.Bool("stdin"),
-			cmd:     context.Args(),
+			cmd:     context.Args()[1:],
 		}
 		if context.Bool("sync") {
 			err := ExecSync(runtimeClient, opts)
@@ -90,9 +88,6 @@ var runtimeExecCommand = cli.Command{
 // ExecSync sends an ExecSyncRequest to the server, and parses
 // the returned ExecSyncResponse.
 func ExecSync(client pb.RuntimeServiceClient, opts execOptions) error {
-	if opts.id == "" {
-		return fmt.Errorf("ID cannot be empty")
-	}
 	r, err := client.ExecSync(context.Background(), &pb.ExecSyncRequest{
 		ContainerId: opts.id,
 		Cmd:         opts.cmd,
@@ -112,9 +107,6 @@ func ExecSync(client pb.RuntimeServiceClient, opts execOptions) error {
 
 // Exec sends an ExecRequest to server, and parses the returned ExecResponse
 func Exec(client pb.RuntimeServiceClient, opts execOptions) error {
-	if opts.id == "" {
-		return fmt.Errorf("ID cannot be empty")
-	}
 	r, err := client.Exec(context.Background(), &pb.ExecRequest{
 		ContainerId: opts.id,
 		Cmd:         opts.cmd,

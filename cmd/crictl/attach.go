@@ -34,11 +34,6 @@ var runtimeAttachCommand = cli.Command{
 	Name:  "attach",
 	Usage: "attach a running container",
 	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:  "id",
-			Value: "",
-			Usage: "id of the container",
-		},
 		cli.BoolFlag{
 			Name:  "tty,t",
 			Usage: "Stdin is a TTY",
@@ -50,7 +45,7 @@ var runtimeAttachCommand = cli.Command{
 	},
 	Action: func(context *cli.Context) error {
 		var opts = attachOptions{
-			id:    context.String("id"),
+			id:    context.Args().First(),
 			tty:   context.Bool("tty"),
 			stdin: context.Bool("stdin"),
 		}
