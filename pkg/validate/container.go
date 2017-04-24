@@ -17,6 +17,7 @@ limitations under the License.
 package validate
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -444,28 +445,48 @@ func parseCRILog(log string, msg *logMessage) {
 	msg.log = []byte(strings.Join(logMessage, " ") + "\n")
 }
 
-// verifyLogContents verifies the contents of container log.
-func verifyLogContents(podConfig *runtimeapi.PodSandboxConfig, logPath string, expectedLogMessage *logMessage) {
+// parseLogLine parses log by row.
+func parseLogLine(podConfig *runtimeapi.PodSandboxConfig, logPath string) []logMessage {
 	path := filepath.Join(podConfig.LogDirectory, logPath)
 	f, err := os.Open(path)
 	framework.ExpectNoError(err, "failed to open log file: %v", err)
 	framework.Logf("Open log file %s", path)
 	defer f.Close()
 
-	log, err := ioutil.ReadAll(f)
-	framework.ExpectNoError(err, "failed to read log file: %v", err)
-	framework.Logf("Log file context is %s", log)
-
 	var msg logMessage
+	var msgLog []logMessage
 
-	// to determine whether the log is Docker format or CRI format.
-	if strings.Contains(string(log), "{") {
-		parseDockerJSONLog(log, &msg)
-	} else {
-		parseCRILog(string(log), &msg)
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// to determine whether the log is Docker format or CRI format.
+		if strings.Contains(line, "{") {
+			parseDockerJSONLog([]byte(line), &msg)
+		} else {
+			parseCRILog(line, &msg)
+		}
+		framework.Logf("Parse json log succeed")
+
+		msgLog = append(msgLog, msg)
 	}
-	framework.Logf("Parse json log succeed")
 
-	Expect(string(msg.log)).To(Equal(string(expectedLogMessage.log)), "Log should be %s", string(expectedLogMessage.log))
-	Expect(string(msg.stream)).To(Equal(string(expectedLogMessage.stream)), "Stream should be %s", string(expectedLogMessage.stream))
+	if err := scanner.Err(); err != nil {
+		framework.ExpectNoError(err, "failed to read log by row: %v", err)
+	}
+
+	return msgLog
+
+}
+
+// verifyLogContents verifies the contents of container log.
+func verifyLogContents(podConfig *runtimeapi.PodSandboxConfig, logPath string, expectedLogMessage *logMessage) {
+	By("verify log contents")
+	log := parseLogLine(podConfig, logPath)
+
+	for _, msg := range log {
+		Expect(string(msg.log)).To(Equal(string(expectedLogMessage.log)), "Log should be %s", string(expectedLogMessage.log))
+		Expect(string(msg.stream)).To(Equal(string(expectedLogMessage.stream)), "Stream should be %s", string(expectedLogMessage.stream))
+	}
+
 }
