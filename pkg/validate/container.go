@@ -429,7 +429,7 @@ func parseDockerJSONLog(log []byte, msg *logMessage) {
 	msg.log = []byte(l.Log)
 }
 
-// parseCRILog parses logs in Docker JSON log format.
+// parseCRILog parses logs in CRI log format.
 // CRI log format example :
 //   2016-10-06T00:17:09.669794202Z stdout The content of the log entry 1
 //   2016-10-06T00:17:10.113242941Z stderr The content of the log entry 2

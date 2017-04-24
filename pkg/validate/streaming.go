@@ -20,10 +20,12 @@ import (
 	"bytes"
 	"io"
 	"net/url"
+	"os"
 
 	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
 	remotecommandconsts "k8s.io/apimachinery/pkg/util/remotecommand"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/portforward"
 	"k8s.io/kubernetes/pkg/client/unversioned/remotecommand"
 	internalapi "k8s.io/kubernetes/pkg/kubelet/api"
 	runtimeapi "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
@@ -88,6 +90,28 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			By("check the output of attach")
 			checkAttach(rc, req)
 		})
+
+		It("runtime should support portforward [Conformance]", func() {
+			By("create a PodSandbox with host port and container port port mapping")
+			var podConfig *runtimeapi.PodSandboxConfig
+			portMappings := []*runtimeapi.PortMapping{
+				{
+					ContainerPort: nginxContainerPort,
+				},
+			}
+			podID, podConfig = createPodSandboxWithPortMapping(rc, portMappings)
+
+			By("create a nginx container")
+			containerID := createNginxContainer(rc, ic, podID, podConfig, "container-for-portforward-test")
+
+			By("start the nginx container")
+			startContainer(rc, containerID)
+
+			req := createDefaultPortForward(rc, podID)
+
+			By("check the output of attach")
+			checkPortForward(rc, req)
+		})
 	})
 })
 
@@ -108,13 +132,10 @@ func checkExec(c internalapi.RuntimeService, execServerURL string) {
 	localOut := &bytes.Buffer{}
 	localErr := &bytes.Buffer{}
 
+	// Only http is supported now.
+	// TODO: support streaming APIs via tls.
 	url := parseURL(c, execServerURL)
-	conf := &rest.Config{
-		// Only http is supported now.
-		// TODO: support streaming APIs via tls.
-		Host: url.Host,
-	}
-	e, err := remotecommand.NewExecutor(conf, "POST", url)
+	e, err := remotecommand.NewExecutor(&rest.Config{}, "POST", url)
 	framework.ExpectNoError(err, "failed to create executor for %q", execServerURL)
 
 	err = e.Stream(remotecommand.StreamOptions{
@@ -169,12 +190,6 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 	reader, writer := io.Pipe()
 	var out string
 
-	url := parseURL(c, attachServerURL)
-	conf := &rest.Config{
-		// Only http is supported now.
-		// TODO: support streaming APIs via tls.
-		Host: url.Host,
-	}
 	go func() {
 		writer.Write([]byte("echo hello\n"))
 		Eventually(func() string {
@@ -184,7 +199,10 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 		writer.Close()
 	}()
 
-	e, err := remotecommand.NewExecutor(conf, "POST", url)
+	// Only http is supported now.
+	// TODO: support streaming APIs via tls.
+	url := parseURL(c, attachServerURL)
+	e, err := remotecommand.NewExecutor(&rest.Config{}, "POST", url)
 	framework.ExpectNoError(err, "failed to create executor for %q", attachServerURL)
 
 	err = e.Stream(remotecommand.StreamOptions{
@@ -199,4 +217,39 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 	Expect(out).To(Equal("hello\n"), "The stdout of exec should be hello")
 	Expect(localErr.String()).To(BeEmpty(), "The stderr of attach should be empty")
 	framework.Logf("Check attach url %q succeed", attachServerURL)
+}
+
+func createDefaultPortForward(c internalapi.RuntimeService, podID string) string {
+	By("port forward PodSandbox: " + podID)
+	req := &runtimeapi.PortForwardRequest{
+		PodSandboxId: podID,
+	}
+
+	resp, err := c.PortForward(req)
+	framework.ExpectNoError(err, "failed to port forward PodSandbox %q", podID)
+	framework.Logf("Get port forward url: " + resp.Url)
+	return resp.Url
+}
+
+func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string) {
+	stopChan := make(chan struct{}, 1)
+	readyChan := make(chan struct{})
+	defer close(stopChan)
+
+	url := parseURL(c, portForwardSeverURL)
+	e, err := remotecommand.NewExecutor(&rest.Config{}, "POST", url)
+	framework.ExpectNoError(err, "failed to create executor for %q", portForwardSeverURL)
+
+	pf, err := portforward.New(e, []string{"8000:80"}, stopChan, readyChan, os.Stdout, os.Stderr)
+	framework.ExpectNoError(err, "failed to create port forward for %q", portForwardSeverURL)
+
+	go func() {
+		By("start port forward")
+		err = pf.ForwardPorts()
+		framework.ExpectNoError(err, "failed to start port forward for %q", portForwardSeverURL)
+	}()
+
+	By("check if we can get nginx main page via localhost:8000")
+	checkNginxMainPage(c, "", true)
+	framework.Logf("Check port forward url %q succeed", portForwardSeverURL)
 }
