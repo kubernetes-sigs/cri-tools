@@ -20,12 +20,15 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# start dockershim first
+# Install nsenter
+docker run --rm -v /usr/local/bin:/target jpetazzo/nsenter
+
+# Start dockershim first
 /usr/local/bin/kubelet --v=3 --logtostderr --experimental-dockershim &
 
 # Wait a while for dockershim starting.
 sleep 10
 
-# run critest
+# Run critest
 critest
 
