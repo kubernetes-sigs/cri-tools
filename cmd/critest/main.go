@@ -96,9 +96,7 @@ func main() {
 			ginkgoFlags = ginkgoFlags + " -focus=\"" + focus + "\""
 		}
 
-		runCommand(ginkgo, ginkgoFlags, test, "--", testFlags, "--image-service-address="+runtimeServiceAddress, "--runtime-service-address="+imageServiceAddress)
-
-		return nil
+		return runCommand(ginkgo, ginkgoFlags, test, "--", testFlags, "--image-service-address="+runtimeServiceAddress, "--runtime-service-address="+imageServiceAddress)
 	}
 
 	if err := app.Run(os.Args); err != nil {
