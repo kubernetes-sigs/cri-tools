@@ -466,7 +466,6 @@ func parseLogLine(podConfig *runtimeapi.PodSandboxConfig, logPath string) []logM
 		} else {
 			parseCRILog(line, &msg)
 		}
-		framework.Logf("Parse json log succeed")
 
 		msgLog = append(msgLog, msg)
 	}
@@ -474,9 +473,9 @@ func parseLogLine(podConfig *runtimeapi.PodSandboxConfig, logPath string) []logM
 	if err := scanner.Err(); err != nil {
 		framework.ExpectNoError(err, "failed to read log by row: %v", err)
 	}
+	framework.Logf("Parse json log succeed")
 
 	return msgLog
-
 }
 
 // verifyLogContents verifies the contents of container log.
@@ -488,5 +487,4 @@ func verifyLogContents(podConfig *runtimeapi.PodSandboxConfig, logPath string, e
 		Expect(string(msg.log)).To(Equal(string(expectedLogMessage.log)), "Log should be %s", string(expectedLogMessage.log))
 		Expect(string(msg.stream)).To(Equal(string(expectedLogMessage.stream)), "Stream should be %s", string(expectedLogMessage.stream))
 	}
-
 }

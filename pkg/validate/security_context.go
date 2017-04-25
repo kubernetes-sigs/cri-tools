@@ -19,6 +19,7 @@ package validate
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -46,9 +47,10 @@ var _ = framework.KubeDescribe("Security Context", func() {
 		ic = f.CRIClient.CRIImageClient
 	})
 
-	Context("runtime should support podSandbox with security context", func() {
+	Context("runtime should support NamespaceOption in the Security Context", func() {
 		var podID string
 		var podConfig *runtimeapi.PodSandboxConfig
+		podSandboxName := "NamespaceOption-PodSandbox-" + framework.NewUUID()
 
 		AfterEach(func() {
 			By("stop PodSandbox")
@@ -57,12 +59,24 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			rc.RemovePodSandbox(podID)
 		})
 
-		It("runtime should support podSandbox with HostPID", func() {
+		It("runtime should support HostPID", func() {
 			By("create podSandbox for security context HostPID")
-			podID, podConfig = createNamespacePodSandbox(rc, false, true, false)
+			podSandboxNamespace := &runtimeapi.NamespaceOption{
+				HostPid:     true,
+				HostIpc:     false,
+				HostNetwork: false,
+			}
+			podID, podConfig = createNamespacePodSandbox(rc, podSandboxNamespace, podSandboxName, "")
 
 			By("create nginx container")
-			containerID, nginxContainerName := createNamespaceContainer(rc, ic, podID, podConfig, "nginx-container-", nginxContainerImage, true, nil)
+			containerNamespace := &runtimeapi.NamespaceOption{
+				HostPid:     true,
+				HostIpc:     false,
+				HostNetwork: false,
+			}
+			prefix := "nginx-container-"
+			containerName := prefix + framework.NewUUID()
+			containerID, nginxContainerName, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, nginxContainerImage, containerNamespace, nil, "")
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -78,7 +92,9 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			By("create busybox container with hostPID")
 			command = []string{"sh", "-c", "sleep 1000"}
-			containerID, _ = createNamespaceContainer(rc, ic, podID, podConfig, "container-with-HostPID-test-", defaultContainerImage, true, command)
+			prefix = "container-with-HostPID-test-"
+			containerName = prefix + framework.NewUUID()
+			containerID, _, _ = createNamespaceContainer(rc, ic, podID, podConfig, containerName, defaultContainerImage, containerNamespace, command, "")
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -99,6 +115,79 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			if !strings.Contains(pids, nginxPid) {
 				framework.Failf("nginx's pid should be seen by hostpid containers")
 			}
+
+		})
+
+		It("runtime should support HostNetwork is true", func() {
+			By("create podSandbox for security context HostPID")
+			podSandboxNamespace := &runtimeapi.NamespaceOption{
+				HostPid:     false,
+				HostIpc:     false,
+				HostNetwork: true,
+			}
+			hostPath, podLogPath := createLogTempDir(podSandboxName)
+			podID, podConfig := createNamespacePodSandbox(rc, podSandboxNamespace, podSandboxName, podLogPath)
+
+			defer os.RemoveAll(hostPath) //clean up the TempDir
+
+			By("create nginx container")
+			command := []string{"sh", "-c", "cat /proc/net/dev | awk '{print $1}'"}
+			containerNamespace := &runtimeapi.NamespaceOption{
+				HostPid:     false,
+				HostIpc:     false,
+				HostNetwork: true,
+			}
+
+			prefix := "container-with-HostNetwork-test-"
+			containerName := prefix + framework.NewUUID()
+			path := fmt.Sprintf("%s.log", containerName)
+			containerID, _, logPath := createNamespaceContainer(rc, ic, podID, podConfig, containerName, defaultContainerImage, containerNamespace, command, path)
+
+			By("start container")
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+			By("compare host networkList with container's networkList")
+			compareNetworkList(podConfig, logPath, containerNamespace.HostNetwork)
+
+		})
+
+		It("runtime should support HostNetwork is false", func() {
+			By("create podSandbox for security context HostPID")
+			podSandboxNamespace := &runtimeapi.NamespaceOption{
+				HostPid:     false,
+				HostIpc:     false,
+				HostNetwork: false,
+			}
+
+			hostPath, podLogPath := createLogTempDir(podSandboxName)
+			podID, podConfig := createNamespacePodSandbox(rc, podSandboxNamespace, podSandboxName, podLogPath)
+
+			defer os.RemoveAll(hostPath) //clean up the TempDir
+
+			By("create nginx container")
+			command := []string{"sh", "-c", "cat /proc/net/dev | awk '{print $1}'"}
+			containerNamespace := &runtimeapi.NamespaceOption{
+				HostPid:     false,
+				HostIpc:     false,
+				HostNetwork: false,
+			}
+
+			prefix := "container-with-HostNetwork-test-"
+			containerName := prefix + framework.NewUUID()
+			path := fmt.Sprintf("%s.log", containerName)
+			containerID, _, logPath := createNamespaceContainer(rc, ic, podID, podConfig, containerName, defaultContainerImage, containerNamespace, command, path)
+
+			By("start container")
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+			By("compare host networkList with container's networkList")
+			compareNetworkList(podConfig, logPath, containerNamespace.HostNetwork)
 
 		})
 
@@ -238,44 +327,37 @@ func createRunAsUserNameContainer(rc internalapi.RuntimeService, ic internalapi.
 }
 
 // createNamespacePodSandbox creates a PodSandbox for creating containers.
-func createNamespacePodSandbox(rc internalapi.RuntimeService, hostNetwork bool, hostPID bool, hostIPC bool) (string, *runtimeapi.PodSandboxConfig) {
-	podSandboxName := "NamespaceOption-PodSandbox-" + framework.NewUUID()
+func createNamespacePodSandbox(rc internalapi.RuntimeService, podSandboxNamespace *runtimeapi.NamespaceOption, podSandboxName string, podLogPath string) (string, *runtimeapi.PodSandboxConfig) {
 	uid := defaultUIDPrefix + framework.NewUUID()
 	namespace := defaultNamespacePrefix + framework.NewUUID()
 	config := &runtimeapi.PodSandboxConfig{
 		Metadata: buildPodSandboxMetadata(podSandboxName, uid, namespace, defaultAttempt),
 		Linux: &runtimeapi.LinuxPodSandboxConfig{
 			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
-				NamespaceOptions: &runtimeapi.NamespaceOption{
-					HostNetwork: hostNetwork,
-					HostPid:     hostPID,
-					HostIpc:     hostIPC,
-				},
+				NamespaceOptions: podSandboxNamespace,
 			},
 		},
+		LogDirectory: podLogPath,
 	}
 
-	podID := runPodSandbox(rc, config)
-	return podID, config
+	return runPodSandbox(rc, config), config
 }
 
 // createNamespaceContainer creates container with different NamespaceOption config.
-func createNamespaceContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, image string, hostPID bool, command []string) (string, string) {
-	containerName := prefix + framework.NewUUID()
+func createNamespaceContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, containerName string, image string, containerNamespace *runtimeapi.NamespaceOption, command []string, path string) (string, string, string) {
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: buildContainerMetadata(containerName, defaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: image},
 		Command:  command,
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
-				NamespaceOptions: &runtimeapi.NamespaceOption{
-					HostPid: hostPID,
-				},
+				NamespaceOptions: containerNamespace,
 			},
 		},
+		LogPath: path,
 	}
 
-	return createContainer(rc, ic, containerConfig, podID, podConfig), containerName
+	return createContainer(rc, ic, containerConfig, podID, podConfig), containerName, containerConfig.LogPath
 
 }
 
@@ -315,4 +397,34 @@ func checkRootfs(podConfig *runtimeapi.PodSandboxConfig, logpath string, readOnl
 		}
 		verifyLogContents(podConfig, logpath, expectedLogMessage)
 	}
+}
+
+// getHostNetworkList gets the host network list.
+func getHostNetworkList() []byte {
+	cmd := exec.Command("sh", "-c", "cat /proc/net/dev | awk '{print $1}'")
+	hostNetwork, err := cmd.Output()
+	framework.ExpectNoError(err, "failed to run cmd %q: %v", cmd, err)
+
+	return hostNetwork
+}
+
+// compareNetworkList compares hostNetwork list with container's network list.
+func compareNetworkList(podConfig *runtimeapi.PodSandboxConfig, logPath string, network bool) {
+	By("compare NetworkList")
+	hostNetwork := getHostNetworkList()
+
+	logSlice := parseLogLine(podConfig, logPath)
+	var conNetwork []byte
+	for _, msg := range logSlice {
+		conNetwork = append(conNetwork, msg.log...)
+	}
+
+	if network {
+		framework.Logf("hostNetwork list \n: %s\n containerNetwork list : %s\n", hostNetwork, conNetwork)
+		Expect(conNetwork).To(Equal(hostNetwork), "HostNetwork is true, so container NetworkList should equal with host NetworkList.")
+	} else {
+		framework.Logf("hostNetwork list \n: %s\n containerNetwork list : %s\n", hostNetwork, conNetwork)
+		Expect(conNetwork).ToNot(Equal(hostNetwork), "HostNetwork is false, so container NetworkList should not equal with host NetworkList.")
+	}
+
 }
