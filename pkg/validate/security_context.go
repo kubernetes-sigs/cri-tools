@@ -279,12 +279,49 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("Check whether rootfs is read-only")
 			checkRootfs(podConfig, logPath, readOnlyRootfs)
 		})
+
+		It("runtime should support Privileged is true", func() {
+			By("create pod")
+			isPrivileged := true
+			podID, podConfig = createPrivilegedPodSandbox(rc, isPrivileged)
+
+			By("create container for security context Privileged is true")
+			containerID, _ := createPrivilegedContainer(rc, ic, podID, podConfig, "container-with-isPrivileged-test-", isPrivileged)
+
+			By("start container")
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+			By("check the Privileged container")
+			verifyPrivileged(rc, containerID, isPrivileged)
+		})
+
+		It("runtime should support Privileged is false", func() {
+			By("create pod")
+			notPrivileged := false
+			podID, podConfig = createPrivilegedPodSandbox(rc, notPrivileged)
+
+			By("create container for security context Privileged is true")
+			containerID, _ := createPrivilegedContainer(rc, ic, podID, podConfig, "container-with-notPrivileged-test-", notPrivileged)
+
+			By("start container")
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+			By("check the Privileged container")
+			verifyPrivileged(rc, containerID, notPrivileged)
+		})
 	})
 
 })
 
 // createRunAsUserContainer creates the container with specified RunAsUser in ContainerConfig.
 func createRunAsUserContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) (string, []byte) {
+	By("create RunAsUser container")
 	var uidV runtimeapi.Int64Value
 	uidV.Value = 1001
 	userID := strconv.FormatInt(uidV.Value, 10)
@@ -308,6 +345,7 @@ func createRunAsUserContainer(rc internalapi.RuntimeService, ic internalapi.Imag
 
 // createRunAsUserNameContainer creates the container with specified RunAsUserName in ContainerConfig.
 func createRunAsUserNameContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) (string, []byte) {
+	By("create RunAsUserName container")
 	userName := "nobody"
 	expectedLogMessage := []byte(userName + "\n")
 
@@ -326,8 +364,9 @@ func createRunAsUserNameContainer(rc internalapi.RuntimeService, ic internalapi.
 	return createContainer(rc, ic, containerConfig, podID, podConfig), expectedLogMessage
 }
 
-// createNamespacePodSandbox creates a PodSandbox for creating containers.
+// createNamespacePodSandbox creates a PodSandbox with different NamespaceOption config for creating containers.
 func createNamespacePodSandbox(rc internalapi.RuntimeService, podSandboxNamespace *runtimeapi.NamespaceOption, podSandboxName string, podLogPath string) (string, *runtimeapi.PodSandboxConfig) {
+	By("create NamespaceOption podSandbox")
 	uid := defaultUIDPrefix + framework.NewUUID()
 	namespace := defaultNamespacePrefix + framework.NewUUID()
 	config := &runtimeapi.PodSandboxConfig{
@@ -345,6 +384,7 @@ func createNamespacePodSandbox(rc internalapi.RuntimeService, podSandboxNamespac
 
 // createNamespaceContainer creates container with different NamespaceOption config.
 func createNamespaceContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, containerName string, image string, containerNamespace *runtimeapi.NamespaceOption, command []string, path string) (string, string, string) {
+	By("create NamespaceOption container")
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: buildContainerMetadata(containerName, defaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: image},
@@ -361,8 +401,9 @@ func createNamespaceContainer(rc internalapi.RuntimeService, ic internalapi.Imag
 
 }
 
-// createReadOnlyRootfsContainer creates creates the container with specified ReadOnlyRootfs in ContainerConfig.
+// createReadOnlyRootfsContainer creates the container with specified ReadOnlyRootfs in ContainerConfig.
 func createReadOnlyRootfsContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, readonly bool) (string, string) {
+	By("create ReadOnlyRootfs container")
 	containerName := prefix + framework.NewUUID()
 	path := fmt.Sprintf("%s.log", containerName)
 	containerConfig := &runtimeapi.ContainerConfig{
@@ -427,4 +468,54 @@ func compareNetworkList(podConfig *runtimeapi.PodSandboxConfig, logPath string, 
 		Expect(conNetwork).ToNot(Equal(hostNetwork), "HostNetwork is false, so container NetworkList should not equal with host NetworkList.")
 	}
 
+}
+
+// createPrivilegedPodSandbox creates a PodSandbox with Privileged of SecurityContext config.
+func createPrivilegedPodSandbox(rc internalapi.RuntimeService, privileged bool) (string, *runtimeapi.PodSandboxConfig) {
+	By("create Privileged podSandbox")
+	podSandboxName := "create-Privileged-PodSandbox-for-container-" + framework.NewUUID()
+	uid := defaultUIDPrefix + framework.NewUUID()
+	namespace := defaultNamespacePrefix + framework.NewUUID()
+	config := &runtimeapi.PodSandboxConfig{
+		Metadata: buildPodSandboxMetadata(podSandboxName, uid, namespace, defaultAttempt),
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
+				Privileged: privileged,
+			},
+		},
+	}
+
+	return runPodSandbox(rc, config), config
+}
+
+// createPrivilegedContainer creates container with specified Privileged in ContainerConfig.
+func createPrivilegedContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, privileged bool) (string, string) {
+	By("create Privileged container")
+	containerName := prefix + framework.NewUUID()
+	containerConfig := &runtimeapi.ContainerConfig{
+		Metadata: buildContainerMetadata(containerName, defaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
+		Command:  []string{"top"},
+		Linux: &runtimeapi.LinuxContainerConfig{
+			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
+				Privileged: privileged,
+			},
+		},
+	}
+
+	return createContainer(rc, ic, containerConfig, podID, podConfig), containerName
+}
+
+// verifyPrivileged verifies the container with Privileged config works fine.
+func verifyPrivileged(rc internalapi.RuntimeService, containerID string, isPrivileged bool) {
+	cmd := []string{"ip", "link", "add", "dummy0", "type", "dummy"}
+
+	stdout, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
+
+	if isPrivileged {
+		Expect(err).NotTo(HaveOccurred(), msg)
+	} else {
+		Expect(err).To(HaveOccurred(), msg)
+	}
 }
