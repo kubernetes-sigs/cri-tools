@@ -21,6 +21,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
 	remotecommandconsts "k8s.io/apimachinery/pkg/util/remotecommand"
@@ -195,7 +196,7 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 		Eventually(func() string {
 			out = localOut.String()
 			return out
-		}).ShouldNot(BeEmpty())
+		}, time.Minute, time.Second).ShouldNot(BeEmpty())
 		writer.Close()
 	}()
 
