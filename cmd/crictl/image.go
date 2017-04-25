@@ -19,6 +19,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
 	pb "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
@@ -42,6 +43,7 @@ var pullImageCommand = cli.Command{
 	Usage: "pull an image",
 	Action: func(context *cli.Context) error {
 		r, err := PullImage(imageClient, context.Args().Get(0))
+		logrus.Debugf("PullImageResponse: %v", r)
 		if err != nil {
 			return fmt.Errorf("pulling image failed: %v", err)
 		}
@@ -61,6 +63,7 @@ var listImageCommand = cli.Command{
 	},
 	Action: func(context *cli.Context) error {
 		r, err := ListImages(imageClient, context.Args().Get(0))
+		logrus.Debugf("ListImagesResponse: %v", r)
 		if err != nil {
 			return fmt.Errorf("listing images failed: %v", err)
 		}
@@ -93,6 +96,7 @@ var imageStatusCommand = cli.Command{
 	Action: func(context *cli.Context) error {
 		id := context.Args().First()
 		r, err := ImageStatus(imageClient, id)
+		logrus.Debugf("ImageStatus: %v", r)
 		if err != nil {
 			return fmt.Errorf("image status request failed: %v", err)
 		}
@@ -116,7 +120,8 @@ var removeImageCommand = cli.Command{
 	Usage: "remove an image",
 	Action: func(context *cli.Context) error {
 		id := context.Args().First()
-		_, err := RemoveImage(imageClient, id)
+		r, err := RemoveImage(imageClient, id)
+		logrus.Debugf("RemoveImageResponse: %v", r)
 		if err != nil {
 			return fmt.Errorf("removing the image failed: %v", err)
 		}
@@ -127,18 +132,24 @@ var removeImageCommand = cli.Command{
 // PullImage sends a PullImageRequest to the server, and parses
 // the returned PullImageResponse.
 func PullImage(client pb.ImageServiceClient, image string) (*pb.PullImageResponse, error) {
-	return client.PullImage(context.Background(), &pb.PullImageRequest{Image: &pb.ImageSpec{Image: image}})
+	request := &pb.PullImageRequest{Image: &pb.ImageSpec{Image: image}}
+	logrus.Debugf("PullImageRequest: %v", request)
+	return client.PullImage(context.Background(), request)
 }
 
 // ListImages sends a ListImagesRequest to the server, and parses
 // the returned ListImagesResponse.
 func ListImages(client pb.ImageServiceClient, image string) (*pb.ListImagesResponse, error) {
+	request := &pb.ListImagesRequest{Filter: &pb.ImageFilter{Image: &pb.ImageSpec{Image: image}}}
+	logrus.Debugf("ListImagesRequest: %v", request)
 	return client.ListImages(context.Background(), &pb.ListImagesRequest{Filter: &pb.ImageFilter{Image: &pb.ImageSpec{Image: image}}})
 }
 
 // ImageStatus sends an ImageStatusRequest to the server, and parses
 // the returned ImageStatusResponse.
 func ImageStatus(client pb.ImageServiceClient, image string) (*pb.ImageStatusResponse, error) {
+	request := &pb.ImageStatusRequest{Image: &pb.ImageSpec{Image: image}}
+	logrus.Debugf("ImageStatusRequest: %v", request)
 	return client.ImageStatus(context.Background(), &pb.ImageStatusRequest{Image: &pb.ImageSpec{Image: image}})
 }
 
@@ -148,5 +159,7 @@ func RemoveImage(client pb.ImageServiceClient, image string) (*pb.RemoveImageRes
 	if image == "" {
 		return nil, fmt.Errorf("ID cannot be empty")
 	}
+	request := &pb.RemoveImageRequest{Image: &pb.ImageSpec{Image: image}}
+	logrus.Debugf("RemoveImageRequest: %v", request)
 	return client.RemoveImage(context.Background(), &pb.RemoveImageRequest{Image: &pb.ImageSpec{Image: image}})
 }

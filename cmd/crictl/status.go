@@ -19,6 +19,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
 	pb "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
@@ -40,7 +41,10 @@ var runtimeStatusCommand = cli.Command{
 
 // Status sends a StatusRequest to the server, and parses the returned StatusResponse.
 func Status(client pb.RuntimeServiceClient) error {
-	r, err := client.Status(context.Background(), &pb.StatusRequest{})
+	request := &pb.StatusRequest{}
+	logrus.Debugf("StatusRequest: %v", request)
+	r, err := client.Status(context.Background(), request)
+	logrus.Debugf("StatusResponse: %v", r)
 	if err != nil {
 		return err
 	}

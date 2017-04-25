@@ -19,6 +19,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
 	pb "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
@@ -42,11 +43,13 @@ var runtimeVersionCommand = cli.Command{
 
 // Version sends a VersionRequest to the server, and parses the returned VersionResponse.
 func Version(client pb.RuntimeServiceClient, version string) error {
-	r, err := client.Version(context.Background(), &pb.VersionRequest{Version: version})
+	request := &pb.VersionRequest{Version: version}
+	logrus.Debugf("VersionRequest: %v", request)
+	r, err := client.Version(context.Background(), request)
+	logrus.Debugf("VersionResponse: %v", r)
 	if err != nil {
 		return err
 	}
-	fmt.Println("VersionResponse:")
 	fmt.Println("Version: ", r.Version)
 	fmt.Println("RuntimeName: ", r.RuntimeName)
 	fmt.Println("RuntimeVersion: ", r.RuntimeVersion)

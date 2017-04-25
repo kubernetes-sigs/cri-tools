@@ -22,6 +22,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
 	remotecommandconsts "k8s.io/apimachinery/pkg/util/remotecommand"
@@ -67,11 +68,14 @@ func Attach(client pb.RuntimeServiceClient, opts attachOptions) error {
 		return fmt.Errorf("ID cannot be empty")
 
 	}
-	r, err := client.Attach(context.Background(), &pb.AttachRequest{
+	request := &pb.AttachRequest{
 		ContainerId: opts.id,
 		Tty:         opts.tty,
 		Stdin:       opts.stdin,
-	})
+	}
+	logrus.Debugf("AttachRequest: %v", request)
+	r, err := client.Attach(context.Background(), request)
+	logrus.Debugf("AttachResponse: %v", r)
 	if err != nil {
 		return err
 	}
@@ -84,7 +88,7 @@ func Attach(client pb.RuntimeServiceClient, opts attachOptions) error {
 	if err != nil {
 		return err
 	}
-
+	logrus.Debugf("Attach URL: %v", URL)
 	attach, err := remotecommand.NewExecutor(&restclient.Config{}, "POST", URL)
 	if err != nil {
 		return err
@@ -99,5 +103,6 @@ func Attach(client pb.RuntimeServiceClient, opts attachOptions) error {
 	if opts.stdin {
 		streamOptions.Stdin = os.Stdin
 	}
+	logrus.Debugf("StreamOptions: %v", streamOptions)
 	return attach.Stream(streamOptions)
 }
