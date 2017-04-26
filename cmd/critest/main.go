@@ -52,13 +52,13 @@ func main() {
 			Destination: &testFlags,
 		},
 		cli.StringFlag{
-			Name:        "runtime-service-address, r",
+			Name:        "runtime-endpoint, r",
 			Value:       "/var/run/dockershim.sock",
 			Usage:       "CRI runtime service address which is tested.",
 			Destination: &runtimeServiceAddress,
 		},
 		cli.StringFlag{
-			Name:        "image-service-address, i",
+			Name:        "image-endpoint, i",
 			Usage:       "CRI image service address which is tested. Same with runtime-address if not specified.",
 			Destination: &imageServiceAddress,
 		},
@@ -96,7 +96,7 @@ func main() {
 			ginkgoFlags = ginkgoFlags + " -focus=\"" + focus + "\""
 		}
 
-		return runCommand(ginkgo, ginkgoFlags, test, "--", testFlags, "--image-service-address="+runtimeServiceAddress, "--runtime-service-address="+imageServiceAddress)
+		return runCommand(ginkgo, ginkgoFlags, test, "--", testFlags, "--runtime-service-address="+runtimeServiceAddress, "--image-service-address="+imageServiceAddress)
 	}
 
 	if err := app.Run(os.Args); err != nil {
