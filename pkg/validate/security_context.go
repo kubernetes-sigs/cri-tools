@@ -145,9 +145,6 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			By("start container")
 			startContainer(rc, containerID)
-			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
-			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("compare host networkList with container's networkList")
 			compareNetworkList(podConfig, logPath, containerNamespace.HostNetwork)
@@ -182,9 +179,6 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			By("start container")
 			startContainer(rc, containerID)
-			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
-			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("compare host networkList with container's networkList")
 			compareNetworkList(podConfig, logPath, containerNamespace.HostNetwork)
@@ -252,9 +246,6 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			By("start container")
 			startContainer(rc, containerID)
-			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
-			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("Check whether rootfs is writable")
 			checkRootfs(podConfig, logPath, readOnlyRootfs)
