@@ -110,7 +110,7 @@ var _ = framework.KubeDescribe("Streaming", func() {
 
 			req := createDefaultPortForward(rc, podID)
 
-			By("check the output of attach")
+			By("check the output of portforward")
 			checkPortForward(rc, req)
 		})
 	})

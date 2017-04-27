@@ -59,24 +59,19 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			rc.RemovePodSandbox(podID)
 		})
 
-		It("runtime should support HostPID", func() {
+		It("runtime should support HostPID [security context]", func() {
 			By("create podSandbox for security context HostPID")
-			podSandboxNamespace := &runtimeapi.NamespaceOption{
+			namespaceOption := &runtimeapi.NamespaceOption{
 				HostPid:     true,
 				HostIpc:     false,
 				HostNetwork: false,
 			}
-			podID, podConfig = createNamespacePodSandbox(rc, podSandboxNamespace, podSandboxName, "")
+			podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podSandboxName, "")
 
 			By("create nginx container")
-			containerNamespace := &runtimeapi.NamespaceOption{
-				HostPid:     true,
-				HostIpc:     false,
-				HostNetwork: false,
-			}
 			prefix := "nginx-container-"
 			containerName := prefix + framework.NewUUID()
-			containerID, nginxContainerName, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, nginxContainerImage, containerNamespace, nil, "")
+			containerID, nginxContainerName, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, nginxContainerImage, namespaceOption, nil, "")
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -94,7 +89,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			command = []string{"sh", "-c", "sleep 1000"}
 			prefix = "container-with-HostPID-test-"
 			containerName = prefix + framework.NewUUID()
-			containerID, _, _ = createNamespaceContainer(rc, ic, podID, podConfig, containerName, defaultContainerImage, containerNamespace, command, "")
+			containerID, _, _ = createNamespaceContainer(rc, ic, podID, podConfig, containerName, defaultContainerImage, namespaceOption, command, "")
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -118,8 +113,74 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 		})
 
-		It("runtime should support HostNetwork is true", func() {
-			By("create podSandbox for security context HostPID")
+		It("runtime should support HostIpc is true [security context]", func() {
+			By("create shared memory segment on the host")
+			out, err := exec.Command("ipcmk", "-M", "1M").Output()
+			framework.ExpectNoError(err, "failed to execute ipcmk -M 1M")
+			rawID := strings.TrimSpace(string(out))
+			segmentID := strings.TrimPrefix(rawID, "Shared memory id: ")
+
+			By("create podSandbox for security context HostIPC is true")
+			namespaceOption := &runtimeapi.NamespaceOption{
+				HostPid:     false,
+				HostIpc:     true,
+				HostNetwork: false,
+			}
+			podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podSandboxName, "")
+
+			By("create a default container with namespace")
+			prefix := "namespace-container-"
+			command := []string{"top"}
+			containerName := prefix + framework.NewUUID()
+			containerID, _, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, defaultContainerImage, namespaceOption, command, "")
+
+			By("start container")
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+			By("check if the shared memory segment is included in the container")
+			command = []string{"ipcs", "-m"}
+			out = execSyncContainer(rc, containerID, command)
+			Expect(string(out)).To(ContainSubstring(segmentID), "The shared memory segment should be included in the container")
+		})
+
+		It("runtime should support HostIpc is false [security context]", func() {
+			By("create shared memory segment on the host")
+			out, err := exec.Command("ipcmk", "-M", "1M").Output()
+			framework.ExpectNoError(err, "failed to execute ipcmk -M 1M")
+			rawID := strings.TrimSpace(string(out))
+			segmentID := strings.TrimPrefix(rawID, "Shared memory id: ")
+
+			By("create podSandbox for security context HostIpc is false")
+			namespaceOption := &runtimeapi.NamespaceOption{
+				HostPid:     false,
+				HostIpc:     false,
+				HostNetwork: false,
+			}
+			podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podSandboxName, "")
+
+			By("create a default container with namespace")
+			prefix := "namespace-container-"
+			command := []string{"top"}
+			containerName := prefix + framework.NewUUID()
+			containerID, _, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, defaultContainerImage, namespaceOption, command, "")
+
+			By("start container")
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+			By("check if the shared memory segment is not included in the container")
+			command = []string{"ipcs", "-m"}
+			out = execSyncContainer(rc, containerID, command)
+			Expect(string(out)).NotTo(ContainSubstring(segmentID), "The shared memory segment should be included in the container")
+		})
+
+		It("runtime should support HostNetwork is true [security context]", func() {
+			By("create podSandbox for security context HostNetwork")
 			podSandboxNamespace := &runtimeapi.NamespaceOption{
 				HostPid:     false,
 				HostIpc:     false,
@@ -130,7 +191,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			defer os.RemoveAll(hostPath) //clean up the TempDir
 
-			By("create nginx container")
+			By("create a container with namespace options")
 			command := []string{"sh", "-c", "cat /proc/net/dev | awk '{print $1}'"}
 			containerNamespace := &runtimeapi.NamespaceOption{
 				HostPid:     false,
@@ -151,8 +212,8 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 		})
 
-		It("runtime should support HostNetwork is false", func() {
-			By("create podSandbox for security context HostPID")
+		It("runtime should support HostNetwork is false [security context]", func() {
+			By("create podSandbox for security context HostNetwork")
 			podSandboxNamespace := &runtimeapi.NamespaceOption{
 				HostPid:     false,
 				HostIpc:     false,
@@ -164,7 +225,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			defer os.RemoveAll(hostPath) //clean up the TempDir
 
-			By("create nginx container")
+			By("create a container with namespace options")
 			command := []string{"sh", "-c", "cat /proc/net/dev | awk '{print $1}'"}
 			containerNamespace := &runtimeapi.NamespaceOption{
 				HostPid:     false,
@@ -198,7 +259,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			rc.RemovePodSandbox(podID)
 		})
 
-		It("runtime should support RunAsUser", func() {
+		It("runtime should support RunAsUser [security context]", func() {
 			By("create pod")
 			podID, podConfig = createPodSandboxForContainer(rc)
 
@@ -216,7 +277,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			verifyExecSyncOutput(rc, containerID, command, expectedLogMessage)
 		})
 
-		It("runtime should support RunAsUserName", func() {
+		It("runtime should support RunAsUserName [security context]", func() {
 			By("create pod")
 			podID, podConfig = createPodSandboxForContainer(rc)
 
@@ -234,7 +295,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			verifyExecSyncOutput(rc, containerID, command, expectedLogMessage)
 		})
 
-		It("runtime should support that ReadOnlyRootfs is false", func() {
+		It("runtime should support that ReadOnlyRootfs is false [security context]", func() {
 			By("create pod with log")
 			podID, podConfig, hostPath = createPodSandboxWithLogDirectory(rc)
 
@@ -251,7 +312,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			checkRootfs(podConfig, logPath, readOnlyRootfs)
 		})
 
-		It("runtime should support that ReadOnlyRootfs is true", func() {
+		It("runtime should support that ReadOnlyRootfs is true [security context]", func() {
 			By("create pod with log")
 			podID, podConfig, hostPath = createPodSandboxWithLogDirectory(rc)
 
@@ -271,7 +332,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			checkRootfs(podConfig, logPath, readOnlyRootfs)
 		})
 
-		It("runtime should support Privileged is true", func() {
+		It("runtime should support Privileged is true [security context]", func() {
 			By("create pod")
 			isPrivileged := true
 			podID, podConfig = createPrivilegedPodSandbox(rc, isPrivileged)
@@ -289,7 +350,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			verifyPrivileged(rc, containerID, isPrivileged)
 		})
 
-		It("runtime should support Privileged is false", func() {
+		It("runtime should support Privileged is false [security context]", func() {
 			By("create pod")
 			notPrivileged := false
 			podID, podConfig = createPrivilegedPodSandbox(rc, notPrivileged)
