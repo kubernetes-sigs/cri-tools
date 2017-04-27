@@ -51,15 +51,101 @@ Participation in the Kubernetes community is governed by the [Kubernetes Code of
 
 ```bash
 go get github.com/kubernetes-incubator/cri-tools/cmd/critest
-$GOPATH/bin/critest
+go get github.com/kubernetes-incubator/cri-tools/cmd/critctl
 ```
+### critest
 
-### Flags
+ Validation test suites for kubelet CRI
 
-`--runtime-service-address`, `-r`:The default server is dockershim. If we want to test other CRI server such as frakti, we can add flag `--runtime-service-address=/var/run/frakti.sock`. And we can run this test against frakti.
+#### Flags
 
-`--build-dependencies`, `-b`:If we don't need to build dependencies, we can add this flag `--build-dependencies=false` or `-b=false`.
+- `--runtime-endpoint`, `-r`:CRI runtime server endpoint. Default is /var/run/dockershim.sock.
 
-`--ginkgo-flags`,`-g`:Space-separated list of arguments to pass to Ginkgo test runner.
+- `--image-endpoint`, `-i`:CRI server image endpoint, default same as runtime endpoint.
 
-`--focus`,`-f`:CRI e2e test will only run the test that match the focus regular expression.
+- `--build-dependencies`, `-b`:If we don't need to build dependencies, we can add this flag `--build-dependencies=false` or `-b=false`.
+
+- `--ginkgo-flags`,`-g`:Space-separated list of arguments to pass to Ginkgo test runner.
+
+- `--focus`,`-f`:CRI e2e test will only run the test that match the focus regular expression.
+
+### crictl
+
+CLI for kubelet CRI
+
+#### Commands
+
+- `version`: Get version information of runtime
+
+- `sandbox`, `sb`: Manage lifecycle of podsandbox
+
+- `container`, `ctr`:Manage lifecycle of container
+
+- `status`:Get the status information of runtime
+
+- `attach`:Attach a running container
+
+- `image`:Manage image
+
+- `exec`:Exec(exec, syncexec) a command in a running container
+
+- `portforward`:Forword ports(localport:remoteport) from a sandbox
+
+- `help`, `h`:Shows a list of commands or help for one command
+
+#### Global flags
+
+- `--runtime-endpoint`:CRI server runtime endpoint (default: "/var/run/dockershim.sock").The default server is dockershim. If we want to debug other CRI server such as frakti, we can add flag `--runtime-endpoint=/var/run/frakti.sock`
+
+- `--image-endpoint`:CRI server image endpoint, default same as runtime endpoint.
+
+- `--timeout`:Timeout of connecting to server (default: 10s)
+
+- `--debug`:Enable debug output
+
+- `--help`, `-h`:show help
+
+- `--version`, `-v`:print the version information of crictl
+
+#### Examples
+
+- Run podsandbox with config file
+
+`crictl sandbox run pod.json`
+
+example of config file for podsandbox `pod.json`:
+
+```
+{
+    "metadata": {
+        "name": "podsandbox-1",
+        "namespace": "default",
+        "attempt": "2",
+        "uid": "hdishd83djaidwnduwk28bcsb"
+    },
+    "linux": {
+    }
+}
+```
+- Create container in a sandbox with container config file
+
+`crictl container create --pod podid --connfig container.json` (replace `podid` with id of a ready sandbox)
+
+example of config file for container `container.json`:
+
+```
+    {
+    "metadata": {
+        "name": "container-1"
+    },
+    "image":{
+        "image": "busybox"
+    },
+    "command": [
+        "sh",
+        "-c"
+    ],
+    "linux": {
+    }
+}
+```
