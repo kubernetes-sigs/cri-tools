@@ -277,7 +277,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			podID, podConfig = createPrivilegedPodSandbox(rc, isPrivileged)
 
 			By("create container for security context Privileged is true")
-			containerID, _ := createPrivilegedContainer(rc, ic, podID, podConfig, "container-with-isPrivileged-test-", isPrivileged)
+			containerID := createPrivilegedContainer(rc, ic, podID, podConfig, "container-with-isPrivileged-test-", isPrivileged)
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -286,7 +286,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("check the Privileged container")
-			verifyPrivileged(rc, containerID, isPrivileged)
+			checkNetworkManagement(rc, containerID, isPrivileged)
 		})
 
 		It("runtime should support Privileged is false", func() {
@@ -295,7 +295,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			podID, podConfig = createPrivilegedPodSandbox(rc, notPrivileged)
 
 			By("create container for security context Privileged is true")
-			containerID, _ := createPrivilegedContainer(rc, ic, podID, podConfig, "container-with-notPrivileged-test-", notPrivileged)
+			containerID := createPrivilegedContainer(rc, ic, podID, podConfig, "container-with-notPrivileged-test-", notPrivileged)
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -304,7 +304,32 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("check the Privileged container")
-			verifyPrivileged(rc, containerID, notPrivileged)
+			checkNetworkManagement(rc, containerID, notPrivileged)
+		})
+
+		It("runtime should support setting Capability", func() {
+			By("create pod")
+			podID, podConfig = createPodSandboxForContainer(rc)
+
+			By("create container with security context Capability and test")
+			containerID := createCapabilityContainer(rc, ic, podID, podConfig, "container-with-Capability-test-")
+
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+			checkNetworkManagement(rc, containerID, true)
+
+			By("create container without security context Capability and test")
+			containerID = createDefaultContainer(rc, ic, podID, podConfig, "container-with-notCapability-test-")
+
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+			checkNetworkManagement(rc, containerID, false)
 		})
 	})
 
@@ -480,7 +505,7 @@ func createPrivilegedPodSandbox(rc internalapi.RuntimeService, privileged bool) 
 }
 
 // createPrivilegedContainer creates container with specified Privileged in ContainerConfig.
-func createPrivilegedContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, privileged bool) (string, string) {
+func createPrivilegedContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, privileged bool) string {
 	By("create Privileged container")
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
@@ -494,19 +519,39 @@ func createPrivilegedContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 		},
 	}
 
-	return createContainer(rc, ic, containerConfig, podID, podConfig), containerName
+	return createContainer(rc, ic, containerConfig, podID, podConfig)
 }
 
-// verifyPrivileged verifies the container with Privileged config works fine.
-func verifyPrivileged(rc internalapi.RuntimeService, containerID string, isPrivileged bool) {
+// checkNetworkManagement checks the container's network management works fine.
+func checkNetworkManagement(rc internalapi.RuntimeService, containerID string, manageable bool) {
 	cmd := []string{"ip", "link", "add", "dummy0", "type", "dummy"}
 
 	stdout, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
 
-	if isPrivileged {
+	if manageable {
 		Expect(err).NotTo(HaveOccurred(), msg)
 	} else {
 		Expect(err).To(HaveOccurred(), msg)
 	}
+}
+
+// createCapabilityContainer creates container with specified Capability in ContainerConfig.
+func createCapabilityContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
+	By("create Capability container")
+	containerName := prefix + framework.NewUUID()
+	containerConfig := &runtimeapi.ContainerConfig{
+		Metadata: buildContainerMetadata(containerName, defaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
+		Command:  []string{"top"},
+		Linux: &runtimeapi.LinuxContainerConfig{
+			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
+				Capabilities: &runtimeapi.Capability{
+					AddCapabilities: []string{"NET_ADMIN"},
+				},
+			},
+		},
+	}
+
+	return createContainer(rc, ic, containerConfig, podID, podConfig)
 }
