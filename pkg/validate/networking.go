@@ -126,10 +126,10 @@ var _ = framework.KubeDescribe("Networking", func() {
 // createPodSandWithDNSConfig create a PodSandbox with DNS config.
 func createPodSandWithDNSConfig(c internalapi.RuntimeService) (string, *runtimeapi.PodSandboxConfig) {
 	podSandboxName := "create-PodSandbox-with-DNS-config" + framework.NewUUID()
-	uid := defaultUIDPrefix + framework.NewUUID()
-	namespace := defaultNamespacePrefix + framework.NewUUID()
+	uid := framework.DefaultUIDPrefix + framework.NewUUID()
+	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
 	config := &runtimeapi.PodSandboxConfig{
-		Metadata: buildPodSandboxMetadata(podSandboxName, uid, namespace, defaultAttempt),
+		Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 		DnsConfig: &runtimeapi.DNSConfig{
 			Servers:  []string{defaultDNSServer},
 			Searches: []string{defaultDNSSearch},
@@ -138,22 +138,22 @@ func createPodSandWithDNSConfig(c internalapi.RuntimeService) (string, *runtimea
 		Linux: &runtimeapi.LinuxPodSandboxConfig{},
 	}
 
-	podID := runPodSandbox(c, config)
+	podID := framework.RunPodSandbox(c, config)
 	return podID, config
 }
 
 // createPodSandboxWithPortMapping create a PodSandbox with port mapping.
 func createPodSandboxWithPortMapping(c internalapi.RuntimeService, portMappings []*runtimeapi.PortMapping) (string, *runtimeapi.PodSandboxConfig) {
 	podSandboxName := "create-PodSandbox-with-port-mapping" + framework.NewUUID()
-	uid := defaultUIDPrefix + framework.NewUUID()
-	namespace := defaultNamespacePrefix + framework.NewUUID()
+	uid := framework.DefaultUIDPrefix + framework.NewUUID()
+	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
 	config := &runtimeapi.PodSandboxConfig{
-		Metadata:     buildPodSandboxMetadata(podSandboxName, uid, namespace, defaultAttempt),
+		Metadata:     framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 		PortMappings: portMappings,
 		Linux:        &runtimeapi.LinuxPodSandboxConfig{},
 	}
 
-	podID := runPodSandbox(c, config)
+	podID := framework.RunPodSandbox(c, config)
 	return podID, config
 }
 
@@ -174,7 +174,7 @@ func checkDNSConfig(c internalapi.RuntimeService, containerID string, expectedCo
 func createNginxContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, defaultAttempt),
+		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: nginxImage},
 		Linux:    &runtimeapi.LinuxContainerConfig{},
 	}

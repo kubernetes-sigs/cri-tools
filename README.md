@@ -63,11 +63,13 @@ go get github.com/kubernetes-incubator/cri-tools/cmd/critctl
 
 - `--image-endpoint`, `-i`:CRI server image endpoint, default same as runtime endpoint.
 
-- `--build-dependencies`, `-b`:If we don't need to build dependencies, we can add this flag `--build-dependencies=false` or `-b=false`.
+- `--compile`, `-c`:If we don't need to build dependencies, we can add this flag `--compile=false` or `-c=false`.
 
 - `--ginkgo-flags`,`-g`:Space-separated list of arguments to pass to Ginkgo test runner.
 
 - `--focus`,`-f`:CRI e2e test will only run the test that match the focus regular expression.
+
+- `--benchmark`,`-b`:If set, critest will only run benchmark.
 
 ### crictl
 

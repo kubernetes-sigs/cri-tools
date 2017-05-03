@@ -29,12 +29,6 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-const (
-	defaultUIDPrefix       string = "e2e-cri-uid"
-	defaultNamespacePrefix string = "e2e-cri-namespace"
-	defaultAttempt         uint32 = 2
-)
-
 var _ = framework.KubeDescribe("PodSandbox", func() {
 	f := framework.NewDefaultCRIFramework()
 
@@ -65,7 +59,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 		It("runtime should support stopping PodSandbox [Conformance]", func() {
 			By("run PodSandbox")
-			podID = runDefaultPodSandbox(c, "PodSandbox-for-test-stop-")
+			podID = framework.RunDefaultPodSandbox(c, "PodSandbox-for-test-stop-")
 
 			By("test stop PodSandbox")
 			testStopPodSandbox(c, podID)
@@ -73,7 +67,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 		It("runtime should support removing PodSandbox [Conformance]", func() {
 			By("run PodSandbox")
-			podID = runDefaultPodSandbox(c, "PodSandbox-for-test-remove-")
+			podID = framework.RunDefaultPodSandbox(c, "PodSandbox-for-test-remove-")
 
 			By("stop PodSandbox")
 			stopPodSandbox(c, podID)
@@ -94,47 +88,15 @@ func podSandboxFound(podSandboxs []*runtimeapi.PodSandbox, podID string) bool {
 	return false
 }
 
-// buildPodSandboxMetadata builds PodSandboxMetadata.
-func buildPodSandboxMetadata(podSandboxName, uid, namespace string, attempt uint32) *runtimeapi.PodSandboxMetadata {
-	return &runtimeapi.PodSandboxMetadata{
-		Name:      podSandboxName,
-		Uid:       uid,
-		Namespace: namespace,
-		Attempt:   attempt,
-	}
-}
-
 // verifyPodSandboxStatus verifies whether PodSandbox status for given podID matches.
 func verifyPodSandboxStatus(c internalapi.RuntimeService, podID string, expectedStatus runtimeapi.PodSandboxState, statusName string) {
 	status := getPodSandboxStatus(c, podID)
 	Expect(status.State).To(Equal(expectedStatus), "PodSandbox state should be "+statusName)
 }
 
-// runPodSandbox runs a PodSandbox.
-func runPodSandbox(c internalapi.RuntimeService, config *runtimeapi.PodSandboxConfig) string {
-	By("Run PodSandbox.")
-	podID, err := c.RunPodSandbox(config)
-	framework.ExpectNoError(err, "failed to create PodSandbox: %v", err)
-	framework.Logf("Created PodSandbox %q\n", podID)
-	return podID
-}
-
-// runDefaultPodSandbox runs a PodSandbox with default options.
-func runDefaultPodSandbox(c internalapi.RuntimeService, prefix string) string {
-	podSandboxName := prefix + framework.NewUUID()
-	uid := defaultUIDPrefix + framework.NewUUID()
-	namespace := defaultNamespacePrefix + framework.NewUUID()
-
-	config := &runtimeapi.PodSandboxConfig{
-		Metadata: buildPodSandboxMetadata(podSandboxName, uid, namespace, defaultAttempt),
-		Linux:    &runtimeapi.LinuxPodSandboxConfig{},
-	}
-	return runPodSandbox(c, config)
-}
-
 // testRunDefaultPodSandbox runs a PodSandbox and make sure it is ready.
 func testRunDefaultPodSandbox(c internalapi.RuntimeService) string {
-	podID := runDefaultPodSandbox(c, "PodSandbox-for-create-test-")
+	podID := framework.RunDefaultPodSandbox(c, "PodSandbox-for-create-test-")
 	verifyPodSandboxStatus(c, podID, runtimeapi.PodSandboxState_SANDBOX_READY, "ready")
 	return podID
 }
@@ -197,14 +159,14 @@ func listPodSandbox(c internalapi.RuntimeService, filter *runtimeapi.PodSandboxF
 // createPodSandboxForContainer creates a PodSandbox for creating containers.
 func createPodSandboxForContainer(c internalapi.RuntimeService) (string, *runtimeapi.PodSandboxConfig) {
 	podSandboxName := "create-PodSandbox-for-container-" + framework.NewUUID()
-	uid := defaultUIDPrefix + framework.NewUUID()
-	namespace := defaultNamespacePrefix + framework.NewUUID()
+	uid := framework.DefaultUIDPrefix + framework.NewUUID()
+	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
 	config := &runtimeapi.PodSandboxConfig{
-		Metadata: buildPodSandboxMetadata(podSandboxName, uid, namespace, defaultAttempt),
+		Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 		Linux:    &runtimeapi.LinuxPodSandboxConfig{},
 	}
 
-	podID := runPodSandbox(c, config)
+	podID := framework.RunPodSandbox(c, config)
 	return podID, config
 }
 
@@ -223,14 +185,14 @@ func createLogTempDir(podSandboxName string) (string, string) {
 func createPodSandboxWithLogDirectory(c internalapi.RuntimeService) (string, *runtimeapi.PodSandboxConfig, string) {
 	By("create a PodSandbox with log directory")
 	podSandboxName := "PodSandbox-with-log-directory-" + framework.NewUUID()
-	uid := defaultUIDPrefix + framework.NewUUID()
-	namespace := defaultNamespacePrefix + framework.NewUUID()
+	uid := framework.DefaultUIDPrefix + framework.NewUUID()
+	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
 
 	hostPath, podLogPath := createLogTempDir(podSandboxName)
 
 	podConfig := &runtimeapi.PodSandboxConfig{
-		Metadata:     buildPodSandboxMetadata(podSandboxName, uid, namespace, defaultAttempt),
+		Metadata:     framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 		LogDirectory: podLogPath,
 	}
-	return runPodSandbox(c, podConfig), podConfig, hostPath
+	return framework.RunPodSandbox(c, podConfig), podConfig, hostPath
 }

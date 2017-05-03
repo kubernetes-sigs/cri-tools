@@ -407,7 +407,7 @@ func createRunAsUserContainer(rc internalapi.RuntimeService, ic internalapi.Imag
 	By("create a container with RunAsUser")
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, defaultAttempt),
+		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
 		Command:  []string{"sh", "-c", "top"},
 		Linux: &runtimeapi.LinuxContainerConfig{
@@ -429,7 +429,7 @@ func createRunAsUserNameContainer(rc internalapi.RuntimeService, ic internalapi.
 	By("create a container with RunAsUserName")
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, defaultAttempt),
+		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
 		Command:  []string{"sh", "-c", "top"},
 		Linux: &runtimeapi.LinuxContainerConfig{
@@ -444,10 +444,10 @@ func createRunAsUserNameContainer(rc internalapi.RuntimeService, ic internalapi.
 // createNamespacePodSandbox creates a PodSandbox with different NamespaceOption config for creating containers.
 func createNamespacePodSandbox(rc internalapi.RuntimeService, podSandboxNamespace *runtimeapi.NamespaceOption, podSandboxName string, podLogPath string) (string, *runtimeapi.PodSandboxConfig) {
 	By("create NamespaceOption podSandbox")
-	uid := defaultUIDPrefix + framework.NewUUID()
-	namespace := defaultNamespacePrefix + framework.NewUUID()
+	uid := framework.DefaultUIDPrefix + framework.NewUUID()
+	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
 	config := &runtimeapi.PodSandboxConfig{
-		Metadata: buildPodSandboxMetadata(podSandboxName, uid, namespace, defaultAttempt),
+		Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 		Linux: &runtimeapi.LinuxPodSandboxConfig{
 			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
 				NamespaceOptions: podSandboxNamespace,
@@ -456,14 +456,14 @@ func createNamespacePodSandbox(rc internalapi.RuntimeService, podSandboxNamespac
 		LogDirectory: podLogPath,
 	}
 
-	return runPodSandbox(rc, config), config
+	return framework.RunPodSandbox(rc, config), config
 }
 
 // createNamespaceContainer creates container with different NamespaceOption config.
 func createNamespaceContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, containerName string, image string, containerNamespace *runtimeapi.NamespaceOption, command []string, path string) (string, string, string) {
 	By("create NamespaceOption container")
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, defaultAttempt),
+		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: image},
 		Command:  command,
 		Linux: &runtimeapi.LinuxContainerConfig{
@@ -484,7 +484,7 @@ func createReadOnlyRootfsContainer(rc internalapi.RuntimeService, ic internalapi
 	containerName := prefix + framework.NewUUID()
 	path := fmt.Sprintf("%s.log", containerName)
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, defaultAttempt),
+		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
 		Command:  []string{"sh", "-c", "touch test.go && [ -f test.go ] && echo 'Found'"},
 		Linux: &runtimeapi.LinuxContainerConfig{
@@ -551,10 +551,10 @@ func compareNetworkList(podConfig *runtimeapi.PodSandboxConfig, logPath string, 
 func createPrivilegedPodSandbox(rc internalapi.RuntimeService, privileged bool) (string, *runtimeapi.PodSandboxConfig) {
 	By("create Privileged podSandbox")
 	podSandboxName := "create-Privileged-PodSandbox-for-container-" + framework.NewUUID()
-	uid := defaultUIDPrefix + framework.NewUUID()
-	namespace := defaultNamespacePrefix + framework.NewUUID()
+	uid := framework.DefaultUIDPrefix + framework.NewUUID()
+	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
 	config := &runtimeapi.PodSandboxConfig{
-		Metadata: buildPodSandboxMetadata(podSandboxName, uid, namespace, defaultAttempt),
+		Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 		Linux: &runtimeapi.LinuxPodSandboxConfig{
 			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
 				Privileged: privileged,
@@ -562,7 +562,7 @@ func createPrivilegedPodSandbox(rc internalapi.RuntimeService, privileged bool) 
 		},
 	}
 
-	return runPodSandbox(rc, config), config
+	return framework.RunPodSandbox(rc, config), config
 }
 
 // createPrivilegedContainer creates container with specified Privileged in ContainerConfig.
@@ -570,7 +570,7 @@ func createPrivilegedContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 	By("create Privileged container")
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, defaultAttempt),
+		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
 		Command:  []string{"top"},
 		Linux: &runtimeapi.LinuxContainerConfig{
@@ -602,7 +602,7 @@ func createCapabilityContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 	By("create Capability container")
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, defaultAttempt),
+		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
 		Command:  []string{"top"},
 		Linux: &runtimeapi.LinuxContainerConfig{

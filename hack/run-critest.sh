@@ -29,6 +29,8 @@ docker run --rm -v /usr/local/bin:/target jpetazzo/nsenter
 # Wait a while for dockershim starting.
 sleep 10
 
-# Run critest
+# Run e2e test cases
 critest
 
+# Run benchmark test cases
+critest -b

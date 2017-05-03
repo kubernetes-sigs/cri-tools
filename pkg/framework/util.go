@@ -22,6 +22,8 @@ import (
 	"time"
 
 	"github.com/pborman/uuid"
+	internalapi "k8s.io/kubernetes/pkg/kubelet/api"
+	runtimeapi "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
 	"k8s.io/kubernetes/pkg/kubelet/remote"
 
 	. "github.com/onsi/ginkgo"
@@ -34,6 +36,17 @@ var (
 
 	// lastUUID record last generated uuid from NewUUID()
 	lastUUID uuid.UUID
+)
+
+const (
+	// DefaultUIDPrefix is a default UID prefix of PodSandbox
+	DefaultUIDPrefix string = "cri-test-uid"
+
+	// DefaultNamespacePrefix is a default namespace prefix of PodSandbox
+	DefaultNamespacePrefix string = "cri-test-namespace"
+
+	// DefaultAttempt is a default attempt prefix of PodSandbox or container
+	DefaultAttempt uint32 = 2
 )
 
 // LoadCRIClient creates a InternalAPIClient.
@@ -96,4 +109,34 @@ func NewUUID() string {
 	}
 	lastUUID = result
 	return result.String()
+}
+
+// RunDefaultPodSandbox runs a PodSandbox with default options.
+func RunDefaultPodSandbox(c internalapi.RuntimeService, prefix string) string {
+	podSandboxName := prefix + NewUUID()
+	uid := DefaultUIDPrefix + NewUUID()
+	namespace := DefaultNamespacePrefix + NewUUID()
+
+	config := &runtimeapi.PodSandboxConfig{
+		Metadata: BuildPodSandboxMetadata(podSandboxName, uid, namespace, DefaultAttempt),
+		Linux:    &runtimeapi.LinuxPodSandboxConfig{},
+	}
+	return RunPodSandbox(c, config)
+}
+
+// BuildPodSandboxMetadata builds PodSandboxMetadata.
+func BuildPodSandboxMetadata(podSandboxName, uid, namespace string, attempt uint32) *runtimeapi.PodSandboxMetadata {
+	return &runtimeapi.PodSandboxMetadata{
+		Name:      podSandboxName,
+		Uid:       uid,
+		Namespace: namespace,
+		Attempt:   attempt,
+	}
+}
+
+// RunPodSandbox runs a PodSandbox.
+func RunPodSandbox(c internalapi.RuntimeService, config *runtimeapi.PodSandboxConfig) string {
+	podID, err := c.RunPodSandbox(config)
+	ExpectNoError(err, "failed to create PodSandbox: %v", err)
+	return podID
 }
