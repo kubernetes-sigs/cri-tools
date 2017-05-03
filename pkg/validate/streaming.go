@@ -192,6 +192,7 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 	var out string
 
 	go func() {
+		defer GinkgoRecover()
 		writer.Write([]byte("echo hello\n"))
 		Eventually(func() string {
 			out = localOut.String()
@@ -245,6 +246,7 @@ func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string) 
 	framework.ExpectNoError(err, "failed to create port forward for %q", portForwardSeverURL)
 
 	go func() {
+		defer GinkgoRecover()
 		By("start port forward")
 		err = pf.ForwardPorts()
 		framework.ExpectNoError(err, "failed to start port forward for %q", portForwardSeverURL)

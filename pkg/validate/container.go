@@ -310,6 +310,7 @@ func stopContainer(c internalapi.RuntimeService, containerID string, timeout int
 	stopped := make(chan bool, 1)
 
 	go func() {
+		defer GinkgoRecover()
 		err := c.StopContainer(containerID, timeout)
 		framework.ExpectNoError(err, "failed to stop container: %v", err)
 		stopped <- true
