@@ -30,7 +30,7 @@ import (
 
 var runtimeContainerCommand = cli.Command{
 	Name:    "container",
-	Usage:   "Manage container",
+	Usage:   "manage containers",
 	Aliases: []string{"ctr"},
 	Subcommands: []cli.Command{
 		createContainerCommand,
@@ -40,8 +40,7 @@ var runtimeContainerCommand = cli.Command{
 		containerStatusCommand,
 		listContainersCommand,
 	},
-	Before: getRuntimeClient,
-	After:  closeConnection,
+	After: closeConnection,
 }
 
 type createOptions struct {
@@ -54,32 +53,23 @@ type createOptions struct {
 }
 
 var createContainerCommand = cli.Command{
-	Name:  "create",
-	Usage: "create a container",
-	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:  "pod",
-			Usage: "the id of the pod sandbox to which the container belongs",
-		},
-		cli.StringFlag{
-			Name:  "config",
-			Value: "config.json",
-			Usage: "the path of a container config file",
-		},
-		cli.StringFlag{
-			Name:  "podconfig",
-			Usage: "the path of a sandbox config file",
-		},
-	},
+	Name:      "create",
+	Usage:     "create a container",
+	ArgsUsage: "sandboxID container-config.json sandbox-config.json",
+	Flags:     []cli.Flag{},
 	Action: func(context *cli.Context) error {
-		if !context.IsSet("pod") {
-			return fmt.Errorf("Please specify the id of the pod sandbox to which the container belongs via the --pod option")
+		if len(context.Args()) != 3 {
+			return cli.ShowSubcommandHelp(context)
+		}
+
+		if err := getRuntimeClient(context); err != nil {
+			return err
 		}
 
 		opts := createOptions{
-			configPath: context.String("config"),
-			podID:      context.String("pod"),
-			podConfig:  context.String("podconfig"),
+			podID:      context.Args().Get(0),
+			configPath: context.Args().Get(1),
+			podConfig:  context.Args().Get(2),
 		}
 
 		err := CreateContainer(runtimeClient, opts)
@@ -91,10 +81,19 @@ var createContainerCommand = cli.Command{
 }
 
 var startContainerCommand = cli.Command{
-	Name:  "start",
-	Usage: "start a container",
+	Name:      "start",
+	Usage:     "start a container",
+	ArgsUsage: "containerID",
 	Action: func(context *cli.Context) error {
 		containerID := context.Args().First()
+		if containerID == "" {
+			return cli.ShowSubcommandHelp(context)
+		}
+
+		if err := getRuntimeClient(context); err != nil {
+			return err
+		}
+
 		err := StartContainer(runtimeClient, containerID)
 		if err != nil {
 			return fmt.Errorf("Starting the container failed: %v", err)
@@ -104,10 +103,19 @@ var startContainerCommand = cli.Command{
 }
 
 var stopContainerCommand = cli.Command{
-	Name:  "stop",
-	Usage: "stop a container",
+	Name:      "stop",
+	Usage:     "stop the container",
+	ArgsUsage: "containerID",
 	Action: func(context *cli.Context) error {
 		containerID := context.Args().First()
+		if containerID == "" {
+			return cli.ShowSubcommandHelp(context)
+		}
+
+		if err := getRuntimeClient(context); err != nil {
+			return err
+		}
+
 		err := StopContainer(runtimeClient, containerID)
 		if err != nil {
 			return fmt.Errorf("Stopping the container failed: %v", err)
@@ -117,10 +125,19 @@ var stopContainerCommand = cli.Command{
 }
 
 var removeContainerCommand = cli.Command{
-	Name:  "rm",
-	Usage: "remove a container",
+	Name:      "rm",
+	Usage:     "remove the container",
+	ArgsUsage: "containerID",
 	Action: func(context *cli.Context) error {
 		containerID := context.Args().First()
+		if containerID == "" {
+			return cli.ShowSubcommandHelp(context)
+		}
+
+		if err := getRuntimeClient(context); err != nil {
+			return err
+		}
+
 		err := RemoveContainer(runtimeClient, containerID)
 		if err != nil {
 			return fmt.Errorf("Removing the container failed: %v", err)
@@ -130,10 +147,19 @@ var removeContainerCommand = cli.Command{
 }
 
 var containerStatusCommand = cli.Command{
-	Name:  "status",
-	Usage: "get the status of a container",
+	Name:      "status",
+	Usage:     "get status of the container",
+	ArgsUsage: "containerID",
 	Action: func(context *cli.Context) error {
 		containerID := context.Args().First()
+		if containerID == "" {
+			return cli.ShowSubcommandHelp(context)
+		}
+
+		if err := getRuntimeClient(context); err != nil {
+			return err
+		}
+
 		err := ContainerStatus(runtimeClient, containerID)
 		if err != nil {
 			return fmt.Errorf("Getting the status of the container failed: %v", err)
@@ -147,8 +173,8 @@ var listContainersCommand = cli.Command{
 	Usage: "list containers",
 	Flags: []cli.Flag{
 		cli.BoolFlag{
-			Name:  "quiet",
-			Usage: "list only container IDs",
+			Name:  "verbose, v",
+			Usage: "show verbos information for containers",
 		},
 		cli.StringFlag{
 			Name:  "id",
@@ -156,9 +182,9 @@ var listContainersCommand = cli.Command{
 			Usage: "filter by container id",
 		},
 		cli.StringFlag{
-			Name:  "pod",
+			Name:  "sandbox",
 			Value: "",
-			Usage: "filter by container pod id",
+			Usage: "filter by sandbox id",
 		},
 		cli.StringFlag{
 			Name:  "state",
@@ -171,12 +197,16 @@ var listContainersCommand = cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
+		if err := getRuntimeClient(context); err != nil {
+			return err
+		}
+
 		opts := listOptions{
-			id:     context.String("id"),
-			podID:  context.String("pod"),
-			state:  context.String("state"),
-			quiet:  context.Bool("quiet"),
-			labels: make(map[string]string),
+			id:      context.String("id"),
+			podID:   context.String("sandbox"),
+			state:   context.String("state"),
+			verbose: context.Bool("verbose"),
+			labels:  make(map[string]string),
 		}
 
 		for _, l := range context.StringSlice("label") {
@@ -302,16 +332,24 @@ func ContainerStatus(client pb.RuntimeServiceClient, ID string) error {
 		if r.Status.Metadata.Name != "" {
 			fmt.Printf("Name: %s\n", r.Status.Metadata.Name)
 		}
-		fmt.Printf("Attempt: %v\n", r.Status.Metadata.Attempt)
+		if r.Status.Metadata.Attempt != 0 {
+			fmt.Printf("Attempt: %v\n", r.Status.Metadata.Attempt)
+		}
 	}
-	fmt.Printf("Status: %s\n", r.Status.State)
+	fmt.Printf("State: %s\n", r.Status.State)
 	ctm := time.Unix(0, r.Status.CreatedAt)
 	fmt.Printf("Created: %v\n", ctm)
-	stm := time.Unix(0, r.Status.StartedAt)
-	fmt.Printf("Started: %v\n", stm)
-	ftm := time.Unix(0, r.Status.FinishedAt)
-	fmt.Printf("Finished: %v\n", ftm)
-	fmt.Printf("Exit Code: %v\n", r.Status.ExitCode)
+	if r.Status.State != pb.ContainerState_CONTAINER_CREATED {
+		stm := time.Unix(0, r.Status.StartedAt)
+		fmt.Printf("Started: %v\n", stm)
+	}
+	if r.Status.FinishedAt != 0 {
+		ftm := time.Unix(0, r.Status.FinishedAt)
+		fmt.Printf("Finished: %v\n", ftm)
+	}
+	if r.Status.State == pb.ContainerState_CONTAINER_EXITED {
+		fmt.Printf("Exit Code: %v\n", r.Status.ExitCode)
+	}
 
 	return nil
 }
@@ -357,24 +395,29 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 	if err != nil {
 		return err
 	}
+	printHeader := true
 	for _, c := range r.GetContainers() {
-		if opts.quiet {
-			fmt.Println(c.Id)
+		ctm := time.Unix(0, c.CreatedAt)
+		if !opts.verbose {
+			if printHeader {
+				printHeader = false
+				fmt.Println("CONTAINER ID\tCREATED\tSTATE\tNAME")
+			}
+			fmt.Printf("%s\t%s\t%s\t%s\n", c.Id, ctm, c.State, c.GetMetadata().GetName())
 			continue
 		}
 		fmt.Printf("ID: %s\n", c.Id)
-		fmt.Printf("Pod: %s\n", c.PodSandboxId)
+		fmt.Printf("SandboxID: %s\n", c.PodSandboxId)
 		if c.Metadata != nil {
 			if c.Metadata.Name != "" {
 				fmt.Printf("Name: %s\n", c.Metadata.Name)
 			}
 			fmt.Printf("Attempt: %v\n", c.Metadata.Attempt)
 		}
-		fmt.Printf("Status: %s\n", c.State)
+		fmt.Printf("State: %s\n", c.State)
 		if c.Image != nil {
 			fmt.Printf("Image: %s\n", c.Image.Image)
 		}
-		ctm := time.Unix(0, c.CreatedAt)
 		fmt.Printf("Created: %v\n", ctm)
 		if c.Labels != nil {
 			fmt.Println("Labels:")

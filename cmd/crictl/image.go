@@ -27,22 +27,31 @@ import (
 
 var imageCommand = cli.Command{
 	Name:  "image",
-	Usage: "Manage image",
+	Usage: "manage images",
 	Subcommands: []cli.Command{
 		pullImageCommand,
 		listImageCommand,
 		imageStatusCommand,
 		removeImageCommand,
 	},
-	Before: getImageClient,
-	After:  closeConnection,
+	After: closeConnection,
 }
 
 var pullImageCommand = cli.Command{
-	Name:  "pull",
-	Usage: "pull an image",
+	Name:      "pull",
+	Usage:     "pull an image",
+	ArgsUsage: "NAME[:TAG|@DIGEST]",
 	Action: func(context *cli.Context) error {
-		r, err := PullImage(imageClient, context.Args().Get(0))
+		imageName := context.Args().First()
+		if imageName == "" {
+			return cli.ShowSubcommandHelp(context)
+		}
+
+		if err := getImageClient(context); err != nil {
+			return err
+		}
+
+		r, err := PullImage(imageClient, imageName)
 		logrus.Debugf("PullImageResponse: %v", r)
 		if err != nil {
 			return fmt.Errorf("pulling image failed: %v", err)
@@ -57,44 +66,66 @@ var listImageCommand = cli.Command{
 	Usage: "list images",
 	Flags: []cli.Flag{
 		cli.BoolFlag{
-			Name:  "quiet",
-			Usage: "list only image IDs",
+			Name:  "verbose, v",
+			Usage: "show verbose info for images",
 		},
 	},
 	Action: func(context *cli.Context) error {
-		r, err := ListImages(imageClient, context.Args().Get(0))
+		if err := getImageClient(context); err != nil {
+			return err
+		}
+
+		r, err := ListImages(imageClient, context.Args().First())
 		logrus.Debugf("ListImagesResponse: %v", r)
 		if err != nil {
 			return fmt.Errorf("listing images failed: %v", err)
 		}
-		quiet := context.Bool("quiet")
+		verbose := context.Bool("verbose")
+		printHeader := true
 		for _, image := range r.Images {
-			if quiet {
-				fmt.Printf("%s\n", image.Id)
+			if !verbose {
+				if printHeader {
+					printHeader = false
+					fmt.Println("IMAGE\tIMAGE ID\tSIZE")
+				}
+				fmt.Printf("%s\t%s\t%d\n", image.RepoTags[0], image.Id, image.GetSize_())
 				continue
 			}
 			fmt.Printf("ID: %s\n", image.Id)
 			for _, tag := range image.RepoTags {
-				fmt.Printf("Tag: %s\n", tag)
+				fmt.Printf("RepoTags: %s\n", tag)
 			}
 			for _, digest := range image.RepoDigests {
-				fmt.Printf("Digest: %s\n", digest)
+				fmt.Printf("RepoDigests: %s\n", digest)
 			}
 			if image.Size_ != 0 {
 				fmt.Printf("Size: %d\n", image.Size_)
 			}
-			fmt.Printf("Uid: %v\n", image.Uid)
-			fmt.Printf("Username: %v\n\n", image.Username)
+			if image.Uid != nil {
+				fmt.Printf("Uid: %v\n", image.Uid)
+			}
+			if image.Username != "" {
+				fmt.Printf("Username: %v\n\n", image.Username)
+			}
 		}
 		return nil
 	},
 }
 
 var imageStatusCommand = cli.Command{
-	Name:  "status",
-	Usage: "return the status of an image",
+	Name:      "status",
+	Usage:     "return the status of an image",
+	ArgsUsage: "IMAGEID",
 	Action: func(context *cli.Context) error {
 		id := context.Args().First()
+		if id == "" {
+			return cli.ShowSubcommandHelp(context)
+		}
+
+		if err := getImageClient(context); err != nil {
+			return err
+		}
+
 		r, err := ImageStatus(imageClient, id)
 		logrus.Debugf("ImageStatus: %v", r)
 		if err != nil {
@@ -116,14 +147,23 @@ var imageStatusCommand = cli.Command{
 	},
 }
 var removeImageCommand = cli.Command{
-	Name:  "rm",
-	Usage: "remove an image",
+	Name:      "rm",
+	Usage:     "remove an image",
+	ArgsUsage: "IMAGEID",
 	Action: func(context *cli.Context) error {
 		id := context.Args().First()
+		if id == "" {
+			return cli.ShowSubcommandHelp(context)
+		}
+
+		if err := getImageClient(context); err != nil {
+			return err
+		}
+
 		r, err := RemoveImage(imageClient, id)
 		logrus.Debugf("RemoveImageResponse: %v", r)
 		if err != nil {
-			return fmt.Errorf("removing the image failed: %v", err)
+			return fmt.Errorf("removing the image %q failed: %v", id, err)
 		}
 		return nil
 	},
@@ -157,7 +197,7 @@ func ImageStatus(client pb.ImageServiceClient, image string) (*pb.ImageStatusRes
 // the returned RemoveImageResponse.
 func RemoveImage(client pb.ImageServiceClient, image string) (*pb.RemoveImageResponse, error) {
 	if image == "" {
-		return nil, fmt.Errorf("ID cannot be empty")
+		return nil, fmt.Errorf("ImageID cannot be empty")
 	}
 	request := &pb.RemoveImageRequest{Image: &pb.ImageSpec{Image: image}}
 	logrus.Debugf("RemoveImageRequest: %v", request)

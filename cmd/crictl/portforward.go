@@ -33,13 +33,19 @@ import (
 )
 
 var runtimePortForwardCommand = cli.Command{
-	Name:  "portforward",
-	Usage: "forword ports from a sandbox",
+	Name:      "portforward",
+	Usage:     "forword ports from a sandbox",
+	ArgsUsage: "sandboxID [LOCAL_PORT:]REMOTE_PORT",
 	Action: func(context *cli.Context) error {
 		args := context.Args()
 		if len(args) < 2 {
-			return fmt.Errorf("Please specify sandbox and port to forward")
+			return cli.ShowSubcommandHelp(context)
 		}
+
+		if err := getRuntimeClient(context); err != nil {
+			return err
+		}
+
 		var opts = portforwardOptions{
 			id:    args[0],
 			ports: args[1:],
@@ -52,8 +58,7 @@ var runtimePortForwardCommand = cli.Command{
 		return nil
 
 	},
-	Before: getRuntimeClient,
-	After:  closeConnection,
+	After: closeConnection,
 }
 
 // PortForward sends an PortForwardRequest to server, and parses the returned PortForwardResponse

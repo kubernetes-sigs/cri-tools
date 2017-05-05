@@ -26,7 +26,7 @@ import (
 )
 
 var runtimeVersionCommand = cli.Command{
-	Name:  "version",
+	Name:  "info",
 	Usage: "get runtime version information",
 	Action: func(context *cli.Context) error {
 		// Test RuntimeServiceClient.Version

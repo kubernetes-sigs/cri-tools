@@ -51,7 +51,7 @@ Participation in the Kubernetes community is governed by the [Kubernetes Code of
 
 ```bash
 go get github.com/kubernetes-incubator/cri-tools/cmd/critest
-go get github.com/kubernetes-incubator/cri-tools/cmd/critctl
+go get github.com/kubernetes-incubator/cri-tools/cmd/crictl
 ```
 ### critest
 
@@ -109,43 +109,65 @@ CLI for kubelet CRI
 
 #### Examples
 
-- Run podsandbox with config file
-
-`crictl sandbox run pod.json`
-
-example of config file for podsandbox `pod.json`:
+- Run sandbox with config file
 
 ```
+# cat sandbox-config.json
 {
     "metadata": {
-        "name": "podsandbox-1",
+        "name": "nginx-sandbox",
         "namespace": "default",
-        "attempt": "2",
+        "attempt": 1,
         "uid": "hdishd83djaidwnduwk28bcsb"
     },
     "linux": {
     }
 }
+# crictl sandbox run sandbox-config.json
+9b542bfe8f93eb2d726d0f7b619f253c18858006aa53023e392e138b0be6301c
 ```
-- Create container in a sandbox with container config file
 
-`crictl container create --pod podid --connfig container.json` (replace `podid` with id of a ready sandbox)
-
-example of config file for container `container.json`:
+- Create container in a sandbox with config file
 
 ```
-    {
+# cat sandbox-config.json
+{
     "metadata": {
-        "name": "container-1"
+        "name": "nginx-sandbox",
+        "namespace": "default",
+        "attempt": 1,
+        "uid": "hdishd83djaidwnduwk28bcsb"
     },
-    "image":{
-        "image": "busybox"
-    },
-    "command": [
-        "sh",
-        "-c"
-    ],
     "linux": {
     }
 }
+# cat container-config.json
+{
+  "metadata": {
+      "name": "busybox"
+  },
+  "image":{
+      "image": "busybox"
+  },
+  "command": [
+      "top"
+  ],
+  "linux": {
+  }
+}
+# crictl container create 9b542bfe8f93eb2d726d0f7b619f253c18858006aa53023e392e138b0be6301c container-config.json sandbox-config.json
+bf642f55ecf54345354a86a42c08fb0d66e55e90c855973495f31e991c2bf725
+```
+
+* Start container
+
+```
+# crictl container start bf642f55ecf54345354a86a42c08fb0d66e55e90c855973495f31e991c2bf725
+bf642f55ecf54345354a86a42c08fb0d66e55e90c855973495f31e991c2bf725
+```
+
+* Exec a command in container
+
+```
+# crictl exec -i -t bf642f55ecf54345354a86a42c08fb0d66e55e90c855973495f31e991c2bf725 sh
 ```
