@@ -38,8 +38,8 @@ type listOptions struct {
 	podID string
 	// state of the sandbox
 	state string
-	// quiet is for listing just sandbox IDs
-	quiet bool
+	// show verbose info for the sandbox
+	verbose bool
 	// labels are selectors for the sandbox
 	labels map[string]string
 }
@@ -143,5 +143,9 @@ func getImageClient(context *cli.Context) error {
 }
 
 func closeConnection(context *cli.Context) error {
+	if conn == nil {
+		return nil
+	}
+
 	return conn.Close()
 }

@@ -32,8 +32,9 @@ import (
 )
 
 var runtimeAttachCommand = cli.Command{
-	Name:  "attach",
-	Usage: "attach a running container",
+	Name:      "attach",
+	Usage:     "attach a running container",
+	ArgsUsage: "containerID",
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "tty,t",
@@ -45,8 +46,17 @@ var runtimeAttachCommand = cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
+		id := context.Args().First()
+		if id == "" {
+			return cli.ShowSubcommandHelp(context)
+		}
+
+		if err := getRuntimeClient(context); err != nil {
+			return err
+		}
+
 		var opts = attachOptions{
-			id:    context.Args().First(),
+			id:    id,
 			tty:   context.Bool("tty"),
 			stdin: context.Bool("stdin"),
 		}
@@ -58,8 +68,7 @@ var runtimeAttachCommand = cli.Command{
 		return nil
 
 	},
-	Before: getRuntimeClient,
-	After:  closeConnection,
+	After: closeConnection,
 }
 
 // Attach sends an AttachRequest to server, and parses the returned AttachResponse

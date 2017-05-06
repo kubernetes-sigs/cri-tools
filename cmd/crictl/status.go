@@ -48,14 +48,9 @@ func Status(client pb.RuntimeServiceClient) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Runtime Conditions:")
-	var runtimeCondition *pb.RuntimeCondition
-	for _, runtimeCondition = range r.GetStatus().GetConditions() {
-		fmt.Println("Type: ", runtimeCondition.Type)
-		fmt.Println("Status: ", runtimeCondition.Status)
-		fmt.Println("Reason: ", runtimeCondition.Reason)
-		fmt.Println("Message: ", runtimeCondition.Message)
-		fmt.Printf("\n")
+	fmt.Println("CONDITION\tSTATUS\tREASON\tMESSAGE")
+	for _, c := range r.GetStatus().GetConditions() {
+		fmt.Printf("%s\t%v\t%s\t%s\n", c.Type, c.Status, c.Reason, c.Message)
 	}
 	return nil
 }

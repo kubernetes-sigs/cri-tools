@@ -37,8 +37,9 @@ const (
 )
 
 var runtimeExecCommand = cli.Command{
-	Name:  "exec",
-	Usage: "exec a command in a container",
+	Name:      "exec",
+	Usage:     "exec a command in a container",
+	ArgsUsage: "containerID COMMAND [ARG...]",
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "sync",
@@ -50,18 +51,23 @@ var runtimeExecCommand = cli.Command{
 			Usage: "timeout for the command",
 		},
 		cli.BoolFlag{
-			Name:  "tty",
+			Name:  "tty, t",
 			Usage: "exec a command in a tty",
 		},
 		cli.BoolFlag{
-			Name:  "stdin",
+			Name:  "stdin, i",
 			Usage: "stream stdin",
 		},
 	},
 	Action: func(context *cli.Context) error {
 		if len(context.Args()) < 2 {
-			return fmt.Errorf("Please specify both containerID and cmd to exec")
+			return cli.ShowSubcommandHelp(context)
 		}
+
+		if err := getRuntimeClient(context); err != nil {
+			return err
+		}
+
 		var opts = execOptions{
 			id:      context.Args().First(),
 			timeout: context.Int64("timeout"),
@@ -82,8 +88,7 @@ var runtimeExecCommand = cli.Command{
 		}
 		return nil
 	},
-	Before: getRuntimeClient,
-	After:  closeConnection,
+	After: closeConnection,
 }
 
 // ExecSync sends an ExecSyncRequest to the server, and parses
@@ -100,11 +105,11 @@ func ExecSync(client pb.RuntimeServiceClient, opts execOptions) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Stdout:")
 	fmt.Println(string(r.Stdout))
-	fmt.Println("Stderr:")
 	fmt.Println(string(r.Stderr))
-	fmt.Printf("Exit code: %v\n", r.ExitCode)
+	if r.ExitCode != 0 {
+		fmt.Printf("Exit code: %v\n", r.ExitCode)
+	}
 
 	return nil
 }

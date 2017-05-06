@@ -82,13 +82,15 @@ func main() {
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:  "runtime-endpoint",
-			Value: "/var/run/dockershim.sock",
-			Usage: "CRI server runtime endpoint",
+			Name:   "runtime-endpoint, r",
+			EnvVar: "CRI_RUNTIME_ENDPOINT",
+			Value:  "/var/run/dockershim.sock",
+			Usage:  "endpoint for CRI container runtime",
 		},
 		cli.StringFlag{
-			Name:  "image-endpoint",
-			Usage: "CRI server image endpoint",
+			Name:   "image-endpoint, i",
+			EnvVar: "CRI_IMAGE_ENDPOINT",
+			Usage:  "endpoint for CRI image service",
 		},
 		cli.DurationFlag{
 			Name:  "timeout",
