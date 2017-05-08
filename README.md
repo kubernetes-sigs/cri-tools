@@ -75,7 +75,7 @@ CLI for kubelet CRI
 
 #### Commands
 
-- `version`: Get version information of runtime
+- `info`: Get version information of runtime
 
 - `sandbox`, `sb`: Manage lifecycle of podsandbox
 

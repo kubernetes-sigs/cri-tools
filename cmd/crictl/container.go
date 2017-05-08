@@ -343,11 +343,11 @@ func ContainerStatus(client pb.RuntimeServiceClient, ID string) error {
 		stm := time.Unix(0, r.Status.StartedAt)
 		fmt.Printf("Started: %v\n", stm)
 	}
-	if r.Status.FinishedAt != 0 {
-		ftm := time.Unix(0, r.Status.FinishedAt)
-		fmt.Printf("Finished: %v\n", ftm)
-	}
 	if r.Status.State == pb.ContainerState_CONTAINER_EXITED {
+		if r.Status.FinishedAt > 0 {
+			ftm := time.Unix(0, r.Status.FinishedAt)
+			fmt.Printf("Finished: %v\n", ftm)
+		}
 		fmt.Printf("Exit Code: %v\n", r.Status.ExitCode)
 	}
 
