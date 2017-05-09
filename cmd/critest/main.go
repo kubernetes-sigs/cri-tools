@@ -22,12 +22,13 @@ import (
 	"sort"
 
 	"github.com/golang/glog"
+	_ "github.com/kubernetes-incubator/cri-tools/pkg/benchmark"
 	_ "github.com/kubernetes-incubator/cri-tools/pkg/validate"
 	"github.com/urfave/cli"
 )
 
 func main() {
-	var buildDependencies bool
+	var buildDependencies, benchmark bool
 	var ginkgoFlags, testFlags, runtimeServiceAddress, imageServiceAddress, focus string
 
 	app := cli.NewApp()
@@ -37,7 +38,7 @@ func main() {
 
 	app.Flags = []cli.Flag{
 		cli.BoolTFlag{
-			Name:        "build-dependencies, b",
+			Name:        "compile, c",
 			Usage:       "If true, build all dependencies.",
 			Destination: &buildDependencies,
 		},
@@ -48,7 +49,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:        "test-flags",
-			Usage:       "Space-separated list of arguments to pass to CRI e2e test.",
+			Usage:       "Space-separated list of arguments to pass to critest.",
 			Destination: &testFlags,
 		},
 		cli.StringFlag{
@@ -66,29 +67,34 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:        "focus, f",
-			Usage:       "CRI e2e test will only run the test that match the focus regular expression.",
+			Usage:       "critest will only run the test that match the focus regular expression.",
 			Destination: &focus,
+		},
+		cli.BoolFlag{
+			Name:        "benchmark, b",
+			Usage:       "If set, critest will only run benchmark.",
+			Destination: &benchmark,
 		},
 	}
 
 	sort.Sort(cli.FlagsByName(app.Flags))
 
 	app.Action = func(c *cli.Context) error {
-		// Build dependencies - ginkgo and e2e.test
+		var test string
+
+		// Build dependencies - ginkgo and test specs.
 		if buildDependencies {
-			if err := build(); err != nil {
+			if err := build(benchmark); err != nil {
 				glog.Fatalf("Failed to build the dependencies: %v", err)
 			}
 		}
 
-		// Run CRI e2e test
 		outputDir, err := getBuildOutputDir()
 		if err != nil {
 			glog.Fatalf("Failed to get build output directory: %v", err)
 		}
 		glog.Infof("Got build output dir: %v", outputDir)
 		ginkgo := filepath.Join(outputDir, "ginkgo")
-		test := filepath.Join(outputDir, "e2e.test")
 
 		if imageServiceAddress == "" {
 			imageServiceAddress = runtimeServiceAddress
@@ -96,6 +102,12 @@ func main() {
 
 		if focus != "" {
 			ginkgoFlags = ginkgoFlags + " -focus=\"" + focus + "\""
+		}
+
+		if benchmark {
+			test = filepath.Join(outputDir, "benchmark.test")
+		} else {
+			test = filepath.Join(outputDir, "e2e.test")
 		}
 
 		return runCommand(ginkgo, ginkgoFlags, test, "--", testFlags, "--runtime-service-address="+runtimeServiceAddress, "--image-service-address="+imageServiceAddress)

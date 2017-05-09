@@ -255,7 +255,7 @@ func createContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerS
 func createDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, defaultAttempt),
+		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
 		Command:  []string{"top"},
 		Linux:    &runtimeapi.LinuxContainerConfig{},
@@ -268,7 +268,7 @@ func createDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageM
 func createShellContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, defaultAttempt),
+		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
 		Command:  []string{"/bin/sh"},
 		Linux:    &runtimeapi.LinuxContainerConfig{},
@@ -387,7 +387,7 @@ func createVolumeContainer(rc internalapi.RuntimeService, ic internalapi.ImageMa
 	By("create a container with volume and name")
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, defaultAttempt),
+		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
 		// mount host path to the same directory in container, and check if flag file exists
 		Command: []string{"sh", "-c", "test -f " + filepath.Join(hostPath, flagFile)},
@@ -408,7 +408,7 @@ func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManag
 	containerName := prefix + framework.NewUUID()
 	path := fmt.Sprintf("%s.log", containerName)
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, defaultAttempt),
+		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
 		Command:  []string{"echo", defaultLog},
 		LogPath:  path,

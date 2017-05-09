@@ -29,23 +29,29 @@ import (
 
 var buildTargets = []string{
 	"github.com/kubernetes-incubator/cri-tools/pkg/validate",
+	"github.com/kubernetes-incubator/cri-tools/pkg/benchmark",
 	"github.com/kubernetes-incubator/cri-tools/vendor/github.com/onsi/ginkgo/ginkgo",
 }
 
 // build cri-tools binaries.
-func build() error {
+func build(benchmark bool) error {
 	glog.Infof("Building cri-tools binaries...")
 	outputDir, err := getBuildOutputDir()
 	if err != nil {
 		glog.Fatalf("Failed to get build output directory: %v", err)
 	}
 
-	err = runCommand("go", "test", "-c", "-v", "-o", filepath.Join(outputDir, "e2e.test"), buildTargets[0])
-	if err != nil {
-		return fmt.Errorf("failed to build e2e.test %v", err)
+	args := []string{"test", "-c", "-v", "-o", filepath.Join(outputDir, "e2e.test"), buildTargets[0]}
+	if benchmark {
+		args = []string{"test", "-c", "-v", "-o", filepath.Join(outputDir, "benchmark.test"), buildTargets[1]}
 	}
 
-	err = runCommand("go", "build", "-o", filepath.Join(outputDir, "ginkgo"), buildTargets[1])
+	err = runCommand("go", args...)
+	if err != nil {
+		return fmt.Errorf("build test suite failed: %v", err)
+	}
+
+	err = runCommand("go", "build", "-o", filepath.Join(outputDir, "ginkgo"), buildTargets[2])
 	if err != nil {
 		return fmt.Errorf("failed to build go ginkgo %v", err)
 	}
