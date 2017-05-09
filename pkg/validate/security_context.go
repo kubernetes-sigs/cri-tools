@@ -89,7 +89,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			command = []string{"sh", "-c", "sleep 1000"}
 			prefix = "container-with-HostPID-test-"
 			containerName = prefix + framework.NewUUID()
-			containerID, _, _ = createNamespaceContainer(rc, ic, podID, podConfig, containerName, defaultContainerImage, namespaceOption, command, "")
+			containerID, _, _ = createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.DefaultContainerImage, namespaceOption, command, "")
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -132,7 +132,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			prefix := "namespace-container-"
 			command := []string{"top"}
 			containerName := prefix + framework.NewUUID()
-			containerID, _, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, defaultContainerImage, namespaceOption, command, "")
+			containerID, _, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.DefaultContainerImage, namespaceOption, command, "")
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -165,7 +165,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			prefix := "namespace-container-"
 			command := []string{"top"}
 			containerName := prefix + framework.NewUUID()
-			containerID, _, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, defaultContainerImage, namespaceOption, command, "")
+			containerID, _, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.DefaultContainerImage, namespaceOption, command, "")
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -202,7 +202,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			prefix := "container-with-HostNetwork-test-"
 			containerName := prefix + framework.NewUUID()
 			path := fmt.Sprintf("%s.log", containerName)
-			containerID, _, logPath := createNamespaceContainer(rc, ic, podID, podConfig, containerName, defaultContainerImage, containerNamespace, command, path)
+			containerID, _, logPath := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.DefaultContainerImage, containerNamespace, command, path)
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -236,7 +236,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			prefix := "container-with-HostNetwork-test-"
 			containerName := prefix + framework.NewUUID()
 			path := fmt.Sprintf("%s.log", containerName)
-			containerID, _, logPath := createNamespaceContainer(rc, ic, podID, podConfig, containerName, defaultContainerImage, containerNamespace, command, path)
+			containerID, _, logPath := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.DefaultContainerImage, containerNamespace, command, path)
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -261,7 +261,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 		It("runtime should support RunAsUser [security context]", func() {
 			By("create pod")
-			podID, podConfig = createPodSandboxForContainer(rc)
+			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
 
 			By("create container for security context RunAsUser")
 			containerID, expectedLogMessage := createRunAsUserContainer(rc, ic, podID, podConfig, "container-with-RunAsUser-test-")
@@ -279,7 +279,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 		It("runtime should support RunAsUserName [security context]", func() {
 			By("create pod")
-			podID, podConfig = createPodSandboxForContainer(rc)
+			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
 
 			By("create container for security context RunAsUser")
 			containerID, expectedLogMessage := createRunAsUserNameContainer(rc, ic, podID, podConfig, "container-with-RunAsUserName-test-")
@@ -370,7 +370,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 		It("runtime should support setting Capability", func() {
 			By("create pod")
-			podID, podConfig = createPodSandboxForContainer(rc)
+			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
 
 			By("create container with security context Capability and test")
 			containerID := createCapabilityContainer(rc, ic, podID, podConfig, "container-with-Capability-test-")
@@ -383,7 +383,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			checkNetworkManagement(rc, containerID, true)
 
 			By("create container without security context Capability and test")
-			containerID = createDefaultContainer(rc, ic, podID, podConfig, "container-with-notCapability-test-")
+			containerID = framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-with-notCapability-test-")
 
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
@@ -407,8 +407,8 @@ func createRunAsUserContainer(rc internalapi.RuntimeService, ic internalapi.Imag
 	By("create a container with RunAsUser")
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
+		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
 		Command:  []string{"sh", "-c", "top"},
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
@@ -417,7 +417,7 @@ func createRunAsUserContainer(rc internalapi.RuntimeService, ic internalapi.Imag
 		},
 	}
 
-	return createContainer(rc, ic, containerConfig, podID, podConfig), expectedLogMessage
+	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig), expectedLogMessage
 }
 
 // createRunAsUserNameContainer creates the container with specified RunAsUserName in ContainerConfig.
@@ -429,8 +429,8 @@ func createRunAsUserNameContainer(rc internalapi.RuntimeService, ic internalapi.
 	By("create a container with RunAsUserName")
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
+		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
 		Command:  []string{"sh", "-c", "top"},
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
@@ -438,7 +438,7 @@ func createRunAsUserNameContainer(rc internalapi.RuntimeService, ic internalapi.
 			},
 		},
 	}
-	return createContainer(rc, ic, containerConfig, podID, podConfig), expectedLogMessage
+	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig), expectedLogMessage
 }
 
 // createNamespacePodSandbox creates a PodSandbox with different NamespaceOption config for creating containers.
@@ -463,7 +463,7 @@ func createNamespacePodSandbox(rc internalapi.RuntimeService, podSandboxNamespac
 func createNamespaceContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, containerName string, image string, containerNamespace *runtimeapi.NamespaceOption, command []string, path string) (string, string, string) {
 	By("create NamespaceOption container")
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
+		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: image},
 		Command:  command,
 		Linux: &runtimeapi.LinuxContainerConfig{
@@ -474,7 +474,7 @@ func createNamespaceContainer(rc internalapi.RuntimeService, ic internalapi.Imag
 		LogPath: path,
 	}
 
-	return createContainer(rc, ic, containerConfig, podID, podConfig), containerName, containerConfig.LogPath
+	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig), containerName, containerConfig.LogPath
 
 }
 
@@ -484,8 +484,8 @@ func createReadOnlyRootfsContainer(rc internalapi.RuntimeService, ic internalapi
 	containerName := prefix + framework.NewUUID()
 	path := fmt.Sprintf("%s.log", containerName)
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
+		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
 		Command:  []string{"sh", "-c", "touch test.go && [ -f test.go ] && echo 'Found'"},
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
@@ -495,7 +495,7 @@ func createReadOnlyRootfsContainer(rc internalapi.RuntimeService, ic internalapi
 		LogPath: path,
 	}
 
-	return containerConfig.LogPath, createContainer(rc, ic, containerConfig, podID, podConfig)
+	return containerConfig.LogPath, framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }
 
 // checkRootfs checks whether the rootfs parameter of the ContainerConfig is working properly.
@@ -570,8 +570,8 @@ func createPrivilegedContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 	By("create Privileged container")
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
+		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
 		Command:  []string{"top"},
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
@@ -580,7 +580,7 @@ func createPrivilegedContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 		},
 	}
 
-	return createContainer(rc, ic, containerConfig, podID, podConfig)
+	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }
 
 // checkNetworkManagement checks the container's network management works fine.
@@ -602,8 +602,8 @@ func createCapabilityContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 	By("create Capability container")
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
+		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
 		Command:  []string{"top"},
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
@@ -614,5 +614,5 @@ func createCapabilityContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 		},
 	}
 
-	return createContainer(rc, ic, containerConfig, podID, podConfig)
+	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }

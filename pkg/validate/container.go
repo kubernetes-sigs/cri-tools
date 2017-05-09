@@ -39,7 +39,6 @@ import (
 type streamType string
 
 const (
-	defaultContainerImage       string     = "gcr.io/google_containers/busybox:1.24"
 	defaultStopContainerTimeout int64      = 60
 	defaultExecSyncTimeout      int64      = 5
 	defaultLog                  string     = "hello World"
@@ -70,7 +69,7 @@ var _ = framework.KubeDescribe("Container", func() {
 		var podConfig *runtimeapi.PodSandboxConfig
 
 		BeforeEach(func() {
-			podID, podConfig = createPodSandboxForContainer(rc)
+			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
 		})
 
 		AfterEach(func() {
@@ -91,7 +90,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support starting container [Conformance]", func() {
 			By("create container")
-			containerID := createDefaultContainer(rc, ic, podID, podConfig, "container-for-start-test-")
+			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-start-test-")
 
 			By("test start container")
 			testStartContainer(rc, containerID)
@@ -99,7 +98,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support stopping container [Conformance]", func() {
 			By("create container")
-			containerID := createDefaultContainer(rc, ic, podID, podConfig, "container-for-stop-test-")
+			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-stop-test-")
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -110,7 +109,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support removing container [Conformance]", func() {
 			By("create container")
-			containerID := createDefaultContainer(rc, ic, podID, podConfig, "container-for-remove-test-")
+			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-remove-test-")
 
 			By("test remove container")
 			removeContainer(rc, containerID)
@@ -120,7 +119,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support execSync [Conformance]", func() {
 			By("create container")
-			containerID := createDefaultContainer(rc, ic, podID, podConfig, "container-for-execSync-test-")
+			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-execSync-test-")
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -137,7 +136,7 @@ var _ = framework.KubeDescribe("Container", func() {
 		var podConfig *runtimeapi.PodSandboxConfig
 
 		BeforeEach(func() {
-			podID, podConfig = createPodSandboxForContainer(rc)
+			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
 		})
 
 		AfterEach(func() {
@@ -214,14 +213,6 @@ func containerFound(containers []*runtimeapi.Container, containerID string) bool
 	return false
 }
 
-// buildContainerMetadata builds containerMetadata.
-func buildContainerMetadata(containerName string, attempt uint32) *runtimeapi.ContainerMetadata {
-	return &runtimeapi.ContainerMetadata{
-		Name:    containerName,
-		Attempt: attempt,
-	}
-}
-
 // getContainerStatus gets ContainerState for containerID and fails if it gets error.
 func getContainerStatus(c internalapi.RuntimeService, containerID string) *runtimeapi.ContainerStatus {
 	By("Get container status for containerID: " + containerID)
@@ -230,58 +221,24 @@ func getContainerStatus(c internalapi.RuntimeService, containerID string) *runti
 	return status
 }
 
-// createContainer creates a container with the prefix of containerName.
-func createContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, config *runtimeapi.ContainerConfig, podID string, podConfig *runtimeapi.PodSandboxConfig) string {
-	// Pull the image if it does not exist.
-	imageName := config.Image.Image
-	if !strings.Contains(imageName, ":") {
-		imageName = imageName + ":latest"
-		framework.Logf("Use latest as default image tag.")
-	}
-
-	images := listImageForImageName(ic, imageName)
-	if len(images) == 0 {
-		pullPublicImage(ic, imageName)
-	}
-
-	By("Create container.")
-	containerID, err := rc.CreateContainer(podID, config, podConfig)
-	framework.ExpectNoError(err, "failed to create container: %v", err)
-	framework.Logf("Created container %q\n", containerID)
-	return containerID
-}
-
-// createDefaultContainer creates a  default container with default options.
-func createDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
-	containerName := prefix + framework.NewUUID()
-	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
-		Command:  []string{"top"},
-		Linux:    &runtimeapi.LinuxContainerConfig{},
-	}
-
-	return createContainer(rc, ic, containerConfig, podID, podConfig)
-}
-
 // createShellContainer creates a container to run /bin/sh.
 func createShellContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
+		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
 		Command:  []string{"/bin/sh"},
 		Linux:    &runtimeapi.LinuxContainerConfig{},
 		Stdin:    true,
 		Tty:      false,
 	}
 
-	return createContainer(rc, ic, containerConfig, podID, podConfig)
+	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }
 
 // testCreateDefaultContainer creates a container in the pod which ID is podID and make sure it's ready.
 func testCreateDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig) string {
-	containerID := createDefaultContainer(rc, ic, podID, podConfig, "container-for-create-test-")
+	containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-create-test-")
 	Eventually(func() runtimeapi.ContainerState {
 		return getContainerStatus(rc, containerID).State
 	}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_CREATED))
@@ -387,8 +344,8 @@ func createVolumeContainer(rc internalapi.RuntimeService, ic internalapi.ImageMa
 	By("create a container with volume and name")
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
+		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
 		// mount host path to the same directory in container, and check if flag file exists
 		Command: []string{"sh", "-c", "test -f " + filepath.Join(hostPath, flagFile)},
 		Mounts: []*runtimeapi.Mount{
@@ -399,7 +356,7 @@ func createVolumeContainer(rc internalapi.RuntimeService, ic internalapi.ImageMa
 		},
 	}
 
-	return createContainer(rc, ic, containerConfig, podID, podConfig)
+	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }
 
 // createLogContainer creates a container with log and the prefix of containerName.
@@ -408,12 +365,12 @@ func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManag
 	containerName := prefix + framework.NewUUID()
 	path := fmt.Sprintf("%s.log", containerName)
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: defaultContainerImage},
+		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
 		Command:  []string{"echo", defaultLog},
 		LogPath:  path,
 	}
-	return containerConfig.LogPath, createContainer(rc, ic, containerConfig, podID, podConfig)
+	return containerConfig.LogPath, framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }
 
 // parseDockerJSONLog parses logs in Docker JSON log format.

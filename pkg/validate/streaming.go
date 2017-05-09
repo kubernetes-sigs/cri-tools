@@ -56,7 +56,7 @@ var _ = framework.KubeDescribe("Streaming", func() {
 		var podConfig *runtimeapi.PodSandboxConfig
 
 		BeforeEach(func() {
-			podID, podConfig = createPodSandboxForContainer(rc)
+			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
 		})
 
 		AfterEach(func() {
@@ -68,7 +68,7 @@ var _ = framework.KubeDescribe("Streaming", func() {
 
 		It("runtime should support exec [Conformance]", func() {
 			By("create a default container")
-			containerID := createDefaultContainer(rc, ic, podID, podConfig, "container-for-exec-test")
+			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-exec-test")
 
 			By("start container")
 			startContainer(rc, containerID)

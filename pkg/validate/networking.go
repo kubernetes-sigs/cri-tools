@@ -66,7 +66,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 			podID, podConfig = createPodSandWithDNSConfig(rc)
 
 			By("create container")
-			containerID := createDefaultContainer(rc, ic, podID, podConfig, "container-for-DNS-config-test-")
+			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-DNS-config-test-")
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -174,11 +174,11 @@ func checkDNSConfig(c internalapi.RuntimeService, containerID string, expectedCo
 func createNginxContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: buildContainerMetadata(containerName, framework.DefaultAttempt),
+		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: nginxImage},
 		Linux:    &runtimeapi.LinuxContainerConfig{},
 	}
-	return createContainer(rc, ic, containerConfig, podID, podConfig)
+	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }
 
 // checkNginxMainPage check if the we can get the main page of nginx via given IP:port.

@@ -156,20 +156,6 @@ func listPodSandbox(c internalapi.RuntimeService, filter *runtimeapi.PodSandboxF
 	return pods
 }
 
-// createPodSandboxForContainer creates a PodSandbox for creating containers.
-func createPodSandboxForContainer(c internalapi.RuntimeService) (string, *runtimeapi.PodSandboxConfig) {
-	podSandboxName := "create-PodSandbox-for-container-" + framework.NewUUID()
-	uid := framework.DefaultUIDPrefix + framework.NewUUID()
-	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
-	config := &runtimeapi.PodSandboxConfig{
-		Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
-		Linux:    &runtimeapi.LinuxPodSandboxConfig{},
-	}
-
-	podID := framework.RunPodSandbox(c, config)
-	return podID, config
-}
-
 // createLogTempDir creates the log temp directory for podSandbox.
 func createLogTempDir(podSandboxName string) (string, string) {
 	hostPath, err := ioutil.TempDir("", "/podLogTest")

@@ -60,7 +60,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 	})
 
 	It("image status get image fields should not be empty [Conformance]", func() {
-		pullPublicImage(c, testImageRef)
+		framework.PullPublicImage(c, testImageRef)
 
 		defer removeImage(c, testImageRef)
 
@@ -82,7 +82,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 
 		defer removeImageList(c, testImageList)
 
-		images := listImage(c, &runtimeapi.ImageFilter{})
+		images := framework.ListImage(c, &runtimeapi.ImageFilter{})
 
 		count := 0
 		for _, imageName := range images {
@@ -114,7 +114,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 
 		defer removeImageList(c, testImageList)
 
-		images := listImage(c, &runtimeapi.ImageFilter{})
+		images := framework.ListImage(c, &runtimeapi.ImageFilter{})
 
 		count := 0
 		for _, imageName := range images {
@@ -143,7 +143,7 @@ func testRemoveImage(c internalapi.ImageManagerService, imageName string) {
 	removeImage(c, imageName)
 
 	By("Check image list empty")
-	images := listImageForImageName(c, imageName)
+	images := framework.ListImageForImageName(c, imageName)
 	Expect(len(images)).To(Equal(0), "Should have none image in list")
 }
 
@@ -152,10 +152,10 @@ func testPullPublicImage(c internalapi.ImageManagerService, imageName string) {
 	if !strings.Contains(imageName, ":") {
 		imageName = imageName + ":latest"
 	}
-	pullPublicImage(c, imageName)
+	framework.PullPublicImage(c, imageName)
 
 	By("Check image list to make sure pulling image success : " + imageName)
-	images := listImageForImageName(c, imageName)
+	images := framework.ListImageForImageName(c, imageName)
 	Expect(len(images)).To(Equal(1), "Should have one image in list")
 
 	testRemoveImage(c, imageName)
@@ -175,7 +175,7 @@ func imageStatus(c internalapi.ImageManagerService, imageName string) *runtimeap
 // pullImageList pulls the images listed in the imageList.
 func pullImageList(c internalapi.ImageManagerService, imageList []string) {
 	for _, imageName := range imageList {
-		pullPublicImage(c, imageName)
+		framework.PullPublicImage(c, imageName)
 	}
 }
 
@@ -186,21 +186,6 @@ func removeImageList(c internalapi.ImageManagerService, imageList []string) {
 	}
 }
 
-// pullPublicImage pulls the public image named imageName.
-func pullPublicImage(c internalapi.ImageManagerService, imageName string) {
-	if !strings.Contains(imageName, ":") {
-		imageName = imageName + ":latest"
-		framework.Logf("Use latest as default image tag.")
-	}
-
-	By("Pull image : " + imageName)
-	imageSpec := &runtimeapi.ImageSpec{
-		Image: imageName,
-	}
-	_, err := c.PullImage(imageSpec, nil)
-	framework.ExpectNoError(err, "failed to pull image: %v", err)
-}
-
 // removeImage removes the image named imagesName.
 func removeImage(c internalapi.ImageManagerService, imageName string) {
 	By("Remove image : " + imageName)
@@ -209,21 +194,4 @@ func removeImage(c internalapi.ImageManagerService, imageName string) {
 	}
 	err := c.RemoveImage(imageSpec)
 	framework.ExpectNoError(err, "failed to remove image: %v", err)
-}
-
-// listImageForImageName lists the images named imageName.
-func listImageForImageName(c internalapi.ImageManagerService, imageName string) []*runtimeapi.Image {
-	By("Get image list for imageName : " + imageName)
-	filter := &runtimeapi.ImageFilter{
-		Image: &runtimeapi.ImageSpec{Image: imageName},
-	}
-	images := listImage(c, filter)
-	return images
-}
-
-// listImage list the image filtered by the image filter.
-func listImage(c internalapi.ImageManagerService, filter *runtimeapi.ImageFilter) []*runtimeapi.Image {
-	images, err := c.ListImages(filter)
-	framework.ExpectNoError(err, "Failed to get image list: %v", err)
-	return images
 }
