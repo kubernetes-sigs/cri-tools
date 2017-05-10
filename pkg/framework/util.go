@@ -18,6 +18,7 @@ package framework
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -47,6 +48,12 @@ const (
 
 	// DefaultAttempt is a default attempt prefix of PodSandbox or container
 	DefaultAttempt uint32 = 2
+
+	// DefaultContainerImage is the default image for container using
+	DefaultContainerImage string = "gcr.io/google_containers/busybox:1.24"
+
+	// DefaultStopContainerTimeout is the default timeout for stopping container
+	DefaultStopContainerTimeout int64 = 60
 )
 
 // LoadCRIClient creates a InternalAPIClient.
@@ -139,4 +146,92 @@ func RunPodSandbox(c internalapi.RuntimeService, config *runtimeapi.PodSandboxCo
 	podID, err := c.RunPodSandbox(config)
 	ExpectNoError(err, "failed to create PodSandbox: %v", err)
 	return podID
+}
+
+// CreatePodSandboxForContainer creates a PodSandbox for creating containers.
+func CreatePodSandboxForContainer(c internalapi.RuntimeService) (string, *runtimeapi.PodSandboxConfig) {
+	podSandboxName := "create-PodSandbox-for-container-" + NewUUID()
+	uid := DefaultUIDPrefix + NewUUID()
+	namespace := DefaultNamespacePrefix + NewUUID()
+	config := &runtimeapi.PodSandboxConfig{
+		Metadata: BuildPodSandboxMetadata(podSandboxName, uid, namespace, DefaultAttempt),
+		Linux:    &runtimeapi.LinuxPodSandboxConfig{},
+	}
+
+	podID := RunPodSandbox(c, config)
+	return podID, config
+}
+
+// BuildContainerMetadata builds containerMetadata.
+func BuildContainerMetadata(containerName string, attempt uint32) *runtimeapi.ContainerMetadata {
+	return &runtimeapi.ContainerMetadata{
+		Name:    containerName,
+		Attempt: attempt,
+	}
+}
+
+// CreateDefaultContainer creates a  default container with default options.
+func CreateDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
+	containerName := prefix + NewUUID()
+	containerConfig := &runtimeapi.ContainerConfig{
+		Metadata: BuildContainerMetadata(containerName, DefaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: DefaultContainerImage},
+		Command:  []string{"top"},
+		Linux:    &runtimeapi.LinuxContainerConfig{},
+	}
+
+	return CreateContainer(rc, ic, containerConfig, podID, podConfig)
+}
+
+// CreateContainer creates a container with the prefix of containerName.
+func CreateContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, config *runtimeapi.ContainerConfig, podID string, podConfig *runtimeapi.PodSandboxConfig) string {
+	// Pull the image if it does not exist.
+	imageName := config.Image.Image
+	if !strings.Contains(imageName, ":") {
+		imageName = imageName + ":latest"
+		Logf("Use latest as default image tag.")
+	}
+
+	images := ListImageForImageName(ic, imageName)
+	if len(images) == 0 {
+		PullPublicImage(ic, imageName)
+	}
+
+	By("Create container.")
+	containerID, err := rc.CreateContainer(podID, config, podConfig)
+	ExpectNoError(err, "failed to create container: %v", err)
+	Logf("Created container %q\n", containerID)
+	return containerID
+}
+
+// ListImageForImageName lists the images named imageName.
+func ListImageForImageName(c internalapi.ImageManagerService, imageName string) []*runtimeapi.Image {
+	By("Get image list for imageName : " + imageName)
+	filter := &runtimeapi.ImageFilter{
+		Image: &runtimeapi.ImageSpec{Image: imageName},
+	}
+	images := ListImage(c, filter)
+	return images
+}
+
+// ListImage list the image filtered by the image filter.
+func ListImage(c internalapi.ImageManagerService, filter *runtimeapi.ImageFilter) []*runtimeapi.Image {
+	images, err := c.ListImages(filter)
+	ExpectNoError(err, "Failed to get image list: %v", err)
+	return images
+}
+
+// PullPublicImage pulls the public image named imageName.
+func PullPublicImage(c internalapi.ImageManagerService, imageName string) {
+	if !strings.Contains(imageName, ":") {
+		imageName = imageName + ":latest"
+		Logf("Use latest as default image tag.")
+	}
+
+	By("Pull image : " + imageName)
+	imageSpec := &runtimeapi.ImageSpec{
+		Image: imageName,
+	}
+	_, err := c.PullImage(imageSpec, nil)
+	ExpectNoError(err, "failed to pull image: %v", err)
 }
