@@ -34,6 +34,9 @@ type TestContextType struct {
 	ImageServiceTimeout   time.Duration
 	RuntimeServiceAddr    string
 	RuntimeServiceTimeout time.Duration
+
+	// Benchmark setting.
+	Number int
 }
 
 // TestContext is a test context.
@@ -56,4 +59,5 @@ func RegisterFlags() {
 	flag.DurationVar(&TestContext.ImageServiceTimeout, "image-service-timeout", 300*time.Second, "Timeout when trying to connect to image service.")
 	flag.StringVar(&TestContext.RuntimeServiceAddr, "runtime-service-address", "/var/run/dockershim.sock", "Runtime service socket for client to connect..")
 	flag.DurationVar(&TestContext.RuntimeServiceTimeout, "runtime-service-timeout", 300*time.Second, "Timeout when trying to connect to a runtime service.")
+	flag.IntVar(&TestContext.Number, "number", 5, "Number of PodSandbox/container in listing benchmark test.")
 }

@@ -18,7 +18,6 @@ package main
 
 import (
 	"os"
-	"path/filepath"
 	"sort"
 
 	"github.com/golang/glog"
@@ -28,90 +27,43 @@ import (
 )
 
 func main() {
-	var buildDependencies, benchmark bool
-	var ginkgoFlags, testFlags, runtimeServiceAddress, imageServiceAddress, focus string
-
 	app := cli.NewApp()
 	app.Name = "critest"
 	app.Usage = "CRI tools for test."
 	app.Version = "0.0.1"
 
+	app.Commands = []cli.Command{
+		validationCommand,
+		benchmarkCommand,
+	}
+
 	app.Flags = []cli.Flag{
 		cli.BoolTFlag{
-			Name:        "compile, c",
-			Usage:       "If true, build all dependencies.",
-			Destination: &buildDependencies,
+			Name:  "compile, c",
+			Usage: "If true, build all dependencies.",
 		},
 		cli.StringFlag{
-			Name:        "ginkgo-flags, g",
-			Usage:       "Space-separated list of arguments to pass to Ginkgo test runner.",
-			Destination: &ginkgoFlags,
+			Name:  "ginkgo-flags, g",
+			Usage: "Space-separated list of arguments to pass to Ginkgo test runner.",
 		},
 		cli.StringFlag{
-			Name:        "test-flags",
-			Usage:       "Space-separated list of arguments to pass to critest.",
-			Destination: &testFlags,
+			Name:   "runtime-endpoint, r",
+			EnvVar: "CRI_RUNTIME_ENDPOINT",
+			Value:  "/var/run/dockershim.sock",
+			Usage:  "CRI runtime service address which is tested.",
 		},
 		cli.StringFlag{
-			Name:        "runtime-endpoint, r",
-			EnvVar:      "CRI_RUNTIME_ENDPOINT",
-			Value:       "/var/run/dockershim.sock",
-			Usage:       "CRI runtime service address which is tested.",
-			Destination: &runtimeServiceAddress,
+			Name:   "image-endpoint, i",
+			EnvVar: "CRI_IMAGE_ENDPOINT",
+			Usage:  "CRI image service address which is tested. Same with runtime-address if not specified.",
 		},
 		cli.StringFlag{
-			Name:        "image-endpoint, i",
-			EnvVar:      "CRI_IMAGE_ENDPOINT",
-			Usage:       "CRI image service address which is tested. Same with runtime-address if not specified.",
-			Destination: &imageServiceAddress,
-		},
-		cli.StringFlag{
-			Name:        "focus, f",
-			Usage:       "critest will only run the test that match the focus regular expression.",
-			Destination: &focus,
-		},
-		cli.BoolFlag{
-			Name:        "benchmark, b",
-			Usage:       "If set, critest will only run benchmark.",
-			Destination: &benchmark,
+			Name:  "focus, f",
+			Usage: "critest will only run the test that match the focus regular expression.",
 		},
 	}
 
 	sort.Sort(cli.FlagsByName(app.Flags))
-
-	app.Action = func(c *cli.Context) error {
-		var test string
-
-		// Build dependencies - ginkgo and test specs.
-		if buildDependencies {
-			if err := build(benchmark); err != nil {
-				glog.Fatalf("Failed to build the dependencies: %v", err)
-			}
-		}
-
-		outputDir, err := getBuildOutputDir()
-		if err != nil {
-			glog.Fatalf("Failed to get build output directory: %v", err)
-		}
-		glog.Infof("Got build output dir: %v", outputDir)
-		ginkgo := filepath.Join(outputDir, "ginkgo")
-
-		if imageServiceAddress == "" {
-			imageServiceAddress = runtimeServiceAddress
-		}
-
-		if focus != "" {
-			ginkgoFlags = ginkgoFlags + " -focus=\"" + focus + "\""
-		}
-
-		if benchmark {
-			test = filepath.Join(outputDir, "benchmark.test")
-		} else {
-			test = filepath.Join(outputDir, "e2e.test")
-		}
-
-		return runCommand(ginkgo, ginkgoFlags, test, "--", testFlags, "--runtime-service-address="+runtimeServiceAddress, "--image-service-address="+imageServiceAddress)
-	}
 
 	if err := app.Run(os.Args); err != nil {
 		glog.Fatal(err)

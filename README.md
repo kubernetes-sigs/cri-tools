@@ -53,11 +53,18 @@ Participation in the Kubernetes community is governed by the [Kubernetes Code of
 go get github.com/kubernetes-incubator/cri-tools/cmd/critest
 go get github.com/kubernetes-incubator/cri-tools/cmd/crictl
 ```
+
 ### critest
 
  Validation test suites for kubelet CRI
 
-#### Flags
+#### Commands
+
+- `benchmark`,`b`:Benchmark test suite for CRI.
+
+- `validation`,`v`:Validation test suite for CRI
+
+#### Global flags
 
 - `--runtime-endpoint`, `-r`:CRI runtime server endpoint. Default is /var/run/dockershim.sock.
 
@@ -67,9 +74,7 @@ go get github.com/kubernetes-incubator/cri-tools/cmd/crictl
 
 - `--ginkgo-flags`,`-g`:Space-separated list of arguments to pass to Ginkgo test runner.
 
-- `--focus`,`-f`:CRI e2e test will only run the test that match the focus regular expression.
-
-- `--benchmark`,`-b`:If set, critest will only run benchmark.
+- `--focus`,`-f`:CRI test will only run the test that match the focus regular expression.
 
 ### crictl
 

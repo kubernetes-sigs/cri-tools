@@ -39,7 +39,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 	})
 
 	Context("benchmark about operations on PodSandbox", func() {
-		Measure("benchmark about creating PodSandbox", func(b Benchmarker) {
+		Measure("benchmark about lifecycle of PodSandbox", func(b Benchmarker) {
 			var podID string
 			var err error
 
@@ -59,35 +59,48 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 			framework.ExpectNoError(err, "failed to create PodSandbox: %v", err)
 			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "create PodSandbox shouldn't take too long.")
 
-			c.StopPodSandbox(podID)
-			c.RemovePodSandbox(podID)
-		}, defaultOperationTimes)
+			operation = b.Time("PodSandbox status", func() {
+				_, err = c.PodSandboxStatus(podID)
+			})
 
-		Measure("benchmark about stopping PodSandbox", func(b Benchmarker) {
-			var err error
-			podID := framework.RunDefaultPodSandbox(c, "PodSandbox-for-stopping-performance-test-")
+			framework.ExpectNoError(err, "failed to get PodSandbox status: %v", err)
+			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "get PodSandbox status shouldn't take too long.")
 
-			operation := b.Time("stop PodSandbox", func() {
+			operation = b.Time("stop PodSandbox", func() {
 				err = c.StopPodSandbox(podID)
 			})
 
 			framework.ExpectNoError(err, "failed to stop PodSandbox: %v", err)
 			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "stop PodSandbox shouldn't take too long.")
 
-			c.RemovePodSandbox(podID)
-		}, defaultOperationTimes)
-
-		Measure("benchmark about removing PodSandbox", func(b Benchmarker) {
-			var err error
-			podID := framework.RunDefaultPodSandbox(c, "PodSandbox-for-removing-performance-test-")
-			c.StopPodSandbox(podID)
-
-			operation := b.Time("remove PodSandbox", func() {
+			operation = b.Time("remove PodSandbox", func() {
 				c.RemovePodSandbox(podID)
 			})
 
 			framework.ExpectNoError(err, "failed to remove PodSandbox: %v", err)
 			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "remove PodSandbox shouldn't take too long.")
+		}, defaultOperationTimes)
+
+		Measure("benchmark about listing PodSandbox", func(b Benchmarker) {
+			podList := make([]string, framework.TestContext.Number)
+			var err error
+
+			for i := 0; i < framework.TestContext.Number; i++ {
+				podID := framework.RunDefaultPodSandbox(c, "PodSandbox-for-list-benchmark-")
+				podList = append(podList, podID)
+			}
+
+			operation := b.Time("list PodSandbox", func() {
+				_, err = c.ListPodSandbox(nil)
+			})
+
+			framework.ExpectNoError(err, "failed to list PodSandbox: %v", err)
+			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "list PodSandbox shouldn't take too long.")
+
+			for _, podID := range podList {
+				c.StopPodSandbox(podID)
+				c.RemovePodSandbox(podID)
+			}
 		}, defaultOperationTimes)
 	})
 })
