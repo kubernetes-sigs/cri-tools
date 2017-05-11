@@ -30,7 +30,7 @@ docker run --rm -v /usr/local/bin:/target jpetazzo/nsenter
 sleep 10
 
 # Run e2e test cases
-critest
+critest v
 
 # Run benchmark test cases
-critest -b
+critest b

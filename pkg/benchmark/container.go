@@ -69,6 +69,14 @@ var _ = framework.KubeDescribe("Container", func() {
 			framework.ExpectNoError(err, "failed to start Container: %v", err)
 			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "start Container shouldn't take too long.")
 
+			operation = b.Time("Container status", func() {
+				By("benchmark about starting Container")
+				_, err = rc.ContainerStatus(containerID)
+			})
+
+			framework.ExpectNoError(err, "failed to get Container status: %v", err)
+			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "get container status shouldn't take too long.")
+
 			operation = b.Time("stop Container", func() {
 				By("benchmark about stoping Container")
 				err = rc.StopContainer(containerID, framework.DefaultStopContainerTimeout)
@@ -86,5 +94,27 @@ var _ = framework.KubeDescribe("Container", func() {
 			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "remove Container shouldn't take too long.")
 
 		}, defaultOperationTimes)
+
+		Measure("benchmark about listing Container", func(b Benchmarker) {
+			containerList := make([]string, framework.TestContext.Number)
+			var err error
+
+			for i := 0; i < framework.TestContext.Number; i++ {
+				containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "Container-for-listing-benchmark-")
+				containerList = append(containerList, containerID)
+			}
+
+			operation := b.Time("list Container", func() {
+				_, err = rc.ListContainers(nil)
+			})
+
+			framework.ExpectNoError(err, "failed to list Container: %v", err)
+			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "list Container shouldn't take too long.")
+
+			for _, containerID := range containerList {
+				rc.StopContainer(containerID, framework.DefaultStopContainerTimeout)
+				rc.RemoveContainer(containerID)
+			}
+		}, 2)
 	})
 })

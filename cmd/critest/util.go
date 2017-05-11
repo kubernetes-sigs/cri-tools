@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
+	"github.com/urfave/cli"
 )
 
 var buildTargets = []string{
@@ -92,4 +93,42 @@ func getBuildOutputDir() (string, error) {
 		return "", err
 	}
 	return buildOutputDir, nil
+}
+
+func runTestSuite(context *cli.Context, benchmark bool) error {
+	var imageServiceAddress string
+	var args []string
+	ginkgoFlags := context.GlobalString("g")
+
+	// Build dependencies - ginkgo and test specs.
+	if context.GlobalBool("c") {
+		if err := build(benchmark); err != nil {
+			glog.Fatalf("Failed to build the dependencies: %v", err)
+		}
+	}
+
+	outputDir, err := getBuildOutputDir()
+	if err != nil {
+		glog.Fatalf("Failed to get build output directory: %v", err)
+	}
+	glog.Infof("Got build output dir: %v", outputDir)
+	ginkgo := filepath.Join(outputDir, "ginkgo")
+
+	if context.GlobalString("i") == "" {
+		imageServiceAddress = context.GlobalString("r")
+	} else {
+		imageServiceAddress = context.GlobalString("i")
+	}
+
+	if context.GlobalString("f") != "" {
+		ginkgoFlags = ginkgoFlags + " -focus=\"" + context.GlobalString("f") + "\""
+	}
+
+	if benchmark {
+		args = []string{ginkgoFlags, filepath.Join(outputDir, "benchmark.test"), "--", "--runtime-service-address=" + context.GlobalString("r"), "--image-service-address=" + imageServiceAddress, "--number=" + context.String("n")}
+	} else {
+		args = []string{ginkgoFlags, filepath.Join(outputDir, "e2e.test"), "--", "--runtime-service-address=" + context.GlobalString("r"), "--image-service-address=" + imageServiceAddress}
+	}
+
+	return runCommand(ginkgo, args...)
 }
