@@ -22,7 +22,7 @@ import (
 
 var validationCommand = cli.Command{
 	Name:    "validation",
-	Usage:   "validation test suite for CRI",
+	Usage:   "Validation test suite for CRI",
 	Aliases: []string{"v"},
 	Action: func(context *cli.Context) error {
 		return runTestSuite(context, false)

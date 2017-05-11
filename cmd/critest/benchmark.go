@@ -22,7 +22,7 @@ import (
 
 var benchmarkCommand = cli.Command{
 	Name:  "benchmark",
-	Usage: "benchmark test suite for CRI",
+	Usage: "Benchmark test suite for CRI",
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "number, n",
