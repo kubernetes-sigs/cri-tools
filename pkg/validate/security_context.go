@@ -18,6 +18,7 @@ package validate
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"strconv"
@@ -180,72 +181,46 @@ var _ = framework.KubeDescribe("Security Context", func() {
 		})
 
 		It("runtime should support HostNetwork is true [security context]", func() {
-			By("create podSandbox for security context HostNetwork")
-			podSandboxNamespace := &runtimeapi.NamespaceOption{
-				HostPid:     false,
-				HostIpc:     false,
-				HostNetwork: true,
+			srv, err := net.Listen("tcp", ":0")
+			if err != nil {
+				framework.Failf("Failed to listen a tcp port: %v", err)
 			}
-			hostPath, podLogPath := createLogTempDir(podSandboxName)
-			podID, podConfig := createNamespacePodSandbox(rc, podSandboxNamespace, podSandboxName, podLogPath)
+			go func() {
+				defer GinkgoRecover()
+				for {
+					conn, err := srv.Accept()
+					if err != nil {
+						return
+					}
+					conn.Write([]byte("hello"))
+				}
+			}()
+			defer srv.Close()
 
-			defer os.RemoveAll(hostPath) //clean up the TempDir
-
-			By("create a container with namespace options")
-			command := []string{"sh", "-c", "cat /proc/net/dev | awk '{print $1}'"}
-			containerNamespace := &runtimeapi.NamespaceOption{
-				HostPid:     false,
-				HostIpc:     false,
-				HostNetwork: true,
-			}
-
-			prefix := "container-with-HostNetwork-test-"
-			containerName := prefix + framework.NewUUID()
-			path := fmt.Sprintf("%s.log", containerName)
-			containerID, _, logPath := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.DefaultContainerImage, containerNamespace, command, path)
-
-			By("start container")
-			startContainer(rc, containerID)
-
-			By("compare host networkList with container's networkList")
-			compareNetworkList(podConfig, logPath, containerNamespace.HostNetwork)
-
+			ports := strings.Split(srv.Addr().String(), ":")
+			podID = createAndCheckHostNetwork(rc, ic, podSandboxName, ports[len(ports)-1], true)
 		})
 
 		It("runtime should support HostNetwork is false [security context]", func() {
-			By("create podSandbox for security context HostNetwork")
-			podSandboxNamespace := &runtimeapi.NamespaceOption{
-				HostPid:     false,
-				HostIpc:     false,
-				HostNetwork: false,
+			srv, err := net.Listen("tcp", ":0")
+			if err != nil {
+				framework.Failf("Failed to listen a tcp port: %v", err)
 			}
+			go func() {
+				defer GinkgoRecover()
+				for {
+					conn, err := srv.Accept()
+					if err != nil {
+						return
+					}
+					conn.Write([]byte("hello"))
+				}
+			}()
+			defer srv.Close()
 
-			hostPath, podLogPath := createLogTempDir(podSandboxName)
-			podID, podConfig := createNamespacePodSandbox(rc, podSandboxNamespace, podSandboxName, podLogPath)
-
-			defer os.RemoveAll(hostPath) //clean up the TempDir
-
-			By("create a container with namespace options")
-			command := []string{"sh", "-c", "cat /proc/net/dev | awk '{print $1}'"}
-			containerNamespace := &runtimeapi.NamespaceOption{
-				HostPid:     false,
-				HostIpc:     false,
-				HostNetwork: false,
-			}
-
-			prefix := "container-with-HostNetwork-test-"
-			containerName := prefix + framework.NewUUID()
-			path := fmt.Sprintf("%s.log", containerName)
-			containerID, _, logPath := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.DefaultContainerImage, containerNamespace, command, path)
-
-			By("start container")
-			startContainer(rc, containerID)
-
-			By("compare host networkList with container's networkList")
-			compareNetworkList(podConfig, logPath, containerNamespace.HostNetwork)
-
+			ports := strings.Split(srv.Addr().String(), ":")
+			podID = createAndCheckHostNetwork(rc, ic, podSandboxName, ports[len(ports)-1], false)
 		})
-
 	})
 
 	Context("runtime should support container with security context", func() {
@@ -517,36 +492,6 @@ func checkRootfs(podConfig *runtimeapi.PodSandboxConfig, logpath string, readOnl
 	}
 }
 
-// getHostNetworkList gets the host network list.
-func getHostNetworkList() []byte {
-	cmd := exec.Command("sh", "-c", "cat /proc/net/dev | awk '{print $1}'")
-	hostNetwork, err := cmd.Output()
-	framework.ExpectNoError(err, "failed to run cmd %q: %v", cmd, err)
-
-	return hostNetwork
-}
-
-// compareNetworkList compares hostNetwork list with container's network list.
-func compareNetworkList(podConfig *runtimeapi.PodSandboxConfig, logPath string, network bool) {
-	By("compare NetworkList")
-	hostNetwork := getHostNetworkList()
-
-	logSlice := parseLogLine(podConfig, logPath)
-	var conNetwork []byte
-	for _, msg := range logSlice {
-		conNetwork = append(conNetwork, msg.log...)
-	}
-
-	if network {
-		framework.Logf("hostNetwork list \n: %s\n containerNetwork list : %s\n", hostNetwork, conNetwork)
-		Expect(conNetwork).To(Equal(hostNetwork), "HostNetwork is true, so container NetworkList should equal with host NetworkList.")
-	} else {
-		framework.Logf("hostNetwork list \n: %s\n containerNetwork list : %s\n", hostNetwork, conNetwork)
-		Expect(conNetwork).ToNot(Equal(hostNetwork), "HostNetwork is false, so container NetworkList should not equal with host NetworkList.")
-	}
-
-}
-
 // createPrivilegedPodSandbox creates a PodSandbox with Privileged of SecurityContext config.
 func createPrivilegedPodSandbox(rc internalapi.RuntimeService, privileged bool) (string, *runtimeapi.PodSandboxConfig) {
 	By("create Privileged podSandbox")
@@ -615,4 +560,47 @@ func createCapabilityContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 	}
 
 	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
+}
+
+func createAndCheckHostNetwork(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podSandboxName, hostNetworkPort string, hostNetwork bool) (podID string) {
+	By(fmt.Sprintf("creating a podSandbox with hostNetwork %v", hostNetwork))
+	namespaceOptions := &runtimeapi.NamespaceOption{
+		HostPid:     false,
+		HostIpc:     false,
+		HostNetwork: hostNetwork,
+	}
+	hostPath, podLogPath := createLogTempDir(podSandboxName)
+	podID, podConfig := createNamespacePodSandbox(rc, namespaceOptions, podSandboxName, podLogPath)
+
+	defer os.RemoveAll(hostPath) //clean up the TempDir
+
+	By("create a container in the sandbox")
+	command := []string{"sh", "-c", "netstat -ln"}
+	containerName := "container-with-HostNetwork-test-" + framework.NewUUID()
+	path := fmt.Sprintf("%s.log", containerName)
+	containerID, _, logPath := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.DefaultContainerImage, namespaceOptions, command, path)
+
+	By("start container")
+	startContainer(rc, containerID)
+
+	By("checking host http service port in the container")
+	Eventually(func() error {
+		log := parseLogLine(podConfig, logPath)
+		for _, msg := range log {
+			if strings.Contains(string(msg.log), fmt.Sprintf(":%s", hostNetworkPort)) {
+				if hostNetwork {
+					return nil
+				}
+
+				return fmt.Errorf("host port %s should not in container's port list", hostNetworkPort)
+			}
+		}
+
+		if hostNetwork {
+			return fmt.Errorf("host port %s should be in container's port list", hostNetworkPort)
+		}
+		return nil
+	}, time.Minute, time.Second).Should(BeNil())
+
+	return podID
 }
