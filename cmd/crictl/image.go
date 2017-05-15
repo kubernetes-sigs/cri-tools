@@ -88,7 +88,11 @@ var listImageCommand = cli.Command{
 					printHeader = false
 					fmt.Println("IMAGE\tIMAGE ID\tSIZE")
 				}
-				fmt.Printf("%s\t%s\t%d\n", image.RepoTags[0], image.Id, image.GetSize_())
+				repoTags := "<none>"
+				if image.RepoTags != nil {
+					repoTags = image.RepoTags[0]
+				}
+				fmt.Printf("%s\t%s\t%d\n", repoTags, image.Id, image.GetSize_())
 				continue
 			}
 			fmt.Printf("ID: %s\n", image.Id)
