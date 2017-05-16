@@ -28,7 +28,7 @@ import (
 	remotecommandconsts "k8s.io/apimachinery/pkg/util/remotecommand"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/kubernetes/pkg/client/unversioned/remotecommand"
-	pb "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
+	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1"
 )
 
 var runtimeAttachCommand = cli.Command{

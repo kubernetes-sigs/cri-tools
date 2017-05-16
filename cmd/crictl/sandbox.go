@@ -25,7 +25,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
-	pb "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
+	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1"
 )
 
 var runtimePodSandboxCommand = cli.Command{
@@ -264,9 +264,6 @@ func PodSandboxStatus(client pb.RuntimeServiceClient, ID string) error {
 	fmt.Printf("Status: %s\n", r.Status.State)
 	ctm := time.Unix(0, r.Status.CreatedAt)
 	fmt.Printf("Created: %v\n", ctm)
-	if r.Status.GetLinux() != nil {
-		fmt.Printf("Network namespace: %s\n", r.Status.GetLinux().GetNamespaces().GetNetwork())
-	}
 
 	if r.Status.Network != nil {
 		fmt.Printf("IP Address: %v\n", r.Status.Network.Ip)
