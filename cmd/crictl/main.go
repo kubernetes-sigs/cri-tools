@@ -78,6 +78,7 @@ func main() {
 		imageCommand,
 		runtimeExecCommand,
 		runtimePortForwardCommand,
+		logsCommand,
 	}
 
 	app.Flags = []cli.Flag{

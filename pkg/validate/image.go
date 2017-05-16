@@ -20,8 +20,8 @@ import (
 	"strings"
 
 	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
-	internalapi "k8s.io/kubernetes/pkg/kubelet/api"
-	runtimeapi "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
+	internalapi "k8s.io/kubernetes/pkg/kubelet/apis/cri"
+	runtimeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -189,9 +189,12 @@ func removeImageList(c internalapi.ImageManagerService, imageList []string) {
 // removeImage removes the image named imagesName.
 func removeImage(c internalapi.ImageManagerService, imageName string) {
 	By("Remove image : " + imageName)
-	imageSpec := &runtimeapi.ImageSpec{
-		Image: imageName,
+	image, err := c.ImageStatus(&runtimeapi.ImageSpec{Image: imageName})
+	framework.ExpectNoError(err, "failed to get image status: %v", err)
+
+	if image != nil {
+		By("Remove image by ID : " + image.Id)
+		err = c.RemoveImage(&runtimeapi.ImageSpec{Image: image.Id})
+		framework.ExpectNoError(err, "failed to remove image: %v", err)
 	}
-	err := c.RemoveImage(imageSpec)
-	framework.ExpectNoError(err, "failed to remove image: %v", err)
 }

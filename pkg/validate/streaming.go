@@ -28,8 +28,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/kubernetes/pkg/client/unversioned/remotecommand"
-	internalapi "k8s.io/kubernetes/pkg/kubelet/api"
-	runtimeapi "k8s.io/kubernetes/pkg/kubelet/api/v1alpha1/runtime"
+	internalapi "k8s.io/kubernetes/pkg/kubelet/apis/cri"
+	runtimeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
