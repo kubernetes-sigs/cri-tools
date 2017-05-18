@@ -70,7 +70,7 @@ var _ = framework.KubeDescribe("Container", func() {
 			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "start Container shouldn't take too long.")
 
 			operation = b.Time("Container status", func() {
-				By("benchmark about starting Container")
+				By("benchmark about getting Container status")
 				_, err = rc.ContainerStatus(containerID)
 			})
 
@@ -115,6 +115,6 @@ var _ = framework.KubeDescribe("Container", func() {
 				rc.StopContainer(containerID, framework.DefaultStopContainerTimeout)
 				rc.RemoveContainer(containerID)
 			}
-		}, 2)
+		}, defaultOperationTimes)
 	})
 })
