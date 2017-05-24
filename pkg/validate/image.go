@@ -64,7 +64,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 
 		defer removeImage(c, testImageRef)
 
-		status := imageStatus(c, testImageRef)
+		status := framework.ImageStatus(c, testImageRef)
 		Expect(status.Id).NotTo(BeNil(), "Image Id should not be nil")
 		Expect(len(status.RepoTags)).NotTo(Equal(0), "Should have repoTags in image")
 		Expect(status.Size_).NotTo(BeNil(), "Image Size should not be nil")
@@ -87,13 +87,13 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 		count := 0
 		for _, imageName := range images {
 			for _, imagesTag := range imageName.RepoTags {
-				if strings.EqualFold(imagesTag, "busybox:1-uclibc") {
+				if strings.HasSuffix(imagesTag, "busybox:1-uclibc") {
 					count = count + 1
 				}
-				if strings.EqualFold(imagesTag, "busybox:1-musl") {
+				if strings.HasSuffix(imagesTag, "busybox:1-musl") {
 					count = count + 1
 				}
-				if strings.EqualFold(imagesTag, "busybox:1-glibc") {
+				if strings.HasSuffix(imagesTag, "busybox:1-glibc") {
 					count = count + 1
 				}
 			}
@@ -119,13 +119,13 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 		count := 0
 		for _, imageName := range images {
 			for _, imagesTag := range imageName.RepoTags {
-				if strings.EqualFold(imagesTag, "busybox:1.26.2-uclibc") {
+				if strings.HasSuffix(imagesTag, "busybox:1.26.2-uclibc") {
 					count = count + 1
 				}
-				if strings.EqualFold(imagesTag, "busybox:1-uclibc") {
+				if strings.HasSuffix(imagesTag, "busybox:1-uclibc") {
 					count = count + 1
 				}
-				if strings.EqualFold(imagesTag, "busybox:1") {
+				if strings.HasSuffix(imagesTag, "busybox:1") {
 					count = count + 1
 				}
 			}
@@ -143,8 +143,8 @@ func testRemoveImage(c internalapi.ImageManagerService, imageName string) {
 	removeImage(c, imageName)
 
 	By("Check image list empty")
-	images := framework.ListImageForImageName(c, imageName)
-	Expect(len(images)).To(Equal(0), "Should have none image in list")
+	status := framework.ImageStatus(c, imageName)
+	Expect(status).To(BeNil(), "Should have none image in list")
 }
 
 // testPullPublicImage pulls the image named imageName, make sure it success and remove the image.
@@ -155,21 +155,10 @@ func testPullPublicImage(c internalapi.ImageManagerService, imageName string) {
 	framework.PullPublicImage(c, imageName)
 
 	By("Check image list to make sure pulling image success : " + imageName)
-	images := framework.ListImageForImageName(c, imageName)
-	Expect(len(images)).To(Equal(1), "Should have one image in list")
+	status := framework.ImageStatus(c, imageName)
+	Expect(status).NotTo(BeNil(), "Should have one image in list")
 
 	testRemoveImage(c, imageName)
-}
-
-// imageStatus gets the status of the image named imageName.
-func imageStatus(c internalapi.ImageManagerService, imageName string) *runtimeapi.Image {
-	By("Get image status")
-	imageSpec := &runtimeapi.ImageSpec{
-		Image: imageName,
-	}
-	status, err := c.ImageStatus(imageSpec)
-	framework.ExpectNoError(err, "failed to get image status: %v", err)
-	return status
 }
 
 // pullImageList pulls the images listed in the imageList.
