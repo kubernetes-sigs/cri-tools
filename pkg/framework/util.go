@@ -192,8 +192,8 @@ func CreateContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerS
 		Logf("Use latest as default image tag.")
 	}
 
-	images := ListImageForImageName(ic, imageName)
-	if len(images) == 0 {
+	status := ImageStatus(ic, imageName)
+	if status == nil {
 		PullPublicImage(ic, imageName)
 	}
 
@@ -204,14 +204,15 @@ func CreateContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerS
 	return containerID
 }
 
-// ListImageForImageName lists the images named imageName.
-func ListImageForImageName(c internalapi.ImageManagerService, imageName string) []*runtimeapi.Image {
-	By("Get image list for imageName : " + imageName)
-	filter := &runtimeapi.ImageFilter{
-		Image: &runtimeapi.ImageSpec{Image: imageName},
+// ImageStatus gets the status of the image named imageName.
+func ImageStatus(c internalapi.ImageManagerService, imageName string) *runtimeapi.Image {
+	By("Get image status for image: " + imageName)
+	imageSpec := &runtimeapi.ImageSpec{
+		Image: imageName,
 	}
-	images := ListImage(c, filter)
-	return images
+	status, err := c.ImageStatus(imageSpec)
+	ExpectNoError(err, "failed to get image status: %v", err)
+	return status
 }
 
 // ListImage list the image filtered by the image filter.
