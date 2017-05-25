@@ -50,7 +50,7 @@ const (
 	DefaultAttempt uint32 = 2
 
 	// DefaultContainerImage is the default image for container using
-	DefaultContainerImage string = "gcr.io/google_containers/busybox:1.24"
+	DefaultContainerImage string = "busybox:1.26"
 
 	// DefaultStopContainerTimeout is the default timeout for stopping container
 	DefaultStopContainerTimeout int64 = 60
