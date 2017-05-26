@@ -123,6 +123,9 @@ func runTestSuite(context *cli.Context, benchmark bool) error {
 	if context.GlobalString("f") != "" {
 		ginkgoFlags = ginkgoFlags + " -focus=\"" + context.GlobalString("f") + "\""
 	}
+	if context.GlobalString("s") != "" {
+		ginkgoFlags = ginkgoFlags + " -skip=\"" + context.GlobalString("s") + "\""
+	}
 
 	if benchmark {
 		args = []string{ginkgoFlags, filepath.Join(outputDir, "benchmark.test"), "--", "--runtime-service-address=" + context.GlobalString("r"), "--image-service-address=" + imageServiceAddress, "--number=" + context.String("n")}

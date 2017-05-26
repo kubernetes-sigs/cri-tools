@@ -61,6 +61,10 @@ func main() {
 			Name:  "focus, f",
 			Usage: "critest will only run the test that match the focus regular expression.",
 		},
+		cli.StringFlag{
+			Name:  "skip, s",
+			Usage: "critest will not run the test that match the skip regular expression.",
+		},
 	}
 
 	sort.Sort(cli.FlagsByName(app.Flags))

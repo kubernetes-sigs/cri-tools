@@ -76,6 +76,8 @@ go get github.com/kubernetes-incubator/cri-tools/cmd/crictl
 
 - `--focus`,`-f`:CRI test will only run the test that match the focus regular expression.
 
+- `--skip`,`-s`:CRI test will not run the test that match the focus regular expression.
+
 ### crictl
 
 CLI for kubelet CRI
