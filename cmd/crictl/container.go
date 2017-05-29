@@ -174,7 +174,7 @@ var listContainersCommand = cli.Command{
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "verbose, v",
-			Usage: "show verbos information for containers",
+			Usage: "show verbose information for containers",
 		},
 		cli.StringFlag{
 			Name:  "id",
@@ -195,6 +195,10 @@ var listContainersCommand = cli.Command{
 			Name:  "label",
 			Usage: "filter by key=value label",
 		},
+		cli.BoolFlag{
+			Name:  "quiet",
+			Usage: "list only container IDs",
+		},
 	},
 	Action: func(context *cli.Context) error {
 		if err := getRuntimeClient(context); err != nil {
@@ -207,6 +211,7 @@ var listContainersCommand = cli.Command{
 			state:   context.String("state"),
 			verbose: context.Bool("verbose"),
 			labels:  make(map[string]string),
+			quiet:   context.Bool("quiet"),
 		}
 
 		for _, l := range context.StringSlice("label") {
@@ -397,6 +402,10 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 	}
 	printHeader := true
 	for _, c := range r.GetContainers() {
+		if opts.quiet {
+			fmt.Printf("%s\n", c.Id)
+			continue
+		}
 		ctm := time.Unix(0, c.CreatedAt)
 		if !opts.verbose {
 			if printHeader {

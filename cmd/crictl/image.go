@@ -69,6 +69,10 @@ var listImageCommand = cli.Command{
 			Name:  "verbose, v",
 			Usage: "show verbose info for images",
 		},
+		cli.BoolFlag{
+			Name:  "quiet",
+			Usage: "list only image IDs",
+		},
 	},
 	Action: func(context *cli.Context) error {
 		if err := getImageClient(context); err != nil {
@@ -83,6 +87,10 @@ var listImageCommand = cli.Command{
 		verbose := context.Bool("verbose")
 		printHeader := true
 		for _, image := range r.Images {
+			if context.Bool("quiet") {
+				fmt.Printf("%s\n", image.Id)
+				continue
+			}
 			if !verbose {
 				if printHeader {
 					printHeader = false

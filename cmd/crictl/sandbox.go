@@ -158,6 +158,10 @@ var listPodSandboxCommand = cli.Command{
 			Name:  "verbose, v",
 			Usage: "show verbose info for sandboxes",
 		},
+		cli.BoolFlag{
+			Name:  "quiet",
+			Usage: "list only sandbox IDs",
+		},
 	},
 	Action: func(context *cli.Context) error {
 		if err := getRuntimeClient(context); err != nil {
@@ -169,6 +173,7 @@ var listPodSandboxCommand = cli.Command{
 			state:   context.String("state"),
 			verbose: context.Bool("verbose"),
 			labels:  make(map[string]string),
+			quiet:   context.Bool("quiet"),
 		}
 
 		for _, l := range context.StringSlice("label") {
@@ -318,6 +323,10 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 	}
 	printHeader := true
 	for _, pod := range r.Items {
+		if opts.quiet {
+			fmt.Printf("%s\n", pod.Id)
+			continue
+		}
 		if !opts.verbose {
 			if printHeader {
 				printHeader = false

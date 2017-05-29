@@ -42,6 +42,8 @@ type listOptions struct {
 	verbose bool
 	// labels are selectors for the sandbox
 	labels map[string]string
+	// quiet is for listing just container/sandbox/image IDs
+	quiet bool
 }
 
 type execOptions struct {
