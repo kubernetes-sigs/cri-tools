@@ -419,7 +419,7 @@ func parseLogLine(podConfig *runtimeapi.PodSandboxConfig, logPath string) []logM
 		line := scanner.Text()
 
 		// to determine whether the log is Docker format or CRI format.
-		if strings.Contains(line, "{") {
+		if strings.HasPrefix(line, "{") {
 			parseDockerJSONLog([]byte(line), &msg)
 		} else {
 			parseCRILog(line, &msg)
@@ -431,7 +431,7 @@ func parseLogLine(podConfig *runtimeapi.PodSandboxConfig, logPath string) []logM
 	if err := scanner.Err(); err != nil {
 		framework.ExpectNoError(err, "failed to read log by row: %v", err)
 	}
-	framework.Logf("Parse json log succeed")
+	framework.Logf("Parse container log succeed")
 
 	return msgLog
 }
