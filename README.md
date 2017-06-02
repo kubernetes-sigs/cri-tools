@@ -104,6 +104,15 @@ CLI for kubelet CRI
 
 #### Global flags
 
+- `--config-file`:Config file (default: "`/etc/crictl.yaml`"). Overrided by flags or  environment variables.
+```
+# cat /etc/crictl.yaml
+runtime-endpoint: /var/run/dockershim.sock
+image-endpoint: /var/run/dockershim.sock
+timeout: 10
+debug: true
+```
+
 - `--runtime-endpoint`:CRI server runtime endpoint (default: "/var/run/dockershim.sock").The default server is dockershim. If we want to debug other CRI server such as frakti, we can add flag `--runtime-endpoint=/var/run/frakti.sock`
 
 - `--image-endpoint`:CRI server image endpoint, default same as runtime endpoint.
