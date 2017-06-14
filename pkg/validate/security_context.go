@@ -34,7 +34,7 @@ import (
 )
 
 const (
-	nginxContainerImage string = "gcr.io/google_containers/nginx-slim:0.7"
+	nginxContainerImage string = "nginx"
 )
 
 var _ = framework.KubeDescribe("Security Context", func() {
