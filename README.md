@@ -60,23 +60,23 @@ go get github.com/kubernetes-incubator/cri-tools/cmd/crictl
 
 #### Commands
 
-- `benchmark`,`b`:Benchmark test suite for CRI.
+- `benchmark`,`b`: Benchmark test suite for CRI.
 
-- `validation`,`v`:Validation test suite for CRI
+- `validation`,`v`: Validation test suite for CRI
 
 #### Global flags
 
-- `--runtime-endpoint`, `-r`:CRI runtime server endpoint. Default is /var/run/dockershim.sock.
+- `--runtime-endpoint`, `-r`: CRI runtime server endpoint. Default is /var/run/dockershim.sock.
 
-- `--image-endpoint`, `-i`:CRI server image endpoint, default same as runtime endpoint.
+- `--image-endpoint`, `-i`: CRI server image endpoint, default same as runtime endpoint.
 
-- `--compile`, `-c`:If we don't need to build dependencies, we can add this flag `--compile=false` or `-c=false`.
+- `--compile`, `-c`: If we don't need to build dependencies, we can add this flag `--compile=false` or `-c=false`.
 
-- `--ginkgo-flags`,`-g`:Space-separated list of arguments to pass to Ginkgo test runner.
+- `--ginkgo-flags`,`-g`: Space-separated list of arguments to pass to Ginkgo test runner.
 
-- `--focus`,`-f`:CRI test will only run the test that match the focus regular expression.
+- `--focus`,`-f`: CRI test will only run the test that match the focus regular expression.
 
-- `--skip`,`-s`:CRI test will not run the test that match the focus regular expression.
+- `--skip`,`-s`: CRI test will not run the test that match the focus regular expression.
 
 ### crictl
 
@@ -88,23 +88,23 @@ CLI for kubelet CRI
 
 - `sandbox`, `sb`: Manage lifecycle of podsandbox
 
-- `container`, `ctr`:Manage lifecycle of container
+- `container`, `ctr`: Manage lifecycle of container
 
-- `status`:Get the status information of runtime
+- `status`: Get the status information of runtime
 
-- `attach`:Attach a running container
+- `attach`: Attach a running container
 
-- `image`:Manage image
+- `image`: Manage images
 
-- `exec`:Exec(exec, syncexec) a command in a running container
+- `exec`: Exec(exec, syncexec) a command in a running container
 
-- `portforward`:Forword ports(localport:remoteport) from a sandbox
+- `portforward`: Forword ports(localport:remoteport) from a sandbox
 
-- `help`, `h`:Shows a list of commands or help for one command
+- `help`, `h`: Shows a list of commands or help for one command
 
 #### Global flags
 
-- `--config-file`:Config file (default: "`/etc/crictl.yaml`"). Overrided by flags or  environment variables.
+- `--config-file`: Config file in yaml format. Overrided by flags or environment variables.
 ```
 # cat /etc/crictl.yaml
 runtime-endpoint: /var/run/dockershim.sock
@@ -113,17 +113,17 @@ timeout: 10
 debug: true
 ```
 
-- `--runtime-endpoint`:CRI server runtime endpoint (default: "/var/run/dockershim.sock").The default server is dockershim. If we want to debug other CRI server such as frakti, we can add flag `--runtime-endpoint=/var/run/frakti.sock`
+- `--runtime-endpoint`: CRI server runtime endpoint (default: "/var/run/dockershim.sock").The default server is dockershim. If we want to debug other CRI server such as frakti, we can add flag `--runtime-endpoint=/var/run/frakti.sock`
 
-- `--image-endpoint`:CRI server image endpoint, default same as runtime endpoint.
+- `--image-endpoint`: CRI server image endpoint, default same as runtime endpoint.
 
-- `--timeout`:Timeout of connecting to server (default: 10s)
+- `--timeout`: Timeout of connecting to server (default: 10s)
 
-- `--debug`:Enable debug output
+- `--debug`: Enable debug output
 
-- `--help`, `-h`:show help
+- `--help`, `-h`: show help
 
-- `--version`, `-v`:print the version information of crictl
+- `--version`, `-v`: print the version information of crictl
 
 #### Examples
 
