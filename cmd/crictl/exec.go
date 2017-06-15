@@ -27,8 +27,8 @@ import (
 	"golang.org/x/net/context"
 	remotecommandconsts "k8s.io/apimachinery/pkg/util/remotecommand"
 	restclient "k8s.io/client-go/rest"
-	"k8s.io/kubernetes/pkg/client/unversioned/remotecommand"
-	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1"
+	remoteclient "k8s.io/client-go/tools/remotecommand"
+	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
 const (
@@ -140,12 +140,12 @@ func Exec(client pb.RuntimeServiceClient, opts execOptions) error {
 	}
 
 	logrus.Debugf("Exec URL: %v", URL)
-	exec, err := remotecommand.NewExecutor(&restclient.Config{}, "POST", URL)
+	exec, err := remoteclient.NewExecutor(&restclient.Config{}, "POST", URL)
 	if err != nil {
 		return err
 	}
 
-	streamOptions := remotecommand.StreamOptions{
+	streamOptions := remoteclient.StreamOptions{
 		SupportedProtocols: remotecommandconsts.SupportedStreamingProtocols,
 		Stdout:             os.Stdout,
 		Stderr:             os.Stderr,

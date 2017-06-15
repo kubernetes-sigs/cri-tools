@@ -24,7 +24,7 @@ import (
 
 	"github.com/urfave/cli"
 	"google.golang.org/grpc"
-	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1"
+	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
 var runtimeClient pb.RuntimeServiceClient

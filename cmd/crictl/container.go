@@ -25,7 +25,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
-	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1"
+	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
 var runtimeContainerCommand = cli.Command{

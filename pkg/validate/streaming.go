@@ -27,9 +27,9 @@ import (
 	remotecommandconsts "k8s.io/apimachinery/pkg/util/remotecommand"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
-	"k8s.io/kubernetes/pkg/client/unversioned/remotecommand"
+	remoteclient "k8s.io/client-go/tools/remotecommand"
 	internalapi "k8s.io/kubernetes/pkg/kubelet/apis/cri"
-	runtimeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1"
+	runtimeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -136,10 +136,10 @@ func checkExec(c internalapi.RuntimeService, execServerURL string) {
 	// Only http is supported now.
 	// TODO: support streaming APIs via tls.
 	url := parseURL(c, execServerURL)
-	e, err := remotecommand.NewExecutor(&rest.Config{}, "POST", url)
+	e, err := remoteclient.NewExecutor(&rest.Config{}, "POST", url)
 	framework.ExpectNoError(err, "failed to create executor for %q", execServerURL)
 
-	err = e.Stream(remotecommand.StreamOptions{
+	err = e.Stream(remoteclient.StreamOptions{
 		SupportedProtocols: remotecommandconsts.SupportedStreamingProtocols,
 		Stdout:             localOut,
 		Stderr:             localErr,
@@ -204,10 +204,10 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 	// Only http is supported now.
 	// TODO: support streaming APIs via tls.
 	url := parseURL(c, attachServerURL)
-	e, err := remotecommand.NewExecutor(&rest.Config{}, "POST", url)
+	e, err := remoteclient.NewExecutor(&rest.Config{}, "POST", url)
 	framework.ExpectNoError(err, "failed to create executor for %q", attachServerURL)
 
-	err = e.Stream(remotecommand.StreamOptions{
+	err = e.Stream(remoteclient.StreamOptions{
 		SupportedProtocols: remotecommandconsts.SupportedStreamingProtocols,
 		Stdin:              reader,
 		Stdout:             localOut,
@@ -239,7 +239,7 @@ func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string) 
 	defer close(stopChan)
 
 	url := parseURL(c, portForwardSeverURL)
-	e, err := remotecommand.NewExecutor(&rest.Config{}, "POST", url)
+	e, err := remoteclient.NewExecutor(&rest.Config{}, "POST", url)
 	framework.ExpectNoError(err, "failed to create executor for %q", portForwardSeverURL)
 
 	pf, err := portforward.New(e, []string{"8000:80"}, stopChan, readyChan, os.Stdout, os.Stderr)
