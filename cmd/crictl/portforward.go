@@ -28,8 +28,8 @@ import (
 	"golang.org/x/net/context"
 	restclient "k8s.io/client-go/rest"
 	portforward "k8s.io/client-go/tools/portforward"
-	"k8s.io/kubernetes/pkg/client/unversioned/remotecommand"
-	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1"
+	remoteclient "k8s.io/client-go/tools/remotecommand"
+	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
 var runtimePortForwardCommand = cli.Command{
@@ -86,7 +86,7 @@ func PortForward(client pb.RuntimeServiceClient, opts portforwardOptions) error 
 		return err
 	}
 	logrus.Debugf("PortForward URL: %v", URL)
-	exec, err := remotecommand.NewExecutor(&restclient.Config{}, "POST", URL)
+	exec, err := remoteclient.NewExecutor(&restclient.Config{}, "POST", URL)
 	if err != nil {
 		return err
 	}
