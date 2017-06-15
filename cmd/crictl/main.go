@@ -94,7 +94,7 @@ func main() {
 		cli.StringFlag{
 			Name:   "config-file, c",
 			EnvVar: "CRI_CONFIG_FILE",
-			Value:  "/etc/crictl.yaml",
+			Value:  "",
 			Usage:  "config file for crictl",
 		},
 		cli.StringFlag{
@@ -121,14 +121,19 @@ func main() {
 
 	app.Before = func(context *cli.Context) error {
 		configFile := context.GlobalString("config-file")
-		config, err := ReadConfig(configFile)
-		if err != nil {
-			logrus.Infof("Falied to load config file:%v", err)
+		if configFile == "" {
 			RuntimeEndpoint = context.GlobalString("runtime-endpoint")
 			ImageEndpoint = context.GlobalString("image-endpoint")
 			Timeout = context.GlobalDuration("timeout")
 			Debug = context.GlobalBool("debug")
 		} else {
+			// Get config from file.
+			config, err := ReadConfig(configFile)
+			if err != nil {
+				logrus.Fatalf("Falied to load config file: %v", err)
+			}
+
+			// Command line flags overrides config file.
 			if context.IsSet("runtime-endpoint") {
 				RuntimeEndpoint = context.String("runtime-endpoint")
 			} else if config.RuntimeEndpoint != "" {
@@ -156,6 +161,7 @@ func main() {
 				Debug = config.Debug
 			}
 		}
+
 		if Debug {
 			logrus.SetLevel(logrus.DebugLevel)
 		}
