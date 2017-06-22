@@ -17,12 +17,15 @@ cri-tools aims to provide a series of debugging and validation tools for Kubelet
 * Building a new kubelet container runtime based on CRI.
 * Managing pods/containers for CRI-compatible runtimes by end-users, e.g. pods created by crictl may be removed automatically by kubelet because of non-exist on the kube-apiserver.
 
-## Roadmap
+## Current Status
 
-* Basic sandbox/image/container lifecycle operations
-* Handle streaming APIs (exec/attach/port-forwarding)
-* Reading logs of containers.
-* Validation test suites.
+We are currently working toward an alpha version of CRI validation tests to be used in conjunction with Kubernetes 1.7. See the [roadmap](docs/roadmap.md) for information about current and future milestones.
+
+## Documentation
+
+- [CRI validation test suite](docs/validation.md)
+- [CRI performance benchmarking](docs/benchmark.md)
+- [CRI CLI](docs/crictl.md)
 
 ## Community, discussion, contribution, and support
 
@@ -41,151 +44,10 @@ This is a [Kubernetes Incubator project](https://github.com/kubernetes/community
 - Champion: Yu-Ju Hong (@yujuhong)
 - SIG: sig-node
 
-### Code of conduct
+## Contributing
+
+Interested in contributing? Check out the [documentation](CONTRIBUTING.md).
+
+## Code of conduct
 
 Participation in the Kubernetes community is governed by the [Kubernetes Code of Conduct](code-of-conduct.md).
-
-## Getting started
-
-### Build cri-tools
-
-```bash
-go get github.com/kubernetes-incubator/cri-tools/cmd/critest
-go get github.com/kubernetes-incubator/cri-tools/cmd/crictl
-```
-
-### critest
-
- Validation test suites for kubelet CRI
-
-#### Commands
-
-- `benchmark`,`b`: Benchmark test suite for CRI.
-
-- `validation`,`v`: Validation test suite for CRI
-
-#### Global flags
-
-- `--runtime-endpoint`, `-r`: CRI runtime server endpoint. Default is /var/run/dockershim.sock.
-
-- `--image-endpoint`, `-i`: CRI server image endpoint, default same as runtime endpoint.
-
-- `--compile`, `-c`: If we don't need to build dependencies, we can add this flag `--compile=false` or `-c=false`.
-
-- `--ginkgo-flags`,`-g`: Space-separated list of arguments to pass to Ginkgo test runner.
-
-- `--focus`,`-f`: CRI test will only run the test that match the focus regular expression.
-
-- `--skip`,`-s`: CRI test will not run the test that match the focus regular expression.
-
-### crictl
-
-CLI for kubelet CRI
-
-#### Commands
-
-- `info`: Get version information of runtime
-
-- `sandbox`, `sb`: Manage lifecycle of podsandbox
-
-- `container`, `ctr`: Manage lifecycle of container
-
-- `status`: Get the status information of runtime
-
-- `attach`: Attach a running container
-
-- `image`: Manage images
-
-- `exec`: Exec(exec, syncexec) a command in a running container
-
-- `portforward`: Forword ports(localport:remoteport) from a sandbox
-
-- `help`, `h`: Shows a list of commands or help for one command
-
-#### Global flags
-
-- `--config-file`: Config file in yaml format. Overrided by flags or environment variables.
-```
-# cat /etc/crictl.yaml
-runtime-endpoint: /var/run/dockershim.sock
-image-endpoint: /var/run/dockershim.sock
-timeout: 10
-debug: true
-```
-
-- `--runtime-endpoint`: CRI server runtime endpoint (default: "/var/run/dockershim.sock").The default server is dockershim. If we want to debug other CRI server such as frakti, we can add flag `--runtime-endpoint=/var/run/frakti.sock`
-
-- `--image-endpoint`: CRI server image endpoint, default same as runtime endpoint.
-
-- `--timeout`: Timeout of connecting to server (default: 10s)
-
-- `--debug`: Enable debug output
-
-- `--help`, `-h`: show help
-
-- `--version`, `-v`: print the version information of crictl
-
-#### Examples
-
-- Run sandbox with config file
-
-```
-# cat sandbox-config.json
-{
-    "metadata": {
-        "name": "nginx-sandbox",
-        "namespace": "default",
-        "attempt": 1,
-        "uid": "hdishd83djaidwnduwk28bcsb"
-    },
-    "linux": {
-    }
-}
-# crictl sandbox run sandbox-config.json
-9b542bfe8f93eb2d726d0f7b619f253c18858006aa53023e392e138b0be6301c
-```
-
-- Create container in a sandbox with config file
-
-```
-# cat sandbox-config.json
-{
-    "metadata": {
-        "name": "nginx-sandbox",
-        "namespace": "default",
-        "attempt": 1,
-        "uid": "hdishd83djaidwnduwk28bcsb"
-    },
-    "linux": {
-    }
-}
-# cat container-config.json
-{
-  "metadata": {
-      "name": "busybox"
-  },
-  "image":{
-      "image": "busybox"
-  },
-  "command": [
-      "top"
-  ],
-  "linux": {
-  }
-}
-# crictl container create 9b542bfe8f93eb2d726d0f7b619f253c18858006aa53023e392e138b0be6301c container-config.json sandbox-config.json
-bf642f55ecf54345354a86a42c08fb0d66e55e90c855973495f31e991c2bf725
-```
-
-* Start container
-
-```
-# crictl container start bf642f55ecf54345354a86a42c08fb0d66e55e90c855973495f31e991c2bf725
-bf642f55ecf54345354a86a42c08fb0d66e55e90c855973495f31e991c2bf725
-```
-
-* Exec a command in container
-
-```
-# crictl exec -i -t bf642f55ecf54345354a86a42c08fb0d66e55e90c855973495f31e991c2bf725 sh
-```
