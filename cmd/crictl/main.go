@@ -76,7 +76,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "crictl"
 	app.Usage = "client for CRI"
-	app.Version = "0.0.1"
+	app.Version = "0.1.0"
 
 	app.Commands = []cli.Command{
 		runtimeVersionCommand,

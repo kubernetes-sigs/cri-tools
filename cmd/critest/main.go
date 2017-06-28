@@ -30,7 +30,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "critest"
 	app.Usage = "CRI tools for test."
-	app.Version = "0.0.1"
+	app.Version = "0.1.0"
 
 	app.Commands = []cli.Command{
 		validationCommand,
