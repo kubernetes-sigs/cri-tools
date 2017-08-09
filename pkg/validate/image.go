@@ -102,7 +102,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 
 	})
 
-	It("listImage should get exactly 3 repoTags in the result image [Conformance]", func() {
+	It("listImage should get exactly 2 repoTags in the result image [Conformance]", func() {
 		// different tags refer to the same image
 		testImageList := []string{
 			"busybox:1-uclibc",
@@ -129,7 +129,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 				count = 0
 			}
 		}
-		Expect(count).To(Equal(2), "Should have three repoTags in single image in list")
+		Expect(count).To(Equal(2), "Should have two repoTags in single image in list")
 	})
 })
 
