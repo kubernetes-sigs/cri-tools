@@ -17,10 +17,12 @@ before_install:
 install:
   - make install.tools
 
-
-script:
-  - make
-  - make lint
-  - make gofmt
-  - sudo env PATH=$PATH GOPATH=$GOPATH hack/run-critest.sh
-
+jobs:
+  include:
+    - stage: Static check
+      script:
+        - make 
+        - make lint
+        - make gofmt
+    - stage: Test
+      script: sudo env PATH=$PATH GOPATH=$GOPATH hack/run-critest.sh
