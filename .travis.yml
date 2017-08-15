@@ -21,8 +21,9 @@ jobs:
   include:
     - stage: Static check
       script:
-        - make 
         - make lint
         - make gofmt
     - stage: Test
-      script: sudo env PATH=$PATH GOPATH=$GOPATH hack/run-critest.sh
+      script: 
+        - make
+        - sudo env PATH=$PATH GOPATH=$GOPATH hack/run-critest.sh
