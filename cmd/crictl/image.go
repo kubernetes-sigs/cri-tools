@@ -17,7 +17,9 @@ limitations under the License.
 package main
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -38,8 +40,15 @@ var imageCommand = cli.Command{
 }
 
 var pullImageCommand = cli.Command{
-	Name:      "pull",
-	Usage:     "pull an image",
+	Name:  "pull",
+	Usage: "pull an image",
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "creds",
+			Value: "",
+			Usage: "Use `USERNAME[:PASSWORD]` for accessing the registry",
+		},
+	},
 	ArgsUsage: "NAME[:TAG|@DIGEST]",
 	Action: func(context *cli.Context) error {
 		imageName := context.Args().First()
@@ -51,7 +60,16 @@ var pullImageCommand = cli.Command{
 			return err
 		}
 
-		r, err := PullImage(imageClient, imageName)
+		var auth *pb.AuthConfig
+		if context.IsSet("creds") {
+			var err error
+			auth, err = getAuth(context.String("creds"))
+			if err != nil {
+				return err
+			}
+		}
+
+		r, err := PullImage(imageClient, imageName, auth)
 		logrus.Debugf("PullImageResponse: %v", r)
 		if err != nil {
 			return fmt.Errorf("pulling image failed: %v", err)
@@ -181,10 +199,42 @@ var removeImageCommand = cli.Command{
 	},
 }
 
+func parseCreds(creds string) (string, string, error) {
+	if creds == "" {
+		return "", "", errors.New("credentials can't be empty")
+	}
+	up := strings.SplitN(creds, ":", 2)
+	if len(up) == 1 {
+		return up[0], "", nil
+	}
+	if up[0] == "" {
+		return "", "", errors.New("username can't be empty")
+	}
+	return up[0], up[1], nil
+}
+
+func getAuth(creds string) (*pb.AuthConfig, error) {
+	username, password, err := parseCreds(creds)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.AuthConfig{
+		Username: username,
+		Password: password,
+	}, nil
+}
+
 // PullImage sends a PullImageRequest to the server, and parses
 // the returned PullImageResponse.
-func PullImage(client pb.ImageServiceClient, image string) (*pb.PullImageResponse, error) {
-	request := &pb.PullImageRequest{Image: &pb.ImageSpec{Image: image}}
+func PullImage(client pb.ImageServiceClient, image string, auth *pb.AuthConfig) (*pb.PullImageResponse, error) {
+	request := &pb.PullImageRequest{
+		Image: &pb.ImageSpec{
+			Image: image,
+		},
+	}
+	if auth != nil {
+		request.Auth = auth
+	}
 	logrus.Debugf("PullImageRequest: %v", request)
 	return client.PullImage(context.Background(), request)
 }
