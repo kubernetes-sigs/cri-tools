@@ -18,6 +18,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"text/tabwriter"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -26,8 +28,9 @@ import (
 )
 
 var runtimeStatusCommand = cli.Command{
-	Name:  "status",
-	Usage: "get the status of runtime",
+	Name:      "status",
+	Usage:     "Display status of the container runtime",
+	ArgsUsage: "",
 	Action: func(context *cli.Context) error {
 		err := Status(runtimeClient)
 		if err != nil {
@@ -48,9 +51,12 @@ func Status(client pb.RuntimeServiceClient) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("CONDITION\tSTATUS\tREASON\tMESSAGE")
+
+	w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
+	fmt.Fprintln(w, "CONDITION\tSTATUS\tREASON\tMESSAGE")
 	for _, c := range r.GetStatus().GetConditions() {
-		fmt.Printf("%s\t%v\t%s\t%s\n", c.Type, c.Status, c.Reason, c.Message)
+		fmt.Fprintf(w, "%s\t%v\t%s\t%s\n", c.Type, c.Status, c.Reason, c.Message)
 	}
+	w.Flush()
 	return nil
 }

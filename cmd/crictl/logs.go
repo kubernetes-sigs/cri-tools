@@ -80,20 +80,34 @@ type logOptions struct {
 
 var logsCommand = cli.Command{
 	Name:      "logs",
-	Usage:     "Print the logs for container.",
-	ArgsUsage: "containerID",
+	Usage:     "Fetch the logs of a container",
+	ArgsUsage: "CONTAINER",
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "follow, f",
-			Usage: "Specify if the logs should be streamed.",
+			Usage: "Follow log output",
+		},
+		cli.Int64Flag{
+			Name:  "tail, t",
+			Value: -1,
+			Usage: "Number of lines to show from the end of the logs. Defaults to all",
+		},
+		cli.Int64Flag{
+			Name:  "limit-bytes",
+			Value: -1,
+			Usage: "Maximum bytes of logs to return. Defaults to no limit",
 		},
 	},
 	Action: func(context *cli.Context) error {
 		if err := getRuntimeClient(context); err != nil {
 			return err
 		}
+		tailLines := context.Int64("tail")
+		limitBytes := context.Int64("limit-bytes")
 		logOptions := &v1.PodLogOptions{
-			Follow: context.Bool("follow"),
+			Follow:     context.Bool("follow"),
+			TailLines:  &tailLines,
+			LimitBytes: &limitBytes,
 		}
 		r, err := getContainerStatus(runtimeClient, context.Args().First())
 		if err != nil {
@@ -125,8 +139,8 @@ func getContainerStatus(client pb.RuntimeServiceClient, ID string) (*pb.Containe
 // newLogOptions convert the v1.PodLogOptions to internal logOptions.
 func newLogOptions(apiOpts *v1.PodLogOptions, now time.Time) *logOptions {
 	opts := &logOptions{
-		tail:      -1, // -1 by default which means read all logs.
-		bytes:     -1, // -1 by default which means read all logs.
+		tail:      *apiOpts.TailLines,
+		bytes:     *apiOpts.LimitBytes,
 		follow:    apiOpts.Follow,
 		timestamp: apiOpts.Timestamps,
 	}

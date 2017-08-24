@@ -33,16 +33,16 @@ import (
 
 var runtimeAttachCommand = cli.Command{
 	Name:      "attach",
-	Usage:     "attach a running container",
-	ArgsUsage: "containerID",
+	Usage:     "Attach to a running container",
+	ArgsUsage: "CONTAINER",
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "tty,t",
-			Usage: "Stdin is a TTY",
+			Usage: "Allocate a pseudo-TTY",
 		},
 		cli.BoolFlag{
 			Name:  "stdin,i",
-			Usage: "Pass stdin to the container",
+			Usage: "Keep STDIN open",
 		},
 	},
 	Action: func(context *cli.Context) error {
