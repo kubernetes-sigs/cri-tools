@@ -25,6 +25,7 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/urfave/cli"
 	"google.golang.org/grpc"
+	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
@@ -86,6 +87,7 @@ func getSortedKeys(m map[string]string) []string {
 
 	return keys
 }
+
 func loadContainerConfig(path string) (*pb.ContainerConfig, error) {
 	f, err := openFile(path)
 	if err != nil {
@@ -94,7 +96,7 @@ func loadContainerConfig(path string) (*pb.ContainerConfig, error) {
 	defer f.Close()
 
 	var config pb.ContainerConfig
-	if err := json.NewDecoder(f).Decode(&config); err != nil {
+	if err := utilyaml.NewYAMLOrJSONDecoder(f, 4096).Decode(&config); err != nil {
 		return nil, err
 	}
 	return &config, nil
@@ -108,7 +110,7 @@ func loadPodSandboxConfig(path string) (*pb.PodSandboxConfig, error) {
 	defer f.Close()
 
 	var config pb.PodSandboxConfig
-	if err := json.NewDecoder(f).Decode(&config); err != nil {
+	if err := utilyaml.NewYAMLOrJSONDecoder(f, 4096).Decode(&config); err != nil {
 		return nil, err
 	}
 	return &config, nil

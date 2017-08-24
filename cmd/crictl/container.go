@@ -43,7 +43,7 @@ type createOptions struct {
 var createContainerCommand = cli.Command{
 	Name:      "create",
 	Usage:     "Create a new container",
-	ArgsUsage: "SANDBOX container-config.json sandbox-config.json",
+	ArgsUsage: "SANDBOX container-config.[json|yaml] sandbox-config.[json|yaml]",
 	Flags:     []cli.Flag{},
 	Action: func(context *cli.Context) error {
 		if len(context.Args()) != 3 {
