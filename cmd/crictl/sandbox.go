@@ -33,7 +33,7 @@ import (
 var runPodSandboxCommand = cli.Command{
 	Name:      "runs",
 	Usage:     "Run a new sandbox",
-	ArgsUsage: "sandbox-config.json",
+	ArgsUsage: "sandbox-config.[json|yaml]",
 	Action: func(context *cli.Context) error {
 		sandboxSpec := context.Args().First()
 		if sandboxSpec == "" {

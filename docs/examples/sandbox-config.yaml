@@ -1,0 +1,8 @@
+metadata:
+  attempt: 1
+  name: busybox-sandbox
+  namespace: default
+  uid: hdishd83djaidwnduwk28bcsb
+linux:
+  namespaces:
+    options: {}

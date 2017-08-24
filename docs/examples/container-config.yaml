@@ -1,0 +1,6 @@
+metadata:
+  name: busybox
+image:
+  image: busybox:latest
+command:
+- top
