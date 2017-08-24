@@ -38,25 +38,25 @@ const (
 
 var runtimeExecCommand = cli.Command{
 	Name:      "exec",
-	Usage:     "exec a command in a container",
-	ArgsUsage: "containerID COMMAND [ARG...]",
+	Usage:     "Run a command in a running container",
+	ArgsUsage: "CONTAINER COMMAND [ARG...]",
 	Flags: []cli.Flag{
 		cli.BoolFlag{
-			Name:  "sync",
-			Usage: "run a command in a container synchronously",
+			Name:  "sync, s",
+			Usage: "Run the command synchronously",
 		},
 		cli.Int64Flag{
 			Name:  "timeout",
 			Value: 0,
-			Usage: "timeout for the command",
+			Usage: "Timeout in seconds",
 		},
 		cli.BoolFlag{
 			Name:  "tty, t",
-			Usage: "exec a command in a tty",
+			Usage: "Allocate a pseudo-TTY",
 		},
 		cli.BoolFlag{
-			Name:  "stdin, i",
-			Usage: "stream stdin",
+			Name:  "interactive, i",
+			Usage: "Keep STDIN open",
 		},
 	},
 	Action: func(context *cli.Context) error {

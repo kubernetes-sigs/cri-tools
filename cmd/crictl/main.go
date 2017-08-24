@@ -55,6 +55,7 @@ func getRuntimeClientConnection(context *cli.Context) (*grpc.ClientConn, error) 
 	}
 	return conn, nil
 }
+
 func getImageClientConnection(context *cli.Context) (*grpc.ClientConn, error) {
 	if ImageEndpoint == "" {
 		if RuntimeEndpoint == "" {
@@ -80,11 +81,23 @@ func main() {
 
 	app.Commands = []cli.Command{
 		runtimeVersionCommand,
-		runtimePodSandboxCommand,
-		runtimeContainerCommand,
+		runPodSandboxCommand,
+		stopPodSandboxCommand,
+		removePodSandboxCommand,
+		podSandboxStatusCommand,
+		listPodSandboxCommand,
+		createContainerCommand,
+		startContainerCommand,
+		stopContainerCommand,
+		removeContainerCommand,
+		containerStatusCommand,
+		listContainersCommand,
 		runtimeStatusCommand,
 		runtimeAttachCommand,
-		imageCommand,
+		pullImageCommand,
+		listImageCommand,
+		imageStatusCommand,
+		removeImageCommand,
 		runtimeExecCommand,
 		runtimePortForwardCommand,
 		logsCommand,
@@ -92,35 +105,35 @@ func main() {
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:   "config-file, c",
+			Name:   "config, c",
 			EnvVar: "CRI_CONFIG_FILE",
 			Value:  "",
-			Usage:  "config file for crictl",
+			Usage:  "Location of the client config file",
 		},
 		cli.StringFlag{
 			Name:   "runtime-endpoint, r",
 			EnvVar: "CRI_RUNTIME_ENDPOINT",
 			Value:  "/var/run/dockershim.sock",
-			Usage:  "endpoint for CRI container runtime",
+			Usage:  "Endpoint of CRI container runtime service",
 		},
 		cli.StringFlag{
 			Name:   "image-endpoint, i",
 			EnvVar: "CRI_IMAGE_ENDPOINT",
-			Usage:  "endpoint for CRI image service",
+			Usage:  "Endpoint of CRI image manager service",
 		},
 		cli.DurationFlag{
-			Name:  "timeout",
+			Name:  "timeout, t",
 			Value: defaultTimeout,
-			Usage: "Timeout of connecting to server",
+			Usage: "Timeout of connecting to the server",
 		},
 		cli.BoolFlag{
-			Name:  "debug",
-			Usage: "Enable debug output",
+			Name:  "debug, D",
+			Usage: "Enable debug mode",
 		},
 	}
 
 	app.Before = func(context *cli.Context) error {
-		configFile := context.GlobalString("config-file")
+		configFile := context.GlobalString("config")
 		if configFile == "" {
 			RuntimeEndpoint = context.GlobalString("runtime-endpoint")
 			ImageEndpoint = context.GlobalString("image-endpoint")

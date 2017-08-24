@@ -19,29 +19,25 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/Sirupsen/logrus"
+	units "github.com/docker/go-units"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
-var imageCommand = cli.Command{
-	Name:  "image",
-	Usage: "manage images",
-	Subcommands: []cli.Command{
-		pullImageCommand,
-		listImageCommand,
-		imageStatusCommand,
-		removeImageCommand,
-	},
-	After: closeConnection,
-}
+const (
+	// truncatedImageIDLen is the truncated length of imageID
+	truncatedImageIDLen = 13
+)
 
 var pullImageCommand = cli.Command{
 	Name:  "pull",
-	Usage: "pull an image",
+	Usage: "Pull an image from a registry",
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "creds",
@@ -74,22 +70,27 @@ var pullImageCommand = cli.Command{
 		if err != nil {
 			return fmt.Errorf("pulling image failed: %v", err)
 		}
-		fmt.Println(r.ImageRef)
+		fmt.Printf("Image is update to date for %s\n", r.ImageRef)
 		return nil
 	},
 }
 
 var listImageCommand = cli.Command{
-	Name:  "ls",
-	Usage: "list images",
+	Name:      "images",
+	Usage:     "List images",
+	ArgsUsage: "[REPOSITORY[:TAG]]",
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "verbose, v",
-			Usage: "show verbose info for images",
+			Usage: "Show verbose info for images",
 		},
 		cli.BoolFlag{
-			Name:  "quiet",
-			Usage: "list only image IDs",
+			Name:  "quiet, q",
+			Usage: "Only show image IDs",
+		},
+		cli.StringFlag{
+			Name:  "output, o",
+			Usage: "Output format, One of: json|yaml|table",
 		},
 	},
 	Action: func(context *cli.Context) error {
@@ -102,6 +103,16 @@ var listImageCommand = cli.Command{
 		if err != nil {
 			return fmt.Errorf("listing images failed: %v", err)
 		}
+
+		switch context.String("output") {
+		case "json":
+			return outputJSON(r.Images)
+		case "yaml":
+			return outputYAML(r.Images)
+		}
+
+		// output in table format by default.
+		w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
 		verbose := context.Bool("verbose")
 		printHeader := true
 		for _, image := range r.Images {
@@ -112,13 +123,16 @@ var listImageCommand = cli.Command{
 			if !verbose {
 				if printHeader {
 					printHeader = false
-					fmt.Println("IMAGE\tIMAGE ID\tSIZE")
+					fmt.Fprintln(w, "IMAGE\tTAG\tIMAGE ID\tSIZE")
 				}
 				repoTags := "<none>"
 				if image.RepoTags != nil {
 					repoTags = image.RepoTags[0]
 				}
-				fmt.Printf("%s\t%s\t%d\n", repoTags, image.Id, image.GetSize_())
+				repoTagsPair := strings.Split(repoTags, ":")
+				size := units.HumanSizeWithPrecision(float64(image.GetSize_()), 3)
+				trunctedImage := strings.TrimPrefix(image.Id, "sha256:")[:truncatedImageIDLen]
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", repoTagsPair[0], repoTagsPair[1], trunctedImage, size)
 				continue
 			}
 			fmt.Printf("ID: %s\n", image.Id)
@@ -138,14 +152,21 @@ var listImageCommand = cli.Command{
 				fmt.Printf("Username: %v\n\n", image.Username)
 			}
 		}
+		w.Flush()
 		return nil
 	},
 }
 
 var imageStatusCommand = cli.Command{
-	Name:      "status",
-	Usage:     "return the status of an image",
+	Name:      "inspecti",
+	Usage:     "Return the status of an image",
 	ArgsUsage: "IMAGEID",
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "output, o",
+			Usage: "Output format, One of: json|yaml|table",
+		},
+	},
 	Action: func(context *cli.Context) error {
 		id := context.Args().First()
 		if id == "" {
@@ -165,6 +186,16 @@ var imageStatusCommand = cli.Command{
 		if image == nil {
 			return fmt.Errorf("no such image present")
 		}
+
+		switch context.String("output") {
+		case "json":
+			return outputJSON(r.Image)
+
+		case "yaml":
+			return outputYAML(r.Image)
+		}
+
+		// output in table format by default.
 		fmt.Printf("ID: %s\n", image.Id)
 		for _, tag := range image.RepoTags {
 			fmt.Printf("Tag: %s\n", tag)
@@ -172,13 +203,16 @@ var imageStatusCommand = cli.Command{
 		for _, digest := range image.RepoDigests {
 			fmt.Printf("Digest: %s\n", digest)
 		}
-		fmt.Printf("Size: %d\n", image.Size_)
+		size := units.HumanSizeWithPrecision(float64(image.GetSize_()), 3)
+		fmt.Printf("Size: %s\n", size)
+
 		return nil
 	},
 }
+
 var removeImageCommand = cli.Command{
-	Name:      "rm",
-	Usage:     "remove an image",
+	Name:      "rmi",
+	Usage:     "Remove an image",
 	ArgsUsage: "IMAGEID",
 	Action: func(context *cli.Context) error {
 		id := context.Args().First()
@@ -190,10 +224,22 @@ var removeImageCommand = cli.Command{
 			return err
 		}
 
-		r, err := RemoveImage(imageClient, id)
-		logrus.Debugf("RemoveImageResponse: %v", r)
+		status, err := ImageStatus(imageClient, id)
+		logrus.Debugf("Get image status: %v", status)
 		if err != nil {
-			return fmt.Errorf("removing the image %q failed: %v", id, err)
+			return fmt.Errorf("image status request failed: %v", err)
+		}
+		if status.Image == nil {
+			return fmt.Errorf("no such image %s", id)
+		}
+
+		r, err := RemoveImage(imageClient, id)
+		logrus.Debugf("Get remove image response: %v", r)
+		if err != nil {
+			return fmt.Errorf("error of removing image %q: %v", id, err)
+		}
+		for _, repoTag := range status.Image.RepoTags {
+			fmt.Printf("Deleted: %s\n", repoTag)
 		}
 		return nil
 	},

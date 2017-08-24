@@ -22,6 +22,7 @@ import (
 	"os"
 	"sort"
 
+	"github.com/ghodss/yaml"
 	"github.com/urfave/cli"
 	"google.golang.org/grpc"
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
@@ -44,6 +45,8 @@ type listOptions struct {
 	labels map[string]string
 	// quiet is for listing just container/sandbox/image IDs
 	quiet bool
+	// output format
+	output string
 }
 
 type execOptions struct {
@@ -150,4 +153,24 @@ func closeConnection(context *cli.Context) error {
 	}
 
 	return conn.Close()
+}
+
+func outputJSON(v interface{}) error {
+	marshaledJSON, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(string(marshaledJSON))
+	return nil
+}
+
+func outputYAML(v interface{}) error {
+	marshaledYAML, err := yaml.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(string(marshaledYAML))
+	return nil
 }

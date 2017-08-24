@@ -19,7 +19,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
+	"text/tabwriter"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -28,23 +30,9 @@ import (
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
-var runtimePodSandboxCommand = cli.Command{
-	Name:    "sandbox",
-	Usage:   "manage sandboxes",
-	Aliases: []string{"sb"},
-	Subcommands: []cli.Command{
-		runPodSandboxCommand,
-		stopPodSandboxCommand,
-		removePodSandboxCommand,
-		podSandboxStatusCommand,
-		listPodSandboxCommand,
-	},
-	After: closeConnection,
-}
-
 var runPodSandboxCommand = cli.Command{
-	Name:      "run",
-	Usage:     "run a sandbox",
+	Name:      "runs",
+	Usage:     "Run a new sandbox",
 	ArgsUsage: "sandbox-config.json",
 	Action: func(context *cli.Context) error {
 		sandboxSpec := context.Args().First()
@@ -71,9 +59,9 @@ var runPodSandboxCommand = cli.Command{
 }
 
 var stopPodSandboxCommand = cli.Command{
-	Name:      "stop",
-	Usage:     "stop the sandbox",
-	ArgsUsage: "sandboxID",
+	Name:      "stops",
+	Usage:     "Stop a running sandbox",
+	ArgsUsage: "SANDBOX",
 	Action: func(context *cli.Context) error {
 		id := context.Args().First()
 		if id == "" {
@@ -93,9 +81,9 @@ var stopPodSandboxCommand = cli.Command{
 }
 
 var removePodSandboxCommand = cli.Command{
-	Name:      "rm",
-	Usage:     "remove the sandbox",
-	ArgsUsage: "sandboxID",
+	Name:      "rms",
+	Usage:     "Remove a sandbox",
+	ArgsUsage: "SANDBOX",
 	Action: func(context *cli.Context) error {
 		id := context.Args().First()
 		if id == "" {
@@ -115,9 +103,15 @@ var removePodSandboxCommand = cli.Command{
 }
 
 var podSandboxStatusCommand = cli.Command{
-	Name:      "status",
-	Usage:     "get status of the sandbox",
-	ArgsUsage: "sandboxID",
+	Name:      "inspects",
+	Usage:     "Display the status of a sandbox",
+	ArgsUsage: "SANDBOX",
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "output, o",
+			Usage: "Output format, One of: json|yaml|table",
+		},
+	},
 	Action: func(context *cli.Context) error {
 		id := context.Args().First()
 		if id == "" {
@@ -128,7 +122,7 @@ var podSandboxStatusCommand = cli.Command{
 			return err
 		}
 
-		err := PodSandboxStatus(runtimeClient, id)
+		err := PodSandboxStatus(runtimeClient, id, context.String("output"))
 		if err != nil {
 			return fmt.Errorf("getting the pod sandbox status failed: %v", err)
 		}
@@ -137,8 +131,8 @@ var podSandboxStatusCommand = cli.Command{
 }
 
 var listPodSandboxCommand = cli.Command{
-	Name:  "ls",
-	Usage: "list sandboxes",
+	Name:  "sandboxes",
+	Usage: "List sandboxes",
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "id",
@@ -162,6 +156,10 @@ var listPodSandboxCommand = cli.Command{
 			Name:  "quiet",
 			Usage: "list only sandbox IDs",
 		},
+		cli.StringFlag{
+			Name:  "output, o",
+			Usage: "Output format, One of: json|yaml|table",
+		},
 	},
 	Action: func(context *cli.Context) error {
 		if err := getRuntimeClient(context); err != nil {
@@ -174,6 +172,7 @@ var listPodSandboxCommand = cli.Command{
 			verbose: context.Bool("verbose"),
 			labels:  make(map[string]string),
 			quiet:   context.Bool("quiet"),
+			output:  context.String("output"),
 		}
 
 		for _, l := range context.StringSlice("label") {
@@ -219,7 +218,8 @@ func StopPodSandbox(client pb.RuntimeServiceClient, ID string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Stop sandbox success ID: %s\n", ID)
+
+	fmt.Printf("Stopped sandbox %s", ID)
 	return nil
 }
 
@@ -236,13 +236,13 @@ func RemovePodSandbox(client pb.RuntimeServiceClient, ID string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Remove sandbox success ID: %s\n", ID)
+	fmt.Printf("Removed sandbox %s\n", ID)
 	return nil
 }
 
 // PodSandboxStatus sends a PodSandboxStatusRequest to the server, and parses
 // the returned PodSandboxStatusResponse.
-func PodSandboxStatus(client pb.RuntimeServiceClient, ID string) error {
+func PodSandboxStatus(client pb.RuntimeServiceClient, ID, output string) error {
 	if ID == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
@@ -253,6 +253,16 @@ func PodSandboxStatus(client pb.RuntimeServiceClient, ID string) error {
 	if err != nil {
 		return err
 	}
+
+	switch output {
+	case "json":
+		return outputJSON(r.Status)
+
+	case "yaml":
+		return outputYAML(r.Status)
+	}
+
+	// output in table format by default.
 	fmt.Printf("ID: %s\n", r.Status.Id)
 	if r.Status.Metadata != nil {
 		if r.Status.Metadata.Name != "" {
@@ -321,7 +331,18 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 	if err != nil {
 		return err
 	}
+
+	switch opts.output {
+	case "json":
+		return outputJSON(r.Items)
+
+	case "yaml":
+		return outputYAML(r.Items)
+	}
+
+	// output in table format by default.
 	printHeader := true
+	w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
 	for _, pod := range r.Items {
 		if opts.quiet {
 			fmt.Printf("%s\n", pod.Id)
@@ -330,9 +351,10 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 		if !opts.verbose {
 			if printHeader {
 				printHeader = false
-				fmt.Println("SANDBOX ID\tNAME\tSTATE")
+				fmt.Fprintln(w, "SANDBOX ID\tNAME\tSTATE")
 			}
-			fmt.Printf("%s\t%s\t%s\n", pod.Id, pod.Metadata.Name, pod.State)
+
+			fmt.Fprintf(w, "%s\t%s\t%s\n", pod.Id, pod.Metadata.Name, pod.State)
 			continue
 		}
 
@@ -368,5 +390,7 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 		}
 		fmt.Println()
 	}
+
+	w.Flush()
 	return nil
 }

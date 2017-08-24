@@ -19,29 +19,17 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
+	"text/tabwriter"
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	units "github.com/docker/go-units"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
-
-var runtimeContainerCommand = cli.Command{
-	Name:    "container",
-	Usage:   "manage containers",
-	Aliases: []string{"ctr"},
-	Subcommands: []cli.Command{
-		createContainerCommand,
-		startContainerCommand,
-		stopContainerCommand,
-		removeContainerCommand,
-		containerStatusCommand,
-		listContainersCommand,
-	},
-	After: closeConnection,
-}
 
 type createOptions struct {
 	// configPath is path to the config for container
@@ -54,8 +42,8 @@ type createOptions struct {
 
 var createContainerCommand = cli.Command{
 	Name:      "create",
-	Usage:     "create a container",
-	ArgsUsage: "sandboxID container-config.json sandbox-config.json",
+	Usage:     "Create a new container",
+	ArgsUsage: "SANDBOX container-config.json sandbox-config.json",
 	Flags:     []cli.Flag{},
 	Action: func(context *cli.Context) error {
 		if len(context.Args()) != 3 {
@@ -82,8 +70,8 @@ var createContainerCommand = cli.Command{
 
 var startContainerCommand = cli.Command{
 	Name:      "start",
-	Usage:     "start a container",
-	ArgsUsage: "containerID",
+	Usage:     "Start a stopped container",
+	ArgsUsage: "CONTAINER",
 	Action: func(context *cli.Context) error {
 		containerID := context.Args().First()
 		if containerID == "" {
@@ -104,8 +92,8 @@ var startContainerCommand = cli.Command{
 
 var stopContainerCommand = cli.Command{
 	Name:      "stop",
-	Usage:     "stop the container",
-	ArgsUsage: "containerID",
+	Usage:     "Stop a running container",
+	ArgsUsage: "CONTAINER",
 	Action: func(context *cli.Context) error {
 		containerID := context.Args().First()
 		if containerID == "" {
@@ -126,8 +114,8 @@ var stopContainerCommand = cli.Command{
 
 var removeContainerCommand = cli.Command{
 	Name:      "rm",
-	Usage:     "remove the container",
-	ArgsUsage: "containerID",
+	Usage:     "Remove a container",
+	ArgsUsage: "CONTAINER",
 	Action: func(context *cli.Context) error {
 		containerID := context.Args().First()
 		if containerID == "" {
@@ -147,9 +135,15 @@ var removeContainerCommand = cli.Command{
 }
 
 var containerStatusCommand = cli.Command{
-	Name:      "status",
-	Usage:     "get status of the container",
-	ArgsUsage: "containerID",
+	Name:      "inspect",
+	Usage:     "Display the status of a container",
+	ArgsUsage: "CONTAINER",
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "output, o",
+			Usage: "Output format, One of: json|yaml|table",
+		},
+	},
 	Action: func(context *cli.Context) error {
 		containerID := context.Args().First()
 		if containerID == "" {
@@ -160,7 +154,7 @@ var containerStatusCommand = cli.Command{
 			return err
 		}
 
-		err := ContainerStatus(runtimeClient, containerID)
+		err := ContainerStatus(runtimeClient, containerID, context.String("output"))
 		if err != nil {
 			return fmt.Errorf("Getting the status of the container failed: %v", err)
 		}
@@ -169,35 +163,39 @@ var containerStatusCommand = cli.Command{
 }
 
 var listContainersCommand = cli.Command{
-	Name:  "ls",
-	Usage: "list containers",
+	Name:  "ps",
+	Usage: "List containers",
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "verbose, v",
-			Usage: "show verbose information for containers",
+			Usage: "Show verbose information for containers",
 		},
 		cli.StringFlag{
 			Name:  "id",
 			Value: "",
-			Usage: "filter by container id",
+			Usage: "Filter by container id",
 		},
 		cli.StringFlag{
 			Name:  "sandbox",
 			Value: "",
-			Usage: "filter by sandbox id",
+			Usage: "Filter by sandbox id",
 		},
 		cli.StringFlag{
 			Name:  "state",
 			Value: "",
-			Usage: "filter by container state",
+			Usage: "Filter by container state",
 		},
 		cli.StringSliceFlag{
 			Name:  "label",
-			Usage: "filter by key=value label",
+			Usage: "Filter by key=value label",
 		},
 		cli.BoolFlag{
 			Name:  "quiet",
-			Usage: "list only container IDs",
+			Usage: "Only display container IDs",
+		},
+		cli.StringFlag{
+			Name:  "output, o",
+			Usage: "Output format, One of: json|yaml|table",
 		},
 	},
 	Action: func(context *cli.Context) error {
@@ -212,6 +210,7 @@ var listContainersCommand = cli.Command{
 			verbose: context.Bool("verbose"),
 			labels:  make(map[string]string),
 			quiet:   context.Bool("quiet"),
+			output:  context.String("output"),
 		}
 
 		for _, l := range context.StringSlice("label") {
@@ -319,7 +318,7 @@ func RemoveContainer(client pb.RuntimeServiceClient, ID string) error {
 
 // ContainerStatus sends a ContainerStatusRequest to the server, and parses
 // the returned ContainerStatusResponse.
-func ContainerStatus(client pb.RuntimeServiceClient, ID string) error {
+func ContainerStatus(client pb.RuntimeServiceClient, ID, output string) error {
 	if ID == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
@@ -332,6 +331,16 @@ func ContainerStatus(client pb.RuntimeServiceClient, ID string) error {
 	if err != nil {
 		return err
 	}
+
+	switch output {
+	case "json":
+		return outputJSON(r.Status)
+
+	case "yaml":
+		return outputYAML(r.Status)
+	}
+
+	// output in table format by default.
 	fmt.Printf("ID: %s\n", r.Status.Id)
 	if r.Status.Metadata != nil {
 		if r.Status.Metadata.Name != "" {
@@ -343,15 +352,15 @@ func ContainerStatus(client pb.RuntimeServiceClient, ID string) error {
 	}
 	fmt.Printf("State: %s\n", r.Status.State)
 	ctm := time.Unix(0, r.Status.CreatedAt)
-	fmt.Printf("Created: %v\n", ctm)
+	fmt.Printf("Created: %v\n", units.HumanDuration(time.Now().UTC().Sub(ctm))+" ago")
 	if r.Status.State != pb.ContainerState_CONTAINER_CREATED {
 		stm := time.Unix(0, r.Status.StartedAt)
-		fmt.Printf("Started: %v\n", stm)
+		fmt.Printf("Started: %v\n", units.HumanDuration(time.Now().UTC().Sub(stm))+" ago")
 	}
 	if r.Status.State == pb.ContainerState_CONTAINER_EXITED {
 		if r.Status.FinishedAt > 0 {
 			ftm := time.Unix(0, r.Status.FinishedAt)
-			fmt.Printf("Finished: %v\n", ftm)
+			fmt.Printf("Finished: %v\n", units.HumanDuration(time.Now().UTC().Sub(ftm))+" ago")
 		}
 		fmt.Printf("Exit Code: %v\n", r.Status.ExitCode)
 	}
@@ -400,21 +409,35 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 	if err != nil {
 		return err
 	}
+
+	switch opts.output {
+	case "json":
+		return outputJSON(r.Containers)
+
+	case "yaml":
+		return outputYAML(r.Containers)
+	}
+
+	// output in table format by default.
 	printHeader := true
+	w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
 	for _, c := range r.GetContainers() {
 		if opts.quiet {
 			fmt.Printf("%s\n", c.Id)
 			continue
 		}
-		ctm := time.Unix(0, c.CreatedAt)
+
+		createdAt := time.Unix(0, c.CreatedAt)
+		ctm := units.HumanDuration(time.Now().UTC().Sub(createdAt)) + " ago"
 		if !opts.verbose {
 			if printHeader {
 				printHeader = false
-				fmt.Println("CONTAINER ID\tCREATED\tSTATE\tNAME")
+				fmt.Fprintln(w, "CONTAINER ID\tCREATED\tSTATE\tNAME")
 			}
-			fmt.Printf("%s\t%s\t%s\t%s\n", c.Id, ctm, c.State, c.GetMetadata().GetName())
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", c.Id, ctm, c.State, c.GetMetadata().GetName())
 			continue
 		}
+
 		fmt.Printf("ID: %s\n", c.Id)
 		fmt.Printf("SandboxID: %s\n", c.PodSandboxId)
 		if c.Metadata != nil {
@@ -442,5 +465,7 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 		}
 		fmt.Println()
 	}
+
+	w.Flush()
 	return nil
 }

@@ -25,13 +25,15 @@ import (
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
+const (
+	criClientVersion = "v1alpha1"
+)
+
 var runtimeVersionCommand = cli.Command{
 	Name:  "info",
-	Usage: "get runtime version information",
+	Usage: "Display runtime version information",
 	Action: func(context *cli.Context) error {
-		// Test RuntimeServiceClient.Version
-		version := "v1alpha1"
-		err := Version(runtimeClient, version)
+		err := Version(runtimeClient, criClientVersion)
 		if err != nil {
 			return fmt.Errorf("Getting the runtime version failed: %v", err)
 		}

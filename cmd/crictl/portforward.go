@@ -33,9 +33,9 @@ import (
 )
 
 var runtimePortForwardCommand = cli.Command{
-	Name:      "portforward",
-	Usage:     "forword ports from a sandbox",
-	ArgsUsage: "sandboxID [LOCAL_PORT:]REMOTE_PORT",
+	Name:      "port-forward",
+	Usage:     "Forward local port to a sandbox",
+	ArgsUsage: "SANDBOX [LOCAL_PORT:]REMOTE_PORT",
 	Action: func(context *cli.Context) error {
 		args := context.Args()
 		if len(args) < 2 {

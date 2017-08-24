@@ -24,21 +24,34 @@ crictl SUBCOMMAND [FLAGS]
 
 Subcommands includes:
 
-- `info`: Get version information of runtime
-- `sandbox`, `sb`: Manage lifecycle of podsandbox
-- `container`, `ctr`: Manage lifecycle of container
-- `status`: Get the status information of runtime
-- `attach`: Attach a running container
-- `image`: Manage images
-- `exec`: Exec(exec, syncexec) a command in a running container
-- `portforward`: Forword ports(localport:remoteport) from a sandbox
-- `help`, `h`: Shows a list of commands or help for one command
+- `info`:          Display runtime version information
+- `runs`:          Run a new sandbox
+- `stops`:         Stop a running sandbox
+- `rms`:           Remove a sandbox
+- `inspects`:      Display the status of a sandbox
+- `sandboxes`:     List sandboxes
+- `create`:        Create a new container
+- `start`:         Start a stopped container
+- `stop`:          Stop a running container
+- `rm`:            Remove a container
+- `inspect`:       Display the status of a container
+- `ps`:            List containers
+- `status`:        Display status of the container runtime
+- `attach`:        Attach to a running container
+- `pull`:          Pull an image from a registry
+- `images`:        List images
+- `inspecti`:      Return the status of an image
+- `rmi`:           Remove an image
+- `exec`:          Run a command in a running container
+- `port-forward`:  Forward local port to a sandbox
+- `logs`:          Fetch the logs of a container
+- `help`:          Shows a list of commands or help for one command
 
 crictl connects to `/var/run/dockershim.sock` by default. For other runtimes, the endpoint can be set in three ways:
 
 - By setting flags `--runtime-endpoint` and `--image-endpoint`
 - By setting environment variables `CRI_RUNTIME_ENDPOINT` and `CRI_IMAGE_ENDPOINT`
-- By setting the endpoint in the config file `--config-file=/etc/crictl.yaml`
+- By setting the endpoint in the config file `--config=/etc/crictl.yaml`
 
 ```
 # cat /etc/crictl.yaml
@@ -50,13 +63,13 @@ debug: true
 
 ## Additional options
 
-- `--runtime-endpoint`: CRI server runtime endpoint (default: "/var/run/dockershim.sock").The default server is dockershim. If we want to debug other CRI server such as frakti, we can add flag `--runtime-endpoint=/var/run/frakti.sock`
-- `--image-endpoint`: CRI server image endpoint, default same as runtime endpoint.
-- `--timeout`: Timeout of connecting to server (default: 10s)
-- `--debug`: Enable debug output
+- `--runtime-endpoint`, `-r`: CRI server runtime endpoint (default: "/var/run/dockershim.sock").The default server is dockershim. If we want to debug other CRI server such as frakti, we can add flag `--runtime-endpoint=/var/run/frakti.sock`
+- `--image-endpoint`, `-i`: CRI server image endpoint, default same as runtime endpoint.
+- `--timeout`, `-t`: Timeout of connecting to server (default: 10s)
+- `--debug`, `-D`: Enable debug output
 - `--help`, `-h`: show help
 - `--version`, `-v`: print the version information of crictl
-- `--config-file`: Config file in yaml format. Overrided by flags or environment variables.
+- `--config`, `-c`: Config file in yaml format. Overrided by flags or environment variables.
 
 ## Examples
 
@@ -74,8 +87,23 @@ debug: true
     "linux": {
     }
 }
-# crictl sandbox run sandbox-config.json
-9b542bfe8f93eb2d726d0f7b619f253c18858006aa53023e392e138b0be6301c
+
+# crictl runs sandbox-config.json
+e1c83b0b8d481d4af8ba98d5f7812577fc175a37b10dc824335951f52addbb4e
+# crictl sandboxes
+SANDBOX ID                                                         NAME                STATE
+e1c83b0b8d481d4af8ba98d5f7812577fc175a37b10dc824335951f52addbb4e   nginx-sandbox       SANDBOX_READY
+```
+
+### Pull a busybox image
+
+```
+# crictl pull busybox
+Image is update to date for busybox@sha256:b82b5740006c1ab823596d2c07f081084ecdb32fd258072707b99f52a3cb8692
+# crictl images
+IMAGE                                  TAG                 IMAGE ID            SIZE
+busybox                                latest              d20ae45477cbc       1.13MB
+gcr.io/google_containers/pause-amd64   3.0                 99e59f495ffaa       747kB
 ```
 
 ### Create container in a sandbox with config file
@@ -92,6 +120,7 @@ debug: true
     "linux": {
     }
 }
+
 # cat container-config.json
 {
   "metadata": {
@@ -106,19 +135,27 @@ debug: true
   "linux": {
   }
 }
-# crictl container create 9b542bfe8f93eb2d726d0f7b619f253c18858006aa53023e392e138b0be6301c container-config.json sandbox-config.json
-bf642f55ecf54345354a86a42c08fb0d66e55e90c855973495f31e991c2bf725
+
+# crictl create e1c83b0b8d481d4af8ba98d5f7812577fc175a37b10dc824335951f52addbb4e container-config.json sandbox-config.json
+0a2c761303163f2acaaeaee07d2ba143ee4cea7e3bde3d32190e2a36525c8a05
+# crictl ps
+CONTAINER ID                                                       CREATED             STATE               NAME
+0a2c761303163f2acaaeaee07d2ba143ee4cea7e3bde3d32190e2a36525c8a05   1 minutes ago       CONTAINER_CREATED   busybox
 ```
 
 ### Start container
 
 ```
-# crictl container start bf642f55ecf54345354a86a42c08fb0d66e55e90c855973495f31e991c2bf725
-bf642f55ecf54345354a86a42c08fb0d66e55e90c855973495f31e991c2bf725
+# crictl start 0a2c761303163f2acaaeaee07d2ba143ee4cea7e3bde3d32190e2a36525c8a05
+0a2c761303163f2acaaeaee07d2ba143ee4cea7e3bde3d32190e2a36525c8a05
+# crictl ps
+CONTAINER ID                                                       CREATED             STATE               NAME
+0a2c761303163f2acaaeaee07d2ba143ee4cea7e3bde3d32190e2a36525c8a05   2 minutes ago       CONTAINER_RUNNING   busybox
 ```
 
 ### Exec a command in container
 
 ```
-# crictl exec -i -t bf642f55ecf54345354a86a42c08fb0d66e55e90c855973495f31e991c2bf725 sh
+# crictl exec -i -t 0a2c761303163f2acaaeaee07d2ba143ee4cea7e3bde3d32190e2a36525c8a05 ls
+bin   dev   etc   home  proc  root  sys   tmp   usr   var
 ```
