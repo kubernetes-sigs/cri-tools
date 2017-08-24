@@ -256,10 +256,10 @@ func PodSandboxStatus(client pb.RuntimeServiceClient, ID, output string) error {
 
 	switch output {
 	case "json":
-		return outputJson(r.Status)
+		return outputJSON(r.Status)
 
 	case "yaml":
-		return outputYaml(r.Status)
+		return outputYAML(r.Status)
 	}
 
 	// output in table format by default.
@@ -334,10 +334,10 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 
 	switch opts.output {
 	case "json":
-		return outputJson(r.Items)
+		return outputJSON(r.Items)
 
 	case "yaml":
-		return outputYaml(r.Items)
+		return outputYAML(r.Items)
 	}
 
 	// output in table format by default.

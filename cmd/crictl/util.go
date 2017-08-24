@@ -155,22 +155,22 @@ func closeConnection(context *cli.Context) error {
 	return conn.Close()
 }
 
-func outputJson(v interface{}) error {
-	marshaledJson, err := json.MarshalIndent(v, "", "  ")
+func outputJSON(v interface{}) error {
+	marshaledJSON, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(string(marshaledJson))
+	fmt.Println(string(marshaledJSON))
 	return nil
 }
 
-func outputYaml(v interface{}) error {
-	marshaledyaml, err := yaml.Marshal(v)
+func outputYAML(v interface{}) error {
+	marshaledYAML, err := yaml.Marshal(v)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(string(marshaledyaml))
+	fmt.Println(string(marshaledYAML))
 	return nil
 }

@@ -106,9 +106,9 @@ var listImageCommand = cli.Command{
 
 		switch context.String("output") {
 		case "json":
-			return outputJson(r.Images)
+			return outputJSON(r.Images)
 		case "yaml":
-			return outputYaml(r.Images)
+			return outputYAML(r.Images)
 		}
 
 		// output in table format by default.
@@ -189,10 +189,10 @@ var imageStatusCommand = cli.Command{
 
 		switch context.String("output") {
 		case "json":
-			return outputJson(r.Image)
+			return outputJSON(r.Image)
 
 		case "yaml":
-			return outputYaml(r.Image)
+			return outputYAML(r.Image)
 		}
 
 		// output in table format by default.
