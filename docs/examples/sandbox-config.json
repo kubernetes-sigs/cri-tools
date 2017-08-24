@@ -1,0 +1,10 @@
+{
+  "metadata": {
+    "name": "busybox-sandbox",
+    "namespace": "default",
+    "attempt": 1,
+    "uid": "hdishd83djaidwnduwk28bcsb"
+  },
+  "linux": {
+  }
+}
