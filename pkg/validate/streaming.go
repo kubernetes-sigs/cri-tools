@@ -55,10 +55,6 @@ var _ = framework.KubeDescribe("Streaming", func() {
 		var podID string
 		var podConfig *runtimeapi.PodSandboxConfig
 
-		BeforeEach(func() {
-			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
-		})
-
 		AfterEach(func() {
 			By("stop PodSandbox")
 			rc.StopPodSandbox(podID)
@@ -67,6 +63,8 @@ var _ = framework.KubeDescribe("Streaming", func() {
 		})
 
 		It("runtime should support exec [Conformance]", func() {
+			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
+
 			By("create a default container")
 			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-exec-test")
 
@@ -80,6 +78,8 @@ var _ = framework.KubeDescribe("Streaming", func() {
 		})
 
 		It("runtime should support attach [Conformance]", func() {
+			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
+
 			By("create a default container")
 			containerID := createShellContainer(rc, ic, podID, podConfig, "container-for-attach-test")
 
