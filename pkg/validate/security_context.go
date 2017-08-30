@@ -234,6 +234,39 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			rc.RemovePodSandbox(podID)
 		})
 
+		It("runtime should support SupplementalGroups [security context]", func() {
+			By("create pod")
+			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
+
+			supplementalGroups := []int64{1234, 5678}
+			By("create container for security context SupplementalGroups")
+			containerName := "container-with-SupplementalGroups-test-" + framework.NewUUID()
+			containerConfig := &runtimeapi.ContainerConfig{
+				Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+				Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+				Command:  []string{"sh", "-c", "top"},
+				Linux: &runtimeapi.LinuxContainerConfig{
+					SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
+						SupplementalGroups: supplementalGroups,
+					},
+				},
+			}
+			containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
+
+			By("start container")
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+			By("verify SupplementalGroups for container")
+			command := []string{"id", "-G"}
+			output := execSyncContainer(rc, containerID, command)
+			groups := strings.Split(strings.TrimSpace(string(output)), " ")
+			Expect(groups).To(ContainElement("1234"))
+			Expect(groups).To(ContainElement("5678"))
+		})
+
 		It("runtime should support RunAsUser [security context]", func() {
 			By("create pod")
 			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
