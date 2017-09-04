@@ -28,7 +28,8 @@ import (
 )
 
 const (
-	defaultTimeout = 10 * time.Second
+	defaultConfigPath = "/etc/crictl.yaml"
+	defaultTimeout    = 10 * time.Second
 )
 
 var (
@@ -107,7 +108,7 @@ func main() {
 		cli.StringFlag{
 			Name:   "config, c",
 			EnvVar: "CRI_CONFIG_FILE",
-			Value:  "",
+			Value:  defaultConfigPath,
 			Usage:  "Location of the client config file",
 		},
 		cli.StringFlag{
