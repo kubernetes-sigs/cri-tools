@@ -134,8 +134,19 @@ func main() {
 	}
 
 	app.Before = func(context *cli.Context) error {
+		isUseConfig := false
 		configFile := context.GlobalString("config")
-		if configFile == "" {
+		if _, err := os.Stat(configFile); err == nil {
+			isUseConfig = true
+		} else {
+			if context.IsSet("config") || !os.IsNotExist(err) {
+				// note: the absence of default config file is normal case
+				// when user have not setted it in cli
+				logrus.Fatalf("Falied to load config file: %v", err)
+			}
+		}
+
+		if !isUseConfig {
 			RuntimeEndpoint = context.GlobalString("runtime-endpoint")
 			ImageEndpoint = context.GlobalString("image-endpoint")
 			Timeout = context.GlobalDuration("timeout")
