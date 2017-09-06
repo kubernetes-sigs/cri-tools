@@ -70,7 +70,7 @@ var createContainerCommand = cli.Command{
 
 var startContainerCommand = cli.Command{
 	Name:      "start",
-	Usage:     "Start a stopped container",
+	Usage:     "Start a created container",
 	ArgsUsage: "CONTAINER",
 	Action: func(context *cli.Context) error {
 		containerID := context.Args().First()

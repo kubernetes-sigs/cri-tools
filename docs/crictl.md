@@ -31,7 +31,7 @@ Subcommands includes:
 - `inspects`:      Display the status of a sandbox
 - `sandboxes`:     List sandboxes
 - `create`:        Create a new container
-- `start`:         Start a stopped container
+- `start`:         Start a created container
 - `stop`:          Stop a running container
 - `rm`:            Remove a container
 - `inspect`:       Display the status of a container
