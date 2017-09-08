@@ -94,6 +94,13 @@ var stopContainerCommand = cli.Command{
 	Name:      "stop",
 	Usage:     "Stop a running container",
 	ArgsUsage: "CONTAINER",
+	Flags: []cli.Flag{
+		cli.Int64Flag{
+			Name:  "timeout, t",
+			Value: 10,
+			Usage: "Seconds to wait to kill the container after a graceful stop is requested",
+		},
+	},
 	Action: func(context *cli.Context) error {
 		containerID := context.Args().First()
 		if containerID == "" {
@@ -104,7 +111,7 @@ var stopContainerCommand = cli.Command{
 			return err
 		}
 
-		err := StopContainer(runtimeClient, containerID)
+		err := StopContainer(runtimeClient, containerID, context.Int64("timeout"))
 		if err != nil {
 			return fmt.Errorf("Stopping the container failed: %v", err)
 		}
@@ -280,12 +287,13 @@ func StartContainer(client pb.RuntimeServiceClient, ID string) error {
 
 // StopContainer sends a StopContainerRequest to the server, and parses
 // the returned StopContainerResponse.
-func StopContainer(client pb.RuntimeServiceClient, ID string) error {
+func StopContainer(client pb.RuntimeServiceClient, ID string, timeout int64) error {
 	if ID == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
 	request := &pb.StopContainerRequest{
 		ContainerId: ID,
+		Timeout:     timeout,
 	}
 	logrus.Debugf("StopContainerRequest: %v", request)
 	r, err := client.StopContainer(context.Background(), request)
