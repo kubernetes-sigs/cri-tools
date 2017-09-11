@@ -21,6 +21,9 @@ set -o pipefail
 ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"/..
 cd ${ROOT}
 
+echo "Run vndr to update vendor"
+vndr -whitelist github.com/onsi/ginkgo/*
+
 echo "Sort vendor.conf..."
 sort vendor.conf -o vendor.conf
 

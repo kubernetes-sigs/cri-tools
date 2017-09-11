@@ -18,6 +18,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
@@ -28,7 +29,7 @@ import (
 	"golang.org/x/net/context"
 	restclient "k8s.io/client-go/rest"
 	portforward "k8s.io/client-go/tools/portforward"
-	remoteclient "k8s.io/client-go/tools/remotecommand"
+	"k8s.io/client-go/transport/spdy"
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
@@ -86,10 +87,11 @@ func PortForward(client pb.RuntimeServiceClient, opts portforwardOptions) error 
 		return err
 	}
 	logrus.Debugf("PortForward URL: %v", URL)
-	exec, err := remoteclient.NewExecutor(&restclient.Config{}, "POST", URL)
+	transport, upgrader, err := spdy.RoundTripperFor(&restclient.Config{})
 	if err != nil {
 		return err
 	}
+	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", URL)
 
 	stopChan := make(chan struct{}, 1)
 	readyChan := make(chan struct{})
@@ -105,7 +107,7 @@ func PortForward(client pb.RuntimeServiceClient, opts portforwardOptions) error 
 		}
 	}()
 	logrus.Debugf("Ports to forword: %v", opts.ports)
-	pf, err := portforward.New(exec, opts.ports, stopChan, readyChan, os.Stdout, os.Stderr)
+	pf, err := portforward.New(dialer, opts.ports, stopChan, readyChan, os.Stdout, os.Stderr)
 	if err != nil {
 		return err
 	}

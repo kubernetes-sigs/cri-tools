@@ -32,7 +32,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
-	"k8s.io/kubernetes/pkg/api/v1"
+	"k8s.io/api/core/v1"
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 	"k8s.io/kubernetes/pkg/util/tail"
 )
