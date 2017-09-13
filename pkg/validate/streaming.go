@@ -19,15 +19,16 @@ package validate
 import (
 	"bytes"
 	"io"
+	"net/http"
 	"net/url"
 	"os"
 	"time"
 
 	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
-	remotecommandconsts "k8s.io/apimachinery/pkg/util/remotecommand"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
 	remoteclient "k8s.io/client-go/tools/remotecommand"
+	"k8s.io/client-go/transport/spdy"
 	internalapi "k8s.io/kubernetes/pkg/kubelet/apis/cri"
 	runtimeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 
@@ -136,14 +137,13 @@ func checkExec(c internalapi.RuntimeService, execServerURL string) {
 	// Only http is supported now.
 	// TODO: support streaming APIs via tls.
 	url := parseURL(c, execServerURL)
-	e, err := remoteclient.NewExecutor(&rest.Config{}, "POST", url)
+	e, err := remoteclient.NewSPDYExecutor(&rest.Config{}, "POST", url)
 	framework.ExpectNoError(err, "failed to create executor for %q", execServerURL)
 
 	err = e.Stream(remoteclient.StreamOptions{
-		SupportedProtocols: remotecommandconsts.SupportedStreamingProtocols,
-		Stdout:             localOut,
-		Stderr:             localErr,
-		Tty:                false,
+		Stdout: localOut,
+		Stderr: localErr,
+		Tty:    false,
 	})
 	framework.ExpectNoError(err, "failed to open streamer for %q", execServerURL)
 
@@ -204,15 +204,14 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 	// Only http is supported now.
 	// TODO: support streaming APIs via tls.
 	url := parseURL(c, attachServerURL)
-	e, err := remoteclient.NewExecutor(&rest.Config{}, "POST", url)
+	e, err := remoteclient.NewSPDYExecutor(&rest.Config{}, "POST", url)
 	framework.ExpectNoError(err, "failed to create executor for %q", attachServerURL)
 
 	err = e.Stream(remoteclient.StreamOptions{
-		SupportedProtocols: remotecommandconsts.SupportedStreamingProtocols,
-		Stdin:              reader,
-		Stdout:             localOut,
-		Stderr:             localErr,
-		Tty:                false,
+		Stdin:  reader,
+		Stdout: localOut,
+		Stderr: localErr,
+		Tty:    false,
 	})
 	framework.ExpectNoError(err, "failed to open streamer for %q", attachServerURL)
 
@@ -238,11 +237,11 @@ func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string) 
 	readyChan := make(chan struct{})
 	defer close(stopChan)
 
+	transport, upgrader, err := spdy.RoundTripperFor(&rest.Config{})
+	framework.ExpectNoError(err, "failed to create spdy round tripper")
 	url := parseURL(c, portForwardSeverURL)
-	e, err := remoteclient.NewExecutor(&rest.Config{}, "POST", url)
-	framework.ExpectNoError(err, "failed to create executor for %q", portForwardSeverURL)
-
-	pf, err := portforward.New(e, []string{"8000:80"}, stopChan, readyChan, os.Stdout, os.Stderr)
+	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", url)
+	pf, err := portforward.New(dialer, []string{"8000:80"}, stopChan, readyChan, os.Stdout, os.Stderr)
 	framework.ExpectNoError(err, "failed to create port forward for %q", portForwardSeverURL)
 
 	go func() {

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package unversioned contains API types that are common to all versions.
+// Package v1 contains API types that are common to all versions.
 //
 // The package contains two categories of types:
 // - external (serialized) types that lack their own version (e.g TypeMeta)
@@ -29,12 +29,15 @@ import (
 	"fmt"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 )
 
 // TypeMeta describes an individual object in an API response or request
 // with strings representing the type of the object and its API schema version.
 // Structures that are versioned or persisted should inline TypeMeta.
+//
+// +k8s:deepcopy-gen=false
 type TypeMeta struct {
 	// Kind is a string value representing the REST resource this object represents.
 	// Servers may infer this from the endpoint the client submits requests to.
@@ -245,7 +248,9 @@ type Initializers struct {
 	// When the last pending initializer is removed, and no failing result is set, the initializers
 	// struct will be set to nil and the object is considered as initialized and visible to all
 	// clients.
-	Pending []Initializer `json:"pending" protobuf:"bytes,1,rep,name=pending"`
+	// +patchMergeKey=name
+	// +patchStrategy=merge
+	Pending []Initializer `json:"pending" protobuf:"bytes,1,rep,name=pending" patchStrategy:"merge" patchMergeKey:"name"`
 	// If result is set with the Failure field, the object will be persisted to storage and then deleted,
 	// ensuring that other clients can observe the deletion.
 	Result *Status `json:"result,omitempty" protobuf:"bytes,2,opt,name=result"`
@@ -298,6 +303,8 @@ type OwnerReference struct {
 	BlockOwnerDeletion *bool `json:"blockOwnerDeletion,omitempty" protobuf:"varint,7,opt,name=blockOwnerDeletion"`
 }
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
 // ListOptions is the query options to a standard REST list call.
 type ListOptions struct {
 	TypeMeta `json:",inline"`
@@ -330,6 +337,8 @@ type ListOptions struct {
 	TimeoutSeconds *int64 `json:"timeoutSeconds,omitempty" protobuf:"varint,5,opt,name=timeoutSeconds"`
 }
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
 // ExportOptions is the query options to the standard REST get call.
 type ExportOptions struct {
 	TypeMeta `json:",inline"`
@@ -338,6 +347,8 @@ type ExportOptions struct {
 	// Should the export be exact.  Exact export maintains cluster-specific fields like 'Namespace'.
 	Exact bool `json:"exact" protobuf:"varint,2,opt,name=exact"`
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // GetOptions is the standard query options to the standard REST get call.
 type GetOptions struct {
@@ -369,6 +380,8 @@ const (
 	// cascading, i.e., the dependents will be deleted with Foreground.
 	DeletePropagationForeground DeletionPropagation = "Foreground"
 )
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // DeleteOptions may be provided when deleting an API object.
 type DeleteOptions struct {
@@ -407,6 +420,8 @@ type Preconditions struct {
 	// +optional
 	UID *types.UID `json:"uid,omitempty" protobuf:"bytes,1,opt,name=uid,casttype=k8s.io/apimachinery/pkg/types.UID"`
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // Status is a return value for calls that don't return other objects.
 type Status struct {
@@ -469,7 +484,9 @@ type StatusDetails struct {
 	// failure. Not all StatusReasons may provide detailed causes.
 	// +optional
 	Causes []StatusCause `json:"causes,omitempty" protobuf:"bytes,4,rep,name=causes"`
-	// If specified, the time in seconds before the operation should be retried.
+	// If specified, the time in seconds before the operation should be retried. Some errors may indicate
+	// the client must take an alternate action - for those errors this field may indicate how long to wait
+	// before taking the alternate action.
 	// +optional
 	RetryAfterSeconds int32 `json:"retryAfterSeconds,omitempty" protobuf:"varint,5,opt,name=retryAfterSeconds"`
 }
@@ -574,6 +591,15 @@ const (
 	// Status code 504
 	StatusReasonTimeout StatusReason = "Timeout"
 
+	// StatusReasonTooManyRequests means the server experienced too many requests within a
+	// given window and that the client must wait to perform the action again. A client may
+	// always retry the request that led to this error, although the client should wait at least
+	// the number of seconds specified by the retryAfterSeconds field.
+	// Details (optional):
+	//   "retryAfterSeconds" int32 - the number of seconds before the operation should be retried
+	// Status code 429
+	StatusReasonTooManyRequests StatusReason = "TooManyRequests"
+
 	// StatusReasonBadRequest means that the request itself was invalid, because the request
 	// doesn't make any sense, for example deleting a read-only object.  This is different than
 	// StatusReasonInvalid above which indicates that the API call could possibly succeed, but the
@@ -656,10 +682,25 @@ const (
 	CauseTypeUnexpectedServerResponse CauseType = "UnexpectedServerResponse"
 )
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// List holds a list of objects, which may not be known by the server.
+type List struct {
+	TypeMeta `json:",inline"`
+	// Standard list metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
+	// +optional
+	ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// List of objects
+	Items []runtime.RawExtension `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
 // APIVersions lists the versions that are available, to allow clients to
 // discover the API at /api, which is the root path of the legacy v1 API.
 //
 // +protobuf.options.(gogoproto.goproto_stringer)=false
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type APIVersions struct {
 	TypeMeta `json:",inline"`
 	// versions are the api versions that are available.
@@ -674,6 +715,8 @@ type APIVersions struct {
 	ServerAddressByClientCIDRs []ServerAddressByClientCIDR `json:"serverAddressByClientCIDRs" protobuf:"bytes,2,rep,name=serverAddressByClientCIDRs"`
 }
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
 // APIGroupList is a list of APIGroup, to allow clients to discover the API at
 // /apis.
 type APIGroupList struct {
@@ -681,6 +724,8 @@ type APIGroupList struct {
 	// groups is a list of APIGroup.
 	Groups []APIGroup `json:"groups" protobuf:"bytes,1,rep,name=groups"`
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // APIGroup contains the name, the supported versions, and the preferred version
 // of a group.
@@ -753,6 +798,8 @@ type Verbs []string
 func (vs Verbs) String() string {
 	return fmt.Sprintf("%v", []string(vs))
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // APIResourceList is a list of APIResource, it is used to expose the name of the
 // resources supported in a specific group and version, and if the resource
