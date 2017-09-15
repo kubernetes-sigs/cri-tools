@@ -18,9 +18,11 @@ package validate
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -400,6 +402,54 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			checkNetworkManagement(rc, containerID, false)
 		})
+
+		It("should support seccomp unconfined on the container [security context]", func() {
+			var containerID string
+			seccompProfile := "unconfined"
+
+			By("create seccomp sandbox and container")
+			podID, containerID = seccompTestContainer(rc, ic, seccompProfile)
+
+			By("verify seccomp profile")
+			verifySeccomp(rc, containerID, []string{"grep", "ecc", "/proc/self/status"}, false, "0") // seccomp disabled
+		})
+
+		It("should support seccomp docker/default on the container [security context]", func() {
+			var containerID string
+			seccompProfile := "docker/default"
+
+			By("create seccomp sandbox and container")
+			podID, containerID = seccompTestContainer(rc, ic, seccompProfile)
+
+			By("verify seccomp profile")
+			verifySeccomp(rc, containerID, []string{"grep", "ecc", "/proc/self/status"}, false, "2") // seccomp filtered
+		})
+
+		It("should support seccomp localhost/profile on the container [security context]", func() {
+			var containerID string
+
+			By("create seccomp profile")
+			profileDir, profilePath := createSeccompProfile()
+			defer os.RemoveAll(profileDir)
+
+			By("create seccomp sandbox and container")
+			seccompProfile := "localhost/" + profilePath
+			podID, containerID = seccompTestContainer(rc, ic, seccompProfile)
+
+			By("verify seccomp profile")
+			verifySeccomp(rc, containerID, []string{"chmod", "400", "/etc/hosts"}, true, "Operation not permitted") // seccomp denied
+		})
+
+		It("should support seccomp default which is unconfined on the container [security context]", func() {
+			var containerID string
+			seccompProfile := ""
+
+			By("create seccomp sandbox and container")
+			podID, containerID = seccompTestContainer(rc, ic, seccompProfile)
+
+			By("verify seccomp profile")
+			verifySeccomp(rc, containerID, []string{"grep", "ecc", "/proc/self/status"}, false, "0") // seccomp disabled
+		})
 	})
 
 })
@@ -636,4 +686,77 @@ func createAndCheckHostNetwork(rc internalapi.RuntimeService, ic internalapi.Ima
 	}, time.Minute, time.Second).Should(BeNil())
 
 	return podID
+}
+
+// createSeccompProfile creates a seccompe profile which denies chmod syscall.
+func createSeccompProfile() (string, string) {
+	seccompeProfile := `{
+    "defaultAction": "SCMP_ACT_ALLOW",
+    "syscalls": [
+        {
+            "name": "chmod",
+            "action": "SCMP_ACT_ERRNO"
+        }
+    ]
+}`
+	hostPath, err := ioutil.TempDir("", "seccomp-test")
+	framework.ExpectNoError(err, "failed to create tempdir %q: %v", hostPath, err)
+	profilePath := filepath.Join(hostPath, "profile.json")
+	err = ioutil.WriteFile(profilePath, []byte(seccompeProfile), 0644)
+	framework.ExpectNoError(err, "failed to create host path %s: %v", profilePath, err)
+
+	return hostPath, profilePath
+}
+
+// seccompTestContainer creates and starts a seccomp sandbox and a container.
+func seccompTestContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, seccompProfile string) (string, string) {
+	By("create seccomp sandbox")
+	podSandboxName := "seccomp-sandbox-" + framework.NewUUID()
+	uid := framework.DefaultUIDPrefix + framework.NewUUID()
+	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
+	podConfig := &runtimeapi.PodSandboxConfig{
+		Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
+				SeccompProfilePath: seccompProfile,
+			},
+		},
+	}
+	podID := framework.RunPodSandbox(rc, podConfig)
+
+	By("create container")
+	containerNamePrefix := fmt.Sprintf("seccomp-container-%s-%s", strings.Replace(seccompProfile, "/", "-", -1), framework.NewUUID())
+	containerName := containerNamePrefix + framework.NewUUID()
+	containerConfig := &runtimeapi.ContainerConfig{
+		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+		Command:  []string{"top"},
+		Linux: &runtimeapi.LinuxContainerConfig{
+			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
+				SeccompProfilePath: seccompProfile,
+			},
+		},
+	}
+	containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
+
+	By("start container")
+	startContainer(rc, containerID)
+	Eventually(func() runtimeapi.ContainerState {
+		return getContainerStatus(rc, containerID).State
+	}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+	return podID, containerID
+}
+
+func verifySeccomp(rc internalapi.RuntimeService, containerID string, command []string, expectError bool, output string) {
+	stdout, stderr, err := rc.ExecSync(containerID, command, time.Duration(defaultExecSyncTimeout)*time.Second)
+	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", command, stdout, stderr)
+
+	if expectError {
+		Expect(err).To(HaveOccurred(), msg)
+		Expect(string(stderr)).To(ContainSubstring(output))
+	} else {
+		Expect(err).NotTo(HaveOccurred(), msg)
+		Expect(string(stdout)).To(ContainSubstring(output))
+	}
 }
