@@ -18,10 +18,20 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# Install docker
+
+# Install docker.
 sudo sh -c 'echo "deb https://apt.dockerproject.org/repo ubuntu-$(lsb_release -cs) main" > /etc/apt/sources.list.d/docker.list'
 curl -fsSL https://apt.dockerproject.org/gpg | sudo apt-key add -
 sudo apt-key fingerprint 58118E89F3A912897C070ADBF76221572C52609D
 sudo apt-get update
-sudo apt-get -y install "docker-engine=1.13.1-0~ubuntu-$(lsb_release -cs)"
+sudo apt-get -y install "docker-engine=17.03.1~ce-0~ubuntu-$(lsb_release -cs)"
+
+# docker debs don't support seccomp, so we install a static version instead.
+curl -sSL -o docker.tgz https://download.docker.com/linux/static/stable/x86_64/docker-17.03.1-ce.tgz
+tar xzvf docker.tgz
+sudo cp -f docker/* /usr/bin
+rm -f docker.tgz
+
+# Restart docker daemon.
+sudo service docker restart
 
