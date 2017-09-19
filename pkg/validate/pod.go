@@ -20,6 +20,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
 	internalapi "k8s.io/kubernetes/pkg/kubelet/apis/cri"
@@ -32,10 +34,12 @@ import (
 var _ = framework.KubeDescribe("PodSandbox", func() {
 	f := framework.NewDefaultCRIFramework()
 
-	var c internalapi.RuntimeService
+	var rc internalapi.RuntimeService
+	var ic internalapi.ImageManagerService
 
 	BeforeEach(func() {
-		c = f.CRIClient.CRIRuntimeClient
+		rc = f.CRIClient.CRIRuntimeClient
+		ic = f.CRIClient.CRIImageClient
 	})
 
 	Context("runtime should support basic operations on PodSandbox", func() {
@@ -43,37 +47,79 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 		AfterEach(func() {
 			By("stop PodSandbox")
-			c.StopPodSandbox(podID)
+			rc.StopPodSandbox(podID)
 			By("delete PodSandbox")
-			c.RemovePodSandbox(podID)
+			rc.RemovePodSandbox(podID)
 		})
 
 		It("runtime should support running PodSandbox [Conformance]", func() {
 			By("test run a default PodSandbox")
-			podID = testRunDefaultPodSandbox(c)
+			podID = testRunDefaultPodSandbox(rc)
 
 			By("test list PodSandbox")
-			pods := listPodSanboxForID(c, podID)
+			pods := listPodSanboxForID(rc, podID)
 			Expect(podSandboxFound(pods, podID)).To(BeTrue(), "PodSandbox should be listed")
 		})
 
 		It("runtime should support stopping PodSandbox [Conformance]", func() {
 			By("run PodSandbox")
-			podID = framework.RunDefaultPodSandbox(c, "PodSandbox-for-test-stop-")
+			podID = framework.RunDefaultPodSandbox(rc, "PodSandbox-for-test-stop-")
 
 			By("test stop PodSandbox")
-			testStopPodSandbox(c, podID)
+			testStopPodSandbox(rc, podID)
 		})
 
 		It("runtime should support removing PodSandbox [Conformance]", func() {
 			By("run PodSandbox")
-			podID = framework.RunDefaultPodSandbox(c, "PodSandbox-for-test-remove-")
+			podID = framework.RunDefaultPodSandbox(rc, "PodSandbox-for-test-remove-")
 
 			By("stop PodSandbox")
-			stopPodSandbox(c, podID)
+			stopPodSandbox(rc, podID)
 
 			By("test remove PodSandbox")
-			testRemovePodSandbox(c, podID)
+			testRemovePodSandbox(rc, podID)
+		})
+	})
+
+	Context("runtime should support sysctls", func() {
+		var podID string
+		var podConfig *runtimeapi.PodSandboxConfig
+
+		AfterEach(func() {
+			By("stop PodSandbox")
+			rc.StopPodSandbox(podID)
+			By("delete PodSandbox")
+			rc.RemovePodSandbox(podID)
+		})
+
+		It("should support safe sysctls", func() {
+			podID, podConfig = createSandboxWithSysctls(rc, map[string]string{
+				"kernel.shm_rmid_forced": "1",
+			})
+
+			By("create a default container")
+			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-shm-rmid-forced")
+
+			By("start container")
+			startContainer(rc, containerID)
+
+			By("check sysctls kernel.shm_rmid_forced")
+			checkSetSysctls(rc, containerID, "/proc/sys/kernel/shm_rmid_forced", "1")
+		})
+
+		It("should support unsafe sysctls", func() {
+			podID, podConfig = createSandboxWithSysctls(rc, map[string]string{
+				"fs.mqueue.msg_max": "100",
+			})
+
+			By("create a default container")
+			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-fs-mqueue-msg-max")
+
+			By("start container")
+			startContainer(rc, containerID)
+
+			By("check sysctls fs.mqueue.msg_max")
+			checkSetSysctls(rc, containerID, "/proc/sys/fs/mqueue/msg_max", "100")
 		})
 	})
 })
@@ -181,4 +227,28 @@ func createPodSandboxWithLogDirectory(c internalapi.RuntimeService) (string, *ru
 		LogDirectory: podLogPath,
 	}
 	return framework.RunPodSandbox(c, podConfig), podConfig, hostPath
+}
+
+// createSandboxWithSysctls creates a PodSandbox with specified sysctls.
+func createSandboxWithSysctls(rc internalapi.RuntimeService, sysctls map[string]string) (string, *runtimeapi.PodSandboxConfig) {
+	By("create a PodSandbox with sysctls")
+	podSandboxName := "pod-sandbox-with-sysctls-" + framework.NewUUID()
+	uid := framework.DefaultUIDPrefix + framework.NewUUID()
+	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
+
+	podConfig := &runtimeapi.PodSandboxConfig{
+		Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			Sysctls: sysctls,
+		},
+	}
+	return framework.RunPodSandbox(rc, podConfig), podConfig
+}
+
+// checkSetSysctls checks whether sysctl settings is equal to expected string.
+func checkSetSysctls(rc internalapi.RuntimeService, containerID, sysctlPath, expected string) {
+	cmd := []string{"cat", sysctlPath}
+	stdout, _, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(strings.TrimSpace(string(stdout))).To(Equal(expected))
 }
