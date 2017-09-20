@@ -412,7 +412,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
      "defaultAction": "SCMP_ACT_ALLOW",
      "syscalls": [
          {
-             "name": "sethostname",
+             "names": ["sethostname"],
              "action": "SCMP_ACT_ERRNO"
          }
      ]
@@ -422,7 +422,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
      "defaultAction": "SCMP_ACT_ALLOW",
      "syscalls": [
          {
-             "name": "chmod",
+             "names": ["chmod"],
              "action": "SCMP_ACT_ERRNO"
          }
      ]
@@ -534,36 +534,6 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				return getContainerStatus(rc, containerID).State
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 			checkSetHostname(rc, containerID, true)
-		})
-
-		It("runtime should block sethostname with unconfined seccomp profile and no sysCaps", func() {
-			privileged := false
-			expectContainerCreateToPass := true
-			By("create pod")
-			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
-			By("create container with unconfined seccomp profile and test")
-			containerID := createSeccompContainer(rc, ic, podID, podConfig,
-				"container-with-runtimedefault-seccomp-profile-test-", "unconfined", nil, privileged, expectContainerCreateToPass)
-			startContainer(rc, containerID)
-			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
-			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
-			checkSetHostname(rc, containerID, false)
-		})
-
-		It("runtime should block sethostname with nil seccomp profile and no sysCaps", func() {
-			privileged := false
-			expectContainerCreateToPass := true
-			By("create pod")
-			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
-			By("create container with nil seccomp profile and test")
-			containerID := createSeccompContainer(rc, ic, podID, podConfig,
-				"container-with-runtimedefault-seccomp-profile-test-", "", nil, privileged, expectContainerCreateToPass)
-			startContainer(rc, containerID)
-			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
-			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
-			checkSetHostname(rc, containerID, false)
 		})
 
 		Context("docker/default", func() {
