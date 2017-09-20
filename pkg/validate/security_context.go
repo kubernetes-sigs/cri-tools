@@ -27,7 +27,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
 	internalapi "k8s.io/kubernetes/pkg/kubelet/apis/cri"
 	runtimeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
@@ -39,26 +38,6 @@ import (
 const (
 	nginxContainerImage string = "nginx"
 	localhost           string = "localhost/"
-	// profile which denies sethostname syscall
-	seccompBlockHostNameProfile = `{
-     "defaultAction": "SCMP_ACT_ALLOW",
-     "syscalls": [
-         {
-             "name": "sethostname",
-             "action": "SCMP_ACT_ERRNO"
-         }
-     ]
-}`
-	// profile which denies chmod syscall
-	seccompBlockChmodProfile = `{
-     "defaultAction": "SCMP_ACT_ALLOW",
-     "syscalls": [
-         {
-             "name": "chmod",
-             "action": "SCMP_ACT_ERRNO"
-         }
-     ]
-}`
 )
 
 var _ = framework.KubeDescribe("Security Context", func() {
@@ -427,6 +406,28 @@ var _ = framework.KubeDescribe("Security Context", func() {
 	})
 
 	Context("SeccompProfilePath", func() {
+		const (
+			// profile which denies sethostname syscall
+			seccompBlockHostNameProfile = `{
+     "defaultAction": "SCMP_ACT_ALLOW",
+     "syscalls": [
+         {
+             "name": "sethostname",
+             "action": "SCMP_ACT_ERRNO"
+         }
+     ]
+}`
+			// profile which denies chmod syscall
+			seccompBlockChmodProfile = `{
+     "defaultAction": "SCMP_ACT_ALLOW",
+     "syscalls": [
+         {
+             "name": "chmod",
+             "action": "SCMP_ACT_ERRNO"
+         }
+     ]
+}`
+		)
 		var podID, profileDir, blockHostNameProfilePath, blockchmodProfilePath string
 		var podConfig *runtimeapi.PodSandboxConfig
 		var err error
@@ -435,17 +436,17 @@ var _ = framework.KubeDescribe("Security Context", func() {
 		BeforeEach(func() {
 			profileDir, err = createSeccompProfileDir()
 			if err != nil {
-				glog.Errorf("Failed creating seccomp profile directory: %v", err)
+				Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed creating seccomp profile directory: %v", err))
 				return
 			}
 			blockHostNameProfilePath, err = createSeccompProfile(seccompBlockHostNameProfile, "block-host-name.json", profileDir)
 			if err != nil {
-				glog.Errorf("Failed creating seccomp block hostname profile: %v", err)
+				Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed creating seccomp block hostname profile: %v", err))
 				return
 			}
 			blockchmodProfilePath, err = createSeccompProfile(seccompBlockChmodProfile, "block-chmod.json", profileDir)
 			if err != nil {
-				glog.Errorf("Failed creating seccomp block chmod profile: %v", err)
+				Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed creating seccomp block chmod profile: %v", err))
 				return
 			}
 		})
@@ -469,17 +470,6 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			By("verify seccomp profile")
 			verifySeccomp(rc, containerID, []string{"grep", "ecc", "/proc/self/status"}, false, "0") // seccomp disabled
-		})
-
-		It("should support seccomp docker/default on the container", func() {
-			var containerID string
-			seccompProfile := "docker/default"
-
-			By("create seccomp sandbox and container")
-			podID, containerID = seccompTestContainer(rc, ic, seccompProfile)
-
-			By("verify seccomp profile")
-			verifySeccomp(rc, containerID, []string{"grep", "ecc", "/proc/self/status"}, false, "2") // seccomp filtered
 		})
 
 		It("should support seccomp localhost/profile on the container", func() {
@@ -546,55 +536,12 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			checkSetHostname(rc, containerID, true)
 		})
 
-		It("runtime should block setting hostname with no seccomp profile specified", func() {
-			By("create pod")
-			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
-			By("create container without seccomp profile and test")
-			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig,
-				"container-with-no-seccomp-profile-test-")
-			startContainer(rc, containerID)
-			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
-			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
-			checkSetHostname(rc, containerID, false)
-		})
-
-		It("runtime should support setting hostname with docker/default seccomp profile and sysCaps", func() {
-			privileged := false
-			expectContainerCreateToPass := true
-			By("create pod")
-			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
-			By("create container with docker/default seccomp profile and test")
-			containerID := createSeccompContainer(rc, ic, podID, podConfig,
-				"container-with-dockerdefault-seccomp-profile-test-", "docker/default", sysCaps, privileged, expectContainerCreateToPass)
-			startContainer(rc, containerID)
-			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
-			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
-			checkSetHostname(rc, containerID, true)
-		})
-
-		It("runtime should block sethostname with docker/default seccomp profile and no sysCaps", func() {
-			privileged := false
-			expectContainerCreateToPass := true
-			By("create pod")
-			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
-			By("create container with docker/default seccomp profile and test")
-			containerID := createSeccompContainer(rc, ic, podID, podConfig,
-				"container-with-dockerdefault-seccomp-profile-test-", "docker/default", nil, privileged, expectContainerCreateToPass)
-			startContainer(rc, containerID)
-			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
-			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
-			checkSetHostname(rc, containerID, false)
-		})
-
 		It("runtime should block sethostname with unconfined seccomp profile and no sysCaps", func() {
 			privileged := false
 			expectContainerCreateToPass := true
 			By("create pod")
 			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
-			By("create container with runtime/default seccomp profile and test")
+			By("create container with unconfined seccomp profile and test")
 			containerID := createSeccompContainer(rc, ic, podID, podConfig,
 				"container-with-runtimedefault-seccomp-profile-test-", "unconfined", nil, privileged, expectContainerCreateToPass)
 			startContainer(rc, containerID)
@@ -609,7 +556,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			expectContainerCreateToPass := true
 			By("create pod")
 			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
-			By("create container with runtime/default seccomp profile and test")
+			By("create container with nil seccomp profile and test")
 			containerID := createSeccompContainer(rc, ic, podID, podConfig,
 				"container-with-runtimedefault-seccomp-profile-test-", "", nil, privileged, expectContainerCreateToPass)
 			startContainer(rc, containerID)
@@ -617,6 +564,49 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				return getContainerStatus(rc, containerID).State
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 			checkSetHostname(rc, containerID, false)
+		})
+
+		Context("docker/default", func() {
+			It("should support seccomp docker/default on the container", func() {
+				var containerID string
+				seccompProfile := "docker/default"
+
+				By("create seccomp sandbox and container")
+				podID, containerID = seccompTestContainer(rc, ic, seccompProfile)
+
+				By("verify seccomp profile")
+				verifySeccomp(rc, containerID, []string{"grep", "ecc", "/proc/self/status"}, false, "2") // seccomp filtered
+			})
+
+			It("runtime should support setting hostname with docker/default seccomp profile and sysCaps", func() {
+				privileged := false
+				expectContainerCreateToPass := true
+				By("create pod")
+				podID, podConfig = framework.CreatePodSandboxForContainer(rc)
+				By("create container with docker/default seccomp profile and test")
+				containerID := createSeccompContainer(rc, ic, podID, podConfig,
+					"container-with-dockerdefault-seccomp-profile-test-", "docker/default", sysCaps, privileged, expectContainerCreateToPass)
+				startContainer(rc, containerID)
+				Eventually(func() runtimeapi.ContainerState {
+					return getContainerStatus(rc, containerID).State
+				}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+				checkSetHostname(rc, containerID, true)
+			})
+
+			It("runtime should block sethostname with docker/default seccomp profile and no sysCaps", func() {
+				privileged := false
+				expectContainerCreateToPass := true
+				By("create pod")
+				podID, podConfig = framework.CreatePodSandboxForContainer(rc)
+				By("create container with docker/default seccomp profile and test")
+				containerID := createSeccompContainer(rc, ic, podID, podConfig,
+					"container-with-dockerdefault-seccomp-profile-test-", "docker/default", nil, privileged, expectContainerCreateToPass)
+				startContainer(rc, containerID)
+				Eventually(func() runtimeapi.ContainerState {
+					return getContainerStatus(rc, containerID).State
+				}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+				checkSetHostname(rc, containerID, false)
+			})
 		})
 	})
 })
