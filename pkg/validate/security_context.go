@@ -38,6 +38,7 @@ import (
 const (
 	nginxContainerImage string = "nginx"
 	localhost           string = "localhost/"
+	noNewPrivsImage     string = "gcr.io/google_containers/nonewprivs:1.2"
 )
 
 var _ = framework.KubeDescribe("Security Context", func() {
@@ -577,6 +578,70 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 				checkSetHostname(rc, containerID, false)
 			})
+		})
+	})
+
+	Context("NoNewPrivs", func() {
+		var podID, logPath string
+		var podConfig *runtimeapi.PodSandboxConfig
+
+		BeforeEach(func() {
+			podID, podConfig, logPath = createPodSandboxWithLogDirectory(rc)
+		})
+
+		AfterEach(func() {
+			By("stop PodSandbox")
+			rc.StopPodSandbox(podID)
+			By("delete PodSandbox")
+			rc.RemovePodSandbox(podID)
+			By("clean up the log dir")
+			os.RemoveAll(logPath)
+		})
+
+		createContainerWithNoNewPrivs := func(name string, noNewPrivs bool, uid int64) string {
+			By(fmt.Sprintf("create container %s", name))
+			containerConfig := &runtimeapi.ContainerConfig{
+				Metadata: framework.BuildContainerMetadata(name, framework.DefaultAttempt),
+				Image:    &runtimeapi.ImageSpec{Image: noNewPrivsImage},
+				Linux: &runtimeapi.LinuxContainerConfig{
+					SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
+						NoNewPrivs: noNewPrivs,
+						RunAsUser: &runtimeapi.Int64Value{
+							Value: uid,
+						},
+					},
+				},
+				LogPath: fmt.Sprintf("%s.log", name),
+			}
+			containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
+
+			// wait container started and check the status.
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
+
+			return containerID
+		}
+		matchOutput := func(name, output string) {
+			By("check container's output")
+			expectedLog := &logMessage{
+				log:    []byte(output + "\n"),
+				stream: stdoutType,
+			}
+			verifyLogContents(podConfig, fmt.Sprintf("%s.log", name), expectedLog)
+		}
+
+		It("should not allow privilege escalation when true", func() {
+			containerName := "alpine-nnp-true-" + string(framework.NewUUID())
+			createContainerWithNoNewPrivs(containerName, true, 1000)
+			matchOutput(containerName, "Effective uid: 1000")
+		})
+
+		It("should allow privilege escalation when false", func() {
+			containerName := "alpine-nnp-false-" + string(framework.NewUUID())
+			createContainerWithNoNewPrivs(containerName, false, 1000)
+			matchOutput(containerName, "Effective uid: 0")
 		})
 	})
 })
