@@ -405,6 +405,8 @@ var _ = framework.KubeDescribe("Security Context", func() {
 		})
 	})
 
+	// TODO(random-liu): We should set apparmor to unconfined in seccomp test to prevent
+	// them from interfering with each other.
 	Context("SeccompProfilePath", func() {
 		const (
 			// profile which denies sethostname syscall
@@ -431,7 +433,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 		var podID, profileDir, blockHostNameProfilePath, blockchmodProfilePath string
 		var podConfig *runtimeapi.PodSandboxConfig
 		var err error
-		sysCaps := []string{"ALL"}
+		sysAdminCap := []string{"SYS_ADMIN"}
 
 		BeforeEach(func() {
 			profileDir, err = createSeccompProfileDir()
@@ -493,7 +495,8 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			verifySeccomp(rc, containerID, []string{"grep", "ecc", "/proc/self/status"}, false, "0") // seccomp disabled
 		})
 
-		It("runtime should support an seccomp profile that blocks setting hostname with no sysCaps", func() {
+		// SYS_ADMIN capability allows sethostname, and seccomp is unconfined. sethostname should work.
+		It("runtime should not block setting host name with unconfined seccomp and SYS_ADMIN", func() {
 			privileged := false
 			expectContainerCreateToPass := true
 			By("create pod")
@@ -501,7 +504,24 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("create container with seccompBlockHostNameProfile and test")
 			containerID := createSeccompContainer(rc, ic, podID, podConfig,
 				"container-with-block-hostname-seccomp-profile-test-",
-				localhost+blockHostNameProfilePath, nil, privileged, expectContainerCreateToPass)
+				"unconfined", sysAdminCap, privileged, expectContainerCreateToPass)
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+			checkSetHostname(rc, containerID, true)
+		})
+
+		// SYS_ADMIN capability allows sethostname, but seccomp profile should be able to block it.
+		It("runtime should support an seccomp profile that blocks setting hostname with SYS_ADMIN", func() {
+			privileged := false
+			expectContainerCreateToPass := true
+			By("create pod")
+			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
+			By("create container with seccompBlockHostNameProfile and test")
+			containerID := createSeccompContainer(rc, ic, podID, podConfig,
+				"container-with-block-hostname-seccomp-profile-test-",
+				localhost+blockHostNameProfilePath, sysAdminCap, privileged, expectContainerCreateToPass)
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
 				return getContainerStatus(rc, containerID).State
@@ -548,14 +568,14 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				verifySeccomp(rc, containerID, []string{"grep", "ecc", "/proc/self/status"}, false, "2") // seccomp filtered
 			})
 
-			It("runtime should support setting hostname with docker/default seccomp profile and sysCaps", func() {
+			It("runtime should support setting hostname with docker/default seccomp profile and SYS_ADMIN", func() {
 				privileged := false
 				expectContainerCreateToPass := true
 				By("create pod")
 				podID, podConfig = framework.CreatePodSandboxForContainer(rc)
 				By("create container with docker/default seccomp profile and test")
 				containerID := createSeccompContainer(rc, ic, podID, podConfig,
-					"container-with-dockerdefault-seccomp-profile-test-", "docker/default", sysCaps, privileged, expectContainerCreateToPass)
+					"container-with-dockerdefault-seccomp-profile-test-", "docker/default", sysAdminCap, privileged, expectContainerCreateToPass)
 				startContainer(rc, containerID)
 				Eventually(func() runtimeapi.ContainerState {
 					return getContainerStatus(rc, containerID).State
@@ -563,7 +583,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				checkSetHostname(rc, containerID, true)
 			})
 
-			It("runtime should block sethostname with docker/default seccomp profile and no sysCaps", func() {
+			It("runtime should block sethostname with docker/default seccomp profile and no extra caps", func() {
 				privileged := false
 				expectContainerCreateToPass := true
 				By("create pod")
