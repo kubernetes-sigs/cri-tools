@@ -150,20 +150,39 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support starting container with volume [Conformance]", func() {
 			By("create host path and flag file")
-			hostPath, flagFile := createHostPath(podID)
+			hostPath, _ := createHostPath(podID)
 
 			defer os.RemoveAll(hostPath) // clean up the TempDir
 
 			By("create container with volume")
-			containerID := createVolumeContainer(rc, ic, "container-with-volume-test-", podID, podConfig, hostPath, flagFile)
+			containerID := createVolumeContainer(rc, ic, "container-with-volume-test-", podID, podConfig, hostPath)
 
 			By("test start container with volume")
 			testStartContainer(rc, containerID)
 
-			By("test container exit code")
-			Eventually(func() int32 {
-				return getContainerStatus(rc, containerID).ExitCode
-			}, time.Minute, time.Second*4).Should(Equal(int32(0)))
+			By("check whether 'hostPath' contains file or dir in container")
+			command := []string{"ls", "-A", hostPath}
+			output := execSyncContainer(rc, containerID, command)
+			Expect(len(output)).NotTo(BeZero(), "len(output) should not be zero.")
+		})
+
+		It("runtime should support starting container with volume when host path doesn't exist", func() {
+			By("get a host path that doesn't exist")
+			hostPath, _ := createHostPath(podID)
+			os.RemoveAll(hostPath) // make sure the host path doesn't exist
+
+			defer os.RemoveAll(hostPath) // clean up the TempDir
+
+			By("create container with volume")
+			containerID := createVolumeContainer(rc, ic, "container-with-volume-test-", podID, podConfig, hostPath)
+
+			By("test start container with volume")
+			testStartContainer(rc, containerID)
+
+			By("check whether 'hostPath' does exist or not in host")
+			Eventually(func() bool {
+				return pathExists(hostPath)
+			}, time.Minute, time.Second*4).Should(Equal(true))
 		})
 	})
 
@@ -460,14 +479,14 @@ func createHostPath(podID string) (string, string) {
 }
 
 // createVolumeContainer creates a container with volume and the prefix of containerName and fails if it gets error.
-func createVolumeContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix string, podID string, podConfig *runtimeapi.PodSandboxConfig, hostPath, flagFile string) string {
+func createVolumeContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix string, podID string, podConfig *runtimeapi.PodSandboxConfig, hostPath string) string {
 	By("create a container with volume and name")
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
-		// mount host path to the same directory in container, and check if flag file exists
-		Command: []string{"sh", "-c", "test -f " + filepath.Join(hostPath, flagFile)},
+		Command:  []string{"sh", "-c", "top"},
+		// mount host path to the same directory in container, and will check if hostPath isn't empty
 		Mounts: []*runtimeapi.Mount{
 			{
 				HostPath:      hostPath,
@@ -491,6 +510,19 @@ func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManag
 		LogPath:  path,
 	}
 	return containerConfig.LogPath, framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
+}
+
+// pathExists check whether 'path' does exist or not
+func pathExists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	framework.ExpectNoError(err, "failed to check whether %q Exists: %v", path, err)
+	return false
 }
 
 // parseDockerJSONLog parses logs in Docker JSON log format.
