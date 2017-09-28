@@ -122,6 +122,8 @@ func createDefaultExec(c internalapi.RuntimeService, containerID string) string 
 	req := &runtimeapi.ExecRequest{
 		ContainerId: containerID,
 		Cmd:         []string{"echo", "hello"},
+		Stdout:      true,
+		Stderr:      true,
 	}
 
 	resp, err := c.Exec(req)
@@ -176,6 +178,8 @@ func createDefaultAttach(c internalapi.RuntimeService, containerID string) strin
 	req := &runtimeapi.AttachRequest{
 		ContainerId: containerID,
 		Stdin:       true,
+		Stdout:      true,
+		Stderr:      true,
 		Tty:         false,
 	}
 
