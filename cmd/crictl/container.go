@@ -90,6 +90,68 @@ var startContainerCommand = cli.Command{
 	},
 }
 
+var updateContainerCommand = cli.Command{
+	Name:      "update",
+	Usage:     "Update a running container",
+	ArgsUsage: "CONTAINER",
+	Flags: []cli.Flag{
+		cli.Int64Flag{
+			Name:  "cpu-period",
+			Usage: "CPU CFS period to be used for hardcapping (in usecs). 0 to use system default",
+		},
+		cli.Int64Flag{
+			Name:  "cpu-quota",
+			Usage: "CPU CFS hardcap limit (in usecs). Allowed cpu time in a given period",
+		},
+		cli.Int64Flag{
+			Name:  "cpu-share",
+			Usage: "CPU shares (relative weight vs. other containers)",
+		},
+		cli.Int64Flag{
+			Name:  "memory",
+			Usage: "Memory limit (in bytes)",
+		},
+		cli.StringFlag{
+			Name:  "cpuset-cpus",
+			Usage: "CPU(s) to use",
+		},
+		cli.StringFlag{
+			Name:  "cpuset-mems",
+			Usage: "Memory node(s) to use",
+		},
+		cli.Int64Flag{
+			Name:  "oom-score-adj",
+			Usage: "OOM killer score",
+		},
+	},
+	Action: func(context *cli.Context) error {
+		containerID := context.Args().First()
+		if containerID == "" {
+			return cli.ShowSubcommandHelp(context)
+		}
+
+		if err := getRuntimeClient(context); err != nil {
+			return err
+		}
+
+		options := updateOptions{
+			CPUPeriod:          context.Int64("cpu-period"),
+			CPUQuota:           context.Int64("cpu-quota"),
+			CPUShares:          context.Int64("cpu-share"),
+			CpusetCpus:         context.String("cpuset-cpus"),
+			CpusetMems:         context.String("cpuset-mems"),
+			MemoryLimitInBytes: context.Int64("memory"),
+			OomScoreAdj:        context.Int64("oom-score-adj"),
+		}
+
+		err := UpdateContainerResources(runtimeClient, containerID, options)
+		if err != nil {
+			return fmt.Errorf("Updating container resources failed: %v", err)
+		}
+		return nil
+	},
+}
+
 var stopContainerCommand = cli.Command{
 	Name:      "stop",
 	Usage:     "Stop a running container",
@@ -278,6 +340,51 @@ func StartContainer(client pb.RuntimeServiceClient, ID string) error {
 	logrus.Debugf("StartContainerRequest: %v", request)
 	r, err := client.StartContainer(context.Background(), request)
 	logrus.Debugf("StartContainerResponse: %v", r)
+	if err != nil {
+		return err
+	}
+	fmt.Println(ID)
+	return nil
+}
+
+type updateOptions struct {
+	// CPU CFS (Completely Fair Scheduler) period. Default: 0 (not specified).
+	CPUPeriod int64
+	// CPU CFS (Completely Fair Scheduler) quota. Default: 0 (not specified).
+	CPUQuota int64
+	// CPU shares (relative weight vs. other containers). Default: 0 (not specified).
+	CPUShares int64
+	// Memory limit in bytes. Default: 0 (not specified).
+	MemoryLimitInBytes int64
+	// OOMScoreAdj adjusts the oom-killer score. Default: 0 (not specified).
+	OomScoreAdj int64
+	// CpusetCpus constrains the allowed set of logical CPUs. Default: "" (not specified).
+	CpusetCpus string
+	// CpusetMems constrains the allowed set of memory nodes. Default: "" (not specified).
+	CpusetMems string
+}
+
+// UpdateContainerResources sends an UpdateContainerResourcesRequest to the server, and parses
+// the returned UpdateContainerResourcesResponse.
+func UpdateContainerResources(client pb.RuntimeServiceClient, ID string, opts updateOptions) error {
+	if ID == "" {
+		return fmt.Errorf("ID cannot be empty")
+	}
+	request := &pb.UpdateContainerResourcesRequest{
+		ContainerId: ID,
+		Linux: &pb.LinuxContainerResources{
+			CpuPeriod:          opts.CPUPeriod,
+			CpuQuota:           opts.CPUQuota,
+			CpuShares:          opts.CPUShares,
+			CpusetCpus:         opts.CpusetCpus,
+			CpusetMems:         opts.CpusetMems,
+			MemoryLimitInBytes: opts.MemoryLimitInBytes,
+			OomScoreAdj:        opts.OomScoreAdj,
+		},
+	}
+	logrus.Debugf("UpdateContainerResourcesRequest: %v", request)
+	r, err := client.UpdateContainerResources(context.Background(), request)
+	logrus.Debugf("UpdateContainerResourcesResponse: %v", r)
 	if err != nil {
 		return err
 	}
