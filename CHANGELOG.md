@@ -1,4 +1,8 @@
+<!-- TOC -->
 
+- [v0.2](#v02)
+    - [CRI validation testing (critest)](#cri-validation-testing-critest)
+    - [CRI CLI (crictl)](#cri-cli-crictl)
 - [v0.1](#v01)
     - [Features](#features)
         - [CRI validation testing](#cri-validation-testing)
@@ -6,6 +10,30 @@
         - [CRI performance benchmarking](#cri-performance-benchmarking)
     - [Documentation](#documentation)
 
+<!-- /TOC -->
+
+# v0.2
+
+cri-tools v0.2 enhances validation testings, improves crictl UX and also fixes several bugs.  It has also updates container runtime interface (CRI) to kubernetes v1.8.
+
+## CRI validation testing (critest)
+
+- [#127](https://github.com/kubernetes-incubator/cri-tools/pull/127) Adds validation tests for supplemental groups
+- [#135](https://github.com/kubernetes-incubator/cri-tools/pull/135) [#137](https://github.com/kubernetes-incubator/cri-tools/pull/137) and [#144](https://github.com/kubernetes-incubator/cri-tools/pull/144) Adds validation tests for seccomp 
+- [#139](https://github.com/kubernetes-incubator/cri-tools/pull/139) Adds validation tests for sysctls
+- [#140](https://github.com/kubernetes-incubator/cri-tools/pull/140) Adds validation tests for AppArmor
+- [#141](https://github.com/kubernetes-incubator/cri-tools/pull/141) Adds validation tests for NoNewPrivs
+- [#142](https://github.com/kubernetes-incubator/cri-tools/pull/142) Adds validation tests for mount propagation
+- [#115](https://github.com/kubernetes-incubator/cri-tools/pull/115) Fixes image validation tests
+- [#116](https://github.com/kubernetes-incubator/cri-tools/pull/116) Fixes validation message
+- [#126](https://github.com/kubernetes-incubator/cri-tools/pull/126) Fixes sandbox leak in port forward validation tests
+
+## CRI CLI (crictl)
+
+- [#122](https://github.com/kubernetes-incubator/cri-tools/pull/122) Adds support for authenticated image pull
+- [#123](https://github.com/kubernetes-incubator/cri-tools/pull/123) Improves crictl UX
+- [#124](https://github.com/kubernetes-incubator/cri-tools/pull/124) Adds support for creating sandboxes and containers from yaml
+- [#133](https://github.com/kubernetes-incubator/cri-tools/pull/133) Adds timeout support for container stop
 
 # v0.1
 
