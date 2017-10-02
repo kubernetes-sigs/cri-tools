@@ -49,7 +49,9 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 			config := &runtimeapi.PodSandboxConfig{
 				Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
-				Linux:    &runtimeapi.LinuxPodSandboxConfig{},
+				Linux: &runtimeapi.LinuxPodSandboxConfig{
+					SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{},
+				},
 			}
 
 			operation := b.Time("create PodSandbox", func() {

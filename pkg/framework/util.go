@@ -126,7 +126,9 @@ func RunDefaultPodSandbox(c internalapi.RuntimeService, prefix string) string {
 
 	config := &runtimeapi.PodSandboxConfig{
 		Metadata: BuildPodSandboxMetadata(podSandboxName, uid, namespace, DefaultAttempt),
-		Linux:    &runtimeapi.LinuxPodSandboxConfig{},
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{},
+		},
 	}
 	return RunPodSandbox(c, config)
 }
@@ -155,7 +157,9 @@ func CreatePodSandboxForContainer(c internalapi.RuntimeService) (string, *runtim
 	namespace := DefaultNamespacePrefix + NewUUID()
 	config := &runtimeapi.PodSandboxConfig{
 		Metadata: BuildPodSandboxMetadata(podSandboxName, uid, namespace, DefaultAttempt),
-		Linux:    &runtimeapi.LinuxPodSandboxConfig{},
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{},
+		},
 	}
 
 	podID := RunPodSandbox(c, config)

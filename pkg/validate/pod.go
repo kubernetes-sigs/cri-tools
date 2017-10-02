@@ -225,6 +225,9 @@ func createPodSandboxWithLogDirectory(c internalapi.RuntimeService) (string, *ru
 	podConfig := &runtimeapi.PodSandboxConfig{
 		Metadata:     framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 		LogDirectory: podLogPath,
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{},
+		},
 	}
 	return framework.RunPodSandbox(c, podConfig), podConfig, hostPath
 }
@@ -239,7 +242,8 @@ func createSandboxWithSysctls(rc internalapi.RuntimeService, sysctls map[string]
 	podConfig := &runtimeapi.PodSandboxConfig{
 		Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 		Linux: &runtimeapi.LinuxPodSandboxConfig{
-			Sysctls: sysctls,
+			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{},
+			Sysctls:         sysctls,
 		},
 	}
 	return framework.RunPodSandbox(rc, podConfig), podConfig
