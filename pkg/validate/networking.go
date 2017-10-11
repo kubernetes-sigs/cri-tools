@@ -135,7 +135,9 @@ func createPodSandWithDNSConfig(c internalapi.RuntimeService) (string, *runtimea
 			Searches: []string{defaultDNSSearch},
 			Options:  []string{defaultDNSOption},
 		},
-		Linux: &runtimeapi.LinuxPodSandboxConfig{},
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{},
+		},
 	}
 
 	podID := framework.RunPodSandbox(c, config)
@@ -150,7 +152,9 @@ func createPodSandboxWithPortMapping(c internalapi.RuntimeService, portMappings 
 	config := &runtimeapi.PodSandboxConfig{
 		Metadata:     framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 		PortMappings: portMappings,
-		Linux:        &runtimeapi.LinuxPodSandboxConfig{},
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{},
+		},
 	}
 
 	podID := framework.RunPodSandbox(c, config)
