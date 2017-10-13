@@ -125,14 +125,12 @@ var listImageCommand = cli.Command{
 					printHeader = false
 					fmt.Fprintln(w, "IMAGE\tTAG\tIMAGE ID\tSIZE")
 				}
-				repoTags := "<none>"
-				if image.RepoTags != nil {
-					repoTags = image.RepoTags[0]
-				}
-				repoTagsPair := strings.Split(repoTags, ":")
+				repoTagPairs := normalizeRepoTagPair(image.RepoTags, image.RepoDigests)
 				size := units.HumanSizeWithPrecision(float64(image.GetSize_()), 3)
 				trunctedImage := strings.TrimPrefix(image.Id, "sha256:")[:truncatedImageIDLen]
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", repoTagsPair[0], repoTagsPair[1], trunctedImage, size)
+				for _, repoTagPair := range repoTagPairs {
+					fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", repoTagPair[0], repoTagPair[1], trunctedImage, size)
+				}
 				continue
 			}
 			fmt.Printf("ID: %s\n", image.Id)
@@ -268,6 +266,29 @@ func getAuth(creds string) (*pb.AuthConfig, error) {
 		Username: username,
 		Password: password,
 	}, nil
+}
+
+// Ideally repo tag should always be image:tag.
+// The repoTags is nil when pulling image by repoDigest,Then we will show image name instead.
+func normalizeRepoTagPair(repoTags []string, repoDigests []string) (repoTagPairs [][]string) {
+	if len(repoTags) == 0 {
+		if len(repoDigests) == 0 {
+			repoTagPairs = append(repoTagPairs, []string{"errorRepoDigest", "errorRepoDigest"})
+			return
+		}
+		imageName := strings.Split(repoDigests[0], "@")[0]
+		repoTagPairs = append(repoTagPairs, []string{imageName, "<none>"})
+		return
+	}
+
+	for _, repoTag := range repoTags {
+		if idx := strings.Index(repoTag, ":"); idx == -1 {
+			repoTagPairs = append(repoTagPairs, []string{"errorRepoTag", "errorRepoTag"})
+			continue
+		}
+		repoTagPairs = append(repoTagPairs, strings.Split(repoTag, ":"))
+	}
+	return
 }
 
 // PullImage sends a PullImageRequest to the server, and parses
