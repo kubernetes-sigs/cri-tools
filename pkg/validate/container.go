@@ -167,6 +167,8 @@ var _ = framework.KubeDescribe("Container", func() {
 		})
 
 		It("runtime should support starting container with volume when host path doesn't exist", func() {
+			// TODO: revisit this after https://github.com/kubernetes/kubernetes/issues/52318.
+			Skip("Skip the test since the behavior is not decided yet in CRI")
 			By("get a host path that doesn't exist")
 			hostPath, _ := createHostPath(podID)
 			os.RemoveAll(hostPath) // make sure the host path doesn't exist
