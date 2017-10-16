@@ -66,7 +66,6 @@ var pullImageCommand = cli.Command{
 		}
 
 		r, err := PullImage(imageClient, imageName, auth)
-		logrus.Debugf("PullImageResponse: %v", r)
 		if err != nil {
 			return fmt.Errorf("pulling image failed: %v", err)
 		}
@@ -99,7 +98,6 @@ var listImageCommand = cli.Command{
 		}
 
 		r, err := ListImages(imageClient, context.Args().First())
-		logrus.Debugf("ListImagesResponse: %v", r)
 		if err != nil {
 			return fmt.Errorf("listing images failed: %v", err)
 		}
@@ -178,7 +176,6 @@ var imageStatusCommand = cli.Command{
 		}
 
 		r, err := ImageStatus(imageClient, id)
-		logrus.Debugf("ImageStatus: %v", r)
 		if err != nil {
 			return fmt.Errorf("image status request failed: %v", err)
 		}
@@ -225,7 +222,6 @@ var removeImageCommand = cli.Command{
 		}
 
 		status, err := ImageStatus(imageClient, id)
-		logrus.Debugf("Get image status: %v", status)
 		if err != nil {
 			return fmt.Errorf("image status request failed: %v", err)
 		}
@@ -233,8 +229,7 @@ var removeImageCommand = cli.Command{
 			return fmt.Errorf("no such image %s", id)
 		}
 
-		r, err := RemoveImage(imageClient, id)
-		logrus.Debugf("Get remove image response: %v", r)
+		_, err = RemoveImage(imageClient, id)
 		if err != nil {
 			return fmt.Errorf("error of removing image %q: %v", id, err)
 		}
@@ -272,7 +267,7 @@ func getAuth(creds string) (*pb.AuthConfig, error) {
 
 // PullImage sends a PullImageRequest to the server, and parses
 // the returned PullImageResponse.
-func PullImage(client pb.ImageServiceClient, image string, auth *pb.AuthConfig) (*pb.PullImageResponse, error) {
+func PullImage(client pb.ImageServiceClient, image string, auth *pb.AuthConfig) (resp *pb.PullImageResponse, err error) {
 	request := &pb.PullImageRequest{
 		Image: &pb.ImageSpec{
 			Image: image,
@@ -282,32 +277,40 @@ func PullImage(client pb.ImageServiceClient, image string, auth *pb.AuthConfig) 
 		request.Auth = auth
 	}
 	logrus.Debugf("PullImageRequest: %v", request)
-	return client.PullImage(context.Background(), request)
+	resp, err = client.PullImage(context.Background(), request)
+	logrus.Debugf("PullImageResponse: %v", resp)
+	return
 }
 
 // ListImages sends a ListImagesRequest to the server, and parses
 // the returned ListImagesResponse.
-func ListImages(client pb.ImageServiceClient, image string) (*pb.ListImagesResponse, error) {
+func ListImages(client pb.ImageServiceClient, image string) (resp *pb.ListImagesResponse, err error) {
 	request := &pb.ListImagesRequest{Filter: &pb.ImageFilter{Image: &pb.ImageSpec{Image: image}}}
 	logrus.Debugf("ListImagesRequest: %v", request)
-	return client.ListImages(context.Background(), &pb.ListImagesRequest{Filter: &pb.ImageFilter{Image: &pb.ImageSpec{Image: image}}})
+	resp, err = client.ListImages(context.Background(), request)
+	logrus.Debugf("ListImagesResponse: %v", resp)
+	return
 }
 
 // ImageStatus sends an ImageStatusRequest to the server, and parses
 // the returned ImageStatusResponse.
-func ImageStatus(client pb.ImageServiceClient, image string) (*pb.ImageStatusResponse, error) {
+func ImageStatus(client pb.ImageServiceClient, image string) (resp *pb.ImageStatusResponse, err error) {
 	request := &pb.ImageStatusRequest{Image: &pb.ImageSpec{Image: image}}
 	logrus.Debugf("ImageStatusRequest: %v", request)
-	return client.ImageStatus(context.Background(), &pb.ImageStatusRequest{Image: &pb.ImageSpec{Image: image}})
+	resp, err = client.ImageStatus(context.Background(), request)
+	logrus.Debugf("ImageStatusResponse: %v", resp)
+	return
 }
 
 // RemoveImage sends a RemoveImageRequest to the server, and parses
 // the returned RemoveImageResponse.
-func RemoveImage(client pb.ImageServiceClient, image string) (*pb.RemoveImageResponse, error) {
+func RemoveImage(client pb.ImageServiceClient, image string) (resp *pb.RemoveImageResponse, err error) {
 	if image == "" {
 		return nil, fmt.Errorf("ImageID cannot be empty")
 	}
 	request := &pb.RemoveImageRequest{Image: &pb.ImageSpec{Image: image}}
 	logrus.Debugf("RemoveImageRequest: %v", request)
-	return client.RemoveImage(context.Background(), &pb.RemoveImageRequest{Image: &pb.ImageSpec{Image: image}})
+	resp, err = client.RemoveImage(context.Background(), request)
+	logrus.Debugf("RemoveImageResponse: %v", resp)
+	return
 }
