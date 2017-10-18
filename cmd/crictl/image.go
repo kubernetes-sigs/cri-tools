@@ -92,6 +92,10 @@ var listImageCommand = cli.Command{
 			Name:  "output, o",
 			Usage: "Output format, One of: json|yaml|table",
 		},
+		cli.BoolFlag{
+			Name:  "digests",
+			Usage: "Show digests",
+		},
 	},
 	Action: func(context *cli.Context) error {
 		if err := getImageClient(context); err != nil {
@@ -121,15 +125,25 @@ var listImageCommand = cli.Command{
 				continue
 			}
 			if !verbose {
+				showDigest := context.Bool("digests")
 				if printHeader {
 					printHeader = false
-					fmt.Fprintln(w, "IMAGE\tTAG\tIMAGE ID\tSIZE")
+					if showDigest {
+						fmt.Fprintln(w, "IMAGE\tTAG\tDIGEST\tIMAGE ID\tSIZE")
+					} else {
+						fmt.Fprintln(w, "IMAGE\tTAG\tIMAGE ID\tSIZE")
+					}
 				}
-				repoTagPairs := normalizeRepoTagPair(image.RepoTags, image.RepoDigests)
+				imageName, repoDigest := normalizeRepoDigest(image.RepoDigests)
+				repoTagPairs := normalizeRepoTagPair(image.RepoTags, imageName)
 				size := units.HumanSizeWithPrecision(float64(image.GetSize_()), 3)
 				trunctedImage := strings.TrimPrefix(image.Id, "sha256:")[:truncatedImageIDLen]
 				for _, repoTagPair := range repoTagPairs {
-					fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", repoTagPair[0], repoTagPair[1], trunctedImage, size)
+					if showDigest {
+						fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", repoTagPair[0], repoTagPair[1], repoDigest, trunctedImage, size)
+					} else {
+						fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", repoTagPair[0], repoTagPair[1], trunctedImage, size)
+					}
 				}
 				continue
 			}
@@ -270,17 +284,11 @@ func getAuth(creds string) (*pb.AuthConfig, error) {
 
 // Ideally repo tag should always be image:tag.
 // The repoTags is nil when pulling image by repoDigest,Then we will show image name instead.
-func normalizeRepoTagPair(repoTags []string, repoDigests []string) (repoTagPairs [][]string) {
+func normalizeRepoTagPair(repoTags []string, imageName string) (repoTagPairs [][]string) {
 	if len(repoTags) == 0 {
-		if len(repoDigests) == 0 {
-			repoTagPairs = append(repoTagPairs, []string{"errorRepoDigest", "errorRepoDigest"})
-			return
-		}
-		imageName := strings.Split(repoDigests[0], "@")[0]
 		repoTagPairs = append(repoTagPairs, []string{imageName, "<none>"})
 		return
 	}
-
 	for _, repoTag := range repoTags {
 		if idx := strings.Index(repoTag, ":"); idx == -1 {
 			repoTagPairs = append(repoTagPairs, []string{"errorRepoTag", "errorRepoTag"})
@@ -289,6 +297,17 @@ func normalizeRepoTagPair(repoTags []string, repoDigests []string) (repoTagPairs
 		repoTagPairs = append(repoTagPairs, strings.Split(repoTag, ":"))
 	}
 	return
+}
+
+func normalizeRepoDigest(repoDigests []string) (string, string) {
+	if len(repoDigests) == 0 {
+		return "<none>", "<none>"
+	}
+	repoDigestPair := strings.Split(repoDigests[0], "@")
+	if len(repoDigestPair) != 2 {
+		return "errorName", "errorRepoDigest"
+	}
+	return repoDigestPair[0], repoDigestPair[1]
 }
 
 // PullImage sends a PullImageRequest to the server, and parses
