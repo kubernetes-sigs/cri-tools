@@ -482,7 +482,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			podID, containerID = seccompTestContainer(rc, ic, localhost+blockchmodProfilePath)
 
 			By("verify seccomp profile")
-			verifySeccomp(rc, containerID, []string{"chmod", "400", "/etc/hosts"}, true, "Operation not permitted") // seccomp denied
+			verifySeccomp(rc, containerID, []string{"chmod", "400", "/"}, true, "Operation not permitted") // seccomp denied
 		})
 
 		It("should support seccomp default which is unconfined on the container", func() {
