@@ -189,7 +189,7 @@ func checkNginxMainPage(c internalapi.RuntimeService, podID string, localHost bo
 
 	url := "http://"
 	if localHost {
-		url += "localhost:" + strconv.Itoa(int(nginxHostPort))
+		url += "127.0.0.1:" + strconv.Itoa(int(nginxHostPort))
 	} else {
 		status := getPodSandboxStatus(c, podID)
 		Expect(status.GetNetwork()).NotTo(BeNil(), "The network in status should not be nil.")
