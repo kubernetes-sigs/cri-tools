@@ -17,25 +17,32 @@ limitations under the License.
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/ghodss/yaml"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
-const (
-	criClientVersion = "v1alpha1"
-)
-
-var runtimeVersionCommand = cli.Command{
-	Name:  "info",
-	Usage: "Display runtime version information",
+var runtimeStatusCommand = cli.Command{
+	Name:      "info",
+	Usage:     "Display information of the container runtime",
+	ArgsUsage: "",
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "output, o",
+			Value: "json",
+			Usage: "Output format, One of: json|yaml",
+		},
+	},
 	Action: func(context *cli.Context) error {
-		err := Version(runtimeClient, criClientVersion)
+		err := Info(context, runtimeClient)
 		if err != nil {
-			return fmt.Errorf("Getting the runtime version failed: %v", err)
+			return fmt.Errorf("getting status of runtime failed: %v", err)
 		}
 		return nil
 	},
@@ -43,18 +50,42 @@ var runtimeVersionCommand = cli.Command{
 	After:  closeConnection,
 }
 
-// Version sends a VersionRequest to the server, and parses the returned VersionResponse.
-func Version(client pb.RuntimeServiceClient, version string) error {
-	request := &pb.VersionRequest{Version: version}
-	logrus.Debugf("VersionRequest: %v", request)
-	r, err := client.Version(context.Background(), request)
-	logrus.Debugf("VersionResponse: %v", r)
+// Info sends a StatusRequest to the server, and parses the returned StatusResponse.
+func Info(cliContext *cli.Context, client pb.RuntimeServiceClient) error {
+	request := &pb.StatusRequest{}
+	logrus.Debugf("StatusRequest: %v", request)
+	r, err := client.Status(context.Background(), request)
+	logrus.Debugf("StatusResponse: %v", r)
 	if err != nil {
 		return err
 	}
-	fmt.Println("Version: ", r.Version)
-	fmt.Println("RuntimeName: ", r.RuntimeName)
-	fmt.Println("RuntimeVersion: ", r.RuntimeVersion)
-	fmt.Println("RuntimeApiVersion: ", r.RuntimeApiVersion)
+
+	statusByte, err := json.Marshal(r.Status)
+	if err != nil {
+		return err
+	}
+	jsonInfo := "{" + "\"status\":" + string(statusByte) + ","
+	for k, v := range r.Info {
+		jsonInfo += "\"" + k + "\"" + v + ","
+	}
+	jsonInfo = jsonInfo[:len(jsonInfo)-1]
+	jsonInfo += "}"
+
+	switch cliContext.String("output") {
+	case "yaml":
+		yamlInfo, err := yaml.JSONToYAML([]byte(jsonInfo))
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(yamlInfo))
+	case "json":
+		var output bytes.Buffer
+		if err := json.Indent(&output, []byte(jsonInfo), "", "  "); err != nil {
+			return err
+		}
+		fmt.Println(output.String())
+	default:
+		fmt.Printf("Don't support %q format\n", cliContext.String("output"))
+	}
 	return nil
 }
