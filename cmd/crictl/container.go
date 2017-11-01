@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -30,6 +31,14 @@ import (
 	"golang.org/x/net/context"
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
+
+type containerByCreated []*pb.Container
+
+func (a containerByCreated) Len() int      { return len(a) }
+func (a containerByCreated) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a containerByCreated) Less(i, j int) bool {
+	return a[i].CreatedAt < a[j].CreatedAt
+}
 
 type createOptions struct {
 	// configPath is path to the config for container
@@ -524,6 +533,7 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 	if err != nil {
 		return err
 	}
+	sort.Sort(containerByCreated(r.Containers))
 
 	switch opts.output {
 	case "json":

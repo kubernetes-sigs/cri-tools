@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"text/tabwriter"
 
@@ -34,6 +35,20 @@ const (
 	// truncatedImageIDLen is the truncated length of imageID
 	truncatedImageIDLen = 13
 )
+
+type imageByRef []*pb.Image
+
+func (a imageByRef) Len() int      { return len(a) }
+func (a imageByRef) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a imageByRef) Less(i, j int) bool {
+	if len(a[i].RepoTags) > 0 && len(a[j].RepoTags) > 0 {
+		return a[i].RepoTags[0] < a[j].RepoTags[0]
+	}
+	if len(a[i].RepoDigests) > 0 && len(a[j].RepoDigests) > 0 {
+		return a[i].RepoDigests[0] < a[j].RepoDigests[0]
+	}
+	return a[i].Id < a[j].Id
+}
 
 var pullImageCommand = cli.Command{
 	Name:  "pull",
@@ -105,6 +120,7 @@ var listImageCommand = cli.Command{
 		if err != nil {
 			return fmt.Errorf("listing images failed: %v", err)
 		}
+		sort.Sort(imageByRef(r.Images))
 
 		switch context.String("output") {
 		case "json":
