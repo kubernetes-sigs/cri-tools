@@ -556,7 +556,8 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 		createdAt := time.Unix(0, c.CreatedAt)
 		ctm := units.HumanDuration(time.Now().UTC().Sub(createdAt)) + " ago"
 		if !opts.verbose {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", c.Id, ctm, c.State, c.GetMetadata().GetName())
+			truncatedID := strings.TrimPrefix(c.Id, "")[:truncatedIDLen]
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", truncatedID, ctm, c.State, c.GetMetadata().GetName())
 			continue
 		}
 

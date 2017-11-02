@@ -31,11 +31,6 @@ import (
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
-const (
-	// truncatedImageIDLen is the truncated length of imageID
-	truncatedImageIDLen = 13
-)
-
 type imageByRef []*pb.Image
 
 func (a imageByRef) Len() int      { return len(a) }
@@ -151,7 +146,7 @@ var listImageCommand = cli.Command{
 				imageName, repoDigest := normalizeRepoDigest(image.RepoDigests)
 				repoTagPairs := normalizeRepoTagPair(image.RepoTags, imageName)
 				size := units.HumanSizeWithPrecision(float64(image.GetSize_()), 3)
-				trunctedImage := strings.TrimPrefix(image.Id, "sha256:")[:truncatedImageIDLen]
+				trunctedImage := strings.TrimPrefix(image.Id, "sha256:")[:truncatedIDLen]
 				for _, repoTagPair := range repoTagPairs {
 					if showDigest {
 						fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", repoTagPair[0], repoTagPair[1], repoDigest, trunctedImage, size)

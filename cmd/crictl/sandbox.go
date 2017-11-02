@@ -67,7 +67,7 @@ var runPodSandboxCommand = cli.Command{
 		// Test RuntimeServiceClient.RunPodSandbox
 		err = RunPodSandbox(runtimeClient, podSandboxConfig)
 		if err != nil {
-			return fmt.Errorf("Run pod sandbox failed: %v", err)
+			return fmt.Errorf("run pod sandbox failed: %v", err)
 		}
 		return nil
 	},
@@ -155,6 +155,16 @@ var listPodSandboxCommand = cli.Command{
 			Usage: "filter by pod sandbox id",
 		},
 		cli.StringFlag{
+			Name:  "name",
+			Value: "",
+			Usage: "filter by pod sandbox name",
+		},
+		cli.StringFlag{
+			Name:  "namespace",
+			Value: "",
+			Usage: "filter by pod sandbox namespace",
+		},
+		cli.StringFlag{
 			Name:  "state,s",
 			Value: "",
 			Usage: "filter by pod sandbox state",
@@ -168,7 +178,7 @@ var listPodSandboxCommand = cli.Command{
 			Usage: "show verbose info for sandboxes",
 		},
 		cli.BoolFlag{
-			Name:  "quiet",
+			Name:  "quiet, q",
 			Usage: "list only sandbox IDs",
 		},
 		cli.StringFlag{
@@ -196,6 +206,12 @@ var listPodSandboxCommand = cli.Command{
 				return fmt.Errorf("incorrectly specified label: %v", l)
 			}
 			opts.labels[pair[0]] = pair[1]
+		}
+		if context.String("name") != "" {
+			opts.labels["io.kubernetes.pod.name"] = context.String("name")
+		}
+		if context.String("namespace") != "" {
+			opts.labels["io.kubernetes.pod.namespace"] = context.String("namespace")
 		}
 
 		err := ListPodSandboxes(runtimeClient, opts)
@@ -357,7 +373,7 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 
 	w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
 	if !opts.verbose && !opts.quiet {
-		fmt.Fprintln(w, "SANDBOX ID\tNAME\tSTATE")
+		fmt.Fprintln(w, "SANDBOX ID\tSTATE\tNAME\tNAMESPACE")
 	}
 	for _, pod := range r.Items {
 		if opts.quiet {
@@ -365,7 +381,8 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 			continue
 		}
 		if !opts.verbose {
-			fmt.Fprintf(w, "%s\t%s\t%s\n", pod.Id, pod.Metadata.Name, pod.State)
+			truncatedID := strings.TrimPrefix(pod.Id, "")[:truncatedIDLen]
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", truncatedID, pod.State, pod.Metadata.Name, pod.Metadata.Namespace)
 			continue
 		}
 
