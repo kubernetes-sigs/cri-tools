@@ -543,9 +543,10 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 		return outputYAML(r.Containers)
 	}
 
-	// output in table format by default.
-	printHeader := true
 	w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
+	if !opts.verbose && !opts.quiet {
+		fmt.Fprintln(w, "CONTAINER ID\tCREATED\tSTATE\tNAME")
+	}
 	for _, c := range r.GetContainers() {
 		if opts.quiet {
 			fmt.Printf("%s\n", c.Id)
@@ -555,10 +556,6 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 		createdAt := time.Unix(0, c.CreatedAt)
 		ctm := units.HumanDuration(time.Now().UTC().Sub(createdAt)) + " ago"
 		if !opts.verbose {
-			if printHeader {
-				printHeader = false
-				fmt.Fprintln(w, "CONTAINER ID\tCREATED\tSTATE\tNAME")
-			}
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", c.Id, ctm, c.State, c.GetMetadata().GetName())
 			continue
 		}

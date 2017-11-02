@@ -355,20 +355,16 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 		return outputYAML(r.Items)
 	}
 
-	// output in table format by default.
-	printHeader := true
 	w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
+	if !opts.verbose && !opts.quiet {
+		fmt.Fprintln(w, "SANDBOX ID\tNAME\tSTATE")
+	}
 	for _, pod := range r.Items {
 		if opts.quiet {
 			fmt.Printf("%s\n", pod.Id)
 			continue
 		}
 		if !opts.verbose {
-			if printHeader {
-				printHeader = false
-				fmt.Fprintln(w, "SANDBOX ID\tNAME\tSTATE")
-			}
-
 			fmt.Fprintf(w, "%s\t%s\t%s\n", pod.Id, pod.Metadata.Name, pod.State)
 			continue
 		}
