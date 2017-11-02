@@ -132,22 +132,22 @@ var listImageCommand = cli.Command{
 		// output in table format by default.
 		w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
 		verbose := context.Bool("verbose")
-		printHeader := true
+		showDigest := context.Bool("digests")
+		quiet := context.Bool("quiet")
+		if !verbose && !quiet {
+			if showDigest {
+				fmt.Fprintln(w, "IMAGE\tTAG\tDIGEST\tIMAGE ID\tSIZE")
+			} else {
+				fmt.Fprintln(w, "IMAGE\tTAG\tIMAGE ID\tSIZE")
+			}
+		}
 		for _, image := range r.Images {
-			if context.Bool("quiet") {
+			if quiet {
 				fmt.Printf("%s\n", image.Id)
 				continue
 			}
+
 			if !verbose {
-				showDigest := context.Bool("digests")
-				if printHeader {
-					printHeader = false
-					if showDigest {
-						fmt.Fprintln(w, "IMAGE\tTAG\tDIGEST\tIMAGE ID\tSIZE")
-					} else {
-						fmt.Fprintln(w, "IMAGE\tTAG\tIMAGE ID\tSIZE")
-					}
-				}
 				imageName, repoDigest := normalizeRepoDigest(image.RepoDigests)
 				repoTagPairs := normalizeRepoTagPair(image.RepoTags, imageName)
 				size := units.HumanSizeWithPrecision(float64(image.GetSize_()), 3)
