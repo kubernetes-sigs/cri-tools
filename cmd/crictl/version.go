@@ -18,8 +18,6 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"text/tabwriter"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -27,14 +25,17 @@ import (
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
-var runtimeStatusCommand = cli.Command{
-	Name:      "status",
-	Usage:     "Display status of the container runtime",
-	ArgsUsage: "",
+const (
+	criClientVersion = "v1alpha1"
+)
+
+var runtimeVersionCommand = cli.Command{
+	Name:  "version",
+	Usage: "Display runtime version information",
 	Action: func(context *cli.Context) error {
-		err := Status(runtimeClient)
+		err := Version(runtimeClient, criClientVersion)
 		if err != nil {
-			return fmt.Errorf("Getting status of runtime failed: %v", err)
+			return fmt.Errorf("getting the runtime version failed: %v", err)
 		}
 		return nil
 	},
@@ -42,21 +43,18 @@ var runtimeStatusCommand = cli.Command{
 	After:  closeConnection,
 }
 
-// Status sends a StatusRequest to the server, and parses the returned StatusResponse.
-func Status(client pb.RuntimeServiceClient) error {
-	request := &pb.StatusRequest{}
-	logrus.Debugf("StatusRequest: %v", request)
-	r, err := client.Status(context.Background(), request)
-	logrus.Debugf("StatusResponse: %v", r)
+// Version sends a VersionRequest to the server, and parses the returned VersionResponse.
+func Version(client pb.RuntimeServiceClient, version string) error {
+	request := &pb.VersionRequest{Version: version}
+	logrus.Debugf("VersionRequest: %v", request)
+	r, err := client.Version(context.Background(), request)
+	logrus.Debugf("VersionResponse: %v", r)
 	if err != nil {
 		return err
 	}
-
-	w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
-	fmt.Fprintln(w, "CONDITION\tSTATUS\tREASON\tMESSAGE")
-	for _, c := range r.GetStatus().GetConditions() {
-		fmt.Fprintf(w, "%s\t%v\t%s\t%s\n", c.Type, c.Status, c.Reason, c.Message)
-	}
-	w.Flush()
+	fmt.Println("Version: ", r.Version)
+	fmt.Println("RuntimeName: ", r.RuntimeName)
+	fmt.Println("RuntimeVersion: ", r.RuntimeVersion)
+	fmt.Println("RuntimeApiVersion: ", r.RuntimeApiVersion)
 	return nil
 }
