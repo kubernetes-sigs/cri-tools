@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -29,6 +30,20 @@ import (
 	"golang.org/x/net/context"
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
+
+type sandboxBySort []*pb.PodSandbox
+
+func (a sandboxBySort) Len() int      { return len(a) }
+func (a sandboxBySort) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a sandboxBySort) Less(i, j int) bool {
+	if a[i].Metadata.Namespace != a[j].Metadata.Namespace {
+		return a[i].Metadata.Namespace < a[j].Metadata.Namespace
+	}
+	if a[i].Metadata.Name != a[j].Metadata.Name {
+		return a[i].Metadata.Name < a[j].Metadata.Name
+	}
+	return a[i].CreatedAt < a[j].CreatedAt
+}
 
 var runPodSandboxCommand = cli.Command{
 	Name:      "runs",
@@ -331,11 +346,11 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 	if err != nil {
 		return err
 	}
+	sort.Sort(sandboxBySort(r.Items))
 
 	switch opts.output {
 	case "json":
 		return outputJSON(r.Items)
-
 	case "yaml":
 		return outputYAML(r.Items)
 	}
