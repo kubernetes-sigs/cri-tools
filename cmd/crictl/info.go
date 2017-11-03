@@ -17,12 +17,9 @@ limitations under the License.
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/ghodss/yaml"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
@@ -52,7 +49,7 @@ var runtimeStatusCommand = cli.Command{
 
 // Info sends a StatusRequest to the server, and parses the returned StatusResponse.
 func Info(cliContext *cli.Context, client pb.RuntimeServiceClient) error {
-	request := &pb.StatusRequest{}
+	request := &pb.StatusRequest{Verbose: true}
 	logrus.Debugf("StatusRequest: %v", request)
 	r, err := client.Status(context.Background(), request)
 	logrus.Debugf("StatusResponse: %v", r)
@@ -60,32 +57,5 @@ func Info(cliContext *cli.Context, client pb.RuntimeServiceClient) error {
 		return err
 	}
 
-	statusByte, err := json.Marshal(r.Status)
-	if err != nil {
-		return err
-	}
-	jsonInfo := "{" + "\"status\":" + string(statusByte) + ","
-	for k, v := range r.Info {
-		jsonInfo += "\"" + k + "\"" + v + ","
-	}
-	jsonInfo = jsonInfo[:len(jsonInfo)-1]
-	jsonInfo += "}"
-
-	switch cliContext.String("output") {
-	case "yaml":
-		yamlInfo, err := yaml.JSONToYAML([]byte(jsonInfo))
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(yamlInfo))
-	case "json":
-		var output bytes.Buffer
-		if err := json.Indent(&output, []byte(jsonInfo), "", "  "); err != nil {
-			return err
-		}
-		fmt.Println(output.String())
-	default:
-		fmt.Printf("Don't support %q format\n", cliContext.String("output"))
-	}
-	return nil
+	return outputStatusInfo(r.Status, r.Info, cliContext.String("output"))
 }

@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -174,5 +175,36 @@ func outputYAML(v interface{}) error {
 	}
 
 	fmt.Println(string(marshaledYAML))
+	return nil
+}
+
+func outputStatusInfo(status interface{}, info map[string]string, format string) error {
+	statusByte, err := json.Marshal(status)
+	if err != nil {
+		return err
+	}
+	jsonInfo := "{" + "\"status\":" + string(statusByte) + ","
+	for k, v := range info {
+		jsonInfo += "\"" + k + "\"" + ":" + v + ","
+	}
+	jsonInfo = jsonInfo[:len(jsonInfo)-1]
+	jsonInfo += "}"
+
+	switch format {
+	case "yaml":
+		yamlInfo, err := yaml.JSONToYAML([]byte(jsonInfo))
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(yamlInfo))
+	case "json":
+		var output bytes.Buffer
+		if err := json.Indent(&output, []byte(jsonInfo), "", "  "); err != nil {
+			return err
+		}
+		fmt.Println(output.String())
+	default:
+		fmt.Printf("Don't support %q format\n", format)
+	}
 	return nil
 }
