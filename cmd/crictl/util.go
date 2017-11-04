@@ -24,6 +24,8 @@ import (
 	"sort"
 
 	"github.com/ghodss/yaml"
+	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
 	"github.com/urfave/cli"
 	"google.golang.org/grpc"
 	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
@@ -178,8 +180,17 @@ func outputYAML(v interface{}) error {
 	return nil
 }
 
-func outputStatusInfo(status interface{}, info map[string]string, format string) error {
-	statusByte, err := json.Marshal(status)
+func protobufObjectToJSON(obj proto.Message) (string, error) {
+	jsonpbMarshaler := jsonpb.Marshaler{EmitDefaults: true, Indent: "  "}
+	marshaledJSON, err := jsonpbMarshaler.MarshalToString(obj)
+	if err != nil {
+		return "", err
+	}
+	return marshaledJSON, nil
+}
+
+func outputStatusInfo(status proto.Message, info map[string]string, format string) error {
+	statusByte, err := protobufObjectToJSON(status)
 	if err != nil {
 		return err
 	}
