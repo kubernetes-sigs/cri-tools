@@ -30,6 +30,11 @@ import (
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
+const (
+	// truncatedImageIDLen is the truncated length of imageID
+	truncatedIDLen = 13
+)
+
 var runtimeClient pb.RuntimeServiceClient
 var imageClient pb.ImageServiceClient
 var conn *grpc.ClientConn
