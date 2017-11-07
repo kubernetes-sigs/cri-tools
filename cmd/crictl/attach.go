@@ -80,6 +80,8 @@ func Attach(client pb.RuntimeServiceClient, opts attachOptions) error {
 		ContainerId: opts.id,
 		Tty:         opts.tty,
 		Stdin:       opts.stdin,
+		Stdout:      true,
+		Stderr:      !opts.tty,
 	}
 	logrus.Debugf("AttachRequest: %v", request)
 	r, err := client.Attach(context.Background(), request)

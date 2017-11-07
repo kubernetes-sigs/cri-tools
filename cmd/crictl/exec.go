@@ -71,7 +71,7 @@ var runtimeExecCommand = cli.Command{
 			id:      context.Args().First(),
 			timeout: context.Int64("timeout"),
 			tty:     context.Bool("tty"),
-			stdin:   context.Bool("stdin"),
+			stdin:   context.Bool("interactive"),
 			cmd:     context.Args()[1:],
 		}
 		if context.Bool("sync") {
@@ -120,6 +120,8 @@ func Exec(client pb.RuntimeServiceClient, opts execOptions) error {
 		Cmd:         opts.cmd,
 		Tty:         opts.tty,
 		Stdin:       opts.stdin,
+		Stdout:      true,
+		Stderr:      !opts.tty,
 	}
 	logrus.Debugf("ExecRequest: %v", request)
 	r, err := client.Exec(context.Background(), request)
