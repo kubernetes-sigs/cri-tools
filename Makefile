@@ -47,6 +47,7 @@ clean:
 binaries: critest crictl
 
 install: check-gopath
+	mkdir -p $(BINDIR)
 	install -D -m 755 $(GOBINDIR)/bin/critest $(BINDIR)/critest
 	install -D -m 755 $(GOBINDIR)/bin/crictl $(BINDIR)/crictl
 
