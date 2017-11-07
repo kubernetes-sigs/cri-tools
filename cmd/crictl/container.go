@@ -540,7 +540,7 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 
 	w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
 	if !opts.verbose && !opts.quiet {
-		fmt.Fprintln(w, "CONTAINER ID\tCREATED\tSTATE\tNAME")
+		fmt.Fprintln(w, "CONTAINER ID\tIMAGE\tCREATED\tSTATE\tNAME\tATTEMPT")
 	}
 	for _, c := range r.GetContainers() {
 		if opts.quiet {
@@ -552,7 +552,8 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 		ctm := units.HumanDuration(time.Now().UTC().Sub(createdAt)) + " ago"
 		if !opts.verbose {
 			truncatedID := strings.TrimPrefix(c.Id, "")[:truncatedIDLen]
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", truncatedID, ctm, c.State, c.GetMetadata().GetName())
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%d\n",
+				truncatedID, c.Image.Image, ctm, c.State, c.Metadata.Name, c.Metadata.Attempt)
 			continue
 		}
 
