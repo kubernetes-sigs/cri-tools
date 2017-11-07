@@ -26,8 +26,10 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	units "github.com/docker/go-units"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
+
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
@@ -373,7 +375,7 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 
 	w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
 	if !opts.verbose && !opts.quiet {
-		fmt.Fprintln(w, "SANDBOX ID\tSTATE\tNAME\tNAMESPACE")
+		fmt.Fprintln(w, "SANDBOX ID\tCREATED\tSTATE\tNAME\tNAMESPACE")
 	}
 	for _, pod := range r.Items {
 		if opts.quiet {
@@ -381,8 +383,10 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 			continue
 		}
 		if !opts.verbose {
+			createdAt := time.Unix(0, pod.CreatedAt)
+			ctm := units.HumanDuration(time.Now().UTC().Sub(createdAt)) + " ago"
 			truncatedID := strings.TrimPrefix(pod.Id, "")[:truncatedIDLen]
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", truncatedID, pod.State, pod.Metadata.Name, pod.Metadata.Namespace)
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", truncatedID, ctm, pod.State, pod.Metadata.Name, pod.Metadata.Namespace)
 			continue
 		}
 
