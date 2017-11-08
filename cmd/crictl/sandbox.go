@@ -371,7 +371,7 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 
 	w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
 	if !opts.verbose && !opts.quiet {
-		fmt.Fprintln(w, "SANDBOX ID\tCREATED\tSTATE\tNAME\tNAMESPACE")
+		fmt.Fprintln(w, "SANDBOX ID\tCREATED\tSTATE\tNAME\tNAMESPACE\tATTEMPT")
 	}
 	for _, pod := range r.Items {
 		if opts.quiet {
@@ -382,7 +382,8 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 			createdAt := time.Unix(0, pod.CreatedAt)
 			ctm := units.HumanDuration(time.Now().UTC().Sub(createdAt)) + " ago"
 			truncatedID := strings.TrimPrefix(pod.Id, "")[:truncatedIDLen]
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", truncatedID, ctm, pod.State, pod.Metadata.Name, pod.Metadata.Namespace)
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%d\n",
+				truncatedID, ctm, pod.State, pod.Metadata.Name, pod.Metadata.Namespace, pod.Metadata.Attempt)
 			continue
 		}
 
