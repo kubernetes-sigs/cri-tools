@@ -207,12 +207,9 @@ var imageStatusCommand = cli.Command{
 			return fmt.Errorf("no such image present")
 		}
 
-		switch context.String("output") {
-		case "json":
-			return outputJSON(r.Image)
-
-		case "yaml":
-			return outputYAML(r.Image)
+		output := context.String("output")
+		if output == "json" || output == "yaml" {
+			return outputStatusInfo(r.Image, r.Info, output)
 		}
 
 		// output in table format by default.

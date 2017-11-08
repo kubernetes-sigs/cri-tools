@@ -287,12 +287,8 @@ func PodSandboxStatus(client pb.RuntimeServiceClient, ID, output string) error {
 		return err
 	}
 
-	switch output {
-	case "json":
-		return outputJSON(r.Status)
-
-	case "yaml":
-		return outputYAML(r.Status)
+	if output == "json" || output == "yaml" {
+		return outputStatusInfo(r.Status, r.Info, output)
 	}
 
 	// output in table format by default.
