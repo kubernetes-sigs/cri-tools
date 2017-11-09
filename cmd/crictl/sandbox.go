@@ -252,7 +252,7 @@ func StopPodSandbox(client pb.RuntimeServiceClient, ID string) error {
 		return err
 	}
 
-	fmt.Printf("Stopped sandbox %s", ID)
+	fmt.Printf("Stopped sandbox %s\n", ID)
 	return nil
 }
 
