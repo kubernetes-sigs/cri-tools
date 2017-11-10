@@ -25,6 +25,8 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 	"google.golang.org/grpc"
+	"k8s.io/kubernetes/pkg/kubelet/apis/cri"
+	"k8s.io/kubernetes/pkg/kubelet/remote"
 )
 
 const (
@@ -72,6 +74,10 @@ func getImageClientConnection(context *cli.Context) (*grpc.ClientConn, error) {
 		return nil, fmt.Errorf("failed to connect: %v", err)
 	}
 	return conn, nil
+}
+
+func getRuntimeService(context *cli.Context) (cri.RuntimeService, error) {
+	return remote.NewRemoteRuntimeService(RuntimeEndpoint, Timeout)
 }
 
 func main() {
