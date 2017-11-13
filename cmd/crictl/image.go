@@ -119,9 +119,9 @@ var listImageCommand = cli.Command{
 
 		switch context.String("output") {
 		case "json":
-			return outputJSON(r.Images)
+			return outputProtobufObjAsJSON(r)
 		case "yaml":
-			return outputYAML(r.Images)
+			return outputProtobufObjAsYAML(r)
 		}
 
 		// output in table format by default.

@@ -364,9 +364,9 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 
 	switch opts.output {
 	case "json":
-		return outputJSON(r.Items)
+		return outputProtobufObjAsJSON(r)
 	case "yaml":
-		return outputYAML(r.Items)
+		return outputProtobufObjAsJSON(r)
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)

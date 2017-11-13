@@ -165,26 +165,6 @@ func closeConnection(context *cli.Context) error {
 	return conn.Close()
 }
 
-func outputJSON(v interface{}) error {
-	marshaledJSON, err := json.MarshalIndent(v, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	fmt.Println(string(marshaledJSON))
-	return nil
-}
-
-func outputYAML(v interface{}) error {
-	marshaledYAML, err := yaml.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println(string(marshaledYAML))
-	return nil
-}
-
 func protobufObjectToJSON(obj proto.Message) (string, error) {
 	jsonpbMarshaler := jsonpb.Marshaler{EmitDefaults: true, Indent: "  "}
 	marshaledJSON, err := jsonpbMarshaler.MarshalToString(obj)
@@ -192,6 +172,30 @@ func protobufObjectToJSON(obj proto.Message) (string, error) {
 		return "", err
 	}
 	return marshaledJSON, nil
+}
+
+func outputProtobufObjAsJSON(obj proto.Message) error {
+	marshaledJSON, err := protobufObjectToJSON(obj)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(marshaledJSON)
+	return nil
+}
+
+func outputProtobufObjAsYAML(obj proto.Message) error {
+	marshaledJSON, err := protobufObjectToJSON(obj)
+	if err != nil {
+		return err
+	}
+	marshaledYAML, err := yaml.JSONToYAML([]byte(marshaledJSON))
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(string(marshaledYAML))
+	return nil
 }
 
 func outputStatusInfo(status proto.Message, info map[string]string, format string) error {

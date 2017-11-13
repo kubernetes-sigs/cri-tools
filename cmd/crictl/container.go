@@ -533,9 +533,9 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 
 	switch opts.output {
 	case "json":
-		return outputJSON(r.Containers)
+		return outputProtobufObjAsJSON(r)
 	case "yaml":
-		return outputYAML(r.Containers)
+		return outputProtobufObjAsYAML(r)
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
