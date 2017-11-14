@@ -15,8 +15,15 @@
 GO ?= go
 PROJECT := github.com/kubernetes-incubator/cri-tools
 BINDIR := /usr/local/bin
+ifeq ($(GOPATH),)
+export GOPATH := $(CURDIR)/_output
+unexport GOBIN
+endif
 GOBINDIR := $(word 1,$(subst :, ,$(GOPATH)))
 PATH := $(GOBINDIR)/bin:$(PATH)
+GOPKGDIR := $(GOPATH)/src/$(PROJECT)
+GOPKGBASEDIR := $(shell dirname "$(GOPKGDIR)")
+
 
 all: binaries
 
@@ -28,6 +35,10 @@ help:
 	@echo " * 'clean' - Clean artifacts."
 
 check-gopath:
+ifeq ("$(wildcard $(GOPKGDIR))","")
+	mkdir -p "$(GOPKGBASEDIR)"
+	ln -s "$(CURDIR)" "$(GOPKGBASEDIR)/cri-tools"
+endif
 ifndef GOPATH
 	$(error GOPATH is not set)
 endif
