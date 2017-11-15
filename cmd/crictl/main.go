@@ -109,6 +109,7 @@ func main() {
 		stopContainerCommand,
 		stopPodSandboxCommand,
 		updateContainerCommand,
+		configCommand,
 	}
 
 	app.Flags = []cli.Flag{
