@@ -17,8 +17,13 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
+	"os"
+	"strconv"
 
+	"github.com/Sirupsen/logrus"
+	"github.com/urfave/cli"
 	"gopkg.in/yaml.v2"
 )
 
@@ -44,4 +49,82 @@ func ReadConfig(filepath string) (*Config, error) {
 		return nil, err
 	}
 	return &config, err
+}
+
+func writeConfig(c *Config, filepath string) error {
+	data, err := yaml.Marshal(c)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filepath, data, 0644)
+}
+
+var configCommand = cli.Command{
+	Name:      "config",
+	Usage:     "Get and set crictl options",
+	ArgsUsage: "[<options>]",
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "get",
+			Usage: "get value: name",
+		},
+	},
+	Action: func(context *cli.Context) error {
+		configFile := context.GlobalString("config")
+		if _, err := os.Stat(configFile); err != nil {
+			if err := writeConfig(nil, configFile); err != nil {
+				return err
+			}
+		}
+		// Get config from file.
+		config, err := ReadConfig(configFile)
+		if err != nil {
+			return fmt.Errorf("Failed to load config file: %v", err)
+		}
+		if context.IsSet("get") {
+			get := context.String("get")
+			switch get {
+			case "runtime-endpoint":
+				fmt.Println(config.RuntimeEndpoint)
+			case "image-endpoint":
+				fmt.Println(config.ImageEndpoint)
+			case "timeout":
+				fmt.Println(config.Timeout)
+			case "debug":
+				fmt.Println(config.Debug)
+			default:
+				logrus.Fatalf("No section named %s", get)
+			}
+			return nil
+		}
+		key := context.Args().First()
+		if key == "" {
+			return cli.ShowSubcommandHelp(context)
+		}
+		value := context.Args().Get(1)
+		switch key {
+		case "runtime-endpoint":
+			config.RuntimeEndpoint = value
+		case "image-endpoint":
+			config.ImageEndpoint = value
+		case "timeout":
+			n, err := strconv.Atoi(value)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			config.Timeout = n
+		case "debug":
+			var debug bool
+			if value == "true" {
+				debug = true
+			} else {
+				logrus.Fatal("use true|false for debug")
+			}
+			config.Debug = debug
+		default:
+			logrus.Fatalf("No section named %s", key)
+		}
+
+		return writeConfig(config, configFile)
+	},
 }
