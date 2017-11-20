@@ -120,8 +120,8 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 		It("runtime should support HostIpc is true", func() {
 			By("create shared memory segment on the host")
-			out, err := exec.Command("ipcmk", "-M", "1M").Output()
-			framework.ExpectNoError(err, "failed to execute ipcmk -M 1M")
+			out, err := exec.Command("ipcmk", "-M", "1048576").Output()
+			framework.ExpectNoError(err, "failed to execute ipcmk -M 1048576")
 			rawID := strings.TrimSpace(string(out))
 			segmentID := strings.TrimPrefix(rawID, "Shared memory id: ")
 
@@ -153,8 +153,8 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 		It("runtime should support HostIpc is false", func() {
 			By("create shared memory segment on the host")
-			out, err := exec.Command("ipcmk", "-M", "1M").Output()
-			framework.ExpectNoError(err, "failed to execute ipcmk -M 1M")
+			out, err := exec.Command("ipcmk", "-M", "1048576").Output()
+			framework.ExpectNoError(err, "failed to execute ipcmk -M 1048576")
 			rawID := strings.TrimSpace(string(out))
 			segmentID := strings.TrimPrefix(rawID, "Shared memory id: ")
 
