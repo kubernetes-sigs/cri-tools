@@ -211,10 +211,10 @@ var _ = framework.KubeDescribe("Container", func() {
 
 			By("start container with log")
 			startContainer(rc, containerID)
-			// wait container started and check the status.
+			// wait container exited and check the status.
 			Eventually(func() runtimeapi.ContainerState {
 				return getContainerStatus(rc, containerID).State
-			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
 
 			By("check the log context")
 			expectedLogMessage := &logMessage{
