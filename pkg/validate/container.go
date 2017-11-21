@@ -544,13 +544,14 @@ func parseDockerJSONLog(log []byte, msg *logMessage) {
 
 // parseCRILog parses logs in CRI log format.
 // CRI log format example :
-//   2016-10-06T00:17:09.669794202Z stdout The content of the log entry 1
-//   2016-10-06T00:17:10.113242941Z stderr The content of the log entry 2
+//   2016-10-06T00:17:09.669794202Z stdout P The content of the log entry 1
+//   2016-10-06T00:17:10.113242941Z stderr F The content of the log entry 2
 func parseCRILog(log string, msg *logMessage) {
 	timeStamp, err := time.Parse(time.RFC3339Nano, strings.Fields(log)[0])
 	framework.ExpectNoError(err, "failed to parse timeStamp: %v", err)
 	stream := strings.Fields(log)[1]
-	logMessage := strings.Fields(log)[2:]
+	// Skip the tag field.
+	logMessage := strings.Fields(log)[3:]
 
 	msg.timestamp = timeStamp
 	msg.stream = streamType(stream)
