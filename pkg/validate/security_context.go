@@ -825,7 +825,7 @@ func createPrivilegedContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 
 // checkNetworkManagement checks the container's network management works fine.
 func checkNetworkManagement(rc internalapi.RuntimeService, containerID string, manageable bool) {
-	cmd := []string{"ip", "link", "add", "dummy0", "type", "dummy"}
+	cmd := []string{"brctl", "addbr", "foobar"}
 
 	stdout, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
