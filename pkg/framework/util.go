@@ -183,8 +183,8 @@ func CreateDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageM
 	return CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }
 
-// CreateContainer creates a container with the prefix of containerName.
-func CreateContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, config *runtimeapi.ContainerConfig, podID string, podConfig *runtimeapi.PodSandboxConfig) string {
+// CreateContainerWithError creates a container but leave error check to caller
+func CreateContainerWithError(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, config *runtimeapi.ContainerConfig, podID string, podConfig *runtimeapi.PodSandboxConfig) (string, error) {
 	// Pull the image if it does not exist.
 	imageName := config.Image.Image
 	if !strings.Contains(imageName, ":") {
@@ -199,6 +199,12 @@ func CreateContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerS
 
 	By("Create container.")
 	containerID, err := rc.CreateContainer(podID, config, podConfig)
+	return containerID, err
+}
+
+// CreateContainer creates a container with the prefix of containerName.
+func CreateContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, config *runtimeapi.ContainerConfig, podID string, podConfig *runtimeapi.PodSandboxConfig) string {
+	containerID, err := CreateContainerWithError(rc, ic, config, podID, podConfig)
 	ExpectNoError(err, "failed to create container: %v", err)
 	Logf("Created container %q\n", containerID)
 	return containerID
