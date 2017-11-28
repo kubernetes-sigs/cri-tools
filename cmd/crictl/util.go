@@ -58,6 +58,12 @@ type listOptions struct {
 	output string
 	// all containers
 	all bool
+	// latest container
+	latest bool
+	// last n containers
+	last int
+	// out with truncating the id
+	noTrunc bool
 }
 
 type execOptions struct {
