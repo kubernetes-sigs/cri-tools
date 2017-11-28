@@ -56,6 +56,8 @@ type listOptions struct {
 	quiet bool
 	// output format
 	output string
+	// all containers
+	all bool
 }
 
 type execOptions struct {
