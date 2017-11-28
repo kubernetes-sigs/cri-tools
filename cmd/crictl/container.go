@@ -279,6 +279,18 @@ var listContainersCommand = cli.Command{
 			Name:  "all, a",
 			Usage: "Show all containers",
 		},
+		cli.BoolFlag{
+			Name:  "latest, l",
+			Usage: "Show recently created container",
+		},
+		cli.IntFlag{
+			Name:  "last, n",
+			Usage: "Show last n recently created containers",
+		},
+		cli.BoolFlag{
+			Name:  "no-trunc",
+			Usage: "Show output without truncating the ID",
+		},
 	},
 	Action: func(context *cli.Context) error {
 		if err := getRuntimeClient(context); err != nil {
@@ -294,6 +306,9 @@ var listContainersCommand = cli.Command{
 			quiet:   context.Bool("quiet"),
 			output:  context.String("output"),
 			all:     context.Bool("all"),
+			latest:  context.Bool("latest"),
+			last:    context.Int("last"),
+			noTrunc: context.Bool("no-trunc"),
 		}
 
 		for _, l := range context.StringSlice("label") {
@@ -551,7 +566,8 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 	if !opts.verbose && !opts.quiet {
 		fmt.Fprintln(w, "CONTAINER ID\tIMAGE\tCREATED\tSTATE\tNAME\tATTEMPT")
 	}
-	for _, c := range r.GetContainers() {
+	containersList := getContainersList(r.GetContainers(), opts)
+	for _, c := range containersList {
 		if opts.quiet {
 			fmt.Printf("%s\n", c.Id)
 			continue
@@ -560,9 +576,12 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 		createdAt := time.Unix(0, c.CreatedAt)
 		ctm := units.HumanDuration(time.Now().UTC().Sub(createdAt)) + " ago"
 		if !opts.verbose {
-			truncatedID := strings.TrimPrefix(c.Id, "")[:truncatedIDLen]
+			id := c.Id
+			if !opts.noTrunc {
+				id = strings.TrimPrefix(c.Id, "")[:truncatedIDLen]
+			}
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%d\n",
-				truncatedID, c.Image.Image, ctm, c.State, c.Metadata.Name, c.Metadata.Attempt)
+				id, c.Image.Image, ctm, c.State, c.Metadata.Name, c.Metadata.Attempt)
 			continue
 		}
 
@@ -596,4 +615,22 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 
 	w.Flush()
 	return nil
+}
+
+func getContainersList(containersList []*pb.Container, opts listOptions) []*pb.Container {
+	n := len(containersList)
+	if opts.latest {
+		n = 1
+	}
+	if opts.last > 0 {
+		n = opts.last
+	}
+	n = func(a, b int) int {
+		if a < b {
+			return a
+		}
+		return b
+	}(n, len(containersList))
+
+	return containersList[len(containersList)-n:]
 }
