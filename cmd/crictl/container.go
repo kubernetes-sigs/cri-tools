@@ -275,6 +275,10 @@ var listContainersCommand = cli.Command{
 			Name:  "output, o",
 			Usage: "Output format, One of: json|yaml|table",
 		},
+		cli.BoolFlag{
+			Name:  "all, a",
+			Usage: "Show all containers",
+		},
 	},
 	Action: func(context *cli.Context) error {
 		if err := getRuntimeClient(context); err != nil {
@@ -289,6 +293,7 @@ var listContainersCommand = cli.Command{
 			labels:  make(map[string]string),
 			quiet:   context.Bool("quiet"),
 			output:  context.String("output"),
+			all:     context.Bool("all"),
 		}
 
 		for _, l := range context.StringSlice("label") {
@@ -498,8 +503,12 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 	if opts.podID != "" {
 		filter.PodSandboxId = opts.podID
 	}
+	st := &pb.ContainerStateValue{}
+	if !opts.all {
+		st.State = pb.ContainerState_CONTAINER_RUNNING
+		filter.State = st
+	}
 	if opts.state != "" {
-		st := &pb.ContainerStateValue{}
 		st.State = pb.ContainerState_CONTAINER_UNKNOWN
 		switch opts.state {
 		case "created":
