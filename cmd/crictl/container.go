@@ -281,11 +281,11 @@ var listContainersCommand = cli.Command{
 		},
 		cli.BoolFlag{
 			Name:  "latest, l",
-			Usage: "Show recently created container",
+			Usage: "Show recently created container (includes all states)",
 		},
 		cli.IntFlag{
 			Name:  "last, n",
-			Usage: "Show last n recently created containers",
+			Usage: "Show last n recently created containers (includes all states)",
 		},
 		cli.BoolFlag{
 			Name:  "no-trunc",
@@ -538,6 +538,10 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 		default:
 			log.Fatalf("--state should be one of created, running or stopped")
 		}
+	}
+	if opts.latest || opts.last > 0 {
+		// Do not filter by state if latest/last is specified.
+		filter.State = nil
 	}
 	if opts.labels != nil {
 		filter.LabelSelector = opts.labels
