@@ -519,7 +519,7 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 		filter.PodSandboxId = opts.podID
 	}
 	st := &pb.ContainerStateValue{}
-	if !opts.all {
+	if !opts.all && opts.state == "" {
 		st.State = pb.ContainerState_CONTAINER_RUNNING
 		filter.State = st
 	}
