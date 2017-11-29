@@ -21,8 +21,10 @@ import (
 	"os"
 	"time"
 
+	timetypes "github.com/docker/docker/api/types/time"
 	"github.com/urfave/cli"
 	"k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kubernetes/pkg/kubelet/kuberuntime/logs"
 )
 
@@ -36,7 +38,7 @@ var logsCommand = cli.Command{
 			Usage: "Follow log output",
 		},
 		cli.Int64Flag{
-			Name:  "tail, t",
+			Name:  "tail",
 			Value: -1,
 			Usage: "Number of lines to show from the end of the logs. Defaults to all",
 		},
@@ -44,6 +46,15 @@ var logsCommand = cli.Command{
 			Name:  "limit-bytes",
 			Value: -1,
 			Usage: "Maximum bytes of logs to return. Defaults to no limit",
+		},
+		cli.StringFlag{
+			Name:  "since",
+			Value: "",
+			Usage: "Show logs since timestamp (e.g. 2013-01-02T13:23:37) or relative (e.g. 42m for 42 minutes)",
+		},
+		cli.BoolFlag{
+			Name:  "timestamps, t",
+			Usage: "Show timestamps",
 		},
 	},
 	Action: func(context *cli.Context) error {
@@ -58,10 +69,17 @@ var logsCommand = cli.Command{
 		}
 		tailLines := context.Int64("tail")
 		limitBytes := context.Int64("limit-bytes")
+		since, err := parseTimestamp(context.String("since"))
+		if err != nil {
+			return err
+		}
+		timestamp := context.Bool("timestamps")
 		logOptions := logs.NewLogOptions(&v1.PodLogOptions{
 			Follow:     context.Bool("follow"),
 			TailLines:  &tailLines,
 			LimitBytes: &limitBytes,
+			SinceTime:  since,
+			Timestamps: timestamp,
 		}, time.Now())
 		status, err := runtimeService.ContainerStatus(containerID)
 		if err != nil {
@@ -74,4 +92,22 @@ var logsCommand = cli.Command{
 		return logs.ReadLogs(logPath, status.GetId(), logOptions, runtimeService, os.Stdout, os.Stderr)
 	},
 	After: closeConnection,
+}
+
+// parseTimestamp parses timestamp string as golang duration,
+// then RFC3339 time and finally as a Unix timestamp.
+func parseTimestamp(value string) (*metav1.Time, error) {
+	if value == "" {
+		return nil, nil
+	}
+	str, err := timetypes.GetTimestamp(value, time.Now())
+	if err != nil {
+		return nil, err
+	}
+	s, ns, err := timetypes.ParseTimestamps(str, 0)
+	if err != nil {
+		return nil, err
+	}
+	t := metav1.NewTime(time.Unix(s, ns))
+	return &t, nil
 }
