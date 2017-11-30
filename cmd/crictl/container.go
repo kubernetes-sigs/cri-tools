@@ -293,7 +293,8 @@ var listContainersCommand = cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
-		if err := getRuntimeClient(context); err != nil {
+		var err error
+		if err = getRuntimeClient(context); err != nil {
 			return err
 		}
 
@@ -302,7 +303,6 @@ var listContainersCommand = cli.Command{
 			podID:   context.String("sandbox"),
 			state:   context.String("state"),
 			verbose: context.Bool("verbose"),
-			labels:  make(map[string]string),
 			quiet:   context.Bool("quiet"),
 			output:  context.String("output"),
 			all:     context.Bool("all"),
@@ -310,17 +310,12 @@ var listContainersCommand = cli.Command{
 			last:    context.Int("last"),
 			noTrunc: context.Bool("no-trunc"),
 		}
-
-		for _, l := range context.StringSlice("label") {
-			pair := strings.Split(l, "=")
-			if len(pair) != 2 {
-				return fmt.Errorf("incorrectly specified label: %v", l)
-			}
-			opts.labels[pair[0]] = pair[1]
+		opts.labels, err = parseLabelStringSlice(context.StringSlice("label"))
+		if err != nil {
+			return err
 		}
 
-		err := ListContainers(runtimeClient, opts)
-		if err != nil {
+		if err = ListContainers(runtimeClient, opts); err != nil {
 			return fmt.Errorf("listing containers failed: %v", err)
 		}
 		return nil
@@ -550,13 +545,12 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 		Filter: filter,
 	}
 	logrus.Debugf("ListContainerRequest: %v", request)
-	r, err := client.ListContainers(context.Background(), &pb.ListContainersRequest{
-		Filter: filter,
-	})
+	r, err := client.ListContainers(context.Background(), request)
 	logrus.Debugf("ListContainerResponse: %v", r)
 	if err != nil {
 		return err
 	}
+	r.Containers = getContainersList(r.GetContainers(), opts)
 	sort.Sort(containerByCreated(r.Containers))
 
 	switch opts.output {
@@ -570,8 +564,7 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 	if !opts.verbose && !opts.quiet {
 		fmt.Fprintln(w, "CONTAINER ID\tIMAGE\tCREATED\tSTATE\tNAME\tATTEMPT")
 	}
-	containersList := getContainersList(r.GetContainers(), opts)
-	for _, c := range containersList {
+	for _, c := range r.Containers {
 		if opts.quiet {
 			fmt.Printf("%s\n", c.Id)
 			continue
