@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -200,6 +201,12 @@ func main() {
 		}
 		return nil
 	}
+	// sort all flags
+	for _, cmd := range app.Commands {
+		sort.Sort(cli.FlagsByName(cmd.Flags))
+	}
+	sort.Sort(cli.FlagsByName(app.Flags))
+
 	if err := app.Run(os.Args); err != nil {
 		logrus.Fatal(err)
 	}
