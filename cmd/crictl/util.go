@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 
 	"github.com/ghodss/yaml"
 	"github.com/golang/protobuf/jsonpb"
@@ -235,4 +236,16 @@ func outputStatusInfo(status proto.Message, info map[string]string, format strin
 		fmt.Printf("Don't support %q format\n", format)
 	}
 	return nil
+}
+
+func parseLabelStringSlice(ss []string) (map[string]string, error) {
+	labels := make(map[string]string)
+	for _, s := range ss {
+		pair := strings.Split(s, "=")
+		if len(pair) != 2 {
+			return nil, fmt.Errorf("incorrectly specified label: %v", s)
+		}
+		labels[pair[0]] = pair[1]
+	}
+	return labels, nil
 }

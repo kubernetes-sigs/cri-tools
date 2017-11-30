@@ -189,7 +189,8 @@ var listPodSandboxCommand = cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
-		if err := getRuntimeClient(context); err != nil {
+		var err error
+		if err = getRuntimeClient(context); err != nil {
 			return err
 		}
 
@@ -197,17 +198,12 @@ var listPodSandboxCommand = cli.Command{
 			id:      context.String("id"),
 			state:   context.String("state"),
 			verbose: context.Bool("verbose"),
-			labels:  make(map[string]string),
 			quiet:   context.Bool("quiet"),
 			output:  context.String("output"),
 		}
-
-		for _, l := range context.StringSlice("label") {
-			pair := strings.Split(l, "=")
-			if len(pair) != 2 {
-				return fmt.Errorf("incorrectly specified label: %v", l)
-			}
-			opts.labels[pair[0]] = pair[1]
+		opts.labels, err = parseLabelStringSlice(context.StringSlice("label"))
+		if err != nil {
+			return err
 		}
 		if context.String("name") != "" {
 			opts.labels["io.kubernetes.pod.name"] = context.String("name")
@@ -216,8 +212,7 @@ var listPodSandboxCommand = cli.Command{
 			opts.labels["io.kubernetes.pod.namespace"] = context.String("namespace")
 		}
 
-		err := ListPodSandboxes(runtimeClient, opts)
-		if err != nil {
+		if err = ListPodSandboxes(runtimeClient, opts); err != nil {
 			return fmt.Errorf("listing pod sandboxes failed: %v", err)
 		}
 		return nil
