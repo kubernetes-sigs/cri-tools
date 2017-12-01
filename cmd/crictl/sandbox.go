@@ -128,6 +128,10 @@ var podSandboxStatusCommand = cli.Command{
 			Name:  "output, o",
 			Usage: "Output format, One of: json|yaml|table",
 		},
+		cli.BoolFlag{
+			Name:  "quiet, q",
+			Usage: "Do not show verbose information",
+		},
 	},
 	Action: func(context *cli.Context) error {
 		id := context.Args().First()
@@ -139,7 +143,7 @@ var podSandboxStatusCommand = cli.Command{
 			return err
 		}
 
-		err := PodSandboxStatus(runtimeClient, id, context.String("output"))
+		err := PodSandboxStatus(runtimeClient, id, context.String("output"), context.Bool("quiet"))
 		if err != nil {
 			return fmt.Errorf("getting the pod sandbox status failed: %v", err)
 		}
@@ -275,20 +279,32 @@ func RemovePodSandbox(client pb.RuntimeServiceClient, ID string) error {
 
 // PodSandboxStatus sends a PodSandboxStatusRequest to the server, and parses
 // the returned PodSandboxStatusResponse.
-func PodSandboxStatus(client pb.RuntimeServiceClient, ID, output string) error {
+func PodSandboxStatus(client pb.RuntimeServiceClient, ID, output string, quiet bool) error {
+	verbose := !(quiet)
+	if output == "" { // default to json output
+		output = "json"
+	}
 	if ID == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
-	request := &pb.PodSandboxStatusRequest{PodSandboxId: ID}
+
+	request := &pb.PodSandboxStatusRequest{
+		PodSandboxId: ID,
+		Verbose:      verbose,
+	}
 	logrus.Debugf("PodSandboxStatusRequest: %v", request)
-	r, err := client.PodSandboxStatus(context.Background(), &pb.PodSandboxStatusRequest{PodSandboxId: ID})
+	r, err := client.PodSandboxStatus(context.Background(), request)
 	logrus.Debugf("PodSandboxStatusResponse: %v", r)
 	if err != nil {
 		return err
 	}
 
-	if output == "json" || output == "yaml" {
+	switch output {
+	case "json", "yaml":
 		return outputStatusInfo(r.Status, r.Info, output)
+	case "table": // table output is after this switch block
+	default:
+		return fmt.Errorf("output option cannot be %s", output)
 	}
 
 	// output in table format by default.
@@ -324,6 +340,10 @@ func PodSandboxStatus(client pb.RuntimeServiceClient, ID, output string) error {
 			fmt.Printf("\t%s -> %s\n", k, r.Status.Annotations[k])
 		}
 	}
+	if verbose {
+		fmt.Printf("Info: %v\n", r.GetInfo())
+	}
+
 	return nil
 }
 
