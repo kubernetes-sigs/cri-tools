@@ -187,6 +187,10 @@ var imageStatusCommand = cli.Command{
 			Name:  "output, o",
 			Usage: "Output format, One of: json|yaml|table",
 		},
+		cli.BoolFlag{
+			Name:  "quiet, q",
+			Usage: "Do not show verbose information",
+		},
 	},
 	Action: func(context *cli.Context) error {
 		id := context.Args().First()
@@ -198,7 +202,8 @@ var imageStatusCommand = cli.Command{
 			return err
 		}
 
-		r, err := ImageStatus(imageClient, id)
+		verbose := !(context.Bool("quiet"))
+		r, err := ImageStatus(imageClient, id, verbose)
 		if err != nil {
 			return fmt.Errorf("image status request failed: %v", err)
 		}
@@ -208,11 +213,19 @@ var imageStatusCommand = cli.Command{
 		}
 
 		output := context.String("output")
-		if output == "json" || output == "yaml" {
-			return outputStatusInfo(r.Image, r.Info, output)
+		if output == "" { // default to json output
+			output = "json"
 		}
 
-		// output in table format by default.
+		switch output {
+		case "json", "yaml":
+			return outputStatusInfo(r.Image, r.Info, output)
+		case "table": // table output is after this switch block
+		default:
+			return fmt.Errorf("output option cannot be %s", output)
+		}
+
+		// otherwise output in table format
 		fmt.Printf("ID: %s\n", image.Id)
 		for _, tag := range image.RepoTags {
 			fmt.Printf("Tag: %s\n", tag)
@@ -222,6 +235,9 @@ var imageStatusCommand = cli.Command{
 		}
 		size := units.HumanSizeWithPrecision(float64(image.GetSize_()), 3)
 		fmt.Printf("Size: %s\n", size)
+		if verbose {
+			fmt.Printf("Info: %v\n", r.GetInfo())
+		}
 
 		return nil
 	},
@@ -241,7 +257,8 @@ var removeImageCommand = cli.Command{
 			return err
 		}
 
-		status, err := ImageStatus(imageClient, id)
+		var verbose = false
+		status, err := ImageStatus(imageClient, id, verbose)
 		if err != nil {
 			return fmt.Errorf("image status request failed: %v", err)
 		}
@@ -342,8 +359,11 @@ func ListImages(client pb.ImageServiceClient, image string) (resp *pb.ListImages
 
 // ImageStatus sends an ImageStatusRequest to the server, and parses
 // the returned ImageStatusResponse.
-func ImageStatus(client pb.ImageServiceClient, image string) (resp *pb.ImageStatusResponse, err error) {
-	request := &pb.ImageStatusRequest{Image: &pb.ImageSpec{Image: image}}
+func ImageStatus(client pb.ImageServiceClient, image string, verbose bool) (resp *pb.ImageStatusResponse, err error) {
+	request := &pb.ImageStatusRequest{
+		Image:   &pb.ImageSpec{Image: image},
+		Verbose: verbose,
+	}
 	logrus.Debugf("ImageStatusRequest: %v", request)
 	resp, err = client.ImageStatus(context.Background(), request)
 	logrus.Debugf("ImageStatusResponse: %v", resp)
