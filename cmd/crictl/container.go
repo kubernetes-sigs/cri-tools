@@ -221,6 +221,10 @@ var containerStatusCommand = cli.Command{
 			Name:  "output, o",
 			Usage: "Output format, One of: json|yaml|table",
 		},
+		cli.BoolFlag{
+			Name:  "quiet, q",
+			Usage: "Do not show verbose information",
+		},
 	},
 	Action: func(context *cli.Context) error {
 		containerID := context.Args().First()
@@ -232,7 +236,7 @@ var containerStatusCommand = cli.Command{
 			return err
 		}
 
-		err := ContainerStatus(runtimeClient, containerID, context.String("output"))
+		err := ContainerStatus(runtimeClient, containerID, context.String("output"), context.Bool("quiet"))
 		if err != nil {
 			return fmt.Errorf("Getting the status of the container failed: %v", err)
 		}
@@ -457,12 +461,17 @@ func RemoveContainer(client pb.RuntimeServiceClient, ID string) error {
 
 // ContainerStatus sends a ContainerStatusRequest to the server, and parses
 // the returned ContainerStatusResponse.
-func ContainerStatus(client pb.RuntimeServiceClient, ID, output string) error {
+func ContainerStatus(client pb.RuntimeServiceClient, ID, output string, quiet bool) error {
+	verbose := !(quiet)
+	if output == "" { // default to json output
+		output = "json"
+	}
 	if ID == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
 	request := &pb.ContainerStatusRequest{
 		ContainerId: ID,
+		Verbose:     verbose,
 	}
 	logrus.Debugf("ContainerStatusRequest: %v", request)
 	r, err := client.ContainerStatus(context.Background(), request)
@@ -471,11 +480,15 @@ func ContainerStatus(client pb.RuntimeServiceClient, ID, output string) error {
 		return err
 	}
 
-	if output == "json" || output == "yaml" {
+	switch output {
+	case "json", "yaml":
 		return outputStatusInfo(r.Status, r.Info, output)
+	case "table": // table output is after this switch block
+	default:
+		return fmt.Errorf("output option cannot be %s", output)
 	}
 
-	// output in table format by default.
+	// output in table format
 	fmt.Printf("ID: %s\n", r.Status.Id)
 	if r.Status.Metadata != nil {
 		if r.Status.Metadata.Name != "" {
@@ -498,6 +511,9 @@ func ContainerStatus(client pb.RuntimeServiceClient, ID, output string) error {
 			fmt.Printf("Finished: %v\n", units.HumanDuration(time.Now().UTC().Sub(ftm))+" ago")
 		}
 		fmt.Printf("Exit Code: %v\n", r.Status.ExitCode)
+	}
+	if verbose {
+		fmt.Printf("Info: %v\n", r.GetInfo())
 	}
 
 	return nil
