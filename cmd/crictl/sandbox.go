@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -272,6 +273,22 @@ func RemovePodSandbox(client pb.RuntimeServiceClient, ID string) error {
 	return nil
 }
 
+// marshalPodSandboxStatus converts pod sandbox status into string and converts
+// the timestamps into readable format.
+func marshalPodSandboxStatus(ps *pb.PodSandboxStatus) (string, error) {
+	statusStr, err := protobufObjectToJSON(ps)
+	if err != nil {
+		return "", err
+	}
+	jsonMap := make(map[string]interface{})
+	err = json.Unmarshal([]byte(statusStr), &jsonMap)
+	if err != nil {
+		return "", err
+	}
+	jsonMap["createdAt"] = time.Unix(0, ps.CreatedAt).Format(time.RFC3339Nano)
+	return marshalMapInOrder(jsonMap, *ps)
+}
+
 // PodSandboxStatus sends a PodSandboxStatusRequest to the server, and parses
 // the returned PodSandboxStatusResponse.
 func PodSandboxStatus(client pb.RuntimeServiceClient, ID, output string, quiet bool) error {
@@ -294,9 +311,13 @@ func PodSandboxStatus(client pb.RuntimeServiceClient, ID, output string, quiet b
 		return err
 	}
 
+	status, err := marshalPodSandboxStatus(r.Status)
+	if err != nil {
+		return err
+	}
 	switch output {
 	case "json", "yaml":
-		return outputStatusInfo(r.Status, r.Info, output)
+		return outputStatusInfo(status, r.Info, output)
 	case "table": // table output is after this switch block
 	default:
 		return fmt.Errorf("output option cannot be %s", output)

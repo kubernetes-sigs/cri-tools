@@ -57,5 +57,9 @@ func Info(cliContext *cli.Context, client pb.RuntimeServiceClient) error {
 		return err
 	}
 
-	return outputStatusInfo(r.Status, r.Info, cliContext.String("output"))
+	status, err := protobufObjectToJSON(r.Status)
+	if err != nil {
+		return err
+	}
+	return outputStatusInfo(status, r.Info, cliContext.String("output"))
 }
