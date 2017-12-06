@@ -217,9 +217,13 @@ var imageStatusCommand = cli.Command{
 			output = "json"
 		}
 
+		status, err := protobufObjectToJSON(r.Image)
+		if err != nil {
+			return err
+		}
 		switch output {
 		case "json", "yaml":
-			return outputStatusInfo(r.Image, r.Info, output)
+			return outputStatusInfo(status, r.Info, output)
 		case "table": // table output is after this switch block
 		default:
 			return fmt.Errorf("output option cannot be %s", output)

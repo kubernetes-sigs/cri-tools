@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -459,6 +460,24 @@ func RemoveContainer(client pb.RuntimeServiceClient, ID string) error {
 	return nil
 }
 
+// marshalContainerStatus converts container status into string and converts
+// the timestamps into readable format.
+func marshalContainerStatus(cs *pb.ContainerStatus) (string, error) {
+	statusStr, err := protobufObjectToJSON(cs)
+	if err != nil {
+		return "", err
+	}
+	jsonMap := make(map[string]interface{})
+	err = json.Unmarshal([]byte(statusStr), &jsonMap)
+	if err != nil {
+		return "", err
+	}
+	jsonMap["createdAt"] = time.Unix(0, cs.CreatedAt).Format(time.RFC3339Nano)
+	jsonMap["startedAt"] = time.Unix(0, cs.StartedAt).Format(time.RFC3339Nano)
+	jsonMap["finishedAt"] = time.Unix(0, cs.FinishedAt).Format(time.RFC3339Nano)
+	return marshalMapInOrder(jsonMap, *cs)
+}
+
 // ContainerStatus sends a ContainerStatusRequest to the server, and parses
 // the returned ContainerStatusResponse.
 func ContainerStatus(client pb.RuntimeServiceClient, ID, output string, quiet bool) error {
@@ -480,9 +499,14 @@ func ContainerStatus(client pb.RuntimeServiceClient, ID, output string, quiet bo
 		return err
 	}
 
+	status, err := marshalContainerStatus(r.Status)
+	if err != nil {
+		return err
+	}
+
 	switch output {
 	case "json", "yaml":
-		return outputStatusInfo(r.Status, r.Info, output)
+		return outputStatusInfo(status, r.Info, output)
 	case "table": // table output is after this switch block
 	default:
 		return fmt.Errorf("output option cannot be %s", output)

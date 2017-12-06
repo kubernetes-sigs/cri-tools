@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -207,14 +208,17 @@ func outputProtobufObjAsYAML(obj proto.Message) error {
 	return nil
 }
 
-func outputStatusInfo(status proto.Message, info map[string]string, format string) error {
-	statusByte, err := protobufObjectToJSON(status)
-	if err != nil {
-		return err
+func outputStatusInfo(status string, info map[string]string, format string) error {
+	// Sort all keys
+	var keys []string
+	for k := range info {
+		keys = append(keys, k)
 	}
-	jsonInfo := "{" + "\"status\":" + string(statusByte) + ","
-	for k, v := range info {
-		jsonInfo += "\"" + k + "\"" + ":" + v + ","
+	sort.Strings(keys)
+
+	jsonInfo := "{" + "\"status\":" + status + ","
+	for _, k := range keys {
+		jsonInfo += "\"" + k + "\"" + ":" + info[k] + ","
 	}
 	jsonInfo = jsonInfo[:len(jsonInfo)-1]
 	jsonInfo += "}"
@@ -248,4 +252,41 @@ func parseLabelStringSlice(ss []string) (map[string]string, error) {
 		labels[pair[0]] = pair[1]
 	}
 	return labels, nil
+}
+
+// marshalMapInOrder marshalls a map into json in the order of the original
+// data structure.
+func marshalMapInOrder(m map[string]interface{}, t interface{}) (string, error) {
+	s := "{"
+	v := reflect.ValueOf(t)
+	for i := 0; i < v.Type().NumField(); i++ {
+		field := jsonFieldFromTag(v.Type().Field(i).Tag)
+		if field == "" {
+			continue
+		}
+		value, err := json.Marshal(m[field])
+		if err != nil {
+			return "", err
+		}
+		s += fmt.Sprintf("%q:%s,", field, value)
+	}
+	s = s[:len(s)-1]
+	s += "}"
+	var buf bytes.Buffer
+	if err := json.Indent(&buf, []byte(s), "", "  "); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
+// jsonFieldFromTag gets json field name from field tag.
+func jsonFieldFromTag(tag reflect.StructTag) string {
+	field := strings.Split(tag.Get("json"), ",")[0]
+	for _, f := range strings.Split(tag.Get("protobuf"), ",") {
+		if !strings.HasPrefix(f, "json=") {
+			continue
+		}
+		field = strings.TrimPrefix(f, "json=")
+	}
+	return field
 }
