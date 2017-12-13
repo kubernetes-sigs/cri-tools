@@ -105,6 +105,10 @@ var listImageCommand = cli.Command{
 			Name:  "digests",
 			Usage: "Show digests",
 		},
+		cli.BoolFlag{
+			Name:  "no-trunc",
+			Usage: "Show output without truncating the ID",
+		},
 	},
 	Action: func(context *cli.Context) error {
 		if err := getImageClient(context); err != nil {
@@ -129,6 +133,7 @@ var listImageCommand = cli.Command{
 		verbose := context.Bool("verbose")
 		showDigest := context.Bool("digests")
 		quiet := context.Bool("quiet")
+		noTrunc := context.Bool("no-trunc")
 		if !verbose && !quiet {
 			if showDigest {
 				fmt.Fprintln(w, "IMAGE\tTAG\tDIGEST\tIMAGE ID\tSIZE")
@@ -141,17 +146,19 @@ var listImageCommand = cli.Command{
 				fmt.Printf("%s\n", image.Id)
 				continue
 			}
-
 			if !verbose {
 				imageName, repoDigest := normalizeRepoDigest(image.RepoDigests)
 				repoTagPairs := normalizeRepoTagPair(image.RepoTags, imageName)
 				size := units.HumanSizeWithPrecision(float64(image.GetSize_()), 3)
-				trunctedImage := strings.TrimPrefix(image.Id, "sha256:")[:truncatedIDLen]
+				id := image.Id
+				if !noTrunc {
+					id = strings.TrimPrefix(image.Id, "sha256:")[:truncatedIDLen]
+				}
 				for _, repoTagPair := range repoTagPairs {
 					if showDigest {
-						fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", repoTagPair[0], repoTagPair[1], repoDigest, trunctedImage, size)
+						fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", repoTagPair[0], repoTagPair[1], repoDigest, id, size)
 					} else {
-						fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", repoTagPair[0], repoTagPair[1], trunctedImage, size)
+						fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", repoTagPair[0], repoTagPair[1], id, size)
 					}
 				}
 				continue
