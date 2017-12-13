@@ -112,6 +112,7 @@ func main() {
 		updateContainerCommand,
 		configCommand,
 		statsCommand,
+		completionCommand,
 	}
 
 	app.Flags = []cli.Flag{
