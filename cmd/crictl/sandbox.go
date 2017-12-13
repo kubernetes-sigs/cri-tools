@@ -34,18 +34,12 @@ import (
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 )
 
-type sandboxBySort []*pb.PodSandbox
+type sandboxByCreated []*pb.PodSandbox
 
-func (a sandboxBySort) Len() int      { return len(a) }
-func (a sandboxBySort) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a sandboxBySort) Less(i, j int) bool {
-	if a[i].Metadata.Namespace != a[j].Metadata.Namespace {
-		return a[i].Metadata.Namespace < a[j].Metadata.Namespace
-	}
-	if a[i].Metadata.Name != a[j].Metadata.Name {
-		return a[i].Metadata.Name < a[j].Metadata.Name
-	}
-	return a[i].CreatedAt < a[j].CreatedAt
+func (a sandboxByCreated) Len() int      { return len(a) }
+func (a sandboxByCreated) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a sandboxByCreated) Less(i, j int) bool {
+	return a[i].CreatedAt > a[j].CreatedAt
 }
 
 var runPodSandboxCommand = cli.Command{
@@ -172,12 +166,12 @@ var listPodSandboxCommand = cli.Command{
 			Usage: "filter by pod sandbox namespace",
 		},
 		cli.StringFlag{
-			Name:  "state,s",
+			Name:  "state, s",
 			Value: "",
 			Usage: "filter by pod sandbox state",
 		},
 		cli.StringSliceFlag{
-			Name:  "label,l",
+			Name:  "label",
 			Usage: "filter by key=value label",
 		},
 		cli.BoolFlag{
@@ -191,6 +185,14 @@ var listPodSandboxCommand = cli.Command{
 		cli.StringFlag{
 			Name:  "output, o",
 			Usage: "Output format, One of: json|yaml|table",
+		},
+		cli.BoolFlag{
+			Name:  "latest, l",
+			Usage: "Show recently created sandboxes",
+		},
+		cli.IntFlag{
+			Name:  "last, n",
+			Usage: "Show last n recently created sandboxes",
 		},
 		cli.BoolFlag{
 			Name:  "no-trunc",
@@ -209,6 +211,8 @@ var listPodSandboxCommand = cli.Command{
 			verbose: context.Bool("verbose"),
 			quiet:   context.Bool("quiet"),
 			output:  context.String("output"),
+			latest:  context.Bool("latest"),
+			last:    context.Int("last"),
 			noTrunc: context.Bool("no-trunc"),
 		}
 		opts.labels, err = parseLabelStringSlice(context.StringSlice("label"))
@@ -401,7 +405,7 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 	if err != nil {
 		return err
 	}
-	sort.Sort(sandboxBySort(r.Items))
+	r.Items = getSandboxesList(r.GetItems(), opts)
 
 	switch opts.output {
 	case "json":
@@ -466,4 +470,23 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 
 	w.Flush()
 	return nil
+}
+
+func getSandboxesList(sandboxesList []*pb.PodSandbox, opts listOptions) []*pb.PodSandbox {
+	sort.Sort(sandboxByCreated(sandboxesList))
+	n := len(sandboxesList)
+	if opts.latest {
+		n = 1
+	}
+	if opts.last > 0 {
+		n = opts.last
+	}
+	n = func(a, b int) int {
+		if a < b {
+			return a
+		}
+		return b
+	}(n, len(sandboxesList))
+
+	return sandboxesList[:n]
 }
