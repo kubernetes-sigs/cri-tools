@@ -38,7 +38,7 @@ type containerByCreated []*pb.Container
 func (a containerByCreated) Len() int      { return len(a) }
 func (a containerByCreated) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (a containerByCreated) Less(i, j int) bool {
-	return a[i].CreatedAt < a[j].CreatedAt
+	return a[i].CreatedAt > a[j].CreatedAt
 }
 
 type createOptions struct {
@@ -591,7 +591,6 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 		return err
 	}
 	r.Containers = getContainersList(r.GetContainers(), opts)
-	sort.Sort(containerByCreated(r.Containers))
 
 	switch opts.output {
 	case "json":
@@ -655,6 +654,7 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 }
 
 func getContainersList(containersList []*pb.Container, opts listOptions) []*pb.Container {
+	sort.Sort(containerByCreated(containersList))
 	n := len(containersList)
 	if opts.latest {
 		n = 1
@@ -669,5 +669,5 @@ func getContainersList(containersList []*pb.Container, opts listOptions) []*pb.C
 		return b
 	}(n, len(containersList))
 
-	return containersList[len(containersList)-n:]
+	return containersList[:n]
 }
