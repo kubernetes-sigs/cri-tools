@@ -25,11 +25,11 @@ crictl SUBCOMMAND [FLAGS]
 Subcommands includes:
 
 - `info`:          Display runtime version information
-- `runs`:          Run a new sandbox
-- `stops`:         Stop a running sandbox
-- `rms`:           Remove a sandbox
-- `inspects`:      Display the status of a sandbox
-- `sandboxes`:     List sandboxes
+- `runp`:          Run a new pod sandbox
+- `stopp`:         Stop a running pod sandbox
+- `rmp`:           Remove a pod sandbox
+- `inspectp`:      Display the status of a pod sandbox
+- `pods`:          List pod sandboxes
 - `create`:        Create a new container
 - `start`:         Start a created container
 - `stop`:          Stop a running container
@@ -43,7 +43,7 @@ Subcommands includes:
 - `inspecti`:      Return the status of an image
 - `rmi`:           Remove an image
 - `exec`:          Run a command in a running container
-- `port-forward`:  Forward local port to a sandbox
+- `port-forward`:  Forward local port to a pod sandbox
 - `logs`:          Fetch the logs of a container
 - `help`:          Shows a list of commands or help for one command
 
@@ -73,10 +73,10 @@ debug: true
 
 ## Examples
 
-### Run sandbox with config file
+### Run pod sandbox with config file
 
 ```
-# cat sandbox-config.json
+# cat podsandbox-config.json
 {
     "metadata": {
         "name": "nginx-sandbox",
@@ -88,10 +88,10 @@ debug: true
     }
 }
 
-# crictl runs sandbox-config.json
+# crictl runp podsandbox-config.json
 e1c83b0b8d481d4af8ba98d5f7812577fc175a37b10dc824335951f52addbb4e
-# crictl sandboxes
-SANDBOX ID                                                         NAME                STATE
+# crictl pods
+PODSANDBOX ID                                                      NAME                STATE
 e1c83b0b8d481d4af8ba98d5f7812577fc175a37b10dc824335951f52addbb4e   nginx-sandbox       SANDBOX_READY
 ```
 
@@ -106,10 +106,10 @@ busybox                                latest              d20ae45477cbc       1
 gcr.io/google_containers/pause-amd64   3.0                 99e59f495ffaa       747kB
 ```
 
-### Create container in a sandbox with config file
+### Create container in a pod sandbox with config file
 
 ```
-# cat sandbox-config.json
+# cat podsandbox-config.json
 {
     "metadata": {
         "name": "nginx-sandbox",
@@ -136,7 +136,7 @@ gcr.io/google_containers/pause-amd64   3.0                 99e59f495ffaa       7
   }
 }
 
-# crictl create e1c83b0b8d481d4af8ba98d5f7812577fc175a37b10dc824335951f52addbb4e container-config.json sandbox-config.json
+# crictl create e1c83b0b8d481d4af8ba98d5f7812577fc175a37b10dc824335951f52addbb4e container-config.json podsandbox-config.json
 0a2c761303163f2acaaeaee07d2ba143ee4cea7e3bde3d32190e2a36525c8a05
 # crictl ps
 CONTAINER ID                                                       CREATED             STATE               NAME

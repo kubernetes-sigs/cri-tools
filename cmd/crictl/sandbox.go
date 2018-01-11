@@ -43,9 +43,9 @@ func (a sandboxByCreated) Less(i, j int) bool {
 }
 
 var runPodSandboxCommand = cli.Command{
-	Name:      "runs",
-	Usage:     "Run a new sandbox",
-	ArgsUsage: "sandbox-config.[json|yaml]",
+	Name:      "runp",
+	Usage:     "Run a new pod sandbox",
+	ArgsUsage: "podsandbox-config.[json|yaml]",
 	Action: func(context *cli.Context) error {
 		sandboxSpec := context.Args().First()
 		if sandboxSpec == "" {
@@ -71,9 +71,9 @@ var runPodSandboxCommand = cli.Command{
 }
 
 var stopPodSandboxCommand = cli.Command{
-	Name:      "stops",
-	Usage:     "Stop a running sandbox",
-	ArgsUsage: "SANDBOX",
+	Name:      "stopp",
+	Usage:     "Stop a running pod sandbox",
+	ArgsUsage: "PODSANDBOX",
 	Action: func(context *cli.Context) error {
 		id := context.Args().First()
 		if id == "" {
@@ -93,9 +93,9 @@ var stopPodSandboxCommand = cli.Command{
 }
 
 var removePodSandboxCommand = cli.Command{
-	Name:      "rms",
-	Usage:     "Remove a sandbox",
-	ArgsUsage: "SANDBOX",
+	Name:      "rmp",
+	Usage:     "Remove a pod sandbox",
+	ArgsUsage: "PODSANDBOX",
 	Action: func(context *cli.Context) error {
 		id := context.Args().First()
 		if id == "" {
@@ -115,9 +115,9 @@ var removePodSandboxCommand = cli.Command{
 }
 
 var podSandboxStatusCommand = cli.Command{
-	Name:      "inspects",
-	Usage:     "Display the status of a sandbox",
-	ArgsUsage: "SANDBOX",
+	Name:      "inspectp",
+	Usage:     "Display the status of a pod sandbox",
+	ArgsUsage: "PODSANDBOX",
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "output, o",
@@ -147,8 +147,8 @@ var podSandboxStatusCommand = cli.Command{
 }
 
 var listPodSandboxCommand = cli.Command{
-	Name:  "sandboxes",
-	Usage: "List sandboxes",
+	Name:  "pods",
+	Usage: "List pod sandboxes",
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "id",
@@ -176,11 +176,11 @@ var listPodSandboxCommand = cli.Command{
 		},
 		cli.BoolFlag{
 			Name:  "verbose, v",
-			Usage: "show verbose info for sandboxes",
+			Usage: "show verbose info for pod sandboxes",
 		},
 		cli.BoolFlag{
 			Name:  "quiet, q",
-			Usage: "list only sandbox IDs",
+			Usage: "list only pod sandbox IDs",
 		},
 		cli.StringFlag{
 			Name:  "output, o",
@@ -188,11 +188,11 @@ var listPodSandboxCommand = cli.Command{
 		},
 		cli.BoolFlag{
 			Name:  "latest, l",
-			Usage: "Show recently created sandboxes",
+			Usage: "Show recently created pod sandboxes",
 		},
 		cli.IntFlag{
 			Name:  "last, n",
-			Usage: "Show last n recently created sandboxes",
+			Usage: "Show last n recently created pod sandboxes",
 		},
 		cli.BoolFlag{
 			Name:  "no-trunc",
@@ -416,7 +416,7 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 
 	w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
 	if !opts.verbose && !opts.quiet {
-		fmt.Fprintln(w, "SANDBOX ID\tCREATED\tSTATE\tNAME\tNAMESPACE\tATTEMPT")
+		fmt.Fprintln(w, "PODSANDBOX ID\tCREATED\tSTATE\tNAME\tNAMESPACE\tATTEMPT")
 	}
 	for _, pod := range r.Items {
 		if opts.quiet {

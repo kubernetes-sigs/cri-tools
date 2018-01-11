@@ -53,7 +53,7 @@ type createOptions struct {
 var createContainerCommand = cli.Command{
 	Name:      "create",
 	Usage:     "Create a new container",
-	ArgsUsage: "SANDBOX container-config.[json|yaml] sandbox-config.[json|yaml]",
+	ArgsUsage: "PODSANDBOX container-config.[json|yaml] podsandbox-config.[json|yaml]",
 	Flags:     []cli.Flag{},
 	Action: func(context *cli.Context) error {
 		if len(context.Args()) != 3 {
@@ -259,9 +259,9 @@ var listContainersCommand = cli.Command{
 			Usage: "Filter by container id",
 		},
 		cli.StringFlag{
-			Name:  "sandbox",
+			Name:  "podsandbox, p",
 			Value: "",
-			Usage: "Filter by sandbox id",
+			Usage: "Filter by pod sandbox id",
 		},
 		cli.StringFlag{
 			Name:  "state",
@@ -305,7 +305,7 @@ var listContainersCommand = cli.Command{
 
 		opts := listOptions{
 			id:      context.String("id"),
-			podID:   context.String("sandbox"),
+			podID:   context.String("podsandbox"),
 			state:   context.String("state"),
 			verbose: context.Bool("verbose"),
 			quiet:   context.Bool("quiet"),
@@ -622,7 +622,7 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 		}
 
 		fmt.Printf("ID: %s\n", c.Id)
-		fmt.Printf("SandboxID: %s\n", c.PodSandboxId)
+		fmt.Printf("PodSandboxID: %s\n", c.PodSandboxId)
 		if c.Metadata != nil {
 			if c.Metadata.Name != "" {
 				fmt.Printf("Name: %s\n", c.Metadata.Name)
