@@ -49,7 +49,7 @@ func main() {
 		cli.StringFlag{
 			Name:   "runtime-endpoint, r",
 			EnvVar: "CRI_RUNTIME_ENDPOINT",
-			Value:  "/var/run/dockershim.sock",
+			Value:  "unix:///var/run/dockershim.sock",
 			Usage:  "CRI runtime service address which is tested.",
 		},
 		cli.StringFlag{

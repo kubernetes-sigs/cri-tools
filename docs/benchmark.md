@@ -32,7 +32,7 @@ This will
 - Run the benchmark tests using `ginkgo`
 - Output the test results to STDOUT
 
-critest connects to `/var/run/dockershim.sock` by default. For other runtimes, the endpoint can be set in two ways:
+critest connects to `unix:///var/run/dockershim.sock` by default. For other runtimes, the endpoint can be set in two ways:
 
 - By setting flags `--runtime-endpoint` and `--image-endpoint`
 - By setting environment variables `CRI_RUNTIME_ENDPOINT` and `CRI_IMAGE_ENDPOINT`
@@ -42,5 +42,5 @@ critest connects to `/var/run/dockershim.sock` by default. For other runtimes, t
 - `--focus`, `-f`: Only run the tests that match the regular expression.
 - -`-ginkgo-flags`, `-g`: Space-separated list of arguments to pass to Ginkgo test runner.
 - `--image-endpoint`, `-i`: Set the endpoint of image service. Same with runtime-endpoint if not specified.
-- `--runtime-endpoint`, `-r`: Set the endpoint of runtime service. Default to `/var/run/dockershim.sock`.
+- `--runtime-endpoint`, `-r`: Set the endpoint of runtime service. Default to `unix:///var/run/dockershim.sock`.
 - `--skip`, `-s`: Skip the tests that match the regular expression.

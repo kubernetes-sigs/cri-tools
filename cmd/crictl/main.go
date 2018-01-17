@@ -18,7 +18,6 @@ package main
 
 import (
 	"fmt"
-	"net"
 	"os"
 	"sort"
 	"time"
@@ -28,6 +27,7 @@ import (
 	"google.golang.org/grpc"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri"
 	"k8s.io/kubernetes/pkg/kubelet/remote"
+	"k8s.io/kubernetes/pkg/kubelet/util"
 )
 
 const (
@@ -36,7 +36,7 @@ const (
 )
 
 var (
-	// RuntimeEndpoint is CRI server runtime endpoint (default: "/var/run/dockershim.sock")
+	// RuntimeEndpoint is CRI server runtime endpoint (default: "unix:///var/run/dockershim.sock")
 	RuntimeEndpoint string
 	// ImageEndpoint is CRI server image endpoint, default same as runtime endpoint
 	ImageEndpoint string
@@ -50,10 +50,13 @@ func getRuntimeClientConnection(context *cli.Context) (*grpc.ClientConn, error) 
 	if RuntimeEndpoint == "" {
 		return nil, fmt.Errorf("--runtime-endpoint is not set")
 	}
-	conn, err := grpc.Dial(RuntimeEndpoint, grpc.WithInsecure(), grpc.WithTimeout(Timeout),
-		grpc.WithDialer(func(addr string, timeout time.Duration) (net.Conn, error) {
-			return net.DialTimeout("unix", addr, timeout)
-		}))
+
+	addr, dialer, err := util.GetAddressAndDialer(RuntimeEndpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := grpc.Dial(addr, grpc.WithInsecure(), grpc.WithTimeout(Timeout), grpc.WithDialer(dialer))
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %v", err)
 	}
@@ -67,10 +70,13 @@ func getImageClientConnection(context *cli.Context) (*grpc.ClientConn, error) {
 		}
 		ImageEndpoint = RuntimeEndpoint
 	}
-	conn, err := grpc.Dial(ImageEndpoint, grpc.WithInsecure(), grpc.WithTimeout(Timeout),
-		grpc.WithDialer(func(addr string, timeout time.Duration) (net.Conn, error) {
-			return net.DialTimeout("unix", addr, timeout)
-		}))
+
+	addr, dialer, err := util.GetAddressAndDialer(ImageEndpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := grpc.Dial(addr, grpc.WithInsecure(), grpc.WithTimeout(Timeout), grpc.WithDialer(dialer))
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %v", err)
 	}
@@ -125,7 +131,7 @@ func main() {
 		cli.StringFlag{
 			Name:   "runtime-endpoint, r",
 			EnvVar: "CRI_RUNTIME_ENDPOINT",
-			Value:  "/var/run/dockershim.sock",
+			Value:  "unix:///var/run/dockershim.sock",
 			Usage:  "Endpoint of CRI container runtime service",
 		},
 		cli.StringFlag{
