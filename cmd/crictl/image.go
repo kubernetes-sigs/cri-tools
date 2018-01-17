@@ -322,11 +322,12 @@ func normalizeRepoTagPair(repoTags []string, imageName string) (repoTagPairs [][
 		return
 	}
 	for _, repoTag := range repoTags {
-		if idx := strings.Index(repoTag, ":"); idx == -1 {
+		idx := strings.LastIndex(repoTag, ":")
+		if idx == -1 {
 			repoTagPairs = append(repoTagPairs, []string{"errorRepoTag", "errorRepoTag"})
 			continue
 		}
-		repoTagPairs = append(repoTagPairs, strings.Split(repoTag, ":"))
+		repoTagPairs = append(repoTagPairs, []string{repoTag[:idx], repoTag[idx+1:]})
 	}
 	return
 }
