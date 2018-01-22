@@ -55,6 +55,12 @@ clean:
 	find . -name \*~ -delete
 	find . -name \#\* -delete
 
+cross: check-gopath
+	GOOS=windows $(GO) build -o $(CURDIR)/_output/critest.exe \
+		$(PROJECT)/cmd/critest
+	GOOS=windows $(GO) build -o $(CURDIR)/_output/crictl.exe \
+		$(PROJECT)/cmd/crictl
+
 binaries: critest crictl
 
 install: check-gopath
