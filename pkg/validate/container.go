@@ -247,12 +247,13 @@ func getContainerStatus(c internalapi.RuntimeService, containerID string) *runti
 func createShellContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
-		Command:  []string{"/bin/sh"},
-		Linux:    &runtimeapi.LinuxContainerConfig{},
-		Stdin:    true,
-		Tty:      false,
+		Metadata:  framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+		Image:     &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+		Command:   []string{"/bin/sh"},
+		Linux:     &runtimeapi.LinuxContainerConfig{},
+		Stdin:     true,
+		StdinOnce: true,
+		Tty:       false,
 	}
 
 	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
