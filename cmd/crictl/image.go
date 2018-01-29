@@ -348,7 +348,7 @@ func normalizeImageName(image string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return named.Name(), nil
+	return named.String(), nil
 }
 
 // PullImage sends a PullImageRequest to the server, and parses
