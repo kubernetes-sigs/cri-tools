@@ -25,7 +25,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/distribution/reference"
 	units "github.com/docker/go-units"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
@@ -343,21 +342,9 @@ func normalizeRepoDigest(repoDigests []string) (string, string) {
 	return repoDigestPair[0], repoDigestPair[1]
 }
 
-func normalizeImageName(image string) (string, error) {
-	named, err := reference.ParseNormalizedNamed(image)
-	if err != nil {
-		return "", err
-	}
-	return named.Name(), nil
-}
-
 // PullImage sends a PullImageRequest to the server, and parses
 // the returned PullImageResponse.
 func PullImage(client pb.ImageServiceClient, image string, auth *pb.AuthConfig) (resp *pb.PullImageResponse, err error) {
-	image, err = normalizeImageName(image)
-	if err != nil {
-		return nil, err
-	}
 	request := &pb.PullImageRequest{
 		Image: &pb.ImageSpec{
 			Image: image,
@@ -385,10 +372,6 @@ func ListImages(client pb.ImageServiceClient, image string) (resp *pb.ListImages
 // ImageStatus sends an ImageStatusRequest to the server, and parses
 // the returned ImageStatusResponse.
 func ImageStatus(client pb.ImageServiceClient, image string, verbose bool) (resp *pb.ImageStatusResponse, err error) {
-	image, err = normalizeImageName(image)
-	if err != nil {
-		return nil, err
-	}
 	request := &pb.ImageStatusRequest{
 		Image:   &pb.ImageSpec{Image: image},
 		Verbose: verbose,
@@ -404,10 +387,6 @@ func ImageStatus(client pb.ImageServiceClient, image string, verbose bool) (resp
 func RemoveImage(client pb.ImageServiceClient, image string) (resp *pb.RemoveImageResponse, err error) {
 	if image == "" {
 		return nil, fmt.Errorf("ImageID cannot be empty")
-	}
-	image, err = normalizeImageName(image)
-	if err != nil {
-		return nil, err
 	}
 	request := &pb.RemoveImageRequest{Image: &pb.ImageSpec{Image: image}}
 	logrus.Debugf("RemoveImageRequest: %v", request)
