@@ -33,6 +33,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/pkg/errors"
 )
 
 // streamType is the type of the stream.
@@ -429,15 +430,19 @@ func parseDockerJSONLog(log []byte, msg *logMessage) {
 //   2016-10-06T00:17:09.669794202Z stdout P The content of the log entry 1
 //   2016-10-06T00:17:10.113242941Z stderr F The content of the log entry 2
 func parseCRILog(log string, msg *logMessage) {
-	timeStamp, err := time.Parse(time.RFC3339Nano, strings.Fields(log)[0])
+	logMessage := strings.SplitN(log, " ", 4)
+	if len(log) < 4 {
+		err := errors.New("invalid CRI log")
+		framework.ExpectNoError(err, "failed to parse CRI log: %v", err)
+	}
+	timeStamp, err := time.Parse(time.RFC3339Nano, logMessage[0])
 	framework.ExpectNoError(err, "failed to parse timeStamp: %v", err)
-	stream := strings.Fields(log)[1]
-	// Skip the tag field.
-	logMessage := strings.Fields(log)[3:]
+	stream := logMessage[1]
 
 	msg.timestamp = timeStamp
 	msg.stream = streamType(stream)
-	msg.log = []byte(strings.Join(logMessage, " ") + "\n")
+	// Skip the tag field.
+	msg.log = []byte(logMessage[3] + "\n")
 }
 
 // parseLogLine parses log by row.
