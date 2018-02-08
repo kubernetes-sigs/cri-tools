@@ -29,7 +29,7 @@ import (
 
 	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
 	internalapi "k8s.io/kubernetes/pkg/kubelet/apis/cri"
-	runtimeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
+	runtimeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -67,9 +67,9 @@ var _ = framework.KubeDescribe("Security Context", func() {
 		It("runtime should support HostPID", func() {
 			By("create podSandbox for security context HostPID")
 			namespaceOption := &runtimeapi.NamespaceOption{
-				HostPid:     true,
-				HostIpc:     false,
-				HostNetwork: false,
+				Pid:     runtimeapi.NamespaceMode_NODE,
+				Ipc:     runtimeapi.NamespaceMode_POD,
+				Network: runtimeapi.NamespaceMode_POD,
 			}
 			podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podSandboxName, "")
 
@@ -127,9 +127,9 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			By("create podSandbox for security context HostIPC is true")
 			namespaceOption := &runtimeapi.NamespaceOption{
-				HostPid:     false,
-				HostIpc:     true,
-				HostNetwork: false,
+				Pid:     runtimeapi.NamespaceMode_POD,
+				Ipc:     runtimeapi.NamespaceMode_NODE,
+				Network: runtimeapi.NamespaceMode_POD,
 			}
 			podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podSandboxName, "")
 
@@ -160,9 +160,9 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			By("create podSandbox for security context HostIpc is false")
 			namespaceOption := &runtimeapi.NamespaceOption{
-				HostPid:     false,
-				HostIpc:     false,
-				HostNetwork: false,
+				Pid:     runtimeapi.NamespaceMode_POD,
+				Ipc:     runtimeapi.NamespaceMode_POD,
+				Network: runtimeapi.NamespaceMode_POD,
 			}
 			podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podSandboxName, "")
 
@@ -859,10 +859,14 @@ func createCapabilityContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 
 func createAndCheckHostNetwork(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podSandboxName, hostNetworkPort string, hostNetwork bool) (podID string) {
 	By(fmt.Sprintf("creating a podSandbox with hostNetwork %v", hostNetwork))
+	netNSMode := runtimeapi.NamespaceMode_POD
+	if hostNetwork {
+		netNSMode = runtimeapi.NamespaceMode_NODE
+	}
 	namespaceOptions := &runtimeapi.NamespaceOption{
-		HostPid:     false,
-		HostIpc:     false,
-		HostNetwork: hostNetwork,
+		Pid:     runtimeapi.NamespaceMode_POD,
+		Ipc:     runtimeapi.NamespaceMode_POD,
+		Network: netNSMode,
 	}
 	hostPath, podLogPath := createLogTempDir(podSandboxName)
 	podID, podConfig := createNamespacePodSandbox(rc, namespaceOptions, podSandboxName, podLogPath)
