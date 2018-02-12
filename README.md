@@ -19,7 +19,15 @@ cri-tools aims to provide a series of debugging and validation tools for Kubelet
 
 ## Current Status
 
-We are currently working toward an alpha version of CRI validation tests to be used in conjunction with Kubernetes 1.7. See the [roadmap](docs/roadmap.md) for information about current and future milestones.
+Version matrix:
+
+| Kubernetes Version | cri-tools Version |
+|--------------------|-------------------|
+| 1.9.X              | v1.0.0-alpha.0    |
+| 1.8.X              | v0.2              |
+| 1.7.X              | v0.1              |
+
+We are currently working toward an beta version of CRI validation tests to be used in conjunction with Kubernetes 1.10. See the [roadmap](docs/roadmap.md) for information about current and future milestones.
 
 ## Documentation
 
