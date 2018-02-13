@@ -222,6 +222,36 @@ var _ = framework.KubeDescribe("Container", func() {
 			}
 			verifyLogContents(podConfig, logPath, expectedLogMessage)
 		})
+
+		It("runtime should support reopening container log [Conformance]", func() {
+			By("create container with log")
+			logPath, containerID := createKeepLoggingContainer(rc, ic, "container-reopen-log-test-", podID, podConfig)
+
+			By("start container with log")
+			startContainer(rc, containerID)
+
+			Eventually(func() []logMessage {
+				return parseLogLine(podConfig, logPath)
+			}, time.Minute, time.Second).ShouldNot(BeEmpty(), "container log should be generated")
+
+			By("rename container log")
+			newLogPath := logPath + ".new"
+			Expect(os.Rename(filepath.Join(podConfig.LogDirectory, logPath),
+				filepath.Join(podConfig.LogDirectory, newLogPath))).To(Succeed())
+
+			By("reopen container log")
+			Expect(rc.ReopenContainerLog(containerID)).To(Succeed())
+
+			Expect(pathExists(filepath.Join(podConfig.LogDirectory, logPath))).To(
+				BeTrue(), "new container log file should be created")
+			Eventually(func() []logMessage {
+				return parseLogLine(podConfig, logPath)
+			}, time.Minute, time.Second).ShouldNot(BeEmpty(), "new container log should be generated")
+			oldLength := len(parseLogLine(podConfig, newLogPath))
+			Consistently(func() int {
+				return len(parseLogLine(podConfig, newLogPath))
+			}, 5*time.Second, time.Second).Should(Equal(oldLength), "old container log should not change")
+		})
 	})
 
 })
@@ -392,6 +422,20 @@ func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManag
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
 		Command:  []string{"echo", defaultLog},
+		LogPath:  path,
+	}
+	return containerConfig.LogPath, framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
+}
+
+// createKeepLoggingContainer creates a container keeps logging defaultLog to output.
+func createKeepLoggingContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix string, podID string, podConfig *runtimeapi.PodSandboxConfig) (string, string) {
+	By("create a container with log and name")
+	containerName := prefix + framework.NewUUID()
+	path := fmt.Sprintf("%s.log", containerName)
+	containerConfig := &runtimeapi.ContainerConfig{
+		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+		Command:  []string{"sh", "-c", "while true; do echo " + defaultLog + "; sleep 1; done"},
 		LogPath:  path,
 	}
 	return containerConfig.LogPath, framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
