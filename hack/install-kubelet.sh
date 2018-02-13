@@ -18,9 +18,11 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+KUBELET_VERSION="1.9"
+
 # Install kubelet
 ! go get -d k8s.io/kubernetes
 cd $GOPATH/src/k8s.io/kubernetes
+git checkout release-${KUBELET_VERSION}
 make WHAT='cmd/kubelet'
 sudo cp _output/bin/kubelet /usr/local/bin
-
