@@ -30,7 +30,8 @@ docker run --rm -v /usr/local/bin:/target jpetazzo/nsenter
 sleep 10
 
 # Run e2e test cases
-critest v
+# Skip reopen container log test because docker doesn't support it.
+critest --skip="runtime should support reopening container log" v
 
 # Run benchmark test cases
 critest b
