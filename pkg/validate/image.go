@@ -17,7 +17,7 @@ limitations under the License.
 package validate
 
 import (
-	"strings"
+	"sort"
 
 	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
 	internalapi "k8s.io/kubernetes/pkg/kubelet/apis/cri"
@@ -27,15 +27,15 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var (
-	// image name for test image api
-	testImageName = "busybox"
+const (
+	// image reference without
+	testImageWithoutTag = "gcr.io/cri-tools/test-image-latest"
 
 	// name-tagged reference for test image
-	testImageRef = testImageName + ":1.26.2"
+	testImageWithTag = "gcr.io/cri-tools/test-image-tag:test"
 
-	// Digested reference for test image
-	busyboxDigestRef = testImageName + "@sha256:817a12c32a39bbe394944ba49de563e085f1d3c5266eb8e9723256bc4448680e"
+	// digested reference for test image
+	testImageWithDigest = "gcr.io/cri-tools/test-image-digest@sha256:9179135b4b4cc5a8721e09379244807553c318d92fa3111a65133241551ca343"
 )
 
 var _ = framework.KubeDescribe("Image Manager", func() {
@@ -48,88 +48,79 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 	})
 
 	It("public image with tag should be pulled and removed [Conformance]", func() {
-		testPullPublicImage(c, testImageRef)
+		testPullPublicImage(c, testImageWithTag, func(s *runtimeapi.Image) {
+			Expect(s.RepoTags).To(Equal([]string{testImageWithTag}))
+		})
 	})
 
 	It("public image without tag should be pulled and removed [Conformance]", func() {
-		testPullPublicImage(c, testImageName)
+		testPullPublicImage(c, testImageWithoutTag, func(s *runtimeapi.Image) {
+			Expect(s.RepoTags).To(Equal([]string{testImageWithoutTag + ":latest"}))
+		})
 	})
 
 	It("public image with digest should be pulled and removed [Conformance]", func() {
-		testPullPublicImage(c, busyboxDigestRef)
-	})
-
-	It("image status get image fields should not be empty [Conformance]", func() {
-		framework.PullPublicImage(c, testImageRef)
-
-		defer removeImage(c, testImageRef)
-
-		status := framework.ImageStatus(c, testImageRef)
-		Expect(status.Id).NotTo(BeNil(), "Image Id should not be nil")
-		Expect(len(status.RepoTags)).NotTo(Equal(0), "Should have repoTags in image")
-		Expect(status.Size_).NotTo(BeNil(), "Image Size should not be nil")
+		testPullPublicImage(c, testImageWithDigest, func(s *runtimeapi.Image) {
+			Expect(s.RepoTags).To(BeEmpty())
+			Expect(s.RepoDigests).To(Equal([]string{testImageWithDigest}))
+		})
 	})
 
 	It("listImage should get exactly 3 image in the result list [Conformance]", func() {
 		// different tags refer to different images
 		testImageList := []string{
-			"busybox:1-uclibc",
-			"busybox:1-musl",
-			"busybox:1-glibc",
+			"gcr.io/cri-tools/test-image-1:latest",
+			"gcr.io/cri-tools/test-image-2:latest",
+			"gcr.io/cri-tools/test-image-3:latest",
 		}
 
-		pullImageList(c, testImageList)
+		// Make sure test image does not exist.
+		removeImageList(c, testImageList)
+		ids := pullImageList(c, testImageList)
+		ids = removeDuplicates(ids)
+		Expect(len(ids)).To(Equal(3), "3 image ids should be returned")
 
 		defer removeImageList(c, testImageList)
 
 		images := framework.ListImage(c, &runtimeapi.ImageFilter{})
 
-		count := 0
-		for _, imageName := range images {
-			for _, imagesTag := range imageName.RepoTags {
-				if strings.HasSuffix(imagesTag, "busybox:1-uclibc") {
-					count = count + 1
-				}
-				if strings.HasSuffix(imagesTag, "busybox:1-musl") {
-					count = count + 1
-				}
-				if strings.HasSuffix(imagesTag, "busybox:1-glibc") {
-					count = count + 1
+		for i, id := range ids {
+			for _, img := range images {
+				if img.Id == id {
+					Expect(len(img.RepoTags)).To(Equal(1), "Should only have 1 repo tag")
+					Expect(img.RepoTags[0]).To(Equal(testImageList[i]), "Repo tag should be correct")
+					break
 				}
 			}
 		}
-		Expect(count).To(Equal(3), "Should have the specified three images in list")
-
 	})
 
-	It("listImage should get exactly 2 repoTags in the result image [Conformance]", func() {
+	It("listImage should get exactly 3 repoTags in the result image [Conformance]", func() {
 		// different tags refer to the same image
 		testImageList := []string{
-			"busybox:1-uclibc",
-			"busybox:1",
+			"gcr.io/cri-tools/test-image-tags:1",
+			"gcr.io/cri-tools/test-image-tags:2",
+			"gcr.io/cri-tools/test-image-tags:3",
 		}
 
-		pullImageList(c, testImageList)
+		// Make sure test image does not exist.
+		removeImageList(c, testImageList)
+		ids := pullImageList(c, testImageList)
+		ids = removeDuplicates(ids)
+		Expect(len(ids)).To(Equal(1), "Only 1 image id should be returned")
 
 		defer removeImageList(c, testImageList)
 
 		images := framework.ListImage(c, &runtimeapi.ImageFilter{})
 
-		count := 0
-		for _, imageName := range images {
-			for _, imagesTag := range imageName.RepoTags {
-				if strings.HasSuffix(imagesTag, "busybox:1-uclibc") {
-					count = count + 1
-				}
-				if strings.HasSuffix(imagesTag, "busybox:1") {
-					count = count + 1
-				}
-			}
-			if count < 2 {
-				count = 0
+		sort.Strings(testImageList)
+		for _, img := range images {
+			if img.Id == ids[0] {
+				sort.Strings(img.RepoTags)
+				Expect(img.RepoTags).To(Equal(testImageList), "Should have 3 repoTags in single image")
+				break
 			}
 		}
-		Expect(count).To(Equal(2), "Should have two repoTags in single image in list")
 	})
 })
 
@@ -144,24 +135,31 @@ func testRemoveImage(c internalapi.ImageManagerService, imageName string) {
 }
 
 // testPullPublicImage pulls the image named imageName, make sure it success and remove the image.
-func testPullPublicImage(c internalapi.ImageManagerService, imageName string) {
-	if !strings.Contains(imageName, ":") {
-		imageName = imageName + ":latest"
-	}
+func testPullPublicImage(c internalapi.ImageManagerService, imageName string, statusCheck func(*runtimeapi.Image)) {
+	// Make sure image does not exist before testing.
+	removeImage(c, imageName)
+
 	framework.PullPublicImage(c, imageName)
 
 	By("Check image list to make sure pulling image success : " + imageName)
 	status := framework.ImageStatus(c, imageName)
 	Expect(status).NotTo(BeNil(), "Should have one image in list")
+	Expect(status.Id).NotTo(BeNil(), "Image Id should not be nil")
+	Expect(status.Size_).NotTo(BeNil(), "Image Size should not be nil")
+	if statusCheck != nil {
+		statusCheck(status)
+	}
 
 	testRemoveImage(c, imageName)
 }
 
 // pullImageList pulls the images listed in the imageList.
-func pullImageList(c internalapi.ImageManagerService, imageList []string) {
+func pullImageList(c internalapi.ImageManagerService, imageList []string) []string {
+	var ids []string
 	for _, imageName := range imageList {
-		framework.PullPublicImage(c, imageName)
+		ids = append(ids, framework.PullPublicImage(c, imageName))
 	}
+	return ids
 }
 
 // removeImageList removes the images listed in the imageList.
@@ -182,4 +180,18 @@ func removeImage(c internalapi.ImageManagerService, imageName string) {
 		err = c.RemoveImage(&runtimeapi.ImageSpec{Image: image.Id})
 		framework.ExpectNoError(err, "failed to remove image: %v", err)
 	}
+}
+
+// removeDuplicates remove duplicates strings from a list
+func removeDuplicates(ss []string) []string {
+	encountered := map[string]bool{}
+	result := []string{}
+	for _, s := range ss {
+		if encountered[s] == true {
+			continue
+		}
+		encountered[s] = true
+		result = append(result, s)
+	}
+	return result
 }

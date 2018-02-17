@@ -18,6 +18,7 @@ package validate
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -245,7 +246,7 @@ func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string) 
 	framework.ExpectNoError(err, "failed to create spdy round tripper")
 	url := parseURL(c, portForwardSeverURL)
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", url)
-	pf, err := portforward.New(dialer, []string{"8000:80"}, stopChan, readyChan, os.Stdout, os.Stderr)
+	pf, err := portforward.New(dialer, []string{fmt.Sprintf("%d:80", nginxHostPortForPortForward)}, stopChan, readyChan, os.Stdout, os.Stderr)
 	framework.ExpectNoError(err, "failed to create port forward for %q", portForwardSeverURL)
 
 	go func() {
@@ -255,7 +256,7 @@ func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string) 
 		framework.ExpectNoError(err, "failed to start port forward for %q", portForwardSeverURL)
 	}()
 
-	By("check if we can get nginx main page via localhost:8000")
-	checkNginxMainPage(c, "", true)
+	By(fmt.Sprintf("check if we can get nginx main page via localhost:%d", nginxHostPortForPortForward))
+	checkNginxMainPage(c, "", nginxHostPortForPortForward)
 	framework.Logf("Check port forward url %q succeed", portForwardSeverURL)
 }

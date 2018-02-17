@@ -229,7 +229,7 @@ func ListImage(c internalapi.ImageManagerService, filter *runtimeapi.ImageFilter
 }
 
 // PullPublicImage pulls the public image named imageName.
-func PullPublicImage(c internalapi.ImageManagerService, imageName string) {
+func PullPublicImage(c internalapi.ImageManagerService, imageName string) string {
 	if !strings.Contains(imageName, ":") {
 		imageName = imageName + ":latest"
 		Logf("Use latest as default image tag.")
@@ -239,6 +239,7 @@ func PullPublicImage(c internalapi.ImageManagerService, imageName string) {
 	imageSpec := &runtimeapi.ImageSpec{
 		Image: imageName,
 	}
-	_, err := c.PullImage(imageSpec, nil)
+	id, err := c.PullImage(imageSpec, nil)
 	ExpectNoError(err, "failed to pull image: %v", err)
+	return id
 }

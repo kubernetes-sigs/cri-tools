@@ -30,13 +30,14 @@ import (
 )
 
 const (
-	defaultDNSServer   string = "10.10.10.10"
-	defaultDNSSearch   string = "google.com"
-	defaultDNSOption   string = "ndots:8"
-	resolvConfigPath   string = "/etc/resolv.conf"
-	nginxImage         string = "nginx"
-	nginxContainerPort int32  = 80
-	nginxHostPort      int32  = 8000
+	defaultDNSServer            string = "10.10.10.10"
+	defaultDNSSearch            string = "google.com"
+	defaultDNSOption            string = "ndots:8"
+	resolvConfigPath            string = "/etc/resolv.conf"
+	nginxImage                  string = "nginx"
+	nginxContainerPort          int32  = 80
+	nginxHostPortForPortMapping int32  = 8000
+	nginxHostPortForPortForward int32  = 8001
 )
 
 var _ = framework.KubeDescribe("Networking", func() {
@@ -97,7 +98,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 			startContainer(rc, containerID)
 
 			By("check the port mapping with only container port")
-			checkNginxMainPage(rc, podID, false)
+			checkNginxMainPage(rc, podID, 0)
 		})
 
 		It("runtime should support port mapping with host port and container port [Conformance]", func() {
@@ -106,7 +107,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 			portMappings := []*runtimeapi.PortMapping{
 				{
 					ContainerPort: nginxContainerPort,
-					HostPort:      nginxHostPort,
+					HostPort:      nginxHostPortForPortMapping,
 				},
 			}
 			podID, podConfig = createPodSandboxWithPortMapping(rc, portMappings)
@@ -118,7 +119,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 			startContainer(rc, containerID)
 
 			By("check the port mapping with host port and container port")
-			checkNginxMainPage(rc, "", true)
+			checkNginxMainPage(rc, "", nginxHostPortForPortMapping)
 		})
 	})
 })
@@ -182,14 +183,14 @@ func createNginxContainer(rc internalapi.RuntimeService, ic internalapi.ImageMan
 }
 
 // checkNginxMainPage check if the we can get the main page of nginx via given IP:port.
-func checkNginxMainPage(c internalapi.RuntimeService, podID string, localHost bool) {
+func checkNginxMainPage(c internalapi.RuntimeService, podID string, hostPort int32) {
 	By("get the IP:port needed to be checked")
 	var err error
 	var resp *http.Response
 
 	url := "http://"
-	if localHost {
-		url += "127.0.0.1:" + strconv.Itoa(int(nginxHostPort))
+	if hostPort != 0 {
+		url += "127.0.0.1:" + strconv.Itoa(int(hostPort))
 	} else {
 		status := getPodSandboxStatus(c, podID)
 		Expect(status.GetNetwork()).NotTo(BeNil(), "The network in status should not be nil.")
