@@ -1,8 +1,8 @@
 # Container Runtime Interface (CRI) CLI
 
-crictl provides a CLI for CRI-compatible container runtimes. This allows the CRI runtime developers to debug of their runtime without needing to set up Kubernetes components.
+crictl provides a CLI for CRI-compatible container runtimes. This allows the CRI runtime developers to debug their runtime without needing to set up Kubernetes components.
 
-crictl is currently Alpha and still under quick iterations. We encourage the CRI developers to report bugs or help extend the coverage by adding more functionalities.
+crictl is currently in Alpha and still under quick iterations. We encourage the CRI developers to report bugs or help extend the coverage by adding more functionalities.
 
 ## Install
 
