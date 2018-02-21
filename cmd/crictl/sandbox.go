@@ -72,21 +72,21 @@ var runPodSandboxCommand = cli.Command{
 
 var stopPodSandboxCommand = cli.Command{
 	Name:      "stopp",
-	Usage:     "Stop a running pod sandbox",
-	ArgsUsage: "PODSANDBOX",
+	Usage:     "Stop one or more running pod sandboxes",
+	ArgsUsage: "PODSANDBOX [PODSANDBOX...]",
 	Action: func(context *cli.Context) error {
-		id := context.Args().First()
-		if id == "" {
+		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-
 		if err := getRuntimeClient(context); err != nil {
 			return err
 		}
-
-		err := StopPodSandbox(runtimeClient, id)
-		if err != nil {
-			return fmt.Errorf("stopping the pod sandbox failed: %v", err)
+		for i := 0; i < context.NArg(); i++ {
+			id := context.Args().Get(i)
+			err := StopPodSandbox(runtimeClient, id)
+			if err != nil {
+				return fmt.Errorf("stopping the pod sandbox %q failed: %v", id, err)
+			}
 		}
 		return nil
 	},
@@ -94,21 +94,21 @@ var stopPodSandboxCommand = cli.Command{
 
 var removePodSandboxCommand = cli.Command{
 	Name:      "rmp",
-	Usage:     "Remove a pod sandbox",
-	ArgsUsage: "PODSANDBOX",
+	Usage:     "Remove one or more pod sandboxes",
+	ArgsUsage: "PODSANDBOX [PODSANDBOX...]",
 	Action: func(context *cli.Context) error {
-		id := context.Args().First()
-		if id == "" {
+		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-
 		if err := getRuntimeClient(context); err != nil {
 			return err
 		}
-
-		err := RemovePodSandbox(runtimeClient, id)
-		if err != nil {
-			return fmt.Errorf("removing the pod sandbox failed: %v", err)
+		for i := 0; i < context.NArg(); i++ {
+			id := context.Args().Get(i)
+			err := RemovePodSandbox(runtimeClient, id)
+			if err != nil {
+				return fmt.Errorf("removing the pod sandbox %q failed: %v", id, err)
+			}
 		}
 		return nil
 	},
@@ -116,8 +116,8 @@ var removePodSandboxCommand = cli.Command{
 
 var podSandboxStatusCommand = cli.Command{
 	Name:      "inspectp",
-	Usage:     "Display the status of a pod sandbox",
-	ArgsUsage: "PODSANDBOX",
+	Usage:     "Display the status of one or more pod sandboxes",
+	ArgsUsage: "PODSANDBOX [PODSANDBOX...]",
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "output, o",
@@ -129,18 +129,19 @@ var podSandboxStatusCommand = cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
-		id := context.Args().First()
-		if id == "" {
+		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-
 		if err := getRuntimeClient(context); err != nil {
 			return err
 		}
+		for i := 0; i < context.NArg(); i++ {
+			id := context.Args().Get(i)
 
-		err := PodSandboxStatus(runtimeClient, id, context.String("output"), context.Bool("quiet"))
-		if err != nil {
-			return fmt.Errorf("getting the pod sandbox status failed: %v", err)
+			err := PodSandboxStatus(runtimeClient, id, context.String("output"), context.Bool("quiet"))
+			if err != nil {
+				return fmt.Errorf("getting the pod sandbox status for %q failed: %v", id, err)
+			}
 		}
 		return nil
 	},
