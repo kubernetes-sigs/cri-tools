@@ -278,7 +278,7 @@ var listContainersCommand = cli.Command{
 			Usage: "Filter by key=value label",
 		},
 		cli.BoolFlag{
-			Name:  "quiet",
+			Name:  "quiet, q",
 			Usage: "Only display container IDs",
 		},
 		cli.StringFlag{
