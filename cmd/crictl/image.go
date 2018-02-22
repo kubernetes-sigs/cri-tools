@@ -187,8 +187,8 @@ var listImageCommand = cli.Command{
 
 var imageStatusCommand = cli.Command{
 	Name:      "inspecti",
-	Usage:     "Return the status of an image",
-	ArgsUsage: "IMAGEID",
+	Usage:     "Return the status of one ore more images",
+	ArgsUsage: "IMAGEID [IMAGEID...]",
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "output, o",
@@ -200,54 +200,57 @@ var imageStatusCommand = cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
-		id := context.Args().First()
-		if id == "" {
+		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-
 		if err := getImageClient(context); err != nil {
 			return err
 		}
-
 		verbose := !(context.Bool("quiet"))
-		r, err := ImageStatus(imageClient, id, verbose)
-		if err != nil {
-			return fmt.Errorf("image status request failed: %v", err)
-		}
-		image := r.Image
-		if image == nil {
-			return fmt.Errorf("no such image present")
-		}
-
 		output := context.String("output")
 		if output == "" { // default to json output
 			output = "json"
 		}
+		for i := 0; i < context.NArg(); i++ {
+			id := context.Args().Get(i)
 
-		status, err := protobufObjectToJSON(r.Image)
-		if err != nil {
-			return err
-		}
-		switch output {
-		case "json", "yaml":
-			return outputStatusInfo(status, r.Info, output)
-		case "table": // table output is after this switch block
-		default:
-			return fmt.Errorf("output option cannot be %s", output)
-		}
+			r, err := ImageStatus(imageClient, id, verbose)
+			if err != nil {
+				return fmt.Errorf("image status for %q request failed: %v", id, err)
+			}
+			image := r.Image
+			if image == nil {
+				return fmt.Errorf("no such image %q present", id)
+			}
 
-		// otherwise output in table format
-		fmt.Printf("ID: %s\n", image.Id)
-		for _, tag := range image.RepoTags {
-			fmt.Printf("Tag: %s\n", tag)
-		}
-		for _, digest := range image.RepoDigests {
-			fmt.Printf("Digest: %s\n", digest)
-		}
-		size := units.HumanSizeWithPrecision(float64(image.GetSize_()), 3)
-		fmt.Printf("Size: %s\n", size)
-		if verbose {
-			fmt.Printf("Info: %v\n", r.GetInfo())
+			status, err := protobufObjectToJSON(r.Image)
+			if err != nil {
+				return fmt.Errorf("failed to marshal status to json for %q: %v", id, err)
+			}
+			switch output {
+			case "json", "yaml":
+				if err := outputStatusInfo(status, r.Info, output); err != nil {
+					return fmt.Errorf("failed to output status for %q: %v", id, err)
+				}
+				continue
+			case "table": // table output is after this switch block
+			default:
+				return fmt.Errorf("output option cannot be %s", output)
+			}
+
+			// otherwise output in table format
+			fmt.Printf("ID: %s\n", image.Id)
+			for _, tag := range image.RepoTags {
+				fmt.Printf("Tag: %s\n", tag)
+			}
+			for _, digest := range image.RepoDigests {
+				fmt.Printf("Digest: %s\n", digest)
+			}
+			size := units.HumanSizeWithPrecision(float64(image.GetSize_()), 3)
+			fmt.Printf("Size: %s\n", size)
+			if verbose {
+				fmt.Printf("Info: %v\n", r.GetInfo())
+			}
 		}
 
 		return nil
@@ -256,33 +259,34 @@ var imageStatusCommand = cli.Command{
 
 var removeImageCommand = cli.Command{
 	Name:      "rmi",
-	Usage:     "Remove an image",
-	ArgsUsage: "IMAGEID",
+	Usage:     "Remove one or more images",
+	ArgsUsage: "IMAGEID [IMAGEID...]",
 	Action: func(context *cli.Context) error {
-		id := context.Args().First()
-		if id == "" {
+		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-
 		if err := getImageClient(context); err != nil {
 			return err
 		}
+		for i := 0; i < context.NArg(); i++ {
+			id := context.Args().Get(i)
 
-		var verbose = false
-		status, err := ImageStatus(imageClient, id, verbose)
-		if err != nil {
-			return fmt.Errorf("image status request failed: %v", err)
-		}
-		if status.Image == nil {
-			return fmt.Errorf("no such image %s", id)
-		}
+			var verbose = false
+			status, err := ImageStatus(imageClient, id, verbose)
+			if err != nil {
+				return fmt.Errorf("image status request for %q failed: %v", id, err)
+			}
+			if status.Image == nil {
+				return fmt.Errorf("no such image %s", id)
+			}
 
-		_, err = RemoveImage(imageClient, id)
-		if err != nil {
-			return fmt.Errorf("error of removing image %q: %v", id, err)
-		}
-		for _, repoTag := range status.Image.RepoTags {
-			fmt.Printf("Deleted: %s\n", repoTag)
+			_, err = RemoveImage(imageClient, id)
+			if err != nil {
+				return fmt.Errorf("error of removing image %q: %v", id, err)
+			}
+			for _, repoTag := range status.Image.RepoTags {
+				fmt.Printf("Deleted: %s\n", repoTag)
+			}
 		}
 		return nil
 	},

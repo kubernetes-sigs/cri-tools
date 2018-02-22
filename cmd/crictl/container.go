@@ -80,21 +80,22 @@ var createContainerCommand = cli.Command{
 
 var startContainerCommand = cli.Command{
 	Name:      "start",
-	Usage:     "Start a created container",
-	ArgsUsage: "CONTAINER",
+	Usage:     "Start one or more created containers",
+	ArgsUsage: "CONTAINER [CONTAINER...]",
 	Action: func(context *cli.Context) error {
-		containerID := context.Args().First()
-		if containerID == "" {
+		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-
 		if err := getRuntimeClient(context); err != nil {
 			return err
 		}
 
-		err := StartContainer(runtimeClient, containerID)
-		if err != nil {
-			return fmt.Errorf("Starting the container failed: %v", err)
+		for i := 0; i < context.NArg(); i++ {
+			containerID := context.Args().Get(i)
+			err := StartContainer(runtimeClient, containerID)
+			if err != nil {
+				return fmt.Errorf("Starting the container %q failed: %v", containerID, err)
+			}
 		}
 		return nil
 	},
@@ -102,8 +103,8 @@ var startContainerCommand = cli.Command{
 
 var updateContainerCommand = cli.Command{
 	Name:      "update",
-	Usage:     "Update a running container",
-	ArgsUsage: "CONTAINER",
+	Usage:     "Update one or more running containers",
+	ArgsUsage: "CONTAINER [CONTAINER...]",
 	Flags: []cli.Flag{
 		cli.Int64Flag{
 			Name:  "cpu-period",
@@ -135,11 +136,9 @@ var updateContainerCommand = cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
-		containerID := context.Args().First()
-		if containerID == "" {
+		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-
 		if err := getRuntimeClient(context); err != nil {
 			return err
 		}
@@ -154,9 +153,12 @@ var updateContainerCommand = cli.Command{
 			OomScoreAdj:        context.Int64("oom-score-adj"),
 		}
 
-		err := UpdateContainerResources(runtimeClient, containerID, options)
-		if err != nil {
-			return fmt.Errorf("Updating container resources failed: %v", err)
+		for i := 0; i < context.NArg(); i++ {
+			containerID := context.Args().Get(i)
+			err := UpdateContainerResources(runtimeClient, containerID, options)
+			if err != nil {
+				return fmt.Errorf("Updating container resources for %q failed: %v", containerID, err)
+			}
 		}
 		return nil
 	},
@@ -164,8 +166,8 @@ var updateContainerCommand = cli.Command{
 
 var stopContainerCommand = cli.Command{
 	Name:      "stop",
-	Usage:     "Stop a running container",
-	ArgsUsage: "CONTAINER",
+	Usage:     "Stop one or more running containers",
+	ArgsUsage: "CONTAINER [CONTAINER...]",
 	Flags: []cli.Flag{
 		cli.Int64Flag{
 			Name:  "timeout, t",
@@ -174,18 +176,19 @@ var stopContainerCommand = cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
-		containerID := context.Args().First()
-		if containerID == "" {
+		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-
 		if err := getRuntimeClient(context); err != nil {
 			return err
 		}
 
-		err := StopContainer(runtimeClient, containerID, context.Int64("timeout"))
-		if err != nil {
-			return fmt.Errorf("Stopping the container failed: %v", err)
+		for i := 0; i < context.NArg(); i++ {
+			containerID := context.Args().Get(i)
+			err := StopContainer(runtimeClient, containerID, context.Int64("timeout"))
+			if err != nil {
+				return fmt.Errorf("Stopping the container %q failed: %v", containerID, err)
+			}
 		}
 		return nil
 	},
@@ -193,21 +196,22 @@ var stopContainerCommand = cli.Command{
 
 var removeContainerCommand = cli.Command{
 	Name:      "rm",
-	Usage:     "Remove a container",
-	ArgsUsage: "CONTAINER",
+	Usage:     "Remove one or more containers",
+	ArgsUsage: "CONTAINER [CONTAINER...]",
 	Action: func(context *cli.Context) error {
-		containerID := context.Args().First()
-		if containerID == "" {
+		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-
 		if err := getRuntimeClient(context); err != nil {
 			return err
 		}
 
-		err := RemoveContainer(runtimeClient, containerID)
-		if err != nil {
-			return fmt.Errorf("Removing the container failed: %v", err)
+		for i := 0; i < context.NArg(); i++ {
+			containerID := context.Args().Get(i)
+			err := RemoveContainer(runtimeClient, containerID)
+			if err != nil {
+				return fmt.Errorf("Removing the container %q failed: %v", containerID, err)
+			}
 		}
 		return nil
 	},
@@ -215,8 +219,8 @@ var removeContainerCommand = cli.Command{
 
 var containerStatusCommand = cli.Command{
 	Name:      "inspect",
-	Usage:     "Display the status of a container",
-	ArgsUsage: "CONTAINER",
+	Usage:     "Display the status of one or more containers",
+	ArgsUsage: "CONTAINER [CONTAINER...]",
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "output, o",
@@ -228,18 +232,19 @@ var containerStatusCommand = cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
-		containerID := context.Args().First()
-		if containerID == "" {
+		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-
 		if err := getRuntimeClient(context); err != nil {
 			return err
 		}
 
-		err := ContainerStatus(runtimeClient, containerID, context.String("output"), context.Bool("quiet"))
-		if err != nil {
-			return fmt.Errorf("Getting the status of the container failed: %v", err)
+		for i := 0; i < context.NArg(); i++ {
+			containerID := context.Args().Get(i)
+			err := ContainerStatus(runtimeClient, containerID, context.String("output"), context.Bool("quiet"))
+			if err != nil {
+				return fmt.Errorf("Getting the status of the container %q failed: %v", containerID, err)
+			}
 		}
 		return nil
 	},
