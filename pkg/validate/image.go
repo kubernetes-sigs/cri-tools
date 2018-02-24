@@ -17,6 +17,7 @@ limitations under the License.
 package validate
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
@@ -36,6 +37,15 @@ const (
 
 	// digested reference for test image
 	testImageWithDigest = "gcr.io/cri-tools/test-image-digest@sha256:9179135b4b4cc5a8721e09379244807553c318d92fa3111a65133241551ca343"
+
+	testImageUserUID           = "gcr.io/cri-tools/test-image-user-uid"
+	imageUserUID               = int64(1002)
+	testImageUserUsername      = "gcr.io/cri-tools/test-image-user-username"
+	imageUserUsername          = "www-data"
+	testImageUserUIDGroup      = "gcr.io/cri-tools/test-image-user-uid-group"
+	imageUserUIDGroup          = int64(1003)
+	testImageUserUsernameGroup = "gcr.io/cri-tools/test-image-user-username-group"
+	imageUserUsernameGroup     = "www-data"
 )
 
 var _ = framework.KubeDescribe("Image Manager", func() {
@@ -64,6 +74,47 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 			Expect(s.RepoTags).To(BeEmpty())
 			Expect(s.RepoDigests).To(Equal([]string{testImageWithDigest}))
 		})
+	})
+
+	It("image status get image fields should not have Uid|Username empty [Conformance]", func() {
+		for _, item := range []struct {
+			description string
+			image       string
+			uid         int64
+			username    string
+		}{
+			{
+				description: "UID only",
+				image:       testImageUserUID,
+				uid:         imageUserUID,
+				username:    "",
+			},
+			{
+				description: "Username only",
+				image:       testImageUserUsername,
+				uid:         int64(0),
+				username:    imageUserUsername,
+			},
+			{
+				description: "UID:group",
+				image:       testImageUserUIDGroup,
+				uid:         imageUserUIDGroup,
+				username:    "",
+			},
+			{
+				description: "Username:group",
+				image:       testImageUserUsernameGroup,
+				uid:         int64(0),
+				username:    imageUserUsernameGroup,
+			},
+		} {
+			framework.PullPublicImage(c, item.image)
+			defer removeImage(c, item.image)
+
+			status := framework.ImageStatus(c, item.image)
+			Expect(status.GetUid().GetValue()).To(Equal(item.uid), fmt.Sprintf("%s, Image Uid should be %d", item.description, item.uid))
+			Expect(status.GetUsername()).To(Equal(item.username), fmt.Sprintf("%s, Image Username should be %s", item.description, item.username))
+		}
 	})
 
 	It("listImage should get exactly 3 image in the result list [Conformance]", func() {
