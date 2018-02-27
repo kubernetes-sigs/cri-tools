@@ -14,18 +14,19 @@ cri-tools aims to provide a series of debugging and validation tools for Kubelet
 
 ## What is not in scope for this project?
 
-* Building a new kubelet container runtime based on CRI.
-* Managing pods/containers for CRI-compatible runtimes by end-users, e.g. pods created by crictl may be removed automatically by kubelet because of non-exist on the kube-apiserver.
+- Building a new kubelet container runtime based on CRI.
+- Managing pods/containers for CRI-compatible runtimes by end-users, e.g. pods created by crictl may be removed automatically by kubelet because of non-exist on the kube-apiserver.
 
 ## Current Status
 
 Version matrix:
 
-| Kubernetes Version | cri-tools Version |
-|--------------------|-------------------|
-| 1.9.X              | v1.0.0-alpha.0    |
-| 1.8.X              | v0.2              |
-| 1.7.X              | v0.1              |
+| Kubernetes Version | cri-tools Version | cri-tools branch |
+|--------------------|-------------------|------------------|
+| master             |                   | master           |
+| 1.9.X              | v1.0.0-alpha.0    | release-1.9      |
+| 1.8.X              | v0.2              | release-1.8      |
+| 1.7.X              | v0.1              | release-1.7      |
 
 We are currently working toward an beta version of CRI validation tests to be used in conjunction with Kubernetes 1.10. See the [roadmap](docs/roadmap.md) for information about current and future milestones.
 
