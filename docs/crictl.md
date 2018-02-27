@@ -50,7 +50,7 @@ Subcommands includes:
 crictl connects to `unix:///var/run/dockershim.sock` by default. For other runtimes, the endpoint can be set in three ways:
 
 - By setting flags `--runtime-endpoint` and `--image-endpoint`
-- By setting environment variables `CRI_RUNTIME_ENDPOINT` and `CRI_IMAGE_ENDPOINT`
+- By setting environment variables `CONTAINER_RUNTIME_ENDPOINT` and `IMAGE_SERVICE_ENDPOINT`
 - By setting the endpoint in the config file `--config=/etc/crictl.yaml`
 
 ```

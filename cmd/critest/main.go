@@ -48,13 +48,13 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:   "runtime-endpoint, r",
-			EnvVar: "CRI_RUNTIME_ENDPOINT",
+			EnvVar: "CONTAINER_RUNTIME_ENDPOINT",
 			Value:  "unix:///var/run/dockershim.sock",
 			Usage:  "CRI runtime service address which is tested.",
 		},
 		cli.StringFlag{
 			Name:   "image-endpoint, i",
-			EnvVar: "CRI_IMAGE_ENDPOINT",
+			EnvVar: "IMAGE_SERVICE_ENDPOINT",
 			Usage:  "CRI image service address which is tested. Same with runtime-address if not specified.",
 		},
 		cli.StringFlag{
