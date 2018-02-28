@@ -44,8 +44,9 @@ ifndef GOPATH
 endif
 
 critest: check-gopath
-		$(GO) install \
-		$(PROJECT)/cmd/critest
+		$(GO) test -c \
+		$(PROJECT)/cmd/critest \
+		-o $(GOBINDIR)/bin/critest
 
 crictl: check-gopath
 		$(GO) install \
