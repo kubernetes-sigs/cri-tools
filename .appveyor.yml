@@ -1,0 +1,19 @@
+clone_folder: c:\gopath\src\github.com\kubernetes-incubator/cri-tools
+image: Visual Studio 2017
+
+environment:
+  GOPATH: c:\gopath
+
+install:
+  - go version
+  - docker version
+  - set PATH=%GOPATH%\bin;%PATH%
+  - choco upgrade chocolatey
+  - choco install -y make
+  - hack/install-kubelet-windows.cmd
+
+build: off
+
+test_script:
+  - cd c:\gopath\src\github.com\kubernetes-incubator/cri-tools
+  - make cross

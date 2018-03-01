@@ -33,11 +33,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func init() {
-	framework.RegisterFlags()
-}
-
-// TestE2eCRI checks configuration parameters (specified through flags) and then runs
+// TestE2ECRI checks configuration parameters (specified through flags) and then runs
 // E2ECRI tests using the Ginkgo runner.
 // If a "report directory" is specified, one or more JUnit test reports will be
 // generated in this directory.
