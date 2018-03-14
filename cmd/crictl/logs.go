@@ -29,9 +29,10 @@ import (
 )
 
 var logsCommand = cli.Command{
-	Name:      "logs",
-	Usage:     "Fetch the logs of a container",
-	ArgsUsage: "CONTAINER",
+	Name:                   "logs",
+	Usage:                  "Fetch the logs of a container",
+	ArgsUsage:              "CONTAINER",
+	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "follow, f",

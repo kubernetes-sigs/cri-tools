@@ -102,9 +102,10 @@ var startContainerCommand = cli.Command{
 }
 
 var updateContainerCommand = cli.Command{
-	Name:      "update",
-	Usage:     "Update one or more running containers",
-	ArgsUsage: "CONTAINER [CONTAINER...]",
+	Name:                   "update",
+	Usage:                  "Update one or more running containers",
+	ArgsUsage:              "CONTAINER [CONTAINER...]",
+	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		cli.Int64Flag{
 			Name:  "cpu-period",
@@ -165,9 +166,10 @@ var updateContainerCommand = cli.Command{
 }
 
 var stopContainerCommand = cli.Command{
-	Name:      "stop",
-	Usage:     "Stop one or more running containers",
-	ArgsUsage: "CONTAINER [CONTAINER...]",
+	Name:                   "stop",
+	Usage:                  "Stop one or more running containers",
+	ArgsUsage:              "CONTAINER [CONTAINER...]",
+	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		cli.Int64Flag{
 			Name:  "timeout, t",
@@ -218,9 +220,10 @@ var removeContainerCommand = cli.Command{
 }
 
 var containerStatusCommand = cli.Command{
-	Name:      "inspect",
-	Usage:     "Display the status of one or more containers",
-	ArgsUsage: "CONTAINER [CONTAINER...]",
+	Name:                   "inspect",
+	Usage:                  "Display the status of one or more containers",
+	ArgsUsage:              "CONTAINER [CONTAINER...]",
+	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "output, o",
@@ -253,6 +256,7 @@ var containerStatusCommand = cli.Command{
 var listContainersCommand = cli.Command{
 	Name:  "ps",
 	Usage: "List containers",
+	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "verbose, v",

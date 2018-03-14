@@ -48,6 +48,7 @@ func (a imageByRef) Less(i, j int) bool {
 var pullImageCommand = cli.Command{
 	Name:  "pull",
 	Usage: "Pull an image from a registry",
+	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "creds",
@@ -85,9 +86,10 @@ var pullImageCommand = cli.Command{
 }
 
 var listImageCommand = cli.Command{
-	Name:      "images",
-	Usage:     "List images",
-	ArgsUsage: "[REPOSITORY[:TAG]]",
+	Name:                   "images",
+	Usage:                  "List images",
+	ArgsUsage:              "[REPOSITORY[:TAG]]",
+	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "verbose, v",
@@ -186,9 +188,10 @@ var listImageCommand = cli.Command{
 }
 
 var imageStatusCommand = cli.Command{
-	Name:      "inspecti",
-	Usage:     "Return the status of one ore more images",
-	ArgsUsage: "IMAGEID [IMAGEID...]",
+	Name:                   "inspecti",
+	Usage:                  "Return the status of one ore more images",
+	ArgsUsage:              "IMAGEID [IMAGEID...]",
+	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "output, o",
