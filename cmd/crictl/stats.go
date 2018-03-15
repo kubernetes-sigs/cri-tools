@@ -161,7 +161,10 @@ func ContainerStats(client pb.RuntimeServiceClient, opts statsOptions) error {
 	// Use `+` to work around go vet bug
 	fmt.Fprintln(w, "CONTAINER\tCPU %"+"\tMEM\tDISK\tINODES")
 	for _, s := range r.GetStats() {
-		id := strings.TrimPrefix(s.Attributes.Id, "")[:truncatedIDLen]
+		id := strings.TrimPrefix(s.Attributes.Id, "")
+		if len(id) > truncatedIDLen {
+			id = id[:truncatedIDLen]
+		}
 		cpu := s.GetCpu().GetUsageCoreNanoSeconds().GetValue()
 		mem := s.GetMemory().GetWorkingSetBytes().GetValue()
 		disk := s.GetWritableLayer().GetUsedBytes().GetValue()

@@ -152,7 +152,10 @@ var listImageCommand = cli.Command{
 				size := units.HumanSizeWithPrecision(float64(image.GetSize_()), 3)
 				id := image.Id
 				if !noTrunc {
-					id = strings.TrimPrefix(image.Id, "sha256:")[:truncatedIDLen]
+					id = strings.TrimPrefix(image.Id, "sha256:")
+					if len(id) > truncatedIDLen {
+						id = id[:truncatedIDLen]
+					}
 				}
 				for _, repoTagPair := range repoTagPairs {
 					if showDigest {
