@@ -431,7 +431,10 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 			ctm := units.HumanDuration(time.Now().UTC().Sub(createdAt)) + " ago"
 			id := pod.Id
 			if !opts.noTrunc {
-				id = strings.TrimPrefix(pod.Id, "")[:truncatedIDLen]
+				id = strings.TrimPrefix(pod.Id, "")
+				if len(id) > truncatedIDLen {
+					id = id[:truncatedIDLen]
+				}
 			}
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%d\n",
 				id, ctm, pod.State, pod.Metadata.Name, pod.Metadata.Namespace, pod.Metadata.Attempt)
