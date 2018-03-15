@@ -31,7 +31,7 @@ sleep 10
 
 # Run e2e test cases
 # Skip reopen container log test because docker doesn't support it.
-critest --skip="runtime should support reopening container log" --ginkgo-flags=--nodes=8 v
+critest -ginkgo.skip="runtime should support reopening container log" -ginkgo.parallel.total 8
 
 # Run benchmark test cases
-critest b
+critest -benchmark

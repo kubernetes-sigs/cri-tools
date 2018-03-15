@@ -4,15 +4,20 @@ CRI performance benchmarking provides a benchmarking framework for CRI-compatibl
 
 ## Install
 
-The benchmarking tests can be installed easily via `go get` command:
+The benchmarking tests binary `critest` can be downloaded from [Releasing page](https://github.com/kubernetes-incubator/cri-tools/releases):
 
 ```sh
-go get github.com/kubernetes-incubator/cri-tools/cmd/critest
+wget https://github.com/kubernetes-incubator/cri-tools/releases/download/v1.0.0-beta.0/critest-v1.0.0-beta.0-linux-amd64.tar.gz
+sudo tar zxvf critest-v1.0.0-beta.0-linux-amd64.tar.gz -C /usr/local/bin
+rm -f critest-v1.0.0-beta.0-linux-amd64.tar.gz
 ```
 
-Then `critest` binary can be found in `$GOPATH/bin`.
+For v1.0.0-alpha.0 and previous versions, Go and cri-tools source code are also required to run `critest`. The source code could get by running
 
-*Note: ensure GO is installed and GOPATH is set before installing critest.*
+```sh
+# Replace branch name from version matrix in README.md
+git clone https://github.com/kubernetes-incubator/cri-tools -b release-1.9 $GOPATH/src/github.com/kubernetes-incubator/cri-tools
+```
 
 ## Running tests
 
@@ -23,7 +28,7 @@ Before running the test, you need to _ensure that the CRI server under test is r
 ### Run
 
 ```sh
-critest benchmark
+critest -benchmark
 ```
 
 This will
@@ -32,15 +37,12 @@ This will
 - Run the benchmark tests using `ginkgo`
 - Output the test results to STDOUT
 
-critest connects to `unix:///var/run/dockershim.sock` by default. For other runtimes, the endpoint can be set in two ways:
-
-- By setting flags `--runtime-endpoint` and `--image-endpoint`
-- By setting environment variables `CONTAINER_RUNTIME_ENDPOINT` and `IMAGE_SERVICE_ENDPOINT`
+critest connects to `unix:///var/run/dockershim.sock` by default. For other runtimes, the endpoint can be set by flags `--runtime-endpoint` and `--image-endpoint`.
 
 ## Additional options
 
-- `--focus`, `-f`: Only run the tests that match the regular expression.
-- -`-ginkgo-flags`, `-g`: Space-separated list of arguments to pass to Ginkgo test runner.
-- `--image-endpoint`, `-i`: Set the endpoint of image service. Same with runtime-endpoint if not specified.
-- `--runtime-endpoint`, `-r`: Set the endpoint of runtime service. Default to `unix:///var/run/dockershim.sock`.
-- `--skip`, `-s`: Skip the tests that match the regular expression.
+- `-ginkgo.focus`: Only run the tests that match the regular expression.
+- `-image-endpoint`: Set the endpoint of image service. Same with runtime-endpoint if not specified.
+- `-runtime-endpoint`: Set the endpoint of runtime service. Default to `unix:///var/run/dockershim.sock`.
+- `-ginkgo.skip`: Skip the tests that match the regular expression.
+- `-h`: Should help and all supported options.
