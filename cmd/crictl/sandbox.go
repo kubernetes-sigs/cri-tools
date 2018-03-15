@@ -115,9 +115,10 @@ var removePodSandboxCommand = cli.Command{
 }
 
 var podSandboxStatusCommand = cli.Command{
-	Name:      "inspectp",
-	Usage:     "Display the status of one or more pod sandboxes",
-	ArgsUsage: "PODSANDBOX [PODSANDBOX...]",
+	Name:                   "inspectp",
+	Usage:                  "Display the status of one or more pod sandboxes",
+	ArgsUsage:              "PODSANDBOX [PODSANDBOX...]",
+	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "output, o",
@@ -150,6 +151,7 @@ var podSandboxStatusCommand = cli.Command{
 var listPodSandboxCommand = cli.Command{
 	Name:  "pods",
 	Usage: "List pod sandboxes",
+	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "id",
