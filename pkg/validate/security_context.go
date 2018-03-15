@@ -184,6 +184,56 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			Expect(string(out)).NotTo(ContainSubstring(segmentID), "The shared memory segment should be included in the container")
 		})
 
+		It("runtime should support PodPID", func() {
+			By("create podSandbox for sharing process namespace")
+			namespaceOption := &runtimeapi.NamespaceOption{
+				Pid: runtimeapi.NamespaceMode_POD,
+			}
+			framework.Logf("Pid namespace is %q", namespaceOption.Pid)
+			podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podSandboxName, "")
+
+			By("create nginx container")
+			prefix := "nginx-container-"
+			containerName := prefix + framework.NewUUID()
+			containerID, _, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, nginxContainerImage, namespaceOption, nil, "")
+
+			By("start container")
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+			By("get nginx container pid")
+			command := []string{"cat", "/proc/1/cmdline"}
+			output := execSyncContainer(rc, containerID, command)
+			Expect(string(output)).ToNot(ContainSubstring("master process"))
+		})
+
+		It("runtime should support ContainerPID", func() {
+			By("create podSandbox with PID set to container")
+			namespaceOption := &runtimeapi.NamespaceOption{
+				Pid: runtimeapi.NamespaceMode_CONTAINER,
+			}
+			framework.Logf("Pid namespace is %q", namespaceOption.Pid)
+			podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podSandboxName, "")
+
+			By("create nginx container")
+			prefix := "nginx-container-"
+			containerName := prefix + framework.NewUUID()
+			containerID, _, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, nginxContainerImage, namespaceOption, nil, "")
+
+			By("start container")
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+			By("get nginx container pid")
+			command := []string{"cat", "/proc/1/cmdline"}
+			output := execSyncContainer(rc, containerID, command)
+			Expect(string(output)).To(ContainSubstring("master process"))
+		})
+
 		It("runtime should support HostNetwork is true", func() {
 			srv, err := net.Listen("tcp", ":0")
 			if err != nil {
