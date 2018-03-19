@@ -60,10 +60,9 @@ func writeConfig(c *Config, filepath string) error {
 }
 
 var configCommand = cli.Command{
-	Name:                   "config",
-	Usage:                  "Get and set crictl options",
-	ArgsUsage:              "[<options>]",
-	UseShortOptionHandling: true,
+	Name:      "config",
+	Usage:     "Get and set crictl options",
+	ArgsUsage: "[<options>]",
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "get",
