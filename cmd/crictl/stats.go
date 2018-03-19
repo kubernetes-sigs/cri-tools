@@ -50,7 +50,6 @@ var statsCommand = cli.Command{
 	Name: "stats",
 	// TODO(random-liu): Support live monitoring of resource usage.
 	Usage: "List container(s) resource usage statistics",
-	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "all, a",

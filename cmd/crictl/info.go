@@ -26,10 +26,9 @@ import (
 )
 
 var runtimeStatusCommand = cli.Command{
-	Name:                   "info",
-	Usage:                  "Display information of the container runtime",
-	ArgsUsage:              "",
-	UseShortOptionHandling: true,
+	Name:      "info",
+	Usage:     "Display information of the container runtime",
+	ArgsUsage: "",
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "output, o",

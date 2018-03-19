@@ -9,9 +9,9 @@ cli
 [![top level coverage](https://gocover.io/_badge/github.com/urfave/cli?0 "top level coverage")](http://gocover.io/github.com/urfave/cli) /
 [![altsrc coverage](https://gocover.io/_badge/github.com/urfave/cli/altsrc?0 "altsrc coverage")](http://gocover.io/github.com/urfave/cli/altsrc)
 
-This is the library formerly known as `github.com/codegangsta/cli` -- Github
-will automatically redirect requests to this repository, but we recommend
-updating your references for clarity.
+**Notice:** This is the library formerly known as
+`github.com/codegangsta/cli` -- Github will automatically redirect requests
+to this repository, but we recommend updating your references for clarity.
 
 cli is a simple, fast, and fun package for building command line apps in Go. The
 goal is to enable developers to write fast and distributable command line
@@ -32,7 +32,6 @@ applications in an expressive way.
     + [Alternate Names](#alternate-names)
     + [Ordering](#ordering)
     + [Values from the Environment](#values-from-the-environment)
-    + [Values from files](#values-from-files)
     + [Values from alternate input sources (YAML, TOML, and others)](#values-from-alternate-input-sources-yaml-toml-and-others)
     + [Precedence](#precedence)
   * [Subcommands](#subcommands)
@@ -47,7 +46,6 @@ applications in an expressive way.
   * [Version Flag](#version-flag)
     + [Customization](#customization-2)
     + [Full API Example](#full-api-example)
-  * [Combining short Bool options](#combining-short-bool-options)
 - [Contribution Guidelines](#contribution-guidelines)
 
 <!-- tocstop -->
@@ -141,17 +139,13 @@ discovery. So a cli app can be as little as one line of code in `main()`.
 package main
 
 import (
-  "log"
   "os"
 
   "github.com/urfave/cli"
 )
 
 func main() {
-  err := cli.NewApp().Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  cli.NewApp().Run(os.Args)
 }
 ```
 
@@ -166,7 +160,6 @@ package main
 
 import (
   "fmt"
-  "log"
   "os"
 
   "github.com/urfave/cli"
@@ -181,10 +174,7 @@ func main() {
     return nil
   }
 
-  err := app.Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  app.Run(os.Args)
 }
 ```
 
@@ -208,7 +198,6 @@ package main
 
 import (
   "fmt"
-  "log"
   "os"
 
   "github.com/urfave/cli"
@@ -223,10 +212,7 @@ func main() {
     return nil
   }
 
-  err := app.Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  app.Run(os.Args)
 }
 ```
 
@@ -275,7 +261,6 @@ package main
 
 import (
   "fmt"
-  "log"
   "os"
 
   "github.com/urfave/cli"
@@ -289,10 +274,7 @@ func main() {
     return nil
   }
 
-  err := app.Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  app.Run(os.Args)
 }
 ```
 
@@ -308,7 +290,6 @@ package main
 
 import (
   "fmt"
-  "log"
   "os"
 
   "github.com/urfave/cli"
@@ -338,10 +319,7 @@ func main() {
     return nil
   }
 
-  err := app.Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  app.Run(os.Args)
 }
 ```
 
@@ -355,7 +333,6 @@ scanned.
 package main
 
 import (
-  "log"
   "os"
   "fmt"
 
@@ -389,10 +366,7 @@ func main() {
     return nil
   }
 
-  err := app.Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  app.Run(os.Args)
 }
 ```
 
@@ -413,7 +387,6 @@ For example this:
 package main
 
 import (
-  "log"
   "os"
 
   "github.com/urfave/cli"
@@ -429,10 +402,7 @@ func main() {
     },
   }
 
-  err := app.Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  app.Run(os.Args)
 }
 ```
 
@@ -458,7 +428,6 @@ list for the `Name`. e.g.
 package main
 
 import (
-  "log"
   "os"
 
   "github.com/urfave/cli"
@@ -475,10 +444,7 @@ func main() {
     },
   }
 
-  err := app.Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  app.Run(os.Args)
 }
 ```
 
@@ -502,7 +468,6 @@ For example this:
 package main
 
 import (
-  "log"
   "os"
   "sort"
 
@@ -546,10 +511,7 @@ func main() {
   sort.Sort(cli.FlagsByName(app.Flags))
   sort.Sort(cli.CommandsByName(app.Commands))
 
-  err := app.Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  app.Run(os.Args)
 }
 ```
 
@@ -572,7 +534,6 @@ You can also have the default value set from the environment via `EnvVar`.  e.g.
 package main
 
 import (
-  "log"
   "os"
 
   "github.com/urfave/cli"
@@ -590,10 +551,7 @@ func main() {
     },
   }
 
-  err := app.Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  app.Run(os.Args)
 }
 ```
 
@@ -608,7 +566,6 @@ environment variable that resolves is used as the default.
 package main
 
 import (
-  "log"
   "os"
 
   "github.com/urfave/cli"
@@ -626,51 +583,9 @@ func main() {
     },
   }
 
-  err := app.Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  app.Run(os.Args)
 }
 ```
-
-#### Values from files
-
-You can also have the default value set from file via `FilePath`.  e.g.
-
-<!-- {
-  "args": ["&#45;&#45;help"],
-  "output": "password for the mysql database"
-} -->
-``` go
-package main
-
-import (
-  "log"
-  "os"
-
-  "github.com/urfave/cli"
-)
-
-func main() {
-  app := cli.NewApp()
-
-  app.Flags = []cli.Flag {
-    cli.StringFlag{
-      Name: "password, p",
-      Usage: "password for the mysql database",
-      FilePath: "/etc/mysql/password",
-    },
-  }
-
-  err := app.Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
-}
-```
-
-Note that default values set from file (e.g. `FilePath`) take precedence over
-default values set from the enviornment (e.g. `EnvVar`).
 
 #### Values from alternate input sources (YAML, TOML, and others)
 
@@ -701,9 +616,9 @@ the yaml input source for any flags that are defined on that command.  As a note
 the "load" flag used would also have to be defined on the command flags in order
 for this code snipped to work.
 
-Currently only YAML and JSON files are supported but developers can add support
-for other input sources by implementing the altsrc.InputSourceContext for their
-given sources.
+Currently only the aboved specified formats are supported but developers can
+add support for other input sources by implementing the
+altsrc.InputSourceContext for their given sources.
 
 Here is a more complete sample of a command using YAML support:
 
@@ -716,7 +631,6 @@ package notmain
 
 import (
   "fmt"
-  "log"
   "os"
 
   "github.com/urfave/cli"
@@ -739,10 +653,7 @@ func main() {
   app.Before = altsrc.InitInputSourceWithContext(flags, altsrc.NewYamlSourceFromFlagFunc("load"))
   app.Flags = flags
 
-  err := app.Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  app.Run(os.Args)
 }
 ```
 
@@ -768,7 +679,6 @@ package main
 
 import (
   "fmt"
-  "log"
   "os"
 
   "github.com/urfave/cli"
@@ -821,10 +731,7 @@ func main() {
     },
   }
 
-  err := app.Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  app.Run(os.Args)
 }
 ```
 
@@ -840,7 +747,6 @@ E.g.
 package main
 
 import (
-  "log"
   "os"
 
   "github.com/urfave/cli"
@@ -863,10 +769,7 @@ func main() {
     },
   }
 
-  err := app.Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  app.Run(os.Args)
 }
 ```
 
@@ -892,7 +795,6 @@ may be set by returning a non-nil error that fulfills `cli.ExitCoder`, *or* a
 package main
 
 import (
-  "log"
   "os"
 
   "github.com/urfave/cli"
@@ -913,10 +815,7 @@ func main() {
     return nil
   }
 
-  err := app.Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  app.Run(os.Args)
 }
 ```
 
@@ -936,7 +835,6 @@ package main
 
 import (
   "fmt"
-  "log"
   "os"
 
   "github.com/urfave/cli"
@@ -968,10 +866,7 @@ func main() {
     },
   }
 
-  err := app.Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  app.Run(os.Args)
 }
 ```
 
@@ -1011,7 +906,6 @@ The default bash completion flag (`--generate-bash-completion`) is defined as
 package main
 
 import (
-  "log"
   "os"
 
   "github.com/urfave/cli"
@@ -1030,10 +924,7 @@ func main() {
       Name: "wat",
     },
   }
-  err := app.Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  app.Run(os.Args)
 }
 ```
 
@@ -1059,7 +950,6 @@ package main
 
 import (
   "fmt"
-  "log"
   "io"
   "os"
 
@@ -1103,10 +993,7 @@ VERSION:
     fmt.Println("Ha HA.  I pwnd the help!!1")
   }
 
-  err := cli.NewApp().Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  cli.NewApp().Run(os.Args)
 }
 ```
 
@@ -1121,7 +1008,6 @@ setting `cli.HelpFlag`, e.g.:
 package main
 
 import (
-  "log"
   "os"
 
   "github.com/urfave/cli"
@@ -1134,10 +1020,7 @@ func main() {
     EnvVar: "SHOW_HALP,HALPPLZ",
   }
 
-  err := cli.NewApp().Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  cli.NewApp().Run(os.Args)
 }
 ```
 
@@ -1160,7 +1043,6 @@ setting `cli.VersionFlag`, e.g.:
 package main
 
 import (
-  "log"
   "os"
 
   "github.com/urfave/cli"
@@ -1175,10 +1057,7 @@ func main() {
   app := cli.NewApp()
   app.Name = "partay"
   app.Version = "19.99.0"
-  err := app.Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  app.Run(os.Args)
 }
 ```
 
@@ -1193,7 +1072,6 @@ package main
 
 import (
   "fmt"
-  "log"
   "os"
 
   "github.com/urfave/cli"
@@ -1211,10 +1089,7 @@ func main() {
   app := cli.NewApp()
   app.Name = "partay"
   app.Version = "19.99.0"
-  err := app.Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+  app.Run(os.Args)
 }
 ```
 
@@ -1476,7 +1351,7 @@ func main() {
     ec := cli.NewExitError("ohwell", 86)
     fmt.Fprintf(c.App.Writer, "%d", ec.ExitCode())
     fmt.Printf("made it!\n")
-    return nil
+    return ec
   }
 
   if os.Getenv("HEXY") != "" {
@@ -1490,9 +1365,7 @@ func main() {
     "whatever-values": 19.99,
   }
 
-
-  // ignore error so we don't exit non-zero and break gfmrun README example tests
-  _ = app.Run(os.Args)
+  app.Run(os.Args)
 }
 
 func wopAction(c *cli.Context) error {
@@ -1501,26 +1374,18 @@ func wopAction(c *cli.Context) error {
 }
 ```
 
-### Combining short Bool options
-
-Traditional use of boolean options using their shortnames look like this:
-```
-# cmd foobar -s -o
-```
-
-Suppose you want users to be able to combine your bool options with their shortname.  This
-can be done using the **UseShortOptionHandling** bool in your commands.  Suppose your program
-has a two bool flags such as *serve* and *option* with the short options of *-o* and
-*-s* respectively. With **UseShortOptionHandling** set to *true*, a user can use a syntax
-like:
-```
-# cmd foobar -so
-```
-
-If you enable the **UseShortOptionHandling*, then you must not use any flags that have a single
-leading *-* or this will result in failures.  For example, **-option** can no longer be used.  Flags
-with two leading dashes (such as **--options**) are still valid.
-
 ## Contribution Guidelines
 
-See [./CONTRIBUTING.md](./CONTRIBUTING.md)
+Feel free to put up a pull request to fix a bug or maybe add a feature. I will
+give it a code review and make sure that it does not break backwards
+compatibility. If I or any other collaborators agree that it is in line with
+the vision of the project, we will work with you to get the code into
+a mergeable state and merge it into the master branch.
+
+If you have contributed something significant to the project, we will most
+likely add you as a collaborator. As a collaborator you are given the ability
+to merge others pull requests. It is very important that new code does not
+break existing code, so be careful about what code you do choose to merge.
+
+If you feel like you have contributed to the project but have not yet been
+added as a collaborator, we probably forgot to add you, please open an issue.
