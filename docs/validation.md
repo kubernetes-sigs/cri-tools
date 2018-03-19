@@ -14,6 +14,12 @@ sudo tar zxvf critest-v1.0.0-beta.0-linux-amd64.tar.gz -C /usr/local/bin
 rm -f critest-v1.0.0-beta.0-linux-amd64.tar.gz
 ```
 
+critest requires [ginkgo](https://github.com/onsi/ginkgo) to run parallel tests. It could be installed by
+
+```sh
+go get -u github.com/onsi/ginkgo/ginkgo
+```
+
 For v1.0.0-alpha.0 and previous versions, Go and cri-tools source code are also required to run `critest`. The source code could get by running
 
 ```sh
@@ -47,4 +53,5 @@ critest connects to `unix:///var/run/dockershim.sock` by default. For other runt
 - `-image-endpoint`: Set the endpoint of image service. Same with runtime-endpoint if not specified.
 - `-runtime-endpoint`: Set the endpoint of runtime service. Default to `unix:///var/run/dockershim.sock`.
 - `-ginkgo.skip`: Skip the tests that match the regular expression.
+- `-parallel`: The number of parallel test nodes to run (default 1). [ginkgo](https://github.com/onsi/ginkgo) must be installed to run parallel tests.
 - `-h`: Should help and all supported options.

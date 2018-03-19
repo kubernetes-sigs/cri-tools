@@ -19,9 +19,13 @@ package main
 import (
 	"flag"
 	"fmt"
+	"math/rand"
 	"os"
+	"os/exec"
 	"path"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/reporters"
@@ -34,11 +38,15 @@ import (
 )
 
 var (
+	letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
 	isBenchMark = flag.Bool("benchmark", false, "Run benchmarks instead of validation tests")
+	parallel    = flag.Int("parallel", 1, "The number of parallel test nodes to run (default 1)")
 )
 
 func init() {
 	framework.RegisterFlags()
+	rand.Seed(time.Now().UnixNano())
 }
 
 // runTestSuite runs cri validation tests and benchmark tests.
@@ -64,6 +72,50 @@ func runTestSuite(t *testing.T) {
 	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "CRI validation", reporter)
 }
 
+func generateTempTestName() string {
+	suffix := make([]byte, 10)
+	for i := range suffix {
+		suffix[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+
+	return "/tmp/critest-" + string(suffix) + ".test"
+}
+
+func runParallelTestSuite(t *testing.T) {
+	criPath, err := exec.LookPath("critest")
+	if err != nil {
+		t.Fatalf("Failed to lookup path of critest: %v", err)
+	}
+
+	tempFileName := generateTempTestName()
+	err = os.Symlink(criPath, tempFileName)
+	if err != nil {
+		t.Fatalf("Failed to lookup path of critest: %v", err)
+	}
+	defer os.Remove(tempFileName)
+
+	args := []string{fmt.Sprintf("-nodes=%d", *parallel)}
+	flag.Visit(func(f *flag.Flag) {
+		if strings.HasPrefix(f.Name, "ginkgo.") {
+			flagName := strings.TrimPrefix(f.Name, "ginkgo.")
+			args = append(args, fmt.Sprintf("-%s=%s", flagName, f.Value.String()))
+		}
+	})
+	args = append(args, tempFileName)
+
+	cmd := exec.Command("ginkgo", args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		t.Fatalf("Failed to run tests in paralllel: %v", err)
+	}
+}
+
 func TestCRISuite(t *testing.T) {
-	runTestSuite(t)
+	if *parallel > 1 {
+		runParallelTestSuite(t)
+	} else {
+		runTestSuite(t)
+	}
 }
