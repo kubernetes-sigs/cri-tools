@@ -138,7 +138,7 @@ gcr.io/google_containers/pause-amd64   3.0                 99e59f495ffaa       7
 
 # crictl create e1c83b0b8d481d4af8ba98d5f7812577fc175a37b10dc824335951f52addbb4e container-config.json podsandbox-config.json
 0a2c761303163f2acaaeaee07d2ba143ee4cea7e3bde3d32190e2a36525c8a05
-# crictl ps
+# crictl ps -a
 CONTAINER ID                                                       CREATED             STATE               NAME
 0a2c761303163f2acaaeaee07d2ba143ee4cea7e3bde3d32190e2a36525c8a05   1 minutes ago       CONTAINER_CREATED   busybox
 ```
