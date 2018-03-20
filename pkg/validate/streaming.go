@@ -141,7 +141,7 @@ func checkExec(c internalapi.RuntimeService, execServerURL string) {
 	// Only http is supported now.
 	// TODO: support streaming APIs via tls.
 	url := parseURL(c, execServerURL)
-	e, err := remoteclient.NewSPDYExecutor(&rest.Config{}, "POST", url)
+	e, err := remoteclient.NewSPDYExecutor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}, "POST", url)
 	framework.ExpectNoError(err, "failed to create executor for %q", execServerURL)
 
 	err = e.Stream(remoteclient.StreamOptions{
@@ -232,7 +232,7 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 	// Only http is supported now.
 	// TODO: support streaming APIs via tls.
 	url := parseURL(c, attachServerURL)
-	e, err := remoteclient.NewSPDYExecutor(&rest.Config{}, "POST", url)
+	e, err := remoteclient.NewSPDYExecutor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}, "POST", url)
 	framework.ExpectNoError(err, "failed to create executor for %q", attachServerURL)
 
 	err = e.Stream(remoteclient.StreamOptions{
@@ -264,7 +264,7 @@ func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string) 
 	readyChan := make(chan struct{})
 	defer close(stopChan)
 
-	transport, upgrader, err := spdy.RoundTripperFor(&rest.Config{})
+	transport, upgrader, err := spdy.RoundTripperFor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}})
 	framework.ExpectNoError(err, "failed to create spdy round tripper")
 	url := parseURL(c, portForwardSeverURL)
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", url)
