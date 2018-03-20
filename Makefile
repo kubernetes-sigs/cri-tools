@@ -57,7 +57,7 @@ clean:
 	find . -name \#\* -delete
 
 cross: check-gopath
-	GOOS=windows $(GO) build -o $(CURDIR)/_output/critest.exe \
+	GOOS=windows $(GO) test -c -o $(CURDIR)/_output/critest.exe \
 		$(PROJECT)/cmd/critest
 	GOOS=windows $(GO) build -o $(CURDIR)/_output/crictl.exe \
 		$(PROJECT)/cmd/crictl
@@ -89,6 +89,7 @@ gofmt:
 	./hack/repo-infra/verify/go-tools/verify-gofmt.sh
 
 install.tools:
+	go get -u github.com/onsi/ginkgo/ginkgo
 	go get -u github.com/alecthomas/gometalinter
 	gometalinter --install
 
