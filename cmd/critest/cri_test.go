@@ -37,11 +37,16 @@ import (
 	_ "github.com/kubernetes-incubator/cri-tools/pkg/validate"
 )
 
+const (
+	parallelFlag  = "parallel"
+	benchmarkFlag = "benchmark"
+)
+
 var (
 	letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-	isBenchMark = flag.Bool("benchmark", false, "Run benchmarks instead of validation tests")
-	parallel    = flag.Int("parallel", 1, "The number of parallel test nodes to run (default 1)")
+	isBenchMark = flag.Bool(benchmarkFlag, false, "Run benchmarks instead of validation tests")
+	parallel    = flag.Int(parallelFlag, 1, "The number of parallel test nodes to run (default 1)")
 )
 
 func init() {
@@ -52,13 +57,6 @@ func init() {
 // runTestSuite runs cri validation tests and benchmark tests.
 func runTestSuite(t *testing.T) {
 	gomega.RegisterFailHandler(ginkgo.Fail)
-
-	if *isBenchMark {
-		flag.Set("ginkgo.focus", "benchmark")
-	} else {
-		// Skip benchamark measurements for validation tests.
-		flag.Set("ginkgo.skipMeasurements", "true")
-	}
 
 	reporter := []ginkgo.Reporter{}
 	if framework.TestContext.ReportDir != "" {
@@ -94,14 +92,23 @@ func runParallelTestSuite(t *testing.T) {
 	}
 	defer os.Remove(tempFileName)
 
-	args := []string{fmt.Sprintf("-nodes=%d", *parallel)}
+	ginkgoArgs := []string{fmt.Sprintf("-nodes=%d", *parallel)}
+	var testArgs []string
 	flag.Visit(func(f *flag.Flag) {
 		if strings.HasPrefix(f.Name, "ginkgo.") {
 			flagName := strings.TrimPrefix(f.Name, "ginkgo.")
-			args = append(args, fmt.Sprintf("-%s=%s", flagName, f.Value.String()))
+			ginkgoArgs = append(ginkgoArgs, fmt.Sprintf("-%s=%s", flagName, f.Value.String()))
+			return
 		}
+		if f.Name == parallelFlag || f.Name == benchmarkFlag {
+			return
+		}
+		testArgs = append(testArgs, fmt.Sprintf("-%s=%s", f.Name, f.Value.String()))
 	})
-	args = append(args, tempFileName)
+	var args []string
+	args = append(args, ginkgoArgs...)
+	args = append(args, tempFileName, "--")
+	args = append(args, testArgs...)
 
 	cmd := exec.Command("ginkgo", args...)
 	cmd.Stdout = os.Stdout
@@ -113,6 +120,12 @@ func runParallelTestSuite(t *testing.T) {
 }
 
 func TestCRISuite(t *testing.T) {
+	if *isBenchMark {
+		flag.Set("ginkgo.focus", "benchmark")
+	} else {
+		// Skip benchamark measurements for validation tests.
+		flag.Set("ginkgo.skipMeasurements", "true")
+	}
 	if *parallel > 1 {
 		runParallelTestSuite(t)
 	} else {

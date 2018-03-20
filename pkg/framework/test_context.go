@@ -55,7 +55,7 @@ func RegisterFlags() {
 
 	flag.StringVar(&TestContext.ReportPrefix, "report-prefix", "", "Optional prefix for JUnit XML reports. Default is empty, which doesn't prepend anything to the default name.")
 	flag.StringVar(&TestContext.ReportDir, "report-dir", "", "Path to the directory where the JUnit XML reports should be saved. Default is empty, which doesn't generate these reports.")
-	flag.StringVar(&TestContext.ImageServiceAddr, "image-endpoint", "unix:///var/run/dockershim.sock", "Image service socket for client to connect.")
+	flag.StringVar(&TestContext.ImageServiceAddr, "image-endpoint", "", "Image service socket for client to connect.")
 	flag.DurationVar(&TestContext.ImageServiceTimeout, "image-service-timeout", 300*time.Second, "Timeout when trying to connect to image service.")
 	flag.StringVar(&TestContext.RuntimeServiceAddr, "runtime-endpoint", "unix:///var/run/dockershim.sock", "Runtime service socket for client to connect..")
 	flag.DurationVar(&TestContext.RuntimeServiceTimeout, "runtime-service-timeout", 300*time.Second, "Timeout when trying to connect to a runtime service.")
