@@ -141,7 +141,7 @@ func Exec(client pb.RuntimeServiceClient, opts execOptions) error {
 	}
 
 	logrus.Debugf("Exec URL: %v", URL)
-	exec, err := remoteclient.NewSPDYExecutor(&restclient.Config{}, "POST", URL)
+	exec, err := remoteclient.NewSPDYExecutor(&restclient.Config{TLSClientConfig: restclient.TLSClientConfig{Insecure: true}}, "POST", URL)
 	if err != nil {
 		return err
 	}

@@ -99,7 +99,7 @@ func Attach(client pb.RuntimeServiceClient, opts attachOptions) error {
 		return err
 	}
 	logrus.Debugf("Attach URL: %v", URL)
-	attach, err := remoteclient.NewSPDYExecutor(&restclient.Config{}, "POST", URL)
+	attach, err := remoteclient.NewSPDYExecutor(&restclient.Config{TLSClientConfig: restclient.TLSClientConfig{Insecure: true}}, "POST", URL)
 	if err != nil {
 		return err
 	}
