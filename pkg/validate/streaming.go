@@ -158,7 +158,21 @@ func createExec(c internalapi.RuntimeService, execReq *runtimeapi.ExecRequest) s
 func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, isTty bool) {
 	localOut := &bytes.Buffer{}
 	localErr := &bytes.Buffer{}
-	localIn := &bytes.Buffer{}
+	localInRead, localInWrite := io.Pipe()
+
+	// Wait until output read and then shutdown localIn pipe.
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		for {
+			switch {
+			case len(localOut.String()) >= len(stdout):
+				fallthrough
+			case <-ticker.C != time.Time{}:
+				localInWrite.Close()
+				break
+			}
+		}
+	}()
 
 	// Only http is supported now.
 	// TODO: support streaming APIs via tls.
@@ -172,7 +186,7 @@ func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, isTty
 		Tty:    false,
 	}
 	if isTty {
-		streamOptions.Stdin = localIn
+		streamOptions.Stdin = localInRead
 		streamOptions.Tty = true
 	}
 	err = e.Stream(streamOptions)
