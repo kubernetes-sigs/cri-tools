@@ -156,8 +156,8 @@ func createExec(c internalapi.RuntimeService, execReq *runtimeapi.ExecRequest) s
 }
 
 func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, isTty bool) {
-	localOut := &bytes.Buffer{}
-	localErr := &bytes.Buffer{}
+	localOut := &safeBuffer{buffer: bytes.Buffer{}}
+	localErr := &safeBuffer{buffer: bytes.Buffer{}}
 	localInRead, localInWrite := io.Pipe()
 
 	// Wait until output read and then shutdown localIn pipe.
@@ -256,7 +256,7 @@ func (s *safeBuffer) String() string {
 
 func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 	localOut := &safeBuffer{buffer: bytes.Buffer{}}
-	localErr := &bytes.Buffer{}
+	localErr := &safeBuffer{buffer: bytes.Buffer{}}
 	reader, writer := io.Pipe()
 	go func() {
 		defer GinkgoRecover()
