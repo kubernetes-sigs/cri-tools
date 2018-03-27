@@ -40,6 +40,9 @@ import (
 const (
 	parallelFlag  = "parallel"
 	benchmarkFlag = "benchmark"
+	versionFlag   = "version"
+
+	criTestVersion = "1.0.0-beta.0"
 )
 
 var (
@@ -47,6 +50,7 @@ var (
 
 	isBenchMark = flag.Bool(benchmarkFlag, false, "Run benchmarks instead of validation tests")
 	parallel    = flag.Int(parallelFlag, 1, "The number of parallel test nodes to run (default 1)")
+	version     = flag.Bool(versionFlag, false, "Display version of critest")
 )
 
 func init() {
@@ -120,6 +124,11 @@ func runParallelTestSuite(t *testing.T) {
 }
 
 func TestCRISuite(t *testing.T) {
+	if *version {
+		fmt.Printf("critest version: %s\n", criTestVersion)
+		return
+	}
+
 	if *isBenchMark {
 		flag.Set("ginkgo.focus", "benchmark")
 	} else {

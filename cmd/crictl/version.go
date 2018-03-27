@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	criClientVersion = "v1alpha1"
+	criClientVersion = "v1alpha2"
 )
 
 var runtimeVersionCommand = cli.Command{
