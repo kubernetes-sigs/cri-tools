@@ -1,11 +1,14 @@
 <!-- TOC -->
 
-- [v1.0.0-alpha.0](#v100-alpha0)
+- [v1.0.0-beta.0](#v100-beta0)
         - [CRI validation testing (critest)](#cri-validation-testing-critest)
         - [CRI CLI (crictl)](#cri-cli-crictl)
+- [v1.0.0-alpha.0](#v100-alpha0)
+        - [CRI validation testing (critest)](#cri-validation-testing-critest-1)
+        - [CRI CLI (crictl)](#cri-cli-crictl-1)
 - [v0.2](#v02)
-    - [CRI validation testing (critest)](#cri-validation-testing-critest-1)
-    - [CRI CLI (crictl)](#cri-cli-crictl-1)
+    - [CRI validation testing (critest)](#cri-validation-testing-critest-2)
+    - [CRI CLI (crictl)](#cri-cli-crictl-2)
 - [v0.1](#v01)
     - [Features](#features)
         - [CRI validation testing](#cri-validation-testing)
@@ -14,6 +17,33 @@
     - [Documentation](#documentation)
 
 <!-- /TOC -->
+
+# v1.0.0-beta.0
+
+cri-tools v1.0.0-beta.0 is mainly focus on UX improvements, including make crictl command more user friendly and add initial Windows support. Container runtime interface (CRI) has been updated to v1alpha2 in order to be compatible with kubernetes v1.10. Version matrix and branches for different kubernetes versions are also added.
+
+### CRI validation testing (critest)
+
+- [#227](https://github.com/kubernetes-incubator/cri-tools/pull/227) Set StdinOnce to true for attach test
+- [#232](https://github.com/kubernetes-incubator/cri-tools/pull/232) Improves CRI log parser
+- [#242](https://github.com/kubernetes-incubator/cri-tools/pull/242) Add validation of reopening container logs
+- [#250](https://github.com/kubernetes-incubator/cri-tools/pull/250) Add validation of username not empty in ImageStatus
+- [#252](https://github.com/kubernetes-incubator/cri-tools/pull/252) Improve image test and make test run in parallel
+- [#257](https://github.com/kubernetes-incubator/cri-tools/pull/257) Add golang 1.10 and fix a race condition
+- [#261](https://github.com/kubernetes-incubator/cri-tools/pull/261) [#273](https://github.com/kubernetes-incubator/cri-tools/pull/273) Remove dependency of source code
+- [#267](https://github.com/kubernetes-incubator/cri-tools/pull/267) Add test for pid namespace
+- [#269](https://github.com/kubernetes-incubator/cri-tools/pull/269) Add validation of tty settings for exec
+
+### CRI CLI (crictl)
+
+- [#222](https://github.com/kubernetes-incubator/cri-tools/pull/222) Rename `sandboxes` subcommand to `pods` and rename`sandbox` to `podsandbox` in all subcommands
+- [#225](https://github.com/kubernetes-incubator/cri-tools/pull/225) Add support of windows
+- [#238](https://github.com/kubernetes-incubator/cri-tools/pull/238) Update CRI to v1alpha2
+- [#255](https://github.com/kubernetes-incubator/cri-tools/pull/255) Add support of multiple Ids to subcommands
+- [#256](https://github.com/kubernetes-incubator/cri-tools/pull/256) Add `crictl ps -q`
+- [#258](https://github.com/kubernetes-incubator/cri-tools/pull/258) Rename CRI endpoints environment variable to `CONTAINER_RUNTIME_ENDPOINT` and `IMAGE_SERVICE_ENDPOINT`
+- [#268](https://github.com/kubernetes-incubator/cri-tools/pull/268) Avoid panic when runtimes are using truncated IDs
+- [#274](https://github.com/kubernetes-incubator/cri-tools/pull/274) Add support of insecure TLS without auth
 
 # v1.0.0-alpha.0
 
@@ -24,7 +54,7 @@ cri-tools v1.0.0-alpha.0 is mainly focus on UX improvements, including make cric
 - [#164](https://github.com/kubernetes-incubator/cri-tools/pull/164) Fix security context test to not rely on `/etc/hosts`
 - [#165](https://github.com/kubernetes-incubator/cri-tools/pull/165) Validate IPv4 only for port mapping tests
 - [#196](https://github.com/kubernetes-incubator/cri-tools/pull/196) Fix privileged container validation by replacing `ip link` with `brctl addbr` command
--  [#197](https://github.com/kubernetes-incubator/cri-tools/pull/197) Fix hostIPC validation to support old ipcmk versions 
+-  [#197](https://github.com/kubernetes-incubator/cri-tools/pull/197) Fix hostIPC validation to support old ipcmk versions
 - [#199](https://github.com/kubernetes-incubator/cri-tools/pull/199) [#201](https://github.com/kubernetes-incubator/cri-tools/pull/201) Fix container logs validation
 - [#200](https://github.com/kubernetes-incubator/cri-tools/pull/200) Add SELinux validation tests
 
@@ -34,11 +64,11 @@ cri-tools v1.0.0-alpha.0 is mainly focus on UX improvements, including make cric
 - [#163](https://github.com/kubernetes-incubator/cri-tools/pull/163) Add `--digest` option to `images` command
 - [#167](https://github.com/kubernetes-incubator/cri-tools/pull/167) Add verbose for `status` command
 - [#171](https://github.com/kubernetes-incubator/cri-tools/pull/171) Sort results by creation time for `ps`, `sandboxes` and `images` commands
-- [#174](https://github.com/kubernetes-incubator/cri-tools/pull/174) Support select sandboxes by name for `sandboxes` and other commands 
+- [#174](https://github.com/kubernetes-incubator/cri-tools/pull/174) Support select sandboxes by name for `sandboxes` and other commands
 - [#178](https://github.com/kubernetes-incubator/cri-tools/pull/178) [#190](https://github.com/kubernetes-incubator/cri-tools/pull/190) Replace golang json with `protobuf/jsonpb` library
 - [#182](https://github.com/kubernetes-incubator/cri-tools/pull/182) Fix stdout and stderr for `attach` and `exec` command
 - [#183](https://github.com/kubernetes-incubator/cri-tools/pull/183) Add created time to `sandboxes` command
-- [#186](https://github.com/kubernetes-incubator/cri-tools/pull/186) Use kubelet's log library instead of a copied one 
+- [#186](https://github.com/kubernetes-incubator/cri-tools/pull/186) Use kubelet's log library instead of a copied one
 - [#187](https://github.com/kubernetes-incubator/cri-tools/pull/187) Add image tag and attempt to `ps` command
 - [#194](https://github.com/kubernetes-incubator/cri-tools/pull/194) Add `config` command
 - [#217](https://github.com/kubernetes-incubator/cri-tools/pull/217) Add `--latest` and `--last` options to `ps` and `sandboxes` commands
@@ -58,7 +88,7 @@ cri-tools v0.2 enhances validation testings, improves crictl UX and also fixes s
 ## CRI validation testing (critest)
 
 - [#127](https://github.com/kubernetes-incubator/cri-tools/pull/127) Adds validation tests for supplemental groups
-- [#135](https://github.com/kubernetes-incubator/cri-tools/pull/135) [#137](https://github.com/kubernetes-incubator/cri-tools/pull/137) and [#144](https://github.com/kubernetes-incubator/cri-tools/pull/144) Adds validation tests for seccomp 
+- [#135](https://github.com/kubernetes-incubator/cri-tools/pull/135) [#137](https://github.com/kubernetes-incubator/cri-tools/pull/137) and [#144](https://github.com/kubernetes-incubator/cri-tools/pull/144) Adds validation tests for seccomp
 - [#139](https://github.com/kubernetes-incubator/cri-tools/pull/139) Adds validation tests for sysctls
 - [#140](https://github.com/kubernetes-incubator/cri-tools/pull/140) Adds validation tests for AppArmor
 - [#141](https://github.com/kubernetes-incubator/cri-tools/pull/141) Adds validation tests for NoNewPrivs
