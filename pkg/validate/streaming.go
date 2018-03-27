@@ -65,7 +65,7 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			rc.RemovePodSandbox(podID)
 		})
 
-		It("runtime should support exec [Conformance]", func() {
+		It("runtime should support exec with tty=false and stdin=false [Conformance]", func() {
 			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
 
 			By("create a default container")
@@ -74,10 +74,38 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			By("start container")
 			startContainer(rc, containerID)
 
-			req := createDefaultExec(rc, containerID)
+			execReq := &runtimeapi.ExecRequest{
+				ContainerId: containerID,
+				Cmd:         []string{"echo", "hello"},
+				Stdout:      true,
+				Stderr:      true,
+			}
+			req := createExec(rc, execReq)
 
 			By("check the output of exec")
-			checkExec(rc, req)
+			checkExec(rc, req, "hello\n", false)
+		})
+
+		It("runtime should support exec with tty=true and stdin=true [Conformance]", func() {
+			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
+
+			By("create a default container")
+			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-exec-test")
+
+			By("start container")
+			startContainer(rc, containerID)
+
+			execReq := &runtimeapi.ExecRequest{
+				ContainerId: containerID,
+				Cmd:         []string{"echo", "hello"},
+				Stdout:      true,
+				Tty:         true,
+				Stdin:       true,
+			}
+			req := createExec(rc, execReq)
+
+			By("check the output of exec")
+			checkExec(rc, req, "hello\r\n", true)
 		})
 
 		It("runtime should support attach [Conformance]", func() {
@@ -119,24 +147,32 @@ var _ = framework.KubeDescribe("Streaming", func() {
 	})
 })
 
-func createDefaultExec(c internalapi.RuntimeService, containerID string) string {
-	By("exec default command in container: " + containerID)
-	req := &runtimeapi.ExecRequest{
-		ContainerId: containerID,
-		Cmd:         []string{"echo", "hello"},
-		Stdout:      true,
-		Stderr:      true,
-	}
-
-	resp, err := c.Exec(req)
-	framework.ExpectNoError(err, "failed to exec in container %q", containerID)
+func createExec(c internalapi.RuntimeService, execReq *runtimeapi.ExecRequest) string {
+	By("exec given command in container: " + execReq.ContainerId)
+	resp, err := c.Exec(execReq)
+	framework.ExpectNoError(err, "failed to exec in container %q", execReq.ContainerId)
 	framework.Logf("Get exec url: " + resp.Url)
 	return resp.Url
 }
 
-func checkExec(c internalapi.RuntimeService, execServerURL string) {
-	localOut := &bytes.Buffer{}
-	localErr := &bytes.Buffer{}
+func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, isTty bool) {
+	localOut := &safeBuffer{buffer: bytes.Buffer{}}
+	localErr := &safeBuffer{buffer: bytes.Buffer{}}
+	localInRead, localInWrite := io.Pipe()
+
+	// Wait until output read and then shutdown localIn pipe.
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		for {
+			switch {
+			case len(localOut.String()) >= len(stdout):
+				fallthrough
+			case <-ticker.C != time.Time{}:
+				localInWrite.Close()
+				break
+			}
+		}
+	}()
 
 	// Only http is supported now.
 	// TODO: support streaming APIs via tls.
@@ -144,14 +180,19 @@ func checkExec(c internalapi.RuntimeService, execServerURL string) {
 	e, err := remoteclient.NewSPDYExecutor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}, "POST", url)
 	framework.ExpectNoError(err, "failed to create executor for %q", execServerURL)
 
-	err = e.Stream(remoteclient.StreamOptions{
+	streamOptions := remoteclient.StreamOptions{
 		Stdout: localOut,
 		Stderr: localErr,
 		Tty:    false,
-	})
+	}
+	if isTty {
+		streamOptions.Stdin = localInRead
+		streamOptions.Tty = true
+	}
+	err = e.Stream(streamOptions)
 	framework.ExpectNoError(err, "failed to open streamer for %q", execServerURL)
 
-	Expect(localOut.String()).To(Equal("hello\n"), "The stdout of exec should be hello")
+	Expect(localOut.String()).To(Equal(stdout), "The stdout of exec should be "+stdout)
 	Expect(localErr.String()).To(BeEmpty(), "The stderr of exec should be empty")
 	framework.Logf("Check exec url %q succeed", execServerURL)
 }
@@ -215,7 +256,7 @@ func (s *safeBuffer) String() string {
 
 func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 	localOut := &safeBuffer{buffer: bytes.Buffer{}}
-	localErr := &bytes.Buffer{}
+	localErr := &safeBuffer{buffer: bytes.Buffer{}}
 	reader, writer := io.Pipe()
 	go func() {
 		defer GinkgoRecover()
