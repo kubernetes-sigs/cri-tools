@@ -61,9 +61,9 @@ var statsCommand = cli.Command{
 			Usage: "Filter by container id",
 		},
 		cli.StringFlag{
-			Name:  "podsandbox, p",
+			Name:  "pod, p",
 			Value: "",
-			Usage: "Filter by pod sandbox id",
+			Usage: "Filter by pod id",
 		},
 		cli.StringSliceFlag{
 			Name:  "label",
@@ -88,7 +88,7 @@ var statsCommand = cli.Command{
 		opts := statsOptions{
 			all:    context.Bool("all"),
 			id:     context.String("id"),
-			podID:  context.String("podsandbox"),
+			podID:  context.String("pod"),
 			sample: time.Duration(context.Int("seconds")) * time.Second,
 			output: context.String("output"),
 		}
