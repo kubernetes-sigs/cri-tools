@@ -130,10 +130,6 @@ var updateContainerCommand = cli.Command{
 			Name:  "cpuset-mems",
 			Usage: "Memory node(s) to use",
 		},
-		cli.Int64Flag{
-			Name:  "oom-score-adj",
-			Usage: "OOM killer score",
-		},
 	},
 	Action: func(context *cli.Context) error {
 		if context.NArg() == 0 {
@@ -150,7 +146,6 @@ var updateContainerCommand = cli.Command{
 			CpusetCpus:         context.String("cpuset-cpus"),
 			CpusetMems:         context.String("cpuset-mems"),
 			MemoryLimitInBytes: context.Int64("memory"),
-			OomScoreAdj:        context.Int64("oom-score-adj"),
 		}
 
 		for i := 0; i < context.NArg(); i++ {
