@@ -51,7 +51,7 @@ const (
 type logMessage struct {
 	timestamp time.Time
 	stream    streamType
-	log       []byte
+	log       string
 }
 
 var _ = framework.KubeDescribe("Container", func() {
@@ -127,7 +127,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 			By("test execSync")
 			cmd := []string{"echo", "hello"}
-			expectedLogMessage := []byte("hello" + "\n")
+			expectedLogMessage := "hello\n"
 			verifyExecSyncOutput(rc, containerID, cmd, expectedLogMessage)
 		})
 	})
@@ -216,11 +216,8 @@ var _ = framework.KubeDescribe("Container", func() {
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
 
 			By("check the log context")
-			expectedLogMessage := &logMessage{
-				log:    []byte(defaultLog + "\n"),
-				stream: stdoutType,
-			}
-			verifyLogContents(podConfig, logPath, expectedLogMessage)
+			expectedLogMessage := defaultLog + "\n"
+			verifyLogContents(podConfig, logPath, expectedLogMessage, stdoutType)
 		})
 
 		It("runtime should support reopening container log [Conformance]", func() {
@@ -363,21 +360,21 @@ func listContainerForID(c internalapi.RuntimeService, containerID string) []*run
 }
 
 // execSyncContainer test execSync for containerID and make sure the response is right.
-func execSyncContainer(c internalapi.RuntimeService, containerID string, command []string) []byte {
+func execSyncContainer(c internalapi.RuntimeService, containerID string, command []string) string {
 	By("execSync for containerID: " + containerID)
 	stdout, stderr, err := c.ExecSync(containerID, command, time.Duration(defaultExecSyncTimeout)*time.Second)
 	framework.ExpectNoError(err, "failed to execSync in container %q", containerID)
 	Expect(stderr).To(BeNil(), "The stderr should be nil.")
 	framework.Logf("Execsync succeed")
 
-	return stdout
+	return string(stdout)
 }
 
 // execSyncContainer test execSync for containerID and make sure the response is right.
-func verifyExecSyncOutput(c internalapi.RuntimeService, containerID string, command []string, expectedLogMessage []byte) {
+func verifyExecSyncOutput(c internalapi.RuntimeService, containerID string, command []string, expectedLogMessage string) {
 	By("verify execSync output")
 	stdout := execSyncContainer(c, containerID, command)
-	Expect(string(stdout)).To(Equal(string(expectedLogMessage)), "The stdout output of execSync should be %s", string(expectedLogMessage))
+	Expect(stdout).To(Equal(expectedLogMessage), "The stdout output of execSync should be %s", expectedLogMessage)
 	framework.Logf("verfiy Execsync output succeed")
 }
 
@@ -466,7 +463,7 @@ func parseDockerJSONLog(log []byte, msg *logMessage) {
 
 	msg.timestamp = l.Created
 	msg.stream = streamType(l.Stream)
-	msg.log = []byte(l.Log)
+	msg.log = l.Log
 }
 
 // parseCRILog parses logs in CRI log format.
@@ -486,7 +483,7 @@ func parseCRILog(log string, msg *logMessage) {
 	msg.timestamp = timeStamp
 	msg.stream = streamType(stream)
 	// Skip the tag field.
-	msg.log = []byte(logMessage[3] + "\n")
+	msg.log = logMessage[3] + "\n"
 }
 
 // parseLogLine parses log by row.
@@ -523,12 +520,16 @@ func parseLogLine(podConfig *runtimeapi.PodSandboxConfig, logPath string) []logM
 }
 
 // verifyLogContents verifies the contents of container log.
-func verifyLogContents(podConfig *runtimeapi.PodSandboxConfig, logPath string, expectedLogMessage *logMessage) {
+func verifyLogContents(podConfig *runtimeapi.PodSandboxConfig, logPath string, log string, stream streamType) {
 	By("verify log contents")
-	log := parseLogLine(podConfig, logPath)
+	msgs := parseLogLine(podConfig, logPath)
 
-	for _, msg := range log {
-		Expect(string(msg.log)).To(Equal(string(expectedLogMessage.log)), "Log should be %s", string(expectedLogMessage.log))
-		Expect(string(msg.stream)).To(Equal(string(expectedLogMessage.stream)), "Stream should be %s", string(expectedLogMessage.stream))
+	found := false
+	for _, msg := range msgs {
+		if msg.log == log && msg.stream == stream {
+			found = true
+			break
+		}
 	}
+	Expect(found).To(BeTrue(), "expected log %q (stream=%q) not found in logs %+v", log, stream, msgs)
 }
