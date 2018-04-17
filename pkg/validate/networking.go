@@ -30,14 +30,19 @@ import (
 )
 
 const (
-	defaultDNSServer            string = "10.10.10.10"
-	defaultDNSSearch            string = "google.com"
-	defaultDNSOption            string = "ndots:8"
-	resolvConfigPath            string = "/etc/resolv.conf"
-	nginxImage                  string = "nginx"
-	nginxContainerPort          int32  = 80
-	nginxHostPortForPortMapping int32  = 8000
-	nginxHostPortForPortForward int32  = 8001
+	defaultDNSServer   string = "10.10.10.10"
+	defaultDNSSearch   string = "google.com"
+	defaultDNSOption   string = "ndots:8"
+	resolvConfigPath   string = "/etc/resolv.conf"
+	nginxImage         string = "nginx"
+	hostNetNginxImage  string = "gcr.io/cri-tools/hostnet-nginx"
+	nginxContainerPort int32  = 80
+	// The following host ports must not be in-use when running the test.
+	nginxHostPortForPortMapping        int32 = 12000
+	nginxHostPortForPortForward        int32 = 12001
+	nginxHostPortForHostNetPortFroward int32 = 12002
+	// The port used in hostNetNginxImage (See images/hostnet-nginx/)
+	nginxHostNetContainerPort int32 = 12003
 )
 
 var _ = framework.KubeDescribe("Networking", func() {
@@ -89,7 +94,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 					ContainerPort: nginxContainerPort,
 				},
 			}
-			podID, podConfig = createPodSandboxWithPortMapping(rc, portMappings)
+			podID, podConfig = createPodSandboxWithPortMapping(rc, portMappings, false)
 
 			By("create a nginx container")
 			containerID := createNginxContainer(rc, ic, podID, podConfig, "container-for-container-port")
@@ -110,7 +115,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 					HostPort:      nginxHostPortForPortMapping,
 				},
 			}
-			podID, podConfig = createPodSandboxWithPortMapping(rc, portMappings)
+			podID, podConfig = createPodSandboxWithPortMapping(rc, portMappings, false)
 
 			By("create a nginx container")
 			containerID := createNginxContainer(rc, ic, podID, podConfig, "container-for-host-port")
@@ -144,7 +149,7 @@ func createPodSandWithDNSConfig(c internalapi.RuntimeService) (string, *runtimea
 }
 
 // createPodSandboxWithPortMapping create a PodSandbox with port mapping.
-func createPodSandboxWithPortMapping(c internalapi.RuntimeService, portMappings []*runtimeapi.PortMapping) (string, *runtimeapi.PodSandboxConfig) {
+func createPodSandboxWithPortMapping(c internalapi.RuntimeService, portMappings []*runtimeapi.PortMapping, hostNet bool) (string, *runtimeapi.PodSandboxConfig) {
 	podSandboxName := "create-PodSandbox-with-port-mapping" + framework.NewUUID()
 	uid := framework.DefaultUIDPrefix + framework.NewUUID()
 	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
@@ -152,6 +157,13 @@ func createPodSandboxWithPortMapping(c internalapi.RuntimeService, portMappings 
 		Metadata:     framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 		PortMappings: portMappings,
 		Linux:        &runtimeapi.LinuxPodSandboxConfig{},
+	}
+	if hostNet {
+		config.Linux.SecurityContext = &runtimeapi.LinuxSandboxSecurityContext{
+			NamespaceOptions: &runtimeapi.NamespaceOption{
+				Network: runtimeapi.NamespaceMode_NODE,
+			},
+		}
 	}
 
 	podID := framework.RunPodSandbox(c, config)
@@ -177,6 +189,17 @@ func createNginxContainer(rc internalapi.RuntimeService, ic internalapi.ImageMan
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: nginxImage},
+		Linux:    &runtimeapi.LinuxContainerConfig{},
+	}
+	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
+}
+
+// createHostNetNginxContainer creates a nginx container using nginxHostNetContainerPort.
+func createHostNetNginxContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
+	containerName := prefix + framework.NewUUID()
+	containerConfig := &runtimeapi.ContainerConfig{
+		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: hostNetNginxImage},
 		Linux:    &runtimeapi.LinuxContainerConfig{},
 	}
 	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)

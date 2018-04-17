@@ -124,14 +124,14 @@ var _ = framework.KubeDescribe("Streaming", func() {
 		})
 
 		It("runtime should support portforward [Conformance]", func() {
-			By("create a PodSandbox with host port and container port port mapping")
+			By("create a PodSandbox with container port port mapping")
 			var podConfig *runtimeapi.PodSandboxConfig
 			portMappings := []*runtimeapi.PortMapping{
 				{
 					ContainerPort: nginxContainerPort,
 				},
 			}
-			podID, podConfig = createPodSandboxWithPortMapping(rc, portMappings)
+			podID, podConfig = createPodSandboxWithPortMapping(rc, portMappings, false)
 
 			By("create a nginx container")
 			containerID := createNginxContainer(rc, ic, podID, podConfig, "container-for-portforward-test")
@@ -142,8 +142,31 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			req := createDefaultPortForward(rc, podID)
 
 			By("check the output of portforward")
-			checkPortForward(rc, req)
+			checkPortForward(rc, req, nginxHostPortForPortForward, nginxContainerPort)
 		})
+
+		It("runtime should support portforward in host network", func() {
+			By("create a PodSandbox with container port port mapping in host network")
+			var podConfig *runtimeapi.PodSandboxConfig
+			portMappings := []*runtimeapi.PortMapping{
+				{
+					ContainerPort: nginxHostNetContainerPort,
+				},
+			}
+			podID, podConfig = createPodSandboxWithPortMapping(rc, portMappings, true)
+
+			By("create a nginx container")
+			containerID := createHostNetNginxContainer(rc, ic, podID, podConfig, "container-for-host-net-portforward-test")
+
+			By("start the nginx container")
+			startContainer(rc, containerID)
+
+			req := createDefaultPortForward(rc, podID)
+
+			By("check the output of portforward")
+			checkPortForward(rc, req, nginxHostPortForHostNetPortFroward, nginxHostNetContainerPort)
+		})
+
 	})
 })
 
@@ -300,7 +323,7 @@ func createDefaultPortForward(c internalapi.RuntimeService, podID string) string
 	return resp.Url
 }
 
-func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string) {
+func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string, hostPort, containerPort int32) {
 	stopChan := make(chan struct{}, 1)
 	readyChan := make(chan struct{})
 	defer close(stopChan)
@@ -309,7 +332,7 @@ func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string) 
 	framework.ExpectNoError(err, "failed to create spdy round tripper")
 	url := parseURL(c, portForwardSeverURL)
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", url)
-	pf, err := portforward.New(dialer, []string{fmt.Sprintf("%d:80", nginxHostPortForPortForward)}, stopChan, readyChan, os.Stdout, os.Stderr)
+	pf, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", hostPort, containerPort)}, stopChan, readyChan, os.Stdout, os.Stderr)
 	framework.ExpectNoError(err, "failed to create port forward for %q", portForwardSeverURL)
 
 	go func() {
@@ -319,7 +342,7 @@ func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string) 
 		framework.ExpectNoError(err, "failed to start port forward for %q", portForwardSeverURL)
 	}()
 
-	By(fmt.Sprintf("check if we can get nginx main page via localhost:%d", nginxHostPortForPortForward))
-	checkNginxMainPage(c, "", nginxHostPortForPortForward)
+	By(fmt.Sprintf("check if we can get nginx main page via localhost:%d", hostPort))
+	checkNginxMainPage(c, "", hostPort)
 	framework.Logf("Check port forward url %q succeed", portForwardSeverURL)
 }
