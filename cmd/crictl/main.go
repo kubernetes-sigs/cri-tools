@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"sort"
@@ -88,6 +89,10 @@ func getRuntimeService(context *cli.Context) (cri.RuntimeService, error) {
 }
 
 func main() {
+	// Do not log to files.
+	if err := flag.Set("logtostderr", "true"); err != nil {
+		logrus.WithError(err).Fatal("Failed to set logtostderr=true")
+	}
 	app := cli.NewApp()
 	app.Name = "crictl"
 	app.Usage = "client for CRI"
