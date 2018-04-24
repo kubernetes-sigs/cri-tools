@@ -50,7 +50,7 @@ const (
 	DefaultAttempt uint32 = 2
 
 	// DefaultContainerImage is the default image for container using
-	DefaultContainerImage string = "busybox:1.26"
+	DefaultContainerImage string = "busybox:1.28"
 
 	// DefaultStopContainerTimeout is the default timeout for stopping container
 	DefaultStopContainerTimeout int64 = 60
