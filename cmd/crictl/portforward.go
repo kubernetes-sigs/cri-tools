@@ -24,7 +24,7 @@ import (
 	"os/signal"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
 	restclient "k8s.io/client-go/rest"
