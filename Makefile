@@ -44,12 +44,12 @@ ifndef GOPATH
 endif
 
 critest: check-gopath
-		$(GO) test -c \
+		CGO_ENABLED=0 $(GO) test -c \
 		$(PROJECT)/cmd/critest \
 		-o $(GOBINDIR)/bin/critest
 
 crictl: check-gopath
-		$(GO) install \
+		CGO_ENABLED=0 $(GO) install \
 		$(PROJECT)/cmd/crictl
 
 clean:
