@@ -1,11 +1,11 @@
 <!-- TOC -->
-
+- [v1.0.0-beta.1](#v100-beta1)
 - [v1.0.0-beta.0](#v100-beta0)
-        - [CRI validation testing (critest)](#cri-validation-testing-critest)
-        - [CRI CLI (crictl)](#cri-cli-crictl)
+    - [CRI validation testing (critest)](#cri-validation-testing-critest)
+    - [CRI CLI (crictl)](#cri-cli-crictl)
 - [v1.0.0-alpha.0](#v100-alpha0)
-        - [CRI validation testing (critest)](#cri-validation-testing-critest-1)
-        - [CRI CLI (crictl)](#cri-cli-crictl-1)
+    - [CRI validation testing (critest)](#cri-validation-testing-critest-1)
+    - [CRI CLI (crictl)](#cri-cli-crictl-1)
 - [v0.2](#v02)
     - [CRI validation testing (critest)](#cri-validation-testing-critest-2)
     - [CRI CLI (crictl)](#cri-cli-crictl-2)
@@ -17,6 +17,23 @@
     - [Documentation](#documentation)
 
 <!-- /TOC -->
+# v1.0.0-beta.1
+
+cri-tools v1.0.0-beta.1 mainly focused on critest coverage improvement, and bug fixes.
+
+### CRI validation testing (critest)
+
+- [#282](https://github.com/kubernetes-incubator/cri-tools/pull/282) Add RunAsGroup test. The test `runtime should return error if RunAsGroup is set without RunAsUser` only works with Kubernetes 1.11+.
+- [#289](https://github.com/kubernetes-incubator/cri-tools/pull/289) Add host network pod portforward test.
+- [#290](https://github.com/kubernetes-incubator/cri-tools/pull/290) Use busybox:1.28 instead of busybox:1.26 in the test to better support multi-arch.
+- [#296](https://github.com/kubernetes-incubator/cri-tools/pull/296) Make `critest` binary statically linked.
+
+### CRI CLI (crictl)
+
+- [#278](https://github.com/kubernetes-incubator/cri-tools/pull/278) Remove "sandbox" from `crictl` command description.
+- [#279](https://github.com/kubernetes-incubator/cri-tools/pull/279) Remove `oom-score-adj` flag from `crictl update` because it is not supported by `runc`.
+- [#291](https://github.com/kubernetes-incubator/cri-tools/pull/291) Fix a bug that `crictl` generates a log file in `/tmp` directory each run. This can potentially fill `/tmp` directory.
+- [#296](https://github.com/kubernetes-incubator/cri-tools/pull/296) Make `crictl` binary statically linked.
 
 # v1.0.0-beta.0
 
