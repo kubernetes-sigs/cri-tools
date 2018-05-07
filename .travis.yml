@@ -3,7 +3,7 @@ sudo: required
 dist: trusty
 
 go:
-  - 1.10.x
+  - "1.10.2"
 
 go_import_path: github.com/kubernetes-incubator/cri-tools
 
