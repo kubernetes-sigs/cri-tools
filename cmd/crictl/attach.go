@@ -31,9 +31,11 @@ import (
 )
 
 var runtimeAttachCommand = cli.Command{
-	Name:      "attach",
-	Usage:     "Attach to a running container",
-	ArgsUsage: "CONTAINER",
+	Name:                   "attach",
+	Usage:                  "Attach to a running container",
+	ArgsUsage:              "CONTAINER",
+	SkipArgReorder:         true,
+	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "tty,t",

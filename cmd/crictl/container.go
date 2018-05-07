@@ -55,6 +55,7 @@ var createContainerCommand = cli.Command{
 	Usage:     "Create a new container",
 	ArgsUsage: "POD container-config.[json|yaml] pod-config.[json|yaml]",
 	Flags:     []cli.Flag{},
+
 	Action: func(context *cli.Context) error {
 		if len(context.Args()) != 3 {
 			return cli.ShowSubcommandHelp(context)
@@ -160,9 +161,11 @@ var updateContainerCommand = cli.Command{
 }
 
 var stopContainerCommand = cli.Command{
-	Name:      "stop",
-	Usage:     "Stop one or more running containers",
-	ArgsUsage: "CONTAINER [CONTAINER...]",
+	Name:                   "stop",
+	Usage:                  "Stop one or more running containers",
+	ArgsUsage:              "CONTAINER [CONTAINER...]",
+	SkipArgReorder:         true,
+	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		cli.Int64Flag{
 			Name:  "timeout, t",
@@ -246,8 +249,10 @@ var containerStatusCommand = cli.Command{
 }
 
 var listContainersCommand = cli.Command{
-	Name:  "ps",
-	Usage: "List containers",
+	Name:                   "ps",
+	Usage:                  "List containers",
+	SkipArgReorder:         true,
+	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "verbose, v",
