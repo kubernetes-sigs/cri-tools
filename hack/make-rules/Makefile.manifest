@@ -12,7 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG ARCH
-FROM $ARCH/busybox
-ARG USER
-USER ${USER}
+.PHONY: manifest-tool
+
+MANIFEST_TOOL_DIR := $(shell mktemp -d)
+export PATH := $(MANIFEST_TOOL_DIR):$(PATH)
+
+MANIFEST_TOOL_VERSION := v0.7.0
+
+space :=
+space +=
+comma := ,
+prefix_linux = $(addprefix linux/,$(strip $1))
+join_platforms = $(subst $(space),$(comma),$(call prefix_linux,$(strip $1)))
+
+manifest-tool:
+	curl -sSL https://github.com/estesp/manifest-tool/releases/download/$(MANIFEST_TOOL_VERSION)/manifest-tool-linux-amd64 > $(MANIFEST_TOOL_DIR)/manifest-tool
+	chmod +x $(MANIFEST_TOOL_DIR)/manifest-tool
