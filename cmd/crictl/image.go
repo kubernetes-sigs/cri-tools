@@ -79,7 +79,7 @@ var pullImageCommand = cli.Command{
 		if err != nil {
 			return fmt.Errorf("pulling image failed: %v", err)
 		}
-		fmt.Printf("Image is update to date for %s\n", r.ImageRef)
+		fmt.Printf("Image is up to date for %s\n", r.ImageRef)
 		return nil
 	},
 }
