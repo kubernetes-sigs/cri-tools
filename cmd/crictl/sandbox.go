@@ -115,9 +115,11 @@ var removePodCommand = cli.Command{
 }
 
 var podStatusCommand = cli.Command{
-	Name:      "inspectp",
-	Usage:     "Display the status of one or more pods",
-	ArgsUsage: "POD [POD...]",
+	Name:                   "inspectp",
+	Usage:                  "Display the status of one or more pods",
+	ArgsUsage:              "POD [POD...]",
+	SkipArgReorder:         true,
+	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "output, o",
@@ -148,8 +150,10 @@ var podStatusCommand = cli.Command{
 }
 
 var listPodCommand = cli.Command{
-	Name:  "pods",
-	Usage: "List pods",
+	Name:                   "pods",
+	Usage:                  "List pods",
+	SkipArgReorder:         true,
+	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "id",
