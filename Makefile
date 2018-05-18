@@ -93,6 +93,8 @@ install.tools:
 	go get -u github.com/alecthomas/gometalinter
 	gometalinter --install
 
+release:
+	hack/release.sh
 
 .PHONY: \
 	help \
@@ -109,4 +111,5 @@ install.tools:
 	uninstall-crictl \
 	lint \
 	gofmt \
-	install.tools
+	install.tools \
+	release
