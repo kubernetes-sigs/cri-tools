@@ -194,7 +194,7 @@ var listImageCommand = cli.Command{
 
 var imageStatusCommand = cli.Command{
 	Name:                   "inspecti",
-	Usage:                  "Return the status of one ore more images",
+	Usage:                  "Return the status of one or more images",
 	ArgsUsage:              "IMAGEID [IMAGEID...]",
 	SkipArgReorder:         true,
 	UseShortOptionHandling: true,
