@@ -15,14 +15,14 @@
 include ../../hack/make-rules/Makefile.manifest
 include ../../hack/make-rules/BASEIMAGES
 
-.PHONY: all test-image-user-uid test-image-user-username test-image-user-uid-group test-image-user-username-group
+.PHONY: all test-image-user-uid test-image-user-username test-image-user-uid-group test-image-user-username-group push-manifest
 
 REGISTRY = gcr.io/cri-tools
 ALL_ARCH = amd64 arm arm64 ppc64le s390x
 TAG = latest
 IMAGES_LIST = test-image-user-uid test-image-user-username test-image-user-uid-group test-image-user-username-group
 
-all: test-image-user-uid test-image-user-username test-image-user-uid-group test-image-user-username-group
+all: test-image-user-uid test-image-user-username test-image-user-uid-group test-image-user-username-group push-manifest
 
 test-image-user-uid:
 	$(foreach arch,$(ALL_ARCH),docker build . -t $(REGISTRY)/$@-$(arch) --build-arg ARCH=$($(arch)) --build-arg USER=1002;)
