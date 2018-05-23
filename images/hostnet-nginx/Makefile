@@ -12,10 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-.PHONY: all
+include ../../hack/make-rules/Makefile.manifest
+include ../../hack/make-rules/BASEIMAGES
 
-all: hostnet-nginx
+.PHONY: all push-manifest
+
+REGISTRY = gcr.io/cri-tools
+ALL_ARCH = amd64 arm64 ppc64le s390x
+TAG = latest
+IMAGES_LIST = hostnet-nginx
+PORT=12003
+
+all: hostnet-nginx push-manifest
 
 hostnet-nginx:
-	docker build . -t gcr.io/cri-tools/$@ --build-arg PORT=12003
-	gcloud docker -- push gcr.io/cri-tools/$@
+	sed -i "s/listen\s*80;/listen ${PORT};/g" default.conf
+	$(foreach arch,$(ALL_ARCH),docker build . -t $(REGISTRY)/$@-$(arch) --build-arg ARCH=$($(arch));)
+	$(foreach arch,$(ALL_ARCH),docker push $(REGISTRY)/$@-$(arch);)
+
+push-manifest: manifest-tool
+	$(foreach image,$(IMAGES_LIST),manifest-tool push from-args --platforms $(call join_platforms,$(ALL_ARCH)) --template $(REGISTRY)/$(image)-ARCH:$(TAG) --target $(REGISTRY)/$(image):$(TAG);)

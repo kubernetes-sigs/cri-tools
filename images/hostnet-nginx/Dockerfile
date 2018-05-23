@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM nginx
-ARG PORT
-RUN sed -i "s/listen\s*80;/listen ${PORT};/g" /etc/nginx/conf.d/default.conf
+ARG ARCH
+FROM $ARCH/nginx
+COPY default.conf /etc/nginx/conf.d/default.conf
