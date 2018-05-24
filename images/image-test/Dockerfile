@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM busybox
+ARG ARCH
+FROM $ARCH/busybox
 ARG TEST
-RUN touch ${TEST}
+ADD ${TEST} ${TEST}
