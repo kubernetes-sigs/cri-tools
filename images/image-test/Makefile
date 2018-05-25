@@ -12,19 +12,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-.PHONY: all test-image-list test-image-tags
+include ../../hack/make-rules/Makefile.manifest
+include ../../hack/make-rules/BASEIMAGES
 
-all: test-image-list test-image-tags
+.PHONY: all-push all-push-images test-image-tags test-image-tag push-manifest
 
-IMAGES_LIST = test-image-1 test-image-2 test-image-3 test-image-latest test-image-digest test-image-tag:test
-test-image-list:
-	$(foreach name,$(IMAGES_LIST),docker build . -t gcr.io/cri-tools/$(name) --build-arg TEST=$(name);)
-	$(foreach name,$(IMAGES_LIST),gcloud docker -- push gcr.io/cri-tools/$(name);)
+REGISTRY ?= gcr.io/cri-tools
+TAG = latest
+ALL_ARCH = amd64 arm64 ppc64le s390x
+IMAGES_LIST = test-image-1 test-image-2 test-image-3 test-image-latest test-image-digest
+
+all-push: all-push-images test-image-tags test-image-tag push-manifest
+
+all-push-images: $(addprefix sub-push-,$(ALL_ARCH))
+
+sub-push-%:
+	$(foreach name,$(IMAGES_LIST),touch $(name) && docker build . -t $(REGISTRY)/$(name)-$*:$(TAG) --build-arg TEST=$(name) --build-arg ARCH=$($*) && rm -f $(name);)
+	$(foreach name,$(IMAGES_LIST),docker push $(REGISTRY)/$(name)-$*:$(TAG);)
 
 test-image-tags:
-	docker build . -t gcr.io/cri-tools/$@:1 --build-arg TEST=$@
-	docker tag gcr.io/cri-tools/$@:1 gcr.io/cri-tools/$@:2
-	docker tag gcr.io/cri-tools/$@:1 gcr.io/cri-tools/$@:3
-	gcloud docker -- push gcr.io/cri-tools/$@:1
-	gcloud docker -- push gcr.io/cri-tools/$@:2
-	gcloud docker -- push gcr.io/cri-tools/$@:3
+	$(foreach arch,$(ALL_ARCH),touch $@ && docker build . -t $(REGISTRY)/$@-$(arch):1 --build-arg TEST=$@ --build-arg ARCH=$($(arch)) && rm -f $@;)
+	$(foreach arch,$(ALL_ARCH),docker tag $(REGISTRY)/$@-$(arch):1 $(REGISTRY)/$@-$(arch):2;)
+	$(foreach arch,$(ALL_ARCH),docker tag $(REGISTRY)/$@-$(arch):1 $(REGISTRY)/$@-$(arch):3;)
+	$(foreach arch,$(ALL_ARCH),docker push $(REGISTRY)/$@-$(arch):1;)
+	$(foreach arch,$(ALL_ARCH),docker push $(REGISTRY)/$@-$(arch):2;)
+	$(foreach arch,$(ALL_ARCH),docker push $(REGISTRY)/$@-$(arch):3;)
+
+test-image-tag:
+	$(foreach arch,$(ALL_ARCH),touch $@ && docker build . -t $(REGISTRY)/$@-$(arch):test --build-arg TEST=$@ --build-arg ARCH=$($(arch)) && rm -f $@;)
+	$(foreach arch,$(ALL_ARCH),docker push $(REGISTRY)/$@-$(arch):test;)
+
+push-manifest: manifest-tool
+	$(foreach image,$(IMAGES_LIST),manifest-tool push from-args --platforms $(call join_platforms,$(ALL_ARCH)) --template $(REGISTRY)/$(image)-ARCH:$(TAG) --target $(REGISTRY)/$(image):$(TAG);)
+	$(foreach arch,$(ALL_ARCH),manifest-tool push from-args --platforms $(call join_platforms,$(ALL_ARCH)) --template $(REGISTRY)/test-image-tags-ARCH:1 --target $(REGISTRY)/test-image-tags:1;)
+	$(foreach arch,$(ALL_ARCH),manifest-tool push from-args --platforms $(call join_platforms,$(ALL_ARCH)) --template $(REGISTRY)/test-image-tags-ARCH:2 --target $(REGISTRY)/test-image-tags:2;)
+	$(foreach arch,$(ALL_ARCH),manifest-tool push from-args --platforms $(call join_platforms,$(ALL_ARCH)) --template $(REGISTRY)/test-image-tags-ARCH:3 --target $(REGISTRY)/test-image-tags:3;)
+	$(foreach arch,$(ALL_ARCH),manifest-tool push from-args --platforms $(call join_platforms,$(ALL_ARCH)) --template $(REGISTRY)/test-image-tag-ARCH:test --target $(REGISTRY)/test-image-tag:test;)
