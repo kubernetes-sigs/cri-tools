@@ -565,18 +565,21 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 	}
 	if opts.state != "" {
 		st.State = pb.ContainerState_CONTAINER_UNKNOWN
-		switch opts.state {
+		switch strings.ToLower(opts.state) {
 		case "created":
 			st.State = pb.ContainerState_CONTAINER_CREATED
 			filter.State = st
 		case "running":
 			st.State = pb.ContainerState_CONTAINER_RUNNING
 			filter.State = st
-		case "stopped":
+		case "exited":
 			st.State = pb.ContainerState_CONTAINER_EXITED
 			filter.State = st
+		case "unknown":
+			st.State = pb.ContainerState_CONTAINER_UNKNOWN
+			filter.State = st
 		default:
-			log.Fatalf("--state should be one of created, running or stopped")
+			log.Fatalf("--state should be one of created, running, exited or unknown")
 		}
 	}
 	if opts.latest || opts.last > 0 {
@@ -625,7 +628,7 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 				}
 			}
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%d\n",
-				id, c.Image.Image, ctm, c.State, c.Metadata.Name, c.Metadata.Attempt)
+				id, c.Image.Image, ctm, convertContainerState(c.State), c.Metadata.Name, c.Metadata.Attempt)
 			continue
 		}
 
@@ -637,7 +640,7 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 			}
 			fmt.Printf("Attempt: %v\n", c.Metadata.Attempt)
 		}
-		fmt.Printf("State: %s\n", c.State)
+		fmt.Printf("State: %s\n", convertContainerState(c.State))
 		if c.Image != nil {
 			fmt.Printf("Image: %s\n", c.Image.Image)
 		}
@@ -659,6 +662,22 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 
 	w.Flush()
 	return nil
+}
+
+func convertContainerState(state pb.ContainerState) string {
+	switch state {
+	case pb.ContainerState_CONTAINER_CREATED:
+		return "Created"
+	case pb.ContainerState_CONTAINER_RUNNING:
+		return "Running"
+	case pb.ContainerState_CONTAINER_EXITED:
+		return "Exited"
+	case pb.ContainerState_CONTAINER_UNKNOWN:
+		return "Unknown"
+	default:
+		log.Fatalf("Unknown container state %q", state)
+		return ""
+	}
 }
 
 func getContainersList(containersList []*pb.Container, opts listOptions) []*pb.Container {
