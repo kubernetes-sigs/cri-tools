@@ -387,7 +387,7 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 	if opts.state != "" {
 		st := &pb.PodSandboxStateValue{}
 		st.State = pb.PodSandboxState_SANDBOX_NOTREADY
-		switch opts.state {
+		switch strings.ToLower(opts.state) {
 		case "ready":
 			st.State = pb.PodSandboxState_SANDBOX_READY
 			filter.State = st
@@ -439,7 +439,7 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 				}
 			}
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%d\n",
-				id, ctm, pod.State, pod.Metadata.Name, pod.Metadata.Namespace, pod.Metadata.Attempt)
+				id, ctm, convertPodState(pod.State), pod.Metadata.Name, pod.Metadata.Namespace, pod.Metadata.Attempt)
 			continue
 		}
 
@@ -458,7 +458,7 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 				fmt.Printf("Attempt: %v\n", pod.Metadata.Attempt)
 			}
 		}
-		fmt.Printf("Status: %s\n", pod.State)
+		fmt.Printf("Status: %s\n", convertPodState(pod.State))
 		ctm := time.Unix(0, pod.CreatedAt)
 		fmt.Printf("Created: %v\n", ctm)
 		if pod.Labels != nil {
@@ -478,6 +478,18 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 
 	w.Flush()
 	return nil
+}
+
+func convertPodState(state pb.PodSandboxState) string {
+	switch state {
+	case pb.PodSandboxState_SANDBOX_READY:
+		return "Ready"
+	case pb.PodSandboxState_SANDBOX_NOTREADY:
+		return "NotReady"
+	default:
+		log.Fatalf("Unknown pod state %q", state)
+		return ""
+	}
 }
 
 func getSandboxesList(sandboxesList []*pb.PodSandbox, opts listOptions) []*pb.PodSandbox {
