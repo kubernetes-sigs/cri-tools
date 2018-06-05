@@ -3,6 +3,7 @@ metadata:
   name: busybox-sandbox
   namespace: default
   uid: hdishd83djaidwnduwk28bcsb
+log_directory: /tmp
 linux:
   namespaces:
     options: {}

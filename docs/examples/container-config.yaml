@@ -4,3 +4,5 @@ image:
   image: busybox:latest
 command:
 - top
+log_path: busybox.0.log
+
