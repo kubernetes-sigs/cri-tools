@@ -79,3 +79,7 @@ for platform in "${CRI_TEST_PLATFORMS[@]}"; do
         ${CRITEST_BIN}
 done
 
+# Show sha256 for release files
+for file in $(ls ${CRI_TOOLS_ROOT}/_output/releases); do
+    echo "$file $(sha256sum -b ${CRI_TOOLS_ROOT}/_output/releases/$file | awk '{print $1}')"
+done
