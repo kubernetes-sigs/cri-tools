@@ -132,7 +132,7 @@ var _ = framework.KubeDescribe("Container", func() {
 		})
 	})
 
-	Context("runtime should support adding volume and device [Conformance]", func() {
+	Context("runtime should support adding volume and device", func() {
 		var podID string
 		var podConfig *runtimeapi.PodSandboxConfig
 
@@ -165,26 +165,29 @@ var _ = framework.KubeDescribe("Container", func() {
 			Expect(len(output)).NotTo(BeZero(), "len(output) should not be zero.")
 		})
 
-		It("runtime should support starting container with volume when host path doesn't exist", func() {
-			// TODO: revisit this after https://github.com/kubernetes/kubernetes/issues/52318.
-			Skip("Skip the test since the behavior is not decided yet in CRI")
-			By("get a host path that doesn't exist")
+		It("runtime should support starting container with volume when host path is a symlink [Conformance]", func() {
+			By("create host path and flag file")
 			hostPath, _ := createHostPath(podID)
-			os.RemoveAll(hostPath) // make sure the host path doesn't exist
-
 			defer os.RemoveAll(hostPath) // clean up the TempDir
 
-			By("create container with volume")
-			containerID := createVolumeContainer(rc, ic, "container-with-volume-test-", podID, podConfig, hostPath)
+			By("create symlink")
+			symlinkPath := createSymlink(hostPath)
+			defer os.RemoveAll(symlinkPath) // clean up the symlink
 
-			By("test start container with volume")
+			By("create volume container with symlink host path")
+			containerID := createVolumeContainer(rc, ic, "container-with-symlink-host-path-test-", podID, podConfig, symlinkPath)
+
+			By("test start volume container with symlink host path")
 			testStartContainer(rc, containerID)
 
-			By("check whether 'hostPath' does exist or not in host")
-			Eventually(func() bool {
-				return pathExists(hostPath)
-			}, time.Minute, time.Second*4).Should(Equal(true))
+			By("check whether 'symlink' contains file or dir in container")
+			command := []string{"ls", "-A", symlinkPath}
+			output := execSyncContainer(rc, containerID, command)
+			Expect(len(output)).NotTo(BeZero(), "len(output) should not be zero.")
 		})
+
+		// TODO(random-liu): Decide whether to add host path not exist test when https://github.com/kubernetes/kubernetes/pull/61460
+		// is finalized.
 	})
 
 	Context("runtime should support log", func() {
@@ -388,6 +391,13 @@ func createHostPath(podID string) (string, string) {
 	framework.ExpectNoError(err, "failed to create volume file %q: %v", flagFile, err)
 
 	return hostPath, flagFile
+}
+
+// createSymlink creates a symlink of path.
+func createSymlink(path string) string {
+	symlinkPath := path + "-symlink"
+	framework.ExpectNoError(os.Symlink(path, symlinkPath), "failed to create symlink %q", symlinkPath)
+	return symlinkPath
 }
 
 // createVolumeContainer creates a container with volume and the prefix of containerName and fails if it gets error.
