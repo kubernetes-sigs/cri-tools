@@ -2,19 +2,18 @@
 
 crictl provides a CLI for CRI-compatible container runtimes. This allows the CRI runtime developers to debug their runtime without needing to set up Kubernetes components.
 
-crictl is currently in Alpha and still under quick iterations. We encourage the CRI developers to report bugs or help extend the coverage by adding more functionalities.
+crictl is currently in Beta and still under quick iterations. It is hosted at the [cri-tools](https://github.com/kubernetes-incubator/cri-tools) repository. We encourage the CRI developers to report bugs or help extend the coverage by adding more functionalities.
 
-## Install
+## Install crictl
 
-The CRI CLI can be installed easily via `go get` command:
+crictl can be downloaded from cri-tools [release page](https://github.com/kubernetes-incubator/cri-tools/releases):
 
 ```sh
-go get github.com/kubernetes-incubator/cri-tools/cmd/crictl
+VERSION="v1.0.0-beta.1"
+wget https://github.com/kubernetes-incubator/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux-amd64.tar.gz
+sudo tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
+rm -f crictl-$VERSION-linux-amd64.tar.gz
 ```
-
-Then `crictl` binary can be found in `$GOPATH/bin`.
-
-*Note: ensure GO is installed and GOPATH is set before installing crictl.*
 
 ## Usage
 
@@ -24,28 +23,32 @@ crictl SUBCOMMAND [FLAGS]
 
 Subcommands includes:
 
-- `info`:          Display runtime version information
-- `runp`:          Run a new pod sandbox
-- `stopp`:         Stop a running pod sandbox
-- `rmp`:           Remove a pod sandbox
-- `inspectp`:      Display the status of a pod sandbox
-- `pods`:          List pod sandboxes
-- `create`:        Create a new container
-- `start`:         Start a created container
-- `stop`:          Stop a running container
-- `rm`:            Remove a container
-- `inspect`:       Display the status of a container
-- `ps`:            List containers
-- `status`:        Display status of the container runtime
-- `attach`:        Attach to a running container
-- `pull`:          Pull an image from a registry
-- `images`:        List images
-- `inspecti`:      Return the status of an image
-- `rmi`:           Remove an image
-- `exec`:          Run a command in a running container
-- `port-forward`:  Forward local port to a pod sandbox
-- `logs`:          Fetch the logs of a container
-- `help`:          Shows a list of commands or help for one command
+- `attach`:       Attach to a running container
+- `create`:       Create a new container
+- `exec`:         Run a command in a running container
+- `version`:      Display runtime version information
+- `images`:       List images
+- `inspect`:      Display the status of one or more containers
+- `inspecti`:     Return the status of one ore more images
+- `inspectp`:     Display the status of one or more pods
+- `logs`:         Fetch the logs of a container
+- `port-forward`: Forward local port to a pod
+- `ps`:           List containers
+- `pull`:         Pull an image from a registry
+- `runp`:         Run a new pod
+- `rm`:           Remove one or more containers
+- `rmi`:          Remove one or more images
+- `rmp`:          Remove one or more pods
+- `pods`:         List pods
+- `start`:        Start one or more created containers
+- `info`:         Display information of the container runtime
+- `stop`:         Stop one or more running containers
+- `stopp`:        Stop one or more running pods
+- `update`:       Update one or more running containers
+- `config`:       Get and set crictl options
+- `stats`:        List container(s) resource usage statistics
+- `completion`:   Output bash shell completion code
+- `help, h`:      Shows a list of commands or help for one command
 
 crictl connects to `unix:///var/run/dockershim.sock` by default. For other runtimes, the endpoint can be set in three ways:
 
@@ -53,8 +56,8 @@ crictl connects to `unix:///var/run/dockershim.sock` by default. For other runti
 - By setting environment variables `CONTAINER_RUNTIME_ENDPOINT` and `IMAGE_SERVICE_ENDPOINT`
 - By setting the endpoint in the config file `--config=/etc/crictl.yaml`
 
-```
-# cat /etc/crictl.yaml
+```sh
+$ cat /etc/crictl.yaml
 runtime-endpoint: unix:///var/run/dockershim.sock
 image-endpoint: unix:///var/run/dockershim.sock
 timeout: 10
@@ -75,8 +78,8 @@ debug: true
 
 ### Run pod sandbox with config file
 
-```
-# cat podsandbox-config.json
+```sh
+$ cat pod-config.json
 {
     "metadata": {
         "name": "nginx-sandbox",
@@ -84,32 +87,43 @@ debug: true
         "attempt": 1,
         "uid": "hdishd83djaidwnduwk28bcsb"
     },
+    "logDirectory": "/tmp",
     "linux": {
     }
 }
 
-# crictl runp podsandbox-config.json
-e1c83b0b8d481d4af8ba98d5f7812577fc175a37b10dc824335951f52addbb4e
-# crictl pods
-PODSANDBOX ID                                                      NAME                STATE
-e1c83b0b8d481d4af8ba98d5f7812577fc175a37b10dc824335951f52addbb4e   nginx-sandbox       SANDBOX_READY
+$ crictl runp pod-config.json
+f84dd361f8dc51518ed291fbadd6db537b0496536c1d2d6c05ff943ce8c9a54f
+```
+
+List pod sandboxes and check the sandbox is in Ready state:
+
+```sh
+$ crictl pods
+POD ID              CREATED             STATE               NAME                NAMESPACE           ATTEMPT
+f84dd361f8dc5       17 seconds ago      Ready               busybox-sandbox     default             1
 ```
 
 ### Pull a busybox image
 
-```
-# crictl pull busybox
-Image is update to date for busybox@sha256:b82b5740006c1ab823596d2c07f081084ecdb32fd258072707b99f52a3cb8692
-# crictl images
-IMAGE                                  TAG                 IMAGE ID            SIZE
-busybox                                latest              d20ae45477cbc       1.13MB
-gcr.io/google_containers/pause-amd64   3.0                 99e59f495ffaa       747kB
+```sh
+$ crictl pull busybox
+Image is up to date for busybox@sha256:141c253bc4c3fd0a201d32dc1f493bcf3fff003b6df416dea4f41046e0f37d47
 ```
 
-### Create container in a pod sandbox with config file
+List images and check the busybox image has been pulled:
 
+```sh
+$ crictl images
+IMAGE               TAG                 IMAGE ID            SIZE
+busybox             latest              8c811b4aec35f       1.15MB
+k8s.gcr.io/pause    3.1                 da86e6ba6ca19       742kB
 ```
-# cat podsandbox-config.json
+
+### Create container in the pod sandbox with config file
+
+```sh
+$ cat pod-config.json
 {
     "metadata": {
         "name": "nginx-sandbox",
@@ -117,11 +131,12 @@ gcr.io/google_containers/pause-amd64   3.0                 99e59f495ffaa       7
         "attempt": 1,
         "uid": "hdishd83djaidwnduwk28bcsb"
     },
+    "log_directory": "/tmp",
     "linux": {
     }
 }
 
-# cat container-config.json
+$ cat container-config.json
 {
   "metadata": {
       "name": "busybox"
@@ -132,30 +147,41 @@ gcr.io/google_containers/pause-amd64   3.0                 99e59f495ffaa       7
   "command": [
       "top"
   ],
+  "log_path":"busybox/0.log",
   "linux": {
   }
 }
 
-# crictl create e1c83b0b8d481d4af8ba98d5f7812577fc175a37b10dc824335951f52addbb4e container-config.json podsandbox-config.json
-0a2c761303163f2acaaeaee07d2ba143ee4cea7e3bde3d32190e2a36525c8a05
-# crictl ps -a
-CONTAINER ID                                                       CREATED             STATE               NAME
-0a2c761303163f2acaaeaee07d2ba143ee4cea7e3bde3d32190e2a36525c8a05   1 minutes ago       CONTAINER_CREATED   busybox
+$ crictl create f84dd361f8dc51518ed291fbadd6db537b0496536c1d2d6c05ff943ce8c9a54f container-config.json pod-config.json
+3e025dd50a72d956c4f14881fbb5b1080c9275674e95fb67f965f6478a957d60
+```
+
+List containers and check the container is in Created state:
+
+```sh
+$ crictl ps -a
+CONTAINER ID        IMAGE               CREATED             STATE               NAME                ATTEMPT
+3e025dd50a72d       busybox             32 seconds ago      Created             busybox             0
 ```
 
 ### Start container
 
-```
-# crictl start 0a2c761303163f2acaaeaee07d2ba143ee4cea7e3bde3d32190e2a36525c8a05
-0a2c761303163f2acaaeaee07d2ba143ee4cea7e3bde3d32190e2a36525c8a05
-# crictl ps
-CONTAINER ID                                                       CREATED             STATE               NAME
-0a2c761303163f2acaaeaee07d2ba143ee4cea7e3bde3d32190e2a36525c8a05   2 minutes ago       CONTAINER_RUNNING   busybox
+```sh
+$ crictl start 3e025dd50a72d956c4f14881fbb5b1080c9275674e95fb67f965f6478a957d60
+3e025dd50a72d956c4f14881fbb5b1080c9275674e95fb67f965f6478a957d60
+
+$ crictl ps
+CONTAINER ID        IMAGE               CREATED              STATE               NAME                ATTEMPT
+3e025dd50a72d       busybox             About a minute ago   Running             busybox             0
 ```
 
 ### Exec a command in container
 
-```
-# crictl exec -i -t 0a2c761303163f2acaaeaee07d2ba143ee4cea7e3bde3d32190e2a36525c8a05 ls
+```sh
+crictl exec -i -t 3e025dd50a72d956c4f14881fbb5b1080c9275674e95fb67f965f6478a957d60 ls
 bin   dev   etc   home  proc  root  sys   tmp   usr   var
 ```
+
+## More information
+
+Visit [kubernetes-incubator/cri-tools](https://github.com/kubernetes-incubator/cri-tools) for more information.
