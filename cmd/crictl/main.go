@@ -34,6 +34,7 @@ import (
 const (
 	defaultConfigPath = "/etc/crictl.yaml"
 	defaultTimeout    = 10 * time.Second
+	crictlVersion     = "1.11.0"
 )
 
 var (
@@ -96,7 +97,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "crictl"
 	app.Usage = "client for CRI"
-	app.Version = "1.0.0-beta.1"
+	app.Version = crictlVersion
 
 	app.Commands = []cli.Command{
 		runtimeAttachCommand,

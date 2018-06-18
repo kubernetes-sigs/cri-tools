@@ -42,7 +42,7 @@ const (
 	benchmarkFlag = "benchmark"
 	versionFlag   = "version"
 
-	criTestVersion = "1.0.0-beta.1"
+	criTestVersion = "1.11.0"
 )
 
 var (
