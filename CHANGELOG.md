@@ -1,14 +1,20 @@
 <!-- TOC -->
-- [v1.0.0-beta.1](#v100-beta1)
-- [v1.0.0-beta.0](#v100-beta0)
+
+- [v1.11.0](#v1110)
     - [CRI validation testing (critest)](#cri-validation-testing-critest)
     - [CRI CLI (crictl)](#cri-cli-crictl)
-- [v1.0.0-alpha.0](#v100-alpha0)
+- [v1.0.0-beta.1](#v100-beta1)
     - [CRI validation testing (critest)](#cri-validation-testing-critest-1)
     - [CRI CLI (crictl)](#cri-cli-crictl-1)
-- [v0.2](#v02)
+- [v1.0.0-beta.0](#v100-beta0)
     - [CRI validation testing (critest)](#cri-validation-testing-critest-2)
     - [CRI CLI (crictl)](#cri-cli-crictl-2)
+- [v1.0.0-alpha.0](#v100-alpha0)
+    - [CRI validation testing (critest)](#cri-validation-testing-critest-3)
+    - [CRI CLI (crictl)](#cri-cli-crictl-3)
+- [v0.2](#v02)
+    - [CRI validation testing (critest)](#cri-validation-testing-critest-4)
+    - [CRI CLI (crictl)](#cri-cli-crictl-4)
 - [v0.1](#v01)
     - [Features](#features)
         - [CRI validation testing](#cri-validation-testing)
@@ -17,18 +23,39 @@
     - [Documentation](#documentation)
 
 <!-- /TOC -->
+
+# v1.11.0
+
+cri-tools v1.11.0 mainly focused on stability improvements and multi-arch support. Container runtime interface (CRI) has been updated to v1alpha2 in order to be compatible with kubernetes v1.11.
+
+## CRI validation testing (critest)
+
+- [#300](https://github.com/kubernetes-incubator/cri-tools/pull/300) Make image-user test images multi-arch.
+- [#311](https://github.com/kubernetes-incubator/cri-tools/pull/311) Adds push-manifest into all target in the image-user Makefile.
+- [#313](https://github.com/kubernetes-incubator/cri-tools/pull/313) Make hostnet-nginx test images multi-arch.
+- [#315](https://github.com/kubernetes-incubator/cri-tools/pull/315) Makes image-test test images multi-arch.
+- [#320](https://github.com/kubernetes-incubator/cri-tools/pull/320) Adds container host path validation tests.
+
+## CRI CLI (crictl)
+
+- [#306](https://github.com/kubernetes-incubator/cri-tools/pull/306) Fixes argument parsing for crictl exec.
+- [#312](https://github.com/kubernetes-incubator/cri-tools/pull/312) Fixes a typo in inspecti usage.
+- [#316](https://github.com/kubernetes-incubator/cri-tools/pull/316) Cleanups container and sandbox state.
+- [#321](https://github.com/kubernetes-incubator/cri-tools/pull/321) Improves documentation and examples of crictl.
+- [#325](https://github.com/kubernetes-incubator/cri-tools/pull/325) Upgrades kubernetes vendor to v1.11 branch.
+
 # v1.0.0-beta.1
 
 cri-tools v1.0.0-beta.1 mainly focused on critest coverage improvement, and bug fixes.
 
-### CRI validation testing (critest)
+## CRI validation testing (critest)
 
 - [#282](https://github.com/kubernetes-incubator/cri-tools/pull/282) Add RunAsGroup test. The test `runtime should return error if RunAsGroup is set without RunAsUser` only works with Kubernetes 1.11+.
 - [#289](https://github.com/kubernetes-incubator/cri-tools/pull/289) Add host network pod portforward test.
 - [#290](https://github.com/kubernetes-incubator/cri-tools/pull/290) Use busybox:1.28 instead of busybox:1.26 in the test to better support multi-arch.
 - [#296](https://github.com/kubernetes-incubator/cri-tools/pull/296) Make `critest` binary statically linked.
 
-### CRI CLI (crictl)
+## CRI CLI (crictl)
 
 - [#278](https://github.com/kubernetes-incubator/cri-tools/pull/278) Remove "sandbox" from `crictl` command description.
 - [#279](https://github.com/kubernetes-incubator/cri-tools/pull/279) Remove `oom-score-adj` flag from `crictl update` because it is not supported by `runc`.
@@ -39,7 +66,7 @@ cri-tools v1.0.0-beta.1 mainly focused on critest coverage improvement, and bug 
 
 cri-tools v1.0.0-beta.0 is mainly focus on UX improvements, including make crictl command more user friendly and add initial Windows support. Container runtime interface (CRI) has been updated to v1alpha2 in order to be compatible with kubernetes v1.10. Version matrix and branches for different kubernetes versions are also added.
 
-### CRI validation testing (critest)
+## CRI validation testing (critest)
 
 - [#227](https://github.com/kubernetes-incubator/cri-tools/pull/227) Set StdinOnce to true for attach test
 - [#232](https://github.com/kubernetes-incubator/cri-tools/pull/232) Improves CRI log parser
@@ -51,7 +78,7 @@ cri-tools v1.0.0-beta.0 is mainly focus on UX improvements, including make crict
 - [#267](https://github.com/kubernetes-incubator/cri-tools/pull/267) Add test for pid namespace
 - [#269](https://github.com/kubernetes-incubator/cri-tools/pull/269) Add validation of tty settings for exec
 
-### CRI CLI (crictl)
+## CRI CLI (crictl)
 
 - [#222](https://github.com/kubernetes-incubator/cri-tools/pull/222) Rename `sandboxes` subcommand to `pods` and rename`sandbox` to `podsandbox` in all subcommands
 - [#225](https://github.com/kubernetes-incubator/cri-tools/pull/225) Add support of windows
@@ -66,7 +93,7 @@ cri-tools v1.0.0-beta.0 is mainly focus on UX improvements, including make crict
 
 cri-tools v1.0.0-alpha.0 is mainly focus on UX improvements, including make crictl command more user friendly and add more subcommands. It also updates container runtime interface (CRI) to kubernetes v1.9 and fixes bugs in validation test suites.
 
-### CRI validation testing (critest)
+## CRI validation testing (critest)
 
 - [#164](https://github.com/kubernetes-incubator/cri-tools/pull/164) Fix security context test to not rely on `/etc/hosts`
 - [#165](https://github.com/kubernetes-incubator/cri-tools/pull/165) Validate IPv4 only for port mapping tests
@@ -75,7 +102,7 @@ cri-tools v1.0.0-alpha.0 is mainly focus on UX improvements, including make cric
 - [#199](https://github.com/kubernetes-incubator/cri-tools/pull/199) [#201](https://github.com/kubernetes-incubator/cri-tools/pull/201) Fix container logs validation
 - [#200](https://github.com/kubernetes-incubator/cri-tools/pull/200) Add SELinux validation tests
 
-### CRI CLI (crictl)
+## CRI CLI (crictl)
 
 - [#156](https://github.com/kubernetes-incubator/cri-tools/pull/156) Fix empty RepoTags handling for `images` command
 - [#163](https://github.com/kubernetes-incubator/cri-tools/pull/163) Add `--digest` option to `images` command
