@@ -225,10 +225,10 @@ var listPodCommand = cli.Command{
 			return err
 		}
 		if context.String("name") != "" {
-			opts.labels["io.kubernetes.pod.name"] = context.String("name")
+			opts.labels[kubePodNameLabel] = context.String("name")
 		}
 		if context.String("namespace") != "" {
-			opts.labels["io.kubernetes.pod.namespace"] = context.String("namespace")
+			opts.labels[kubePodNamespaceLabel] = context.String("namespace")
 		}
 
 		if err = ListPodSandboxes(runtimeClient, opts); err != nil {
