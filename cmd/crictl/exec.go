@@ -38,7 +38,7 @@ const (
 var runtimeExecCommand = cli.Command{
 	Name:                   "exec",
 	Usage:                  "Run a command in a running container",
-	ArgsUsage:              "CONTAINER COMMAND [ARG...]",
+	ArgsUsage:              "CONTAINER-ID COMMAND [ARG...]",
 	SkipArgReorder:         true,
 	UseShortOptionHandling: true,
 	Flags: []cli.Flag{

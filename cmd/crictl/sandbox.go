@@ -73,7 +73,7 @@ var runPodCommand = cli.Command{
 var stopPodCommand = cli.Command{
 	Name:      "stopp",
 	Usage:     "Stop one or more running pods",
-	ArgsUsage: "POD [POD...]",
+	ArgsUsage: "POD-ID [POD-ID...]",
 	Action: func(context *cli.Context) error {
 		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
@@ -95,7 +95,7 @@ var stopPodCommand = cli.Command{
 var removePodCommand = cli.Command{
 	Name:      "rmp",
 	Usage:     "Remove one or more pods",
-	ArgsUsage: "POD [POD...]",
+	ArgsUsage: "POD-ID [POD-ID...]",
 	Action: func(context *cli.Context) error {
 		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
@@ -117,7 +117,7 @@ var removePodCommand = cli.Command{
 var podStatusCommand = cli.Command{
 	Name:                   "inspectp",
 	Usage:                  "Display the status of one or more pods",
-	ArgsUsage:              "POD [POD...]",
+	ArgsUsage:              "POD-ID [POD-ID...]",
 	SkipArgReorder:         true,
 	UseShortOptionHandling: true,
 	Flags: []cli.Flag{

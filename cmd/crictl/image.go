@@ -195,7 +195,7 @@ var listImageCommand = cli.Command{
 var imageStatusCommand = cli.Command{
 	Name:                   "inspecti",
 	Usage:                  "Return the status of one or more images",
-	ArgsUsage:              "IMAGEID [IMAGEID...]",
+	ArgsUsage:              "IMAGE-ID [IMAGE-ID...]",
 	SkipArgReorder:         true,
 	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
@@ -269,7 +269,7 @@ var imageStatusCommand = cli.Command{
 var removeImageCommand = cli.Command{
 	Name:      "rmi",
 	Usage:     "Remove one or more images",
-	ArgsUsage: "IMAGEID [IMAGEID...]",
+	ArgsUsage: "IMAGE-ID [IMAGE-ID...]",
 	Action: func(context *cli.Context) error {
 		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)

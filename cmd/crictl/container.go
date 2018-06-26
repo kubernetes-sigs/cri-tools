@@ -82,7 +82,7 @@ var createContainerCommand = cli.Command{
 var startContainerCommand = cli.Command{
 	Name:      "start",
 	Usage:     "Start one or more created containers",
-	ArgsUsage: "CONTAINER [CONTAINER...]",
+	ArgsUsage: "CONTAINER-ID [CONTAINER-ID...]",
 	Action: func(context *cli.Context) error {
 		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
@@ -105,7 +105,7 @@ var startContainerCommand = cli.Command{
 var updateContainerCommand = cli.Command{
 	Name:      "update",
 	Usage:     "Update one or more running containers",
-	ArgsUsage: "CONTAINER [CONTAINER...]",
+	ArgsUsage: "CONTAINER-ID [CONTAINER-ID...]",
 	Flags: []cli.Flag{
 		cli.Int64Flag{
 			Name:  "cpu-period",
@@ -163,7 +163,7 @@ var updateContainerCommand = cli.Command{
 var stopContainerCommand = cli.Command{
 	Name:                   "stop",
 	Usage:                  "Stop one or more running containers",
-	ArgsUsage:              "CONTAINER [CONTAINER...]",
+	ArgsUsage:              "CONTAINER-ID [CONTAINER-ID...]",
 	SkipArgReorder:         true,
 	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
@@ -195,7 +195,7 @@ var stopContainerCommand = cli.Command{
 var removeContainerCommand = cli.Command{
 	Name:      "rm",
 	Usage:     "Remove one or more containers",
-	ArgsUsage: "CONTAINER [CONTAINER...]",
+	ArgsUsage: "CONTAINER-ID [CONTAINER-ID...]",
 	Action: func(context *cli.Context) error {
 		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
@@ -218,7 +218,7 @@ var removeContainerCommand = cli.Command{
 var containerStatusCommand = cli.Command{
 	Name:      "inspect",
 	Usage:     "Display the status of one or more containers",
-	ArgsUsage: "CONTAINER [CONTAINER...]",
+	ArgsUsage: "CONTAINER-ID [CONTAINER-ID...]",
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "output, o",

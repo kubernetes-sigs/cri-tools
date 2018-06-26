@@ -36,7 +36,7 @@ import (
 var runtimePortForwardCommand = cli.Command{
 	Name:      "port-forward",
 	Usage:     "Forward local port to a pod",
-	ArgsUsage: "POD [LOCAL_PORT:]REMOTE_PORT",
+	ArgsUsage: "POD-ID [LOCAL_PORT:]REMOTE_PORT",
 	Action: func(context *cli.Context) error {
 		args := context.Args()
 		if len(args) < 2 {
