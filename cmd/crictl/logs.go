@@ -31,7 +31,7 @@ import (
 var logsCommand = cli.Command{
 	Name:                   "logs",
 	Usage:                  "Fetch the logs of a container",
-	ArgsUsage:              "CONTAINER",
+	ArgsUsage:              "CONTAINER-ID",
 	SkipArgReorder:         true,
 	UseShortOptionHandling: true,
 	Flags: []cli.Flag{

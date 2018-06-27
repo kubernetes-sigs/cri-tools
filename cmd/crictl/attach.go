@@ -33,7 +33,7 @@ import (
 var runtimeAttachCommand = cli.Command{
 	Name:                   "attach",
 	Usage:                  "Attach to a running container",
-	ArgsUsage:              "CONTAINER",
+	ArgsUsage:              "CONTAINER-ID",
 	SkipArgReorder:         true,
 	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
