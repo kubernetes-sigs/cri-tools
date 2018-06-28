@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 	"text/tabwriter"
@@ -163,12 +164,12 @@ var listPodCommand = cli.Command{
 		cli.StringFlag{
 			Name:  "name",
 			Value: "",
-			Usage: "filter by pod name",
+			Usage: "filter by pod name regular expression pattern",
 		},
 		cli.StringFlag{
 			Name:  "namespace",
 			Value: "",
-			Usage: "filter by pod namespace",
+			Usage: "filter by pod namespace regular expression pattern",
 		},
 		cli.StringFlag{
 			Name:  "state, s",
@@ -211,26 +212,21 @@ var listPodCommand = cli.Command{
 		}
 
 		opts := listOptions{
-			id:      context.String("id"),
-			state:   context.String("state"),
-			verbose: context.Bool("verbose"),
-			quiet:   context.Bool("quiet"),
-			output:  context.String("output"),
-			latest:  context.Bool("latest"),
-			last:    context.Int("last"),
-			noTrunc: context.Bool("no-trunc"),
+			id:                 context.String("id"),
+			state:              context.String("state"),
+			verbose:            context.Bool("verbose"),
+			quiet:              context.Bool("quiet"),
+			output:             context.String("output"),
+			latest:             context.Bool("latest"),
+			last:               context.Int("last"),
+			noTrunc:            context.Bool("no-trunc"),
+			podNameRegexp:      context.String("name"),
+			podNamespaceRegexp: context.String("namespace"),
 		}
 		opts.labels, err = parseLabelStringSlice(context.StringSlice("label"))
 		if err != nil {
 			return err
 		}
-		if context.String("name") != "" {
-			opts.labels["io.kubernetes.pod.name"] = context.String("name")
-		}
-		if context.String("namespace") != "" {
-			opts.labels["io.kubernetes.pod.namespace"] = context.String("namespace")
-		}
-
 		if err = ListPodSandboxes(runtimeClient, opts); err != nil {
 			return fmt.Errorf("listing pod sandboxes failed: %v", err)
 		}
@@ -377,6 +373,18 @@ func PodSandboxStatus(client pb.RuntimeServiceClient, ID, output string, quiet b
 	return nil
 }
 
+func podMatchesRegex(pattern, target string) bool {
+	if pattern == "" {
+		return true
+	}
+	matched, err := regexp.MatchString(pattern, target)
+	if err != nil {
+		// Assume it's not a match if an error occurs.
+		return false
+	}
+	return matched
+}
+
 // ListPodSandboxes sends a ListPodSandboxRequest to the server, and parses
 // the returned ListPodSandboxResponse.
 func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
@@ -424,6 +432,14 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 		fmt.Fprintln(w, "POD ID\tCREATED\tSTATE\tNAME\tNAMESPACE\tATTEMPT")
 	}
 	for _, pod := range r.Items {
+		// Filter by pod name/namespace regular expressions.
+		if !podMatchesRegex(opts.podNameRegexp, pod.Labels[kubePodNameLabel]) {
+			continue
+		}
+		if !podMatchesRegex(opts.podNamespaceRegexp, pod.Labels[kubePodNamespaceLabel]) {
+			continue
+		}
+
 		if opts.quiet {
 			fmt.Printf("%s\n", pod.Id)
 			continue
