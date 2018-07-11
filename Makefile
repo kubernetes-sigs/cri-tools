@@ -24,6 +24,9 @@ PATH := $(GOBINDIR)/bin:$(PATH)
 GOPKGDIR := $(GOPATH)/src/$(PROJECT)
 GOPKGBASEDIR := $(shell dirname "$(GOPKGDIR)")
 
+VERSION := $(shell git describe --tags --dirty --always)
+VERSION := $(VERSION:v%=%)
+GO_LDFLAGS := -X $(PROJECT)/pkg/version.Version=$(VERSION)
 
 all: binaries
 
@@ -45,11 +48,13 @@ endif
 
 critest: check-gopath
 		CGO_ENABLED=0 $(GO) test -c \
+		-ldflags '$(GO_LDFLAGS)' \
 		$(PROJECT)/cmd/critest \
 		-o $(GOBINDIR)/bin/critest
 
 crictl: check-gopath
 		CGO_ENABLED=0 $(GO) install \
+		-ldflags '$(GO_LDFLAGS)' \
 		$(PROJECT)/cmd/crictl
 
 clean:
@@ -58,8 +63,10 @@ clean:
 
 cross: check-gopath
 	GOOS=windows $(GO) test -c -o $(CURDIR)/_output/critest.exe \
+		-ldflags '$(GO_LDFLAGS)' \
 		$(PROJECT)/cmd/critest
 	GOOS=windows $(GO) build -o $(CURDIR)/_output/crictl.exe \
+		-ldflags '$(GO_LDFLAGS)' \
 		$(PROJECT)/cmd/crictl
 
 binaries: critest crictl
