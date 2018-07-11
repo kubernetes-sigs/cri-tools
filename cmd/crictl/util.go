@@ -48,6 +48,10 @@ type listOptions struct {
 	id string
 	// podID of container
 	podID string
+	// Regular expression pattern to match pod name
+	podNameRegexp string
+	// Regular expression pattern to match the pod namespace
+	podNamespaceRegexp string
 	// state of the sandbox
 	state string
 	// show verbose info for the sandbox
