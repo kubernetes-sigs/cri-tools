@@ -291,11 +291,11 @@ var listContainersCommand = cli.Command{
 		},
 		cli.BoolFlag{
 			Name:  "latest, l",
-			Usage: "Show recently created container (includes all states)",
+			Usage: "Show the most recently created container (includes all states)",
 		},
 		cli.IntFlag{
 			Name:  "last, n",
-			Usage: "Show last n recently created containers (includes all states)",
+			Usage: "Show last n recently created containers (includes all states). Set 0 for unlimited.",
 		},
 		cli.BoolFlag{
 			Name:  "no-trunc",
