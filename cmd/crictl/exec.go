@@ -166,19 +166,18 @@ func stream(in, tty bool, url *url.URL) error {
 	logrus.Debugf("StreamOptions: %v", streamOptions)
 	if !tty {
 		return executor.Stream(streamOptions)
-	} else {
-		if !in {
-			return fmt.Errorf("tty=true must be specified with interactive=true")
-		}
-		t := term.TTY{
-			In:  stdin,
-			Out: stdout,
-			Raw: true,
-		}
-		if !t.IsTerminalIn() {
-			return fmt.Errorf("input is not a terminal")
-		}
-		streamOptions.TerminalSizeQueue = t.MonitorSize(t.GetSize())
-		return t.Safe(func() error { return executor.Stream(streamOptions) })
 	}
+	if !in {
+		return fmt.Errorf("tty=true must be specified with interactive=true")
+	}
+	t := term.TTY{
+		In:  stdin,
+		Out: stdout,
+		Raw: true,
+	}
+	if !t.IsTerminalIn() {
+		return fmt.Errorf("input is not a terminal")
+	}
+	streamOptions.TerminalSizeQueue = t.MonitorSize(t.GetSize())
+	return t.Safe(func() error { return executor.Stream(streamOptions) })
 }
