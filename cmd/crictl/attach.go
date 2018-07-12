@@ -19,14 +19,11 @@ package main
 import (
 	"fmt"
 	"net/url"
-	"os"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
-	restclient "k8s.io/client-go/rest"
-	remoteclient "k8s.io/client-go/tools/remotecommand"
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 )
 
@@ -101,19 +98,5 @@ func Attach(client pb.RuntimeServiceClient, opts attachOptions) error {
 		return err
 	}
 	logrus.Debugf("Attach URL: %v", URL)
-	attach, err := remoteclient.NewSPDYExecutor(&restclient.Config{TLSClientConfig: restclient.TLSClientConfig{Insecure: true}}, "POST", URL)
-	if err != nil {
-		return err
-	}
-
-	streamOptions := remoteclient.StreamOptions{
-		Stdout: os.Stdout,
-		Stderr: os.Stderr,
-		Tty:    opts.tty,
-	}
-	if opts.stdin {
-		streamOptions.Stdin = os.Stdin
-	}
-	logrus.Debugf("StreamOptions: %v", streamOptions)
-	return attach.Stream(streamOptions)
+	return stream(opts.stdin, opts.tty, URL)
 }
