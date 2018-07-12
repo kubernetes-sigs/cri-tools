@@ -1,20 +1,11 @@
 <!-- TOC -->
 
+- [v1.11.1](#v1111)
 - [v1.11.0](#v1110)
-    - [CRI validation testing (critest)](#cri-validation-testing-critest)
-    - [CRI CLI (crictl)](#cri-cli-crictl)
 - [v1.0.0-beta.1](#v100-beta1)
-    - [CRI validation testing (critest)](#cri-validation-testing-critest-1)
-    - [CRI CLI (crictl)](#cri-cli-crictl-1)
 - [v1.0.0-beta.0](#v100-beta0)
-    - [CRI validation testing (critest)](#cri-validation-testing-critest-2)
-    - [CRI CLI (crictl)](#cri-cli-crictl-2)
 - [v1.0.0-alpha.0](#v100-alpha0)
-    - [CRI validation testing (critest)](#cri-validation-testing-critest-3)
-    - [CRI CLI (crictl)](#cri-cli-crictl-3)
 - [v0.2](#v02)
-    - [CRI validation testing (critest)](#cri-validation-testing-critest-4)
-    - [CRI CLI (crictl)](#cri-cli-crictl-4)
 - [v0.1](#v01)
     - [Features](#features)
         - [CRI validation testing](#cri-validation-testing)
@@ -23,6 +14,16 @@
     - [Documentation](#documentation)
 
 <!-- /TOC -->
+
+# v1.11.1
+
+cri-tools v1.11.1 mainly focused on UX improvement and bug fix.
+
+## CRI CLI (crictl)
+
+- [#338](https://github.com/kubernetes-incubator/cri-tools/pull/338) Allow filtering the pods with prefix matching of name and namespace
+- [#342](https://github.com/kubernetes-incubator/cri-tools/pull/342) Clarify flag description in `crictl ps` and `crictl pods`.
+- [#343](https://github.com/kubernetes-incubator/cri-tools/pull/343) Better terminal support in `crictl exec` and `crictl attach`, which also fixes issue [#288](https://github.com/kubernetes-incubator/cri-tools/issues/288) and [#181](https://github.com/kubernetes-incubator/cri-tools/issues/181).
 
 # v1.11.0
 
