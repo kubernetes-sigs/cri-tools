@@ -194,11 +194,11 @@ var listPodCommand = cli.Command{
 		},
 		cli.BoolFlag{
 			Name:  "latest, l",
-			Usage: "Show recently created pods",
+			Usage: "Show the most recently created pod",
 		},
 		cli.IntFlag{
 			Name:  "last, n",
-			Usage: "Show last n recently created pods",
+			Usage: "Show last n recently created pods. Set 0 for unlimited",
 		},
 		cli.BoolFlag{
 			Name:  "no-trunc",
