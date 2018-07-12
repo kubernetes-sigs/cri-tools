@@ -19,14 +19,15 @@ package main
 import (
 	"fmt"
 	"net/url"
-	"os"
 	"strings"
 
+	dockerterm "github.com/docker/docker/pkg/term"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
 	restclient "k8s.io/client-go/rest"
 	remoteclient "k8s.io/client-go/tools/remotecommand"
+	"k8s.io/kubernetes/pkg/kubectl/util/term"
 	pb "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 )
 
@@ -125,6 +126,7 @@ func Exec(client pb.RuntimeServiceClient, opts execOptions) error {
 		Stdout:      true,
 		Stderr:      !opts.tty,
 	}
+
 	logrus.Debugf("ExecRequest: %v", request)
 	r, err := client.Exec(context.Background(), request)
 	logrus.Debugf("ExecResponse: %v", r)
@@ -143,19 +145,39 @@ func Exec(client pb.RuntimeServiceClient, opts execOptions) error {
 	}
 
 	logrus.Debugf("Exec URL: %v", URL)
-	exec, err := remoteclient.NewSPDYExecutor(&restclient.Config{TLSClientConfig: restclient.TLSClientConfig{Insecure: true}}, "POST", URL)
+	return stream(opts.stdin, opts.tty, URL)
+}
+
+func stream(in, tty bool, url *url.URL) error {
+	executor, err := remoteclient.NewSPDYExecutor(&restclient.Config{TLSClientConfig: restclient.TLSClientConfig{Insecure: true}}, "POST", url)
 	if err != nil {
 		return err
 	}
 
+	stdin, stdout, stderr := dockerterm.StdStreams()
 	streamOptions := remoteclient.StreamOptions{
-		Stdout: os.Stdout,
-		Stderr: os.Stderr,
-		Tty:    opts.tty,
+		Stdout: stdout,
+		Stderr: stderr,
+		Tty:    tty,
 	}
-	if opts.stdin {
-		streamOptions.Stdin = os.Stdin
+	if in {
+		streamOptions.Stdin = stdin
 	}
 	logrus.Debugf("StreamOptions: %v", streamOptions)
-	return exec.Stream(streamOptions)
+	if !tty {
+		return executor.Stream(streamOptions)
+	}
+	if !in {
+		return fmt.Errorf("tty=true must be specified with interactive=true")
+	}
+	t := term.TTY{
+		In:  stdin,
+		Out: stdout,
+		Raw: true,
+	}
+	if !t.IsTerminalIn() {
+		return fmt.Errorf("input is not a terminal")
+	}
+	streamOptions.TerminalSizeQueue = t.MonitorSize(t.GetSize())
+	return t.Safe(func() error { return executor.Stream(streamOptions) })
 }
