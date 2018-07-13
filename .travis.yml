@@ -23,6 +23,9 @@ jobs:
       script:
         - make lint
         - make gofmt
+    - stage: Build
+      script:
+        - make release
     - stage: Test
       script: 
         - make
