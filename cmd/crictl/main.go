@@ -29,12 +29,13 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri"
 	"k8s.io/kubernetes/pkg/kubelet/remote"
 	"k8s.io/kubernetes/pkg/kubelet/util"
+
+	"github.com/kubernetes-incubator/cri-tools/pkg/version"
 )
 
 const (
 	defaultConfigPath = "/etc/crictl.yaml"
 	defaultTimeout    = 10 * time.Second
-	crictlVersion     = "1.11.0"
 )
 
 var (
@@ -97,7 +98,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "crictl"
 	app.Usage = "client for CRI"
-	app.Version = crictlVersion
+	app.Version = version.Version
 
 	app.Commands = []cli.Command{
 		runtimeAttachCommand,

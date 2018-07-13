@@ -32,6 +32,7 @@ import (
 	"github.com/onsi/gomega"
 
 	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
+	versionconst "github.com/kubernetes-incubator/cri-tools/pkg/version"
 
 	_ "github.com/kubernetes-incubator/cri-tools/pkg/benchmark"
 	_ "github.com/kubernetes-incubator/cri-tools/pkg/validate"
@@ -41,8 +42,6 @@ const (
 	parallelFlag  = "parallel"
 	benchmarkFlag = "benchmark"
 	versionFlag   = "version"
-
-	criTestVersion = "1.11.0"
 )
 
 var (
@@ -125,7 +124,7 @@ func runParallelTestSuite(t *testing.T) {
 
 func TestCRISuite(t *testing.T) {
 	if *version {
-		fmt.Printf("critest version: %s\n", criTestVersion)
+		fmt.Printf("critest version: %s\n", versionconst.Version)
 		return
 	}
 
