@@ -425,6 +425,10 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 		return outputProtobufObjAsJSON(r)
 	case "yaml":
 		return outputProtobufObjAsJSON(r)
+	case "table":
+	// continue; output will be generated after the switch block ends.
+	default:
+		return fmt.Errorf("unsupported output format %q", opts.output)
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
