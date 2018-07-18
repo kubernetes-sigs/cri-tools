@@ -32,6 +32,26 @@ Version matrix:
 
 We are currently working toward an beta version of CRI validation tests to be used in conjunction with Kubernetes 1.10. See the [roadmap](docs/roadmap.md) for information about current and future milestones.
 
+## Install
+
+### Install crictl
+
+```sh
+VERSION="v1.11.1"
+wget https://github.com/kubernetes-incubator/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux-amd64.tar.gz
+sudo tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
+rm -f crictl-$VERSION-linux-amd64.tar.gz
+```
+
+### Install critest
+
+```sh
+VERSION="v1.11.1"
+wget https://github.com/kubernetes-incubator/cri-tools/releases/download/$VERSION/critest-$VERSION-linux-amd64.tar.gz
+sudo tar zxvf critest-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
+rm -f critest-$VERSION-linux-amd64.tar.gz
+```
+
 ## Documentation
 
 - [CRI validation test suite](docs/validation.md)
