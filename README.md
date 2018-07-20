@@ -23,13 +23,34 @@ Version matrix:
 
 | Kubernetes Version | cri-tools Version | cri-tools branch |
 |--------------------|-------------------|------------------|
-| 1.11.X             | v1.0.0-beta.1     | master           |
+| master             | -                 | master           |
+| 1.11.X             | v1.11.1           | release-1.11     |
 | 1.10.X             | v1.0.0-beta.0     | release-1.10     |
 | 1.9.X              | v1.0.0-alpha.0    | release-1.9      |
 | 1.8.X              | v0.2              | release-1.8      |
 | 1.7.X              | v0.1              | release-1.7      |
 
 We are currently working toward an beta version of CRI validation tests to be used in conjunction with Kubernetes 1.10. See the [roadmap](docs/roadmap.md) for information about current and future milestones.
+
+## Install
+
+### Install crictl
+
+```sh
+VERSION="v1.11.1"
+wget https://github.com/kubernetes-incubator/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux-amd64.tar.gz
+sudo tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
+rm -f crictl-$VERSION-linux-amd64.tar.gz
+```
+
+### Install critest
+
+```sh
+VERSION="v1.11.1"
+wget https://github.com/kubernetes-incubator/cri-tools/releases/download/$VERSION/critest-$VERSION-linux-amd64.tar.gz
+sudo tar zxvf critest-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
+rm -f critest-$VERSION-linux-amd64.tar.gz
+```
 
 ## Documentation
 

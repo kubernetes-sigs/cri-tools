@@ -9,7 +9,7 @@ crictl is currently in Beta and still under quick iterations. It is hosted at th
 crictl can be downloaded from cri-tools [release page](https://github.com/kubernetes-incubator/cri-tools/releases):
 
 ```sh
-VERSION="v1.0.0-beta.1"
+VERSION="v1.11.1"
 wget https://github.com/kubernetes-incubator/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux-amd64.tar.gz
 sudo tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f crictl-$VERSION-linux-amd64.tar.gz
