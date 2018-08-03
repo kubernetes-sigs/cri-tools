@@ -27,6 +27,7 @@ import (
 	"time"
 
 	units "github.com/docker/go-units"
+	godigest "github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
@@ -625,11 +626,17 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 		ctm := units.HumanDuration(time.Now().UTC().Sub(createdAt)) + " ago"
 		if !opts.verbose {
 			id := c.Id
+			image := c.Image.Image
 			if !opts.noTrunc {
 				id = getTruncatedID(id, "")
+
+				// Now c.Image.Image is imageID in kubelet.
+				if digest, err := godigest.Parse(image); err == nil {
+					image = getTruncatedID(digest.String(), string(digest.Algorithm())+":")
+				}
 			}
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%d\n",
-				id, c.Image.Image, ctm, convertContainerState(c.State), c.Metadata.Name, c.Metadata.Attempt)
+				id, image, ctm, convertContainerState(c.State), c.Metadata.Name, c.Metadata.Attempt)
 			continue
 		}
 
