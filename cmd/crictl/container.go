@@ -626,10 +626,7 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 		if !opts.verbose {
 			id := c.Id
 			if !opts.noTrunc {
-				id = strings.TrimPrefix(c.Id, "")
-				if len(id) > truncatedIDLen {
-					id = id[:truncatedIDLen]
-				}
+				id = getTruncatedID(id, "")
 			}
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%d\n",
 				id, c.Image.Image, ctm, convertContainerState(c.State), c.Metadata.Name, c.Metadata.Attempt)
