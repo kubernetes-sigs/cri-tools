@@ -605,7 +605,7 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 		return outputProtobufObjAsJSON(r)
 	case "yaml":
 		return outputProtobufObjAsYAML(r)
-	case "table":
+	case "table", "":
 	// continue; output will be generated after the switch block ends.
 	default:
 		return fmt.Errorf("unsupported output format %q", opts.output)
