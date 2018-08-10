@@ -43,6 +43,8 @@ PROJECT="github.com/kubernetes-incubator/cri-tools"
 CRI_TOOLS_ROOT="$GOPATH/src/$PROJECT"
 mkdir -p ${CRI_TOOLS_ROOT}/_output/releases
 
+GO_LDFLAGS="-X ${PROJECT}/pkg/version.Version=${VERSION}"
+
 # Build and package crictl releases.
 for platform in "${CRI_CTL_PLATFORMS[@]}"; do
     os="${platform%/*}"
@@ -55,6 +57,7 @@ for platform in "${CRI_CTL_PLATFORMS[@]}"; do
 
     GOARCH="$arch" GOOS="$os" CGO_ENABLED=0 go build \
         -o ${CRI_TOOLS_ROOT}/_output/bin/$arch-$os/${CRICTL_BIN} \
+        -ldflags "${GO_LDFLAGS}" \
         ${PROJECT}/cmd/crictl
     tar zcvf ${CRI_TOOLS_ROOT}/_output/releases/crictl-$VERSION-$os-$arch.tar.gz \
         -C ${CRI_TOOLS_ROOT}/_output/bin/$arch-$os \
@@ -73,6 +76,7 @@ for platform in "${CRI_TEST_PLATFORMS[@]}"; do
 
     GOARCH="$arch" GOOS="$os" CGO_ENABLED=0 go test -c \
         -o ${CRI_TOOLS_ROOT}/_output/bin/$arch-$os/${CRITEST_BIN} \
+        -ldflags "${GO_LDFLAGS}" \
         ${PROJECT}/cmd/critest
     tar zcvf ${CRI_TOOLS_ROOT}/_output/releases/critest-$VERSION-$os-$arch.tar.gz \
         -C ${CRI_TOOLS_ROOT}/_output/bin/$arch-$os \
