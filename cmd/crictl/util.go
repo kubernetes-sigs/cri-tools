@@ -294,3 +294,11 @@ func jsonFieldFromTag(tag reflect.StructTag) string {
 	}
 	return field
 }
+
+func getTruncatedID(id, prefix string) string {
+	id = strings.TrimPrefix(id, prefix)
+	if len(id) > truncatedIDLen {
+		id = id[:truncatedIDLen]
+	}
+	return id
+}
