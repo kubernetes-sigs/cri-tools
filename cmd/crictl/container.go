@@ -614,7 +614,7 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 
 	w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
 	if !opts.verbose && !opts.quiet {
-		fmt.Fprintln(w, "CONTAINER ID\tIMAGE\tCREATED\tSTATE\tNAME\tATTEMPT")
+		fmt.Fprintln(w, "CONTAINER ID\tIMAGE\tCREATED\tSTATE\tNAME\tATTEMPT\tPOD ID")
 	}
 	for _, c := range r.Containers {
 		if opts.quiet {
@@ -635,8 +635,9 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 					image = getTruncatedID(digest.String(), string(digest.Algorithm())+":")
 				}
 			}
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%d\n",
-				id, image, ctm, convertContainerState(c.State), c.Metadata.Name, c.Metadata.Attempt)
+			PodID := getTruncatedID(c.PodSandboxId, "")
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%d\t%s\n",
+				id, image, ctm, convertContainerState(c.State), c.Metadata.Name, c.Metadata.Attempt, PodID)
 			continue
 		}
 
