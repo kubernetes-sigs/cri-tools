@@ -34,8 +34,7 @@ import (
 )
 
 const (
-	defaultConfigPath = "/etc/crictl.yaml"
-	defaultTimeout    = 10 * time.Second
+	defaultTimeout = 10 * time.Second
 )
 
 var (
