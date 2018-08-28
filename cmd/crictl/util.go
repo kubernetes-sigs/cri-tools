@@ -222,7 +222,13 @@ func outputStatusInfo(status string, info map[string]string, format string) erro
 
 	jsonInfo := "{" + "\"status\":" + status + ","
 	for _, k := range keys {
-		jsonInfo += "\"" + k + "\"" + ":" + info[k] + ","
+		var res interface{}
+		// We attempt to convert key into JSON if possible else use it directly
+		if err := json.Unmarshal([]byte(info[k]), res); err != nil {
+			jsonInfo += "\"" + k + "\"" + ":" + "\"" + info[k] + "\","
+		} else {
+			jsonInfo += "\"" + k + "\"" + ":" + info[k] + ","
+		}
 	}
 	jsonInfo = jsonInfo[:len(jsonInfo)-1]
 	jsonInfo += "}"
