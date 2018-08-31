@@ -18,6 +18,30 @@ limitations under the License.
 
 package main
 
-const (
-	defaultConfigPath = "/etc/crictl.yaml"
+import (
+	"net"
+	"time"
+
+	"k8s.io/kubernetes/pkg/kubelet/util"
 )
+
+const (
+	defaultConfigPath      = "/etc/crictl.yaml"
+	defaultRuntimeEndpoint = "unix:///var/run/dockershim.sock"
+)
+
+// GetAddressAndDialer returns the address and a dialer for the endpoint
+// protocol.
+//
+// On Unix supported protocols are unix sockets.
+//
+// Examples:
+//
+// An endpoint of "unix:///var/run/dockershim.sock" returns address
+// "/var/run/dockershim.sock" and a unix socket dialer for this address.
+//
+// An endpoint of "/var/run/dockershim.sock" returns address
+// "/var/run/dockershim.sock" and a unix socket dialer for this address.
+func GetAddressAndDialer(endpoint string) (string, func(addr string, timeout time.Duration) (net.Conn, error), error) {
+	return util.GetAddressAndDialer(endpoint)
+}
