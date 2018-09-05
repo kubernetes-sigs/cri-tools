@@ -56,6 +56,11 @@ var pullImageCommand = cli.Command{
 			Value: "",
 			Usage: "Use `USERNAME[:PASSWORD]` for accessing the registry",
 		},
+		cli.StringFlag{
+			Name:  "pod-config",
+			Value: "",
+			Usage: "Use `pod-config.[json|yaml]` to override the the pull context",
+		},
 	},
 	ArgsUsage: "NAME[:TAG|@DIGEST]",
 	Action: func(context *cli.Context) error {
@@ -76,8 +81,16 @@ var pullImageCommand = cli.Command{
 				return err
 			}
 		}
+		var sandbox *pb.PodSandboxConfig
+		if context.IsSet("pod-config") {
+			var err error
+			sandbox, err = loadPodSandboxConfig(context.String("pod-config"))
+			if err != nil {
+				return fmt.Errorf("load podSandboxConfig failed: %v", err)
+			}
+		}
 
-		r, err := PullImage(imageClient, imageName, auth)
+		r, err := PullImageWithSandbox(imageClient, imageName, auth, sandbox)
 		if err != nil {
 			return fmt.Errorf("pulling image failed: %v", err)
 		}
@@ -355,6 +368,12 @@ func normalizeRepoDigest(repoDigests []string) (string, string) {
 // PullImage sends a PullImageRequest to the server, and parses
 // the returned PullImageResponse.
 func PullImage(client pb.ImageServiceClient, image string, auth *pb.AuthConfig) (resp *pb.PullImageResponse, err error) {
+	return PullImageWithSandbox(client, image, auth, nil)
+}
+
+// PullImageWithSandbox sends a PullImageRequest to the server, and parses
+// the returned PullImageResponse.
+func PullImageWithSandbox(client pb.ImageServiceClient, image string, auth *pb.AuthConfig, sandbox *pb.PodSandboxConfig) (resp *pb.PullImageResponse, err error) {
 	request := &pb.PullImageRequest{
 		Image: &pb.ImageSpec{
 			Image: image,
@@ -362,6 +381,9 @@ func PullImage(client pb.ImageServiceClient, image string, auth *pb.AuthConfig) 
 	}
 	if auth != nil {
 		request.Auth = auth
+	}
+	if sandbox != nil {
+		request.SandboxConfig = sandbox
 	}
 	logrus.Debugf("PullImageRequest: %v", request)
 	resp, err = client.PullImage(context.Background(), request)
