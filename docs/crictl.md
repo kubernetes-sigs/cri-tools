@@ -50,12 +50,13 @@ Subcommands includes:
 - `completion`:   Output bash shell completion code
 - `help, h`:      Shows a list of commands or help for one command
 
-crictl connects to `unix:///var/run/dockershim.sock` by default. For other runtimes, the endpoint can be set in three ways:
+crictl connects to Unix: `unix:///var/run/dockershim.sock` or Windows: `tcp://localhost:3735`  by default. For other runtimes, the endpoint can be set in three ways:
 
 - By setting flags `--runtime-endpoint` and `--image-endpoint`
 - By setting environment variables `CONTAINER_RUNTIME_ENDPOINT` and `IMAGE_SERVICE_ENDPOINT`
 - By setting the endpoint in the config file `--config=/etc/crictl.yaml`
 
+Unix:
 ```sh
 $ cat /etc/crictl.yaml
 runtime-endpoint: unix:///var/run/dockershim.sock
@@ -63,10 +64,18 @@ image-endpoint: unix:///var/run/dockershim.sock
 timeout: 10
 debug: true
 ```
+Windows:
+```cmd
+C:\> type %USERPROFILE%\.crictl\crictl.yaml
+runtime-endpoint: tcp://localhost:3735
+image-endpoint: tcp://localhost:3735
+timeout: 10
+debug: true
+```
 
 ## Additional options
 
-- `--runtime-endpoint`, `-r`: CRI server runtime endpoint (default: "unix:///var/run/dockershim.sock").The default server is dockershim. If we want to debug other CRI server such as frakti, we can add flag `--runtime-endpoint=/var/run/frakti.sock`
+- `--runtime-endpoint`, `-r`: CRI server runtime endpoint (default: Unix: `unix:///var/run/dockershim.sock` or Windows: `tcp://localhost:3735`). The default server is dockershim. If we want to debug other CRI server such as frakti, we can add flag `--runtime-endpoint=/var/run/frakti.sock`
 - `--image-endpoint`, `-i`: CRI server image endpoint, default same as runtime endpoint.
 - `--timeout`, `-t`: Timeout of connecting to server (default: 10s)
 - `--debug`, `-D`: Enable debug output

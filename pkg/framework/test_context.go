@@ -18,6 +18,7 @@ package framework
 
 import (
 	"flag"
+	"runtime"
 	"time"
 
 	"github.com/onsi/ginkgo/config"
@@ -57,7 +58,12 @@ func RegisterFlags() {
 	flag.StringVar(&TestContext.ReportDir, "report-dir", "", "Path to the directory where the JUnit XML reports should be saved. Default is empty, which doesn't generate these reports.")
 	flag.StringVar(&TestContext.ImageServiceAddr, "image-endpoint", "", "Image service socket for client to connect.")
 	flag.DurationVar(&TestContext.ImageServiceTimeout, "image-service-timeout", 300*time.Second, "Timeout when trying to connect to image service.")
-	flag.StringVar(&TestContext.RuntimeServiceAddr, "runtime-endpoint", "unix:///var/run/dockershim.sock", "Runtime service socket for client to connect..")
+
+	svcaddr := "unix:///var/run/dockershim.sock"
+	if runtime.GOOS == "windows" {
+		svcaddr = "tcp://localhost:3735"
+	}
+	flag.StringVar(&TestContext.RuntimeServiceAddr, "runtime-endpoint", svcaddr, "Runtime service socket for client to connect..")
 	flag.DurationVar(&TestContext.RuntimeServiceTimeout, "runtime-service-timeout", 300*time.Second, "Timeout when trying to connect to a runtime service.")
 	flag.IntVar(&TestContext.Number, "number", 5, "Number of PodSandbox/container in listing benchmark test.")
 }

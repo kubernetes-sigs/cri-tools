@@ -28,18 +28,16 @@ import (
 	"google.golang.org/grpc"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri"
 	"k8s.io/kubernetes/pkg/kubelet/remote"
-	"k8s.io/kubernetes/pkg/kubelet/util"
 
 	"github.com/kubernetes-sigs/cri-tools/pkg/version"
 )
 
 const (
-	defaultConfigPath = "/etc/crictl.yaml"
-	defaultTimeout    = 10 * time.Second
+	defaultTimeout = 10 * time.Second
 )
 
 var (
-	// RuntimeEndpoint is CRI server runtime endpoint (default: "unix:///var/run/dockershim.sock")
+	// RuntimeEndpoint is CRI server runtime endpoint
 	RuntimeEndpoint string
 	// ImageEndpoint is CRI server image endpoint, default same as runtime endpoint
 	ImageEndpoint string
@@ -54,7 +52,7 @@ func getRuntimeClientConnection(context *cli.Context) (*grpc.ClientConn, error) 
 		return nil, fmt.Errorf("--runtime-endpoint is not set")
 	}
 
-	addr, dialer, err := util.GetAddressAndDialer(RuntimeEndpoint)
+	addr, dialer, err := GetAddressAndDialer(RuntimeEndpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +72,7 @@ func getImageClientConnection(context *cli.Context) (*grpc.ClientConn, error) {
 		ImageEndpoint = RuntimeEndpoint
 	}
 
-	addr, dialer, err := util.GetAddressAndDialer(ImageEndpoint)
+	addr, dialer, err := GetAddressAndDialer(ImageEndpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +136,7 @@ func main() {
 		cli.StringFlag{
 			Name:   "runtime-endpoint, r",
 			EnvVar: "CONTAINER_RUNTIME_ENDPOINT",
-			Value:  "unix:///var/run/dockershim.sock",
+			Value:  defaultRuntimeEndpoint,
 			Usage:  "Endpoint of CRI container runtime service",
 		},
 		cli.StringFlag{
