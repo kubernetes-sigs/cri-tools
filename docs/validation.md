@@ -6,11 +6,11 @@ CRI validation testing is currently Alpha and still under quick iterations. We e
 
 ## Install
 
-The benchmarking tests binary `critest` can be downloaded from [Releasing page](https://github.com/kubernetes-incubator/cri-tools/releases):
+The benchmarking tests binary `critest` can be downloaded from [Releasing page](https://github.com/kubernetes-sigs/cri-tools/releases):
 
 ```sh
 VERSION="v1.11.1"
-wget https://github.com/kubernetes-incubator/cri-tools/releases/download/$VERSION/critest-$VERSION-linux-amd64.tar.gz
+wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/critest-$VERSION-linux-amd64.tar.gz
 sudo tar zxvf critest-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f critest-$VERSION-linux-amd64.tar.gz
 ```
@@ -25,7 +25,7 @@ For v1.0.0-alpha.0 and previous versions, Go and cri-tools source code are also 
 
 ```sh
 # Replace branch name from version matrix in README.md
-git clone https://github.com/kubernetes-incubator/cri-tools -b release-1.9 $GOPATH/src/github.com/kubernetes-incubator/cri-tools
+git clone https://github.com/kubernetes-sigs/cri-tools -b release-1.9 $GOPATH/src/github.com/kubernetes-sigs/cri-tools
 ```
 
 ## Running tests

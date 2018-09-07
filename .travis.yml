@@ -5,7 +5,7 @@ dist: trusty
 go:
   - "1.10.2"
 
-go_import_path: github.com/kubernetes-incubator/cri-tools
+go_import_path: github.com/kubernetes-sigs/cri-tools
 
 services:
   - docker
@@ -27,6 +27,6 @@ jobs:
       script:
         - make release
     - stage: Test
-      script: 
+      script:
         - make
         - sudo env PATH=$PATH GOPATH=$GOPATH hack/run-critest.sh

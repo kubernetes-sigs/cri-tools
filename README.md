@@ -2,8 +2,8 @@
 
 CLI and validation tools for Kubelet Container Runtime Interface (CRI) .
 
-[![Build Status](https://travis-ci.org/kubernetes-incubator/cri-tools.svg?branch=master)](https://travis-ci.org/kubernetes-incubator/cri-tools)
-[![Go Report Card](https://goreportcard.com/badge/github.com/kubernetes-incubator/cri-tools)](https://goreportcard.com/report/github.com/kubernetes-incubator/cri-tools)
+[![Build Status](https://travis-ci.org/kubernetes-sigs/cri-tools.svg?branch=master)](https://travis-ci.org/kubernetes-sigs/cri-tools)
+[![Go Report Card](https://goreportcard.com/badge/github.com/kubernetes-sigs/cri-tools)](https://goreportcard.com/report/github.com/kubernetes-sigs/cri-tools)
 
 ## What is the scope of this project?
 
@@ -38,7 +38,7 @@ We are currently working toward an beta version of CRI validation tests to be us
 
 ```sh
 VERSION="v1.11.1"
-wget https://github.com/kubernetes-incubator/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux-amd64.tar.gz
+wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux-amd64.tar.gz
 sudo tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f crictl-$VERSION-linux-amd64.tar.gz
 ```
@@ -47,7 +47,7 @@ rm -f crictl-$VERSION-linux-amd64.tar.gz
 
 ```sh
 VERSION="v1.11.1"
-wget https://github.com/kubernetes-incubator/cri-tools/releases/download/$VERSION/critest-$VERSION-linux-amd64.tar.gz
+wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/critest-$VERSION-linux-amd64.tar.gz
 sudo tar zxvf critest-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f critest-$VERSION-linux-amd64.tar.gz
 ```

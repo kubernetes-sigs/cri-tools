@@ -24,7 +24,7 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
+	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	internalapi "k8s.io/kubernetes/pkg/kubelet/apis/cri"
 	runtimeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
 
