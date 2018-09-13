@@ -224,7 +224,7 @@ func outputStatusInfo(status string, info map[string]string, format string) erro
 	for _, k := range keys {
 		var res interface{}
 		// We attempt to convert key into JSON if possible else use it directly
-		if err := json.Unmarshal([]byte(info[k]), res); err != nil {
+		if err := json.Unmarshal([]byte(info[k]), &res); err != nil {
 			jsonInfo += "\"" + k + "\"" + ":" + "\"" + info[k] + "\","
 		} else {
 			jsonInfo += "\"" + k + "\"" + ":" + info[k] + ","
