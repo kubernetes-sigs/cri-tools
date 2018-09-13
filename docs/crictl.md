@@ -2,15 +2,15 @@
 
 crictl provides a CLI for CRI-compatible container runtimes. This allows the CRI runtime developers to debug their runtime without needing to set up Kubernetes components.
 
-crictl is currently in Beta and still under quick iterations. It is hosted at the [cri-tools](https://github.com/kubernetes-incubator/cri-tools) repository. We encourage the CRI developers to report bugs or help extend the coverage by adding more functionalities.
+crictl is currently in Beta and still under quick iterations. It is hosted at the [cri-tools](https://github.com/kubernetes-sigs/cri-tools) repository. We encourage the CRI developers to report bugs or help extend the coverage by adding more functionalities.
 
 ## Install crictl
 
-crictl can be downloaded from cri-tools [release page](https://github.com/kubernetes-incubator/cri-tools/releases):
+crictl can be downloaded from cri-tools [release page](https://github.com/kubernetes-sigs/cri-tools/releases):
 
 ```sh
 VERSION="v1.0.0-beta.1"
-wget https://github.com/kubernetes-incubator/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux-amd64.tar.gz
+wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux-amd64.tar.gz
 sudo tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f crictl-$VERSION-linux-amd64.tar.gz
 ```
@@ -184,4 +184,4 @@ bin   dev   etc   home  proc  root  sys   tmp   usr   var
 
 ## More information
 
-Visit [kubernetes-incubator/cri-tools](https://github.com/kubernetes-incubator/cri-tools) for more information.
+Visit [kubernetes-sigs/cri-tools](https://github.com/kubernetes-sigs/cri-tools) for more information.

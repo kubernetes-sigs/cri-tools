@@ -4,10 +4,10 @@ CRI performance benchmarking provides a benchmarking framework for CRI-compatibl
 
 ## Install
 
-The benchmarking tests binary `critest` can be downloaded from [Releasing page](https://github.com/kubernetes-incubator/cri-tools/releases):
+The benchmarking tests binary `critest` can be downloaded from [Releasing page](https://github.com/kubernetes-sigs/cri-tools/releases):
 
 ```sh
-wget https://github.com/kubernetes-incubator/cri-tools/releases/download/v1.0.0-beta.0/critest-v1.0.0-beta.0-linux-amd64.tar.gz
+wget https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.0.0-beta.0/critest-v1.0.0-beta.0-linux-amd64.tar.gz
 sudo tar zxvf critest-v1.0.0-beta.0-linux-amd64.tar.gz -C /usr/local/bin
 rm -f critest-v1.0.0-beta.0-linux-amd64.tar.gz
 ```
@@ -16,7 +16,7 @@ For v1.0.0-alpha.0 and previous versions, Go and cri-tools source code are also 
 
 ```sh
 # Replace branch name from version matrix in README.md
-git clone https://github.com/kubernetes-incubator/cri-tools -b release-1.9 $GOPATH/src/github.com/kubernetes-incubator/cri-tools
+git clone https://github.com/kubernetes-sigs/cri-tools -b release-1.9 $GOPATH/src/github.com/kubernetes-sigs/cri-tools
 ```
 
 ## Running tests
