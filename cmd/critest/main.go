@@ -21,8 +21,8 @@ import (
 	"sort"
 
 	"github.com/golang/glog"
-	_ "github.com/kubernetes-incubator/cri-tools/pkg/benchmark"
-	_ "github.com/kubernetes-incubator/cri-tools/pkg/validate"
+	_ "github.com/kubernetes-sigs/cri-tools/pkg/benchmark"
+	_ "github.com/kubernetes-sigs/cri-tools/pkg/validate"
 	"github.com/urfave/cli"
 )
 

@@ -9,7 +9,7 @@ CRI validation testing is currently Alpha and still under quick iterations. We e
 The test suites can be installed easily via `go get` command:
 
 ```sh
-go get github.com/kubernetes-incubator/cri-tools/cmd/critest
+go get github.com/kubernetes-sigs/cri-tools/cmd/critest
 ```
 
 Then `critest` binary can be found in `$GOPATH/bin`.

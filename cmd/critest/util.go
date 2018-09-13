@@ -29,9 +29,9 @@ import (
 )
 
 var buildTargets = []string{
-	"github.com/kubernetes-incubator/cri-tools/pkg/validate",
-	"github.com/kubernetes-incubator/cri-tools/pkg/benchmark",
-	"github.com/kubernetes-incubator/cri-tools/vendor/github.com/onsi/ginkgo/ginkgo",
+	"github.com/kubernetes-sigs/cri-tools/pkg/validate",
+	"github.com/kubernetes-sigs/cri-tools/pkg/benchmark",
+	"github.com/kubernetes-sigs/cri-tools/vendor/github.com/onsi/ginkgo/ginkgo",
 }
 
 // build cri-tools binaries.
@@ -74,9 +74,9 @@ func getRootDir() (string, error) {
 	path := filepath.Dir(testExec)
 
 	// Look for the cri-tools source root directory
-	if strings.Contains(path, "github.com/kubernetes-incubator/cri-tools") {
-		splitPath := strings.Split(path, "github.com/kubernetes-incubator/cri-tools")
-		return filepath.Join(splitPath[0], "github.com/kubernetes-incubator/cri-tools/"), nil
+	if strings.Contains(path, "github.com/kubernetes-sigs/cri-tools") {
+		splitPath := strings.Split(path, "github.com/kubernetes-sigs/cri-tools")
+		return filepath.Join(splitPath[0], "github.com/kubernetes-sigs/cri-tools/"), nil
 	}
 
 	return "", fmt.Errorf("could not find cri-tools source root directory")
