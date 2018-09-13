@@ -170,6 +170,7 @@ var listImageCommand = cli.Command{
 				id := image.Id
 				if !noTrunc {
 					id = getTruncatedID(id, "sha256:")
+					repoDigest = getTruncatedID(repoDigest, "sha256:")
 				}
 				for _, repoTagPair := range repoTagPairs {
 					if showDigest {
@@ -194,8 +195,9 @@ var listImageCommand = cli.Command{
 				fmt.Printf("Uid: %v\n", image.Uid)
 			}
 			if image.Username != "" {
-				fmt.Printf("Username: %v\n\n", image.Username)
+				fmt.Printf("Username: %v\n", image.Username)
 			}
+			fmt.Printf("\n")
 		}
 		w.Flush()
 		return nil
