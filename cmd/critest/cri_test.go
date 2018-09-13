@@ -31,10 +31,10 @@ import (
 	"github.com/onsi/ginkgo/reporters"
 	"github.com/onsi/gomega"
 
-	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
+	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 
-	_ "github.com/kubernetes-incubator/cri-tools/pkg/benchmark"
-	_ "github.com/kubernetes-incubator/cri-tools/pkg/validate"
+	_ "github.com/kubernetes-sigs/cri-tools/pkg/benchmark"
+	_ "github.com/kubernetes-sigs/cri-tools/pkg/validate"
 )
 
 const (
