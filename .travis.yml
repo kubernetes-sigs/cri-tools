@@ -5,7 +5,7 @@ dist: trusty
 go:
   - 1.9.x
 
-go_import_path: github.com/kubernetes-incubator/cri-tools
+go_import_path: github.com/kubernetes-sigs/cri-tools
 
 services:
   - docker

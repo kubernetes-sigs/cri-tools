@@ -17,7 +17,7 @@ limitations under the License.
 package benchmark
 
 import (
-	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
+	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	internalapi "k8s.io/kubernetes/pkg/kubelet/apis/cri"
 	runtimeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/v1alpha1/runtime"
 

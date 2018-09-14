@@ -25,7 +25,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	"github.com/kubernetes-incubator/cri-tools/pkg/framework"
+	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	"github.com/onsi/ginkgo/config"
 	"github.com/onsi/ginkgo/reporters"
 
