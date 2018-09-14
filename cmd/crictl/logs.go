@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -59,25 +60,25 @@ var logsCommand = cli.Command{
 			Usage: "Show timestamps",
 		},
 	},
-	Action: func(context *cli.Context) error {
-		runtimeService, err := getRuntimeService(context)
+	Action: func(ctx *cli.Context) error {
+		runtimeService, err := getRuntimeService(ctx)
 		if err != nil {
 			return err
 		}
 
-		containerID := context.Args().First()
+		containerID := ctx.Args().First()
 		if containerID == "" {
 			return fmt.Errorf("ID cannot be empty")
 		}
-		tailLines := context.Int64("tail")
-		limitBytes := context.Int64("limit-bytes")
-		since, err := parseTimestamp(context.String("since"))
+		tailLines := ctx.Int64("tail")
+		limitBytes := ctx.Int64("limit-bytes")
+		since, err := parseTimestamp(ctx.String("since"))
 		if err != nil {
 			return err
 		}
-		timestamp := context.Bool("timestamps")
+		timestamp := ctx.Bool("timestamps")
 		logOptions := logs.NewLogOptions(&v1.PodLogOptions{
-			Follow:     context.Bool("follow"),
+			Follow:     ctx.Bool("follow"),
 			TailLines:  &tailLines,
 			LimitBytes: &limitBytes,
 			SinceTime:  since,
@@ -91,7 +92,7 @@ var logsCommand = cli.Command{
 		if logPath == "" {
 			return fmt.Errorf("The container has not set log path")
 		}
-		return logs.ReadLogs(logPath, status.GetId(), logOptions, runtimeService, os.Stdout, os.Stderr)
+		return logs.ReadLogs(context.Background(), logPath, status.GetId(), logOptions, runtimeService, os.Stdout, os.Stderr)
 	},
 	After: closeConnection,
 }

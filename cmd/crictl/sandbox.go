@@ -47,6 +47,13 @@ var runPodCommand = cli.Command{
 	Name:      "runp",
 	Usage:     "Run a new pod",
 	ArgsUsage: "pod-config.[json|yaml]",
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "runtime, r",
+			Usage: "Runtime handler to use. Available options are defined by the container runtime.",
+		},
+	},
+
 	Action: func(context *cli.Context) error {
 		sandboxSpec := context.Args().First()
 		if sandboxSpec == "" {
@@ -63,7 +70,7 @@ var runPodCommand = cli.Command{
 		}
 
 		// Test RuntimeServiceClient.RunPodSandbox
-		err = RunPodSandbox(runtimeClient, podSandboxConfig)
+		err = RunPodSandbox(runtimeClient, podSandboxConfig, context.String("runtime"))
 		if err != nil {
 			return fmt.Errorf("run pod sandbox failed: %v", err)
 		}
@@ -236,8 +243,11 @@ var listPodCommand = cli.Command{
 
 // RunPodSandbox sends a RunPodSandboxRequest to the server, and parses
 // the returned RunPodSandboxResponse.
-func RunPodSandbox(client pb.RuntimeServiceClient, config *pb.PodSandboxConfig) error {
-	request := &pb.RunPodSandboxRequest{Config: config}
+func RunPodSandbox(client pb.RuntimeServiceClient, config *pb.PodSandboxConfig, runtime string) error {
+	request := &pb.RunPodSandboxRequest{
+		Config:         config,
+		RuntimeHandler: runtime,
+	}
 	logrus.Debugf("RunPodSandboxRequest: %v", request)
 	r, err := client.RunPodSandbox(context.Background(), request)
 	logrus.Debugf("RunPodSandboxResponse: %v", r)
