@@ -13,7 +13,7 @@
 # limitations under the License.
 
 GO ?= go
-PROJECT := github.com/kubernetes-incubator/cri-tools
+PROJECT := github.com/kubernetes-sigs/cri-tools
 BINDIR := /usr/local/bin
 ifeq ($(GOPATH),)
 export GOPATH := $(CURDIR)/_output

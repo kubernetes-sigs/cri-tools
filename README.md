@@ -2,8 +2,8 @@
 
 CLI and validation tools for Kubelet Container Runtime Interface (CRI) .
 
-[![Build Status](https://travis-ci.org/kubernetes-incubator/cri-tools.svg?branch=master)](https://travis-ci.org/kubernetes-incubator/cri-tools)
-[![Go Report Card](https://goreportcard.com/badge/github.com/kubernetes-incubator/cri-tools)](https://goreportcard.com/report/github.com/kubernetes-incubator/cri-tools)
+[![Build Status](https://travis-ci.org/kubernetes-sigs/cri-tools.svg?branch=master)](https://travis-ci.org/kubernetes-sigs/cri-tools)
+[![Go Report Card](https://goreportcard.com/badge/github.com/kubernetes-sigs/cri-tools)](https://goreportcard.com/report/github.com/kubernetes-sigs/cri-tools)
 
 ## What is the scope of this project?
 

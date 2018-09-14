@@ -9,7 +9,7 @@ crictl is currently in Alpha and still under quick iterations. We encourage the 
 The CRI CLI can be installed easily via `go get` command:
 
 ```sh
-go get github.com/kubernetes-incubator/cri-tools/cmd/crictl
+go get github.com/kubernetes-sigs/cri-tools/cmd/crictl
 ```
 
 Then `crictl` binary can be found in `$GOPATH/bin`.
