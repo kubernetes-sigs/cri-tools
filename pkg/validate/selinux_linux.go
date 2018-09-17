@@ -17,6 +17,7 @@ limitations under the License.
 package validate
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
@@ -84,6 +85,58 @@ var _ = framework.KubeDescribe("SELinux", func() {
 				}
 				_ = createContainerWithSelinux(rc, ic, sandboxID, sandboxConfig, options, false, false)
 			})
+
+			It("selinux mount label should persist when container is privileged", func() {
+				By("create pod")
+				privileged := true
+				podID, podConfig := createPrivilegedPodSandbox(rc, privileged)
+
+				By("create container for security context Privileged is true")
+				containerID := createPrivilegedContainer(rc, ic, podID, podConfig, "container-with-isPrivileged-mount-and-process-label-test-", privileged)
+
+				By("start container")
+				startContainer(rc, containerID)
+				Eventually(func() runtimeapi.ContainerState {
+					return getContainerStatus(rc, containerID).State
+				}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+				By("check the Privileged container")
+				checkMountLabel(rc, containerID)
+			})
+
+			It("check selinux process label for privileged and unprivileged containers", func() {
+				By("create pod")
+				privileged := true
+				podID, podConfig := createPrivilegedPodSandbox(rc, privileged)
+
+				By("create container for security context Privileged is true")
+				containerID := createPrivilegedContainer(rc, ic, podID, podConfig, "container-with-isPrivileged-process-label-test-", privileged)
+
+				By("start container")
+				startContainer(rc, containerID)
+				Eventually(func() runtimeapi.ContainerState {
+					return getContainerStatus(rc, containerID).State
+				}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+				By("check the Privileged container")
+				checkProcessLabel(rc, containerID, privileged)
+
+				By("create pod")
+				privileged = false
+				podID, podConfig = createPrivilegedPodSandbox(rc, privileged)
+
+				By("create container for security context Privileged is true")
+				containerID = createPrivilegedContainer(rc, ic, podID, podConfig, "container-with-notPrivileged-process-label-test-", privileged)
+
+				By("start container")
+				startContainer(rc, containerID)
+				Eventually(func() runtimeapi.ContainerState {
+					return getContainerStatus(rc, containerID).State
+				}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+				By("check the Privileged container")
+				checkProcessLabel(rc, containerID, privileged)
+			})
 		})
 	}
 })
@@ -134,5 +187,28 @@ func checkContainerSelinux(rc internalapi.RuntimeService, containerID string, sh
 		Expect(status.GetExitCode()).To(Equal(int32(0)))
 	} else {
 		Expect(status.GetExitCode()).NotTo(Equal(int32(0)))
+	}
+}
+
+func checkMountLabel(rc internalapi.RuntimeService, containerID string) {
+	// Check that the mount label is set for privileged containers
+	cmd := []string{"cat", "/proc/1/mountinfo"}
+	stdout, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
+	Expect(err).NotTo(HaveOccurred(), msg)
+	Expect(string(stdout)).To(ContainSubstring("object_r:container_file_t"))
+}
+
+func checkProcessLabel(rc internalapi.RuntimeService, containerID string, privileged bool) {
+	// Check that the correct process label is set for privileged and unprivileged containers
+	cmd := []string{"cat", "/proc/self/attr/current"}
+	stdout, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
+	Expect(err).NotTo(HaveOccurred(), msg)
+
+	if privileged {
+		Expect(string(stdout)).To(ContainSubstring("system_r:spc_t"))
+	} else {
+		Expect(string(stdout)).To(ContainSubstring("system_r:container_t"))
 	}
 }
