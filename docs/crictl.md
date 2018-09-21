@@ -113,6 +113,37 @@ POD ID              CREATED             STATE               NAME                
 f84dd361f8dc5       17 seconds ago      Ready               busybox-sandbox     default             1
 ```
 
+#### Run pod sandbox with runtime handler
+
+Runtime handler requires runtime support. The following example shows running a pod sandbox with `runsc` hanlder on containerd runtime.
+
+```sh
+$ cat pod-config.json
+{
+    "metadata": {
+        "name": "nginx-runsc-sandbox",
+        "namespace": "default",
+        "attempt": 1,
+        "uid": "hdishd83djaidwnduwk28bcsb"
+    },
+    "logDirectory": "/tmp",
+    "linux": {
+    }
+}
+
+$ crictl runp --runtime=runsc pod-config.json
+c112976cb6caa43a967293e2c62a2e0d9d8191d5109afef230f403411147548c
+
+$ crictl inspectp c112976cb6caa43a967293e2c62a2e0d9d8191d5109afef230f403411147548c
+...
+    "runtime": {
+      "runtimeType": "io.containerd.runtime.v1.linux",
+      "runtimeEngine": "/usr/local/sbin/runsc",
+      "runtimeRoot": "/run/containerd/runsc"
+    },
+...
+```
+
 ### Pull a busybox image
 
 ```sh
