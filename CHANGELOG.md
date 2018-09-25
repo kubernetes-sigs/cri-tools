@@ -1,22 +1,26 @@
 <!-- TOC -->
 
+- [v1.12.0](#v1120)
+  - [CRI CLI (crictl)](#cri-cli-crictl)
+  - [CRI validation testing (critest)](#cri-validation-testing-critest)
+  - [Downloads](#downloads)
 - [v1.11.1](#v1111)
   - [CRI CLI (crictl)](#cri-cli-crictl)
 - [v1.11.0](#v1110)
   - [CRI validation testing (critest)](#cri-validation-testing-critest)
-  - [CRI CLI (crictl)](#cri-cli-crictl-1)
+  - [CRI CLI (crictl)](#cri-cli-crictl)
 - [v1.0.0-beta.1](#v100-beta1)
-  - [CRI validation testing (critest)](#cri-validation-testing-critest-1)
-  - [CRI CLI (crictl)](#cri-cli-crictl-2)
+  - [CRI validation testing (critest)](#cri-validation-testing-critest)
+  - [CRI CLI (crictl)](#cri-cli-crictl)
 - [v1.0.0-beta.0](#v100-beta0)
-  - [CRI validation testing (critest)](#cri-validation-testing-critest-2)
-  - [CRI CLI (crictl)](#cri-cli-crictl-3)
+  - [CRI validation testing (critest)](#cri-validation-testing-critest)
+  - [CRI CLI (crictl)](#cri-cli-crictl)
 - [v1.0.0-alpha.0](#v100-alpha0)
-  - [CRI validation testing (critest)](#cri-validation-testing-critest-3)
-  - [CRI CLI (crictl)](#cri-cli-crictl-4)
+  - [CRI validation testing (critest)](#cri-validation-testing-critest)
+  - [CRI CLI (crictl)](#cri-cli-crictl)
 - [v0.2](#v02)
-  - [CRI validation testing (critest)](#cri-validation-testing-critest-4)
-  - [CRI CLI (crictl)](#cri-cli-crictl-5)
+  - [CRI validation testing (critest)](#cri-validation-testing-critest)
+  - [CRI CLI (crictl)](#cri-cli-crictl)
 - [v0.1](#v01)
   - [Features](#features)
     - [CRI validation testing](#cri-validation-testing)
@@ -25,6 +29,47 @@
   - [Documentation](#documentation)
 
 <!-- /TOC -->
+
+# v1.12.0
+
+cri-tools v1.12.0 has upgraded to kubernetes v1.12. It mainly focus on bug fixes and new features introduced in kubernetes v1.12. It has also moved to <https://github.com/kubernetes-sigs/cri-tools>.
+
+## CRI CLI (crictl)
+
+- [#345](https://github.com/kubernetes-sigs/cri-tools/pull/345) Fixes missing Windows library
+- [#354](https://github.com/kubernetes-sigs/cri-tools/pull/354) Properly returns errors when the output format is not supported
+- [#357](https://github.com/kubernetes-sigs/cri-tools/pull/357) Fixes version information and install guides
+- [#361](https://github.com/kubernetes-sigs/cri-tools/pull/361) Show concise image info for crictl ps
+- [#363](https://github.com/kubernetes-sigs/cri-tools/pull/363) Fixes crictl ps and crictl pods
+- [#367](https://github.com/kubernetes-sigs/cri-tools/pull/367) Fixes version information for release scripts
+- [#369](https://github.com/kubernetes-sigs/cri-tools/pull/369) Adds podID in output of `crictl ps`
+- [#370](https://github.com/kubernetes-sigs/cri-tools/pull/370) Fixes non JSON keys support in info map
+- [#374](https://github.com/kubernetes-sigs/cri-tools/pull/374) Adds support for Windows npipe `\.\pipe\dockershim`
+- [#375](https://github.com/kubernetes-sigs/cri-tools/pull/375) Adds sandbox config to `image pull`
+- [#378](https://github.com/kubernetes-sigs/cri-tools/pull/378) Fixes unmarshal issues in `crictl inspecti`
+- [#383](https://github.com/kubernetes-sigs/cri-tools/pull/383) Adds support for runtime handler
+- [#384](https://github.com/kubernetes-sigs/cri-tools/pull/384) Fixes timeout for grpc dialer
+
+## CRI validation testing (critest)
+
+- [#377](https://github.com/kubernetes-sigs/cri-tools/pull/377) Adds new test to critest for privileged container
+
+## Downloads
+
+| file                                | sha256                                                       |
+| ----------------------------------- | ------------------------------------------------------------ |
+| [crictl-v1.12.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-linux-386.tar.gz)     | 028ccea08422e011fcf11db4ebed772b1c434b44c4dd717cecd80bd0d1e57417 |
+| [crictl-v1.12.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-linux-amd64.tar.gz)   | e7d913bcce40bf54e37ab1d4b75013c823d0551e6bc088b217bc1893207b4844 |
+| [crictl-v1.12.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-linux-arm64.tar.gz)   | 8466f08b59bf36d2eebcb9428c3d4e6e224c3065d800ead09ad730ce374da6fe |
+| [crictl-v1.12.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-linux-arm.tar.gz)     | ca6b4ac80278d32d9cc8b8b19de140fd1cc35640f088969f7068fea2df625490 |
+| [crictl-v1.12.0-linux-ppc64le.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-linux-ppc64le.tar.gz) | ec6254f1f6ffa064ba41825aab5612b7b005c8171fbcdac2ca3927d4e393000f |
+| [crictl-v1.12.0-linux-s390x.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-linux-s390x.tar.gz)   | 814aa9cd496be416612c2653097a1c9eb5784e38aa4889034b44ebf888709057 |
+| [crictl-v1.12.0-windows-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-windows-386.tar.gz)   | 4520520b106b232a8a6e99ecece19a83bf58b94d48e28b4c0483a4a0f59fe161 |
+| [crictl-v1.12.0-windows-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-windows-amd64.tar.gz) | e401db715a9f843acaae40846a4c18f6938df95c34d06af08aac2fc3e591b2a7 |
+| [critest-v1.12.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/critest-v1.12.0-linux-386.tar.gz)    | ae9da4a95147e1486575d649b4384e91ba701a0aecadbc91c70ea3a963ba1b6b |
+| [critest-v1.12.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/critest-v1.12.0-linux-amd64.tar.gz)  | 681055657a19b8ce2ecb2571e71cc7b069f33847f2f5ae72e220f55292a5e976 |
+| [critest-v1.12.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/critest-v1.12.0-linux-arm64.tar.gz)  | b3eb282ab6d845e8c640c51aa266dc9d373d991a824cf550fbc12c36f98dcc5d |
+| [critest-v1.12.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/critest-v1.12.0-linux-arm.tar.gz)    | 4593d86afffa373ab2ec5ae3b66fc0ca5413db3dd8268603e13a4820e0f8633d |
 
 # v1.11.1
 
