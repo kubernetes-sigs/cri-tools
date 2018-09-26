@@ -57,6 +57,11 @@ var pullImageCommand = cli.Command{
 			Usage: "Use `USERNAME[:PASSWORD]` for accessing the registry",
 		},
 		cli.StringFlag{
+			Name:  "auth",
+			Value: "",
+			Usage: "Use `AUTH_STRING` for accessing the registry. AUTH_STRING is a base64 encoded 'USERNAME[:PASSWORD]'",
+		},
+		cli.StringFlag{
 			Name:  "pod-config",
 			Value: "",
 			Usage: "Use `pod-config.[json|yaml]` to override the the pull context",
@@ -73,17 +78,12 @@ var pullImageCommand = cli.Command{
 			return err
 		}
 
-		var auth *pb.AuthConfig
-		if context.IsSet("creds") {
-			var err error
-			auth, err = getAuth(context.String("creds"))
-			if err != nil {
-				return err
-			}
+		auth, err := getAuth(context.String("creds"), context.String("auth"))
+		if err != nil {
+			return err
 		}
 		var sandbox *pb.PodSandboxConfig
 		if context.IsSet("pod-config") {
-			var err error
 			sandbox, err = loadPodSandboxConfig(context.String("pod-config"))
 			if err != nil {
 				return fmt.Errorf("load podSandboxConfig failed: %v", err)
@@ -327,15 +327,26 @@ func parseCreds(creds string) (string, string, error) {
 	return up[0], up[1], nil
 }
 
-func getAuth(creds string) (*pb.AuthConfig, error) {
-	username, password, err := parseCreds(creds)
-	if err != nil {
-		return nil, err
+func getAuth(creds string, auth string) (*pb.AuthConfig, error) {
+	if creds != "" && auth != "" {
+		return nil, errors.New("both `--creds` and `--auth` are specified")
 	}
-	return &pb.AuthConfig{
-		Username: username,
-		Password: password,
-	}, nil
+	if creds != "" {
+		username, password, err := parseCreds(creds)
+		if err != nil {
+			return nil, err
+		}
+		return &pb.AuthConfig{
+			Username: username,
+			Password: password,
+		}, nil
+	}
+	if auth != "" {
+		return &pb.AuthConfig{
+			Auth: auth,
+		}, nil
+	}
+	return nil, nil
 }
 
 // Ideally repo tag should always be image:tag.
