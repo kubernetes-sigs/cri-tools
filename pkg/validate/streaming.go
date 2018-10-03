@@ -343,6 +343,6 @@ func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string, 
 	}()
 
 	By(fmt.Sprintf("check if we can get nginx main page via localhost:%d", hostPort))
-	checkNginxMainPage(c, "", hostPort)
+	checkMainPage(c, "", hostPort)
 	framework.Logf("Check port forward url %q succeed", portForwardSeverURL)
 }
