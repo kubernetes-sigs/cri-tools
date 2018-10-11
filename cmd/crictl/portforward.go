@@ -22,7 +22,6 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -78,14 +77,20 @@ func PortForward(client pb.RuntimeServiceClient, opts portforwardOptions) error 
 		return err
 	}
 	portforwardURL := r.Url
-	if !strings.HasPrefix(portforwardURL, "http") {
-		portforwardURL = kubeletURLPrefix + portforwardURL
-	}
 
 	URL, err := url.Parse(portforwardURL)
 	if err != nil {
 		return err
 	}
+
+	if URL.Host == "" {
+		URL.Host = kubeletURLHost
+	}
+
+	if URL.Scheme == "" {
+		URL.Scheme = kubeletURLSchema
+	}
+
 	logrus.Debugf("PortForward URL: %v", URL)
 	transport, upgrader, err := spdy.RoundTripperFor(&restclient.Config{})
 	if err != nil {
