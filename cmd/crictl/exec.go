@@ -19,7 +19,6 @@ package main
 import (
 	"fmt"
 	"net/url"
-	"strings"
 
 	dockerterm "github.com/docker/docker/pkg/term"
 	"github.com/sirupsen/logrus"
@@ -33,7 +32,8 @@ import (
 
 const (
 	// TODO: make this configurable in kubelet.
-	kubeletURLPrefix = "http://127.0.0.1:10250"
+	kubeletURLSchema = "http"
+	kubeletURLHost   = "http://127.0.0.1:10250"
 )
 
 var runtimeExecCommand = cli.Command{
@@ -134,14 +134,18 @@ func Exec(client pb.RuntimeServiceClient, opts execOptions) error {
 		return err
 	}
 	execURL := r.Url
-	if !strings.HasPrefix(execURL, "http") {
-		execURL = kubeletURLPrefix + execURL
-
-	}
 
 	URL, err := url.Parse(execURL)
 	if err != nil {
 		return err
+	}
+
+	if URL.Host == "" {
+		URL.Host = kubeletURLHost
+	}
+
+	if URL.Scheme == "" {
+		URL.Scheme = kubeletURLSchema
 	}
 
 	logrus.Debugf("Exec URL: %v", URL)

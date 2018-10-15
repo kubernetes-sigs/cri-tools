@@ -19,7 +19,6 @@ package main
 import (
 	"fmt"
 	"net/url"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -89,14 +88,19 @@ func Attach(client pb.RuntimeServiceClient, opts attachOptions) error {
 		return err
 	}
 	attachURL := r.Url
-	if !strings.HasPrefix(attachURL, "http") {
-		attachURL = kubeletURLPrefix + attachURL
-	}
 
 	URL, err := url.Parse(attachURL)
 	if err != nil {
 		return err
 	}
+
+	if URL.Host == "" {
+		URL.Host = kubeletURLHost
+	}
+	if URL.Scheme == "" {
+		URL.Scheme = kubeletURLSchema
+	}
+
 	logrus.Debugf("Attach URL: %v", URL)
 	return stream(opts.stdin, opts.tty, URL)
 }
