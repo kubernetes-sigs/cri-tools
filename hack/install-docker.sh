@@ -34,4 +34,3 @@ rm -f docker.tgz
 
 # Restart docker daemon.
 sudo service docker restart
-
