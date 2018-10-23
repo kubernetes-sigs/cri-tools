@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
@@ -189,20 +190,42 @@ func createDefaultAttach(c internalapi.RuntimeService, containerID string) strin
 	return resp.Url
 }
 
+// safeBuffer is a goroutine safe bytes.Buffer
+type safeBuffer struct {
+	mu     sync.Mutex
+	buffer bytes.Buffer
+}
+
+// Write appends the contents of p to the buffer, growing the buffer as needed. It returns
+// the number of bytes written.
+func (s *safeBuffer) Write(p []byte) (n int, err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.buffer.Write(p)
+}
+
+// String returns the contents of the unread portion of the buffer
+// as a string.  If the Buffer is a nil pointer, it returns "<nil>".
+func (s *safeBuffer) String() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.buffer.String()
+}
+
 func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
-	localOut := &bytes.Buffer{}
+	localOut := &safeBuffer{buffer: bytes.Buffer{}}
 	localErr := &bytes.Buffer{}
 	reader, writer := io.Pipe()
-	var out string
-
 	go func() {
 		defer GinkgoRecover()
+		defer writer.Close()
 		writer.Write([]byte("echo hello\n"))
 		Eventually(func() string {
-			out = localOut.String()
-			return out
-		}, time.Minute, time.Second).ShouldNot(BeEmpty())
-		writer.Close()
+			return localOut.String()
+		}, time.Minute, time.Second).Should(Equal("hello\n"), "The stdout of attach should be hello")
+		Consistently(func() string {
+			return localOut.String()
+		}, 3*time.Second, time.Second).Should(Equal("hello\n"), "The stdout of attach should not contain other things")
 	}()
 
 	// Only http is supported now.
@@ -219,7 +242,6 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 	})
 	framework.ExpectNoError(err, "failed to open streamer for %q", attachServerURL)
 
-	Expect(out).To(Equal("hello\n"), "The stdout of exec should be hello")
 	Expect(localErr.String()).To(BeEmpty(), "The stderr of attach should be empty")
 	framework.Logf("Check attach url %q succeed", attachServerURL)
 }
