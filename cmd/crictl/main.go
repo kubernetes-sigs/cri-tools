@@ -28,6 +28,7 @@ import (
 	"google.golang.org/grpc"
 	"k8s.io/kubernetes/pkg/kubelet/apis/cri"
 	"k8s.io/kubernetes/pkg/kubelet/remote"
+	"k8s.io/kubernetes/pkg/kubelet/util"
 
 	"github.com/kubernetes-sigs/cri-tools/pkg/version"
 )
@@ -52,7 +53,7 @@ func getRuntimeClientConnection(context *cli.Context) (*grpc.ClientConn, error) 
 		return nil, fmt.Errorf("--runtime-endpoint is not set")
 	}
 
-	addr, dialer, err := GetAddressAndDialer(RuntimeEndpoint)
+	addr, dialer, err := util.GetAddressAndDialer(RuntimeEndpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +73,7 @@ func getImageClientConnection(context *cli.Context) (*grpc.ClientConn, error) {
 		ImageEndpoint = RuntimeEndpoint
 	}
 
-	addr, dialer, err := GetAddressAndDialer(ImageEndpoint)
+	addr, dialer, err := util.GetAddressAndDialer(ImageEndpoint)
 	if err != nil {
 		return nil, err
 	}
