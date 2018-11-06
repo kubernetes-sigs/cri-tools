@@ -96,7 +96,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "crictl"
 	app.Usage = "client for CRI"
-	app.Version = "1.0.0-beta.0"
+	app.Version = "1.0.0-beta.2"
 
 	app.Commands = []cli.Command{
 		runtimeAttachCommand,
