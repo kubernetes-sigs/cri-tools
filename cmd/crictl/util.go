@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -48,8 +49,8 @@ type listOptions struct {
 	id string
 	// podID of container
 	podID string
-	// Regular expression pattern to match pod name
-	podNameRegexp string
+	// Regular expression pattern to match pod or container
+	nameRegexp string
 	// Regular expression pattern to match the pod namespace
 	podNamespaceRegexp string
 	// state of the sandbox
@@ -307,4 +308,16 @@ func getTruncatedID(id, prefix string) string {
 		id = id[:truncatedIDLen]
 	}
 	return id
+}
+
+func matchesRegex(pattern, target string) bool {
+	if pattern == "" {
+		return true
+	}
+	matched, err := regexp.MatchString(pattern, target)
+	if err != nil {
+		// Assume it's not a match if an error occurs.
+		return false
+	}
+	return matched
 }

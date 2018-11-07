@@ -20,12 +20,12 @@ import (
 	"testing"
 )
 
-func TestPodFilterByRegex(t *testing.T) {
+func TestNameFilterByRegex(t *testing.T) {
 	testCases := []struct {
-		desc      string
-		pattern   string
-		podString string
-		isMatch   bool
+		desc    string
+		pattern string
+		name    string
+		isMatch bool
 	}{
 		{
 			"exact name should match",
@@ -60,7 +60,7 @@ func TestPodFilterByRegex(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			r := podMatchesRegex(tc.pattern, tc.podString)
+			r := matchesRegex(tc.pattern, tc.name)
 			if r != tc.isMatch {
 				t.Errorf("expected matched to be %v; actual result is %v", tc.isMatch, r)
 			}

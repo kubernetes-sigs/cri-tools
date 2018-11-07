@@ -19,6 +19,7 @@ package main
 const (
 	// This labels are copied from kubelet directly, and may change
 	// without warning in the future.
-	kubePodNameLabel      = "io.kubernetes.pod.name"
-	kubePodNamespaceLabel = "io.kubernetes.pod.namespace"
+	kubePodNameLabel       = "io.kubernetes.pod.name"
+	kubePodNamespaceLabel  = "io.kubernetes.pod.namespace"
+	kubeContainerNameLabel = "io.kubernetes.container.name"
 )
