@@ -26,12 +26,12 @@ Version matrix:
 | master             | N/A               | master           |
 | 1.12.X             | v1.12.0           | release-1.12     |
 | 1.11.X             | v1.11.1           | release-1.11     |
-| 1.10.X             | v1.0.0-beta.1     | release-1.10     |
-| 1.9.X              | v1.0.0-alpha.0    | release-1.9      |
+| 1.10.X             | v1.0.0-beta.2     | release-1.10     |
+| 1.9.X              | v1.0.0-alpha.1    | release-1.9      |
 | 1.8.X              | v0.2              | release-1.8      |
 | 1.7.X              | v0.1              | release-1.7      |
 
-We are currently working toward an beta version of CRI validation tests to be used in conjunction with Kubernetes 1.10. See the [roadmap](docs/roadmap.md) for information about current and future milestones.
+See the [roadmap](docs/roadmap.md) for information about current and future milestones.
 
 ## Install
 
