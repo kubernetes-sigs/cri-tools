@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"regexp"
 	"sort"
 	"strings"
 	"text/tabwriter"
@@ -227,7 +226,7 @@ var listPodCommand = cli.Command{
 			latest:             context.Bool("latest"),
 			last:               context.Int("last"),
 			noTrunc:            context.Bool("no-trunc"),
-			podNameRegexp:      context.String("name"),
+			nameRegexp:         context.String("name"),
 			podNamespaceRegexp: context.String("namespace"),
 		}
 		opts.labels, err = parseLabelStringSlice(context.StringSlice("label"))
@@ -383,18 +382,6 @@ func PodSandboxStatus(client pb.RuntimeServiceClient, ID, output string, quiet b
 	return nil
 }
 
-func podMatchesRegex(pattern, target string) bool {
-	if pattern == "" {
-		return true
-	}
-	matched, err := regexp.MatchString(pattern, target)
-	if err != nil {
-		// Assume it's not a match if an error occurs.
-		return false
-	}
-	return matched
-}
-
 // ListPodSandboxes sends a ListPodSandboxRequest to the server, and parses
 // the returned ListPodSandboxResponse.
 func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
@@ -447,10 +434,10 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 	}
 	for _, pod := range r.Items {
 		// Filter by pod name/namespace regular expressions.
-		if !podMatchesRegex(opts.podNameRegexp, pod.Labels[kubePodNameLabel]) {
+		if !matchesRegex(opts.nameRegexp, pod.Labels[kubePodNameLabel]) {
 			continue
 		}
-		if !podMatchesRegex(opts.podNamespaceRegexp, pod.Labels[kubePodNamespaceLabel]) {
+		if !matchesRegex(opts.podNamespaceRegexp, pod.Labels[kubePodNamespaceLabel]) {
 			continue
 		}
 

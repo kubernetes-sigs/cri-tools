@@ -265,6 +265,11 @@ var listContainersCommand = cli.Command{
 			Usage: "Filter by container id",
 		},
 		cli.StringFlag{
+			Name:  "name",
+			Value: "",
+			Usage: "filter by container name regular expression pattern",
+		},
+		cli.StringFlag{
 			Name:  "pod, p",
 			Value: "",
 			Usage: "Filter by pod id",
@@ -310,16 +315,17 @@ var listContainersCommand = cli.Command{
 		}
 
 		opts := listOptions{
-			id:      context.String("id"),
-			podID:   context.String("pod"),
-			state:   context.String("state"),
-			verbose: context.Bool("verbose"),
-			quiet:   context.Bool("quiet"),
-			output:  context.String("output"),
-			all:     context.Bool("all"),
-			latest:  context.Bool("latest"),
-			last:    context.Int("last"),
-			noTrunc: context.Bool("no-trunc"),
+			id:         context.String("id"),
+			podID:      context.String("pod"),
+			state:      context.String("state"),
+			verbose:    context.Bool("verbose"),
+			quiet:      context.Bool("quiet"),
+			output:     context.String("output"),
+			all:        context.Bool("all"),
+			nameRegexp: context.String("name"),
+			latest:     context.Bool("latest"),
+			last:       context.Int("last"),
+			noTrunc:    context.Bool("no-trunc"),
 		}
 		opts.labels, err = parseLabelStringSlice(context.StringSlice("label"))
 		if err != nil {
@@ -617,6 +623,10 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 		fmt.Fprintln(w, "CONTAINER ID\tIMAGE\tCREATED\tSTATE\tNAME\tATTEMPT\tPOD ID")
 	}
 	for _, c := range r.Containers {
+		// Filter by pod name/namespace regular expressions.
+		if !matchesRegex(opts.nameRegexp, c.Labels[kubeContainerNameLabel]) {
+			continue
+		}
 		if opts.quiet {
 			fmt.Printf("%s\n", c.Id)
 			continue
