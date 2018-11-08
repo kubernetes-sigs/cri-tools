@@ -61,7 +61,7 @@ clean:
 	find . -name \*~ -delete
 	find . -name \#\* -delete
 
-cross: check-gopath
+windows: check-gopath
 	GOOS=windows $(GO) test -c -o $(CURDIR)/_output/critest.exe \
 		-ldflags '$(GO_LDFLAGS)' \
 		$(PROJECT)/cmd/critest

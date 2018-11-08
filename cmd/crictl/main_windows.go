@@ -19,45 +19,16 @@ limitations under the License.
 package main
 
 import (
-	"net"
 	"os"
 	"path/filepath"
-	"strings"
-	"time"
-
-	"github.com/Microsoft/go-winio"
-	"k8s.io/kubernetes/pkg/kubelet/util"
 )
 
 const (
-	defaultRuntimeEndpoint = "tcp://localhost:3735"
+	defaultRuntimeEndpoint = "npipe:////./pipe/dockershim"
 )
 
 var defaultConfigPath string
 
 func init() {
 	defaultConfigPath = filepath.Join(os.Getenv("USERPROFILE"), ".crictl", "crictl.yaml")
-}
-
-// GetAddressAndDialer returns the address and a dialer for the endpoint
-// protocol.
-//
-// On Windows supported protocols are Windows named pipes and tcp.
-//
-// Examples:
-//
-// An endpoint of "tcp://localhost:3735" returns address "localhost:3735" and a
-// tcp socket dialer for this address.
-//
-// An endpoint of "\\.\pipe\name" returns an address of "\\.\pipe\name" and a
-// Windows named pipe dialer for this address.
-func GetAddressAndDialer(endpoint string) (string, func(addr string, timeout time.Duration) (net.Conn, error), error) {
-	if strings.HasPrefix(endpoint, "\\\\.\\pipe") {
-		return endpoint, dial, nil
-	}
-	return util.GetAddressAndDialer(endpoint)
-}
-
-func dial(addr string, timeout time.Duration) (net.Conn, error) {
-	return winio.DialPipe(addr, &timeout)
 }

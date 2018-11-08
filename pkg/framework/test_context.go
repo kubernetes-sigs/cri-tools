@@ -61,7 +61,7 @@ func RegisterFlags() {
 
 	svcaddr := "unix:///var/run/dockershim.sock"
 	if runtime.GOOS == "windows" {
-		svcaddr = "tcp://localhost:3735"
+		svcaddr = "npipe:////./pipe/dockershim"
 	}
 	flag.StringVar(&TestContext.RuntimeServiceAddr, "runtime-endpoint", svcaddr, "Runtime service socket for client to connect..")
 	flag.DurationVar(&TestContext.RuntimeServiceTimeout, "runtime-service-timeout", 300*time.Second, "Timeout when trying to connect to a runtime service.")

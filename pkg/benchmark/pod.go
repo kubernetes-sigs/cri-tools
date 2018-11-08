@@ -52,8 +52,9 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				Linux:    &runtimeapi.LinuxPodSandboxConfig{},
 			}
 
+			// TODO: add support of runtime
 			operation := b.Time("create PodSandbox", func() {
-				podID, err = c.RunPodSandbox(config)
+				podID, err = c.RunPodSandbox(config, "")
 			})
 
 			framework.ExpectNoError(err, "failed to create PodSandbox: %v", err)

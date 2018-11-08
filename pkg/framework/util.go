@@ -148,7 +148,8 @@ func BuildPodSandboxMetadata(podSandboxName, uid, namespace string, attempt uint
 
 // RunPodSandbox runs a PodSandbox.
 func RunPodSandbox(c internalapi.RuntimeService, config *runtimeapi.PodSandboxConfig) string {
-	podID, err := c.RunPodSandbox(config)
+	// TODO: add support of runtime handler.
+	podID, err := c.RunPodSandbox(config, "")
 	ExpectNoError(err, "failed to create PodSandbox: %v", err)
 	return podID
 }

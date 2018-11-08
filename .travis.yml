@@ -48,7 +48,7 @@ jobs:
     - stage: Test
       os: windows
       script:
-        - make
+        - make windows
         - powershell -c "Set-ExecutionPolicy Bypass -Scope CURRENTUSER -Force"
         - powershell hack/install-kubelet.ps1
         # Skip hack/run-critest.sh temporarily.
