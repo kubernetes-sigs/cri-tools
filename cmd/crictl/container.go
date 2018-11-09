@@ -548,6 +548,18 @@ func ContainerStatus(client pb.RuntimeServiceClient, ID, output string, quiet bo
 		}
 		fmt.Printf("Exit Code: %v\n", r.Status.ExitCode)
 	}
+	if r.Status.Labels != nil {
+		fmt.Println("Labels:")
+		for _, k := range getSortedKeys(r.Status.Labels) {
+			fmt.Printf("\t%s -> %s\n", k, r.Status.Labels[k])
+		}
+	}
+	if r.Status.Annotations != nil {
+		fmt.Println("Annotations:")
+		for _, k := range getSortedKeys(r.Status.Annotations) {
+			fmt.Printf("\t%s -> %s\n", k, r.Status.Annotations[k])
+		}
+	}
 	if verbose {
 		fmt.Printf("Info: %v\n", r.GetInfo())
 	}
