@@ -54,7 +54,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 			// TODO: add support of runtime
 			operation := b.Time("create PodSandbox", func() {
-				podID, err = c.RunPodSandbox(config, "")
+				podID, err = c.RunPodSandbox(config, framework.TestContext.RuntimeHandler)
 			})
 
 			framework.ExpectNoError(err, "failed to create PodSandbox: %v", err)
