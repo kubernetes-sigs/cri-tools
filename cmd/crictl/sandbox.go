@@ -434,10 +434,10 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 	}
 	for _, pod := range r.Items {
 		// Filter by pod name/namespace regular expressions.
-		if !matchesRegex(opts.nameRegexp, pod.Labels[kubePodNameLabel]) {
+		if !matchesRegex(opts.nameRegexp, pod.Metadata.Name) {
 			continue
 		}
-		if !matchesRegex(opts.podNamespaceRegexp, pod.Labels[kubePodNamespaceLabel]) {
+		if !matchesRegex(opts.podNamespaceRegexp, pod.Metadata.Namespace) {
 			continue
 		}
 

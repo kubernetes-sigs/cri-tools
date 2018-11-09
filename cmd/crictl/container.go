@@ -624,7 +624,7 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 	}
 	for _, c := range r.Containers {
 		// Filter by pod name/namespace regular expressions.
-		if !matchesRegex(opts.nameRegexp, c.Labels[kubeContainerNameLabel]) {
+		if !matchesRegex(opts.nameRegexp, c.Metadata.Name) {
 			continue
 		}
 		if opts.quiet {
