@@ -31,7 +31,9 @@ sleep 10
 
 # Run e2e test cases
 # Skip reopen container log test because docker doesn't support it.
-critest -ginkgo.skip="runtime should support reopening container log" -parallel 8
+# Skip runtime should support execSync with timeout because docker doesn't
+# support it.
+critest -ginkgo.skip="runtime should support reopening container log|runtime should support execSync with timeout" -parallel 8
 
 # Run benchmark test cases
 critest -benchmark
