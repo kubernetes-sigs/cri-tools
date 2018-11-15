@@ -392,6 +392,9 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			By("start container")
 			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
 
 			By("Check whether rootfs is writable")
 			checkRootfs(podConfig, logPath, readOnlyRootfs)
