@@ -24,7 +24,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	units "github.com/docker/go-units"
+	"github.com/docker/go-units"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
@@ -313,6 +313,58 @@ var removeImageCommand = cli.Command{
 	},
 }
 
+var imageFsInfoCommand = cli.Command{
+	Name:                   "imagefsinfo",
+	Usage:                  "Return image filesystem info",
+	SkipArgReorder:         true,
+	UseShortOptionHandling: true,
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "output, o",
+			Usage: "Output format, One of: json|yaml|table",
+		},
+	},
+	Action: func(context *cli.Context) error {
+		if err := getImageClient(context); err != nil {
+			return err
+		}
+		output := context.String("output")
+		if output == "" { // default to json output
+			output = "json"
+		}
+
+		r, err := ImageFsInfo(imageClient)
+		if err != nil {
+			return fmt.Errorf("image filesystem info request failed: %v", err)
+		}
+		for _, info := range r.ImageFilesystems {
+			status, err := protobufObjectToJSON(info)
+			if err != nil {
+				return fmt.Errorf("failed to marshal image filesystem info to json: %v", err)
+			}
+
+			switch output {
+			case "json", "yaml":
+				if err := outputStatusInfo(status, nil, output); err != nil {
+					return fmt.Errorf("failed to output image filesystem info %v", err)
+				}
+				continue
+			case "table": // table output is after this switch block
+			default:
+				return fmt.Errorf("output option cannot be %s", output)
+			}
+
+			// otherwise output in table format
+			fmt.Printf("TimeStamp: %s\n", info.Timestamp)
+			fmt.Printf("UsedBytes: %s\n", info.UsedBytes)
+			fmt.Printf("Mountpoint: %s\n", info.FsId.Mountpoint)
+		}
+
+		return nil
+
+	},
+}
+
 func parseCreds(creds string) (string, string, error) {
 	if creds == "" {
 		return "", "", errors.New("credentials can't be empty")
@@ -437,5 +489,15 @@ func RemoveImage(client pb.ImageServiceClient, image string) (resp *pb.RemoveIma
 	logrus.Debugf("RemoveImageRequest: %v", request)
 	resp, err = client.RemoveImage(context.Background(), request)
 	logrus.Debugf("RemoveImageResponse: %v", resp)
+	return
+}
+
+// ImageFsInfo sends an ImageStatusRequest to the server, and parses
+// the returned ImageFsInfoResponse.
+func ImageFsInfo(client pb.ImageServiceClient) (resp *pb.ImageFsInfoResponse, err error) {
+	request := &pb.ImageFsInfoRequest{}
+	logrus.Debugf("ImageFsInfoRequest: %v", request)
+	resp, err = client.ImageFsInfo(context.Background(), request)
+	logrus.Debugf("ImageFsInfoResponse: %v", resp)
 	return
 }

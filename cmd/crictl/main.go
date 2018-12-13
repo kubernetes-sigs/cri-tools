@@ -102,6 +102,7 @@ func main() {
 		listImageCommand,
 		containerStatusCommand,
 		imageStatusCommand,
+		imageFsInfoCommand,
 		podStatusCommand,
 		logsCommand,
 		runtimePortForwardCommand,
