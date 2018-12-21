@@ -83,7 +83,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 		}, defaultOperationTimes)
 
 		Measure("benchmark about listing PodSandbox", func(b Benchmarker) {
-			podList := make([]string, framework.TestContext.Number)
+			podList := make([]string, 0, framework.TestContext.Number)
 			var err error
 
 			for i := 0; i < framework.TestContext.Number; i++ {
