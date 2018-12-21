@@ -143,9 +143,8 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			By("create a default container with namespace")
 			prefix := "namespace-container-"
-			command := []string{"top"}
 			containerName := prefix + framework.NewUUID()
-			containerID, _, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.DefaultContainerImage, namespaceOption, command, "")
+			containerID, _, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.DefaultContainerImage, namespaceOption, pauseCmd, "")
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -154,7 +153,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("check if the shared memory segment is included in the container")
-			command = []string{"ipcs", "-m"}
+			command := []string{"ipcs", "-m"}
 			o := execSyncContainer(rc, containerID, command)
 			Expect(o).To(ContainSubstring(segmentID), "The shared memory segment should be included in the container")
 		})
@@ -176,9 +175,8 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			By("create a default container with namespace")
 			prefix := "namespace-container-"
-			command := []string{"top"}
 			containerName := prefix + framework.NewUUID()
-			containerID, _, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.DefaultContainerImage, namespaceOption, command, "")
+			containerID, _, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.DefaultContainerImage, namespaceOption, pauseCmd, "")
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -187,7 +185,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("check if the shared memory segment is not included in the container")
-			command = []string{"ipcs", "-m"}
+			command := []string{"ipcs", "-m"}
 			o := execSyncContainer(rc, containerID, command)
 			Expect(o).NotTo(ContainSubstring(segmentID), "The shared memory segment should be included in the container")
 		})
@@ -296,7 +294,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			containerConfig := &runtimeapi.ContainerConfig{
 				Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 				Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
-				Command:  []string{"sh", "-c", "top"},
+				Command:  pauseCmd,
 				Linux: &runtimeapi.LinuxContainerConfig{
 					SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
 						SupplementalGroups: supplementalGroups,
@@ -727,7 +725,7 @@ func createRunAsUserContainer(rc internalapi.RuntimeService, ic internalapi.Imag
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
-		Command:  []string{"sh", "-c", "top"},
+		Command:  pauseCmd,
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
 				RunAsUser: &uidV,
@@ -749,7 +747,7 @@ func createRunAsUserNameContainer(rc internalapi.RuntimeService, ic internalapi.
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
-		Command:  []string{"sh", "-c", "top"},
+		Command:  pauseCmd,
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
 				RunAsUsername: userName,
@@ -818,6 +816,7 @@ func createNamespacePodSandbox(rc internalapi.RuntimeService, podSandboxNamespac
 			},
 		},
 		LogDirectory: podLogPath,
+		Labels:       framework.DefaultPodLabels,
 	}
 
 	return framework.RunPodSandbox(rc, config), config
@@ -888,6 +887,7 @@ func createPrivilegedPodSandbox(rc internalapi.RuntimeService, privileged bool) 
 				Privileged: privileged,
 			},
 		},
+		Labels: framework.DefaultPodLabels,
 	}
 
 	return framework.RunPodSandbox(rc, config), config
@@ -900,7 +900,7 @@ func createPrivilegedContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
-		Command:  []string{"top"},
+		Command:  pauseCmd,
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
 				Privileged: privileged,
@@ -932,7 +932,7 @@ func createCapabilityContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
-		Command:  []string{"top"},
+		Command:  pauseCmd,
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
 				Capabilities: &runtimeapi.Capability{
@@ -1022,6 +1022,7 @@ func seccompTestContainer(rc internalapi.RuntimeService, ic internalapi.ImageMan
 				SeccompProfilePath: seccompProfile,
 			},
 		},
+		Labels: framework.DefaultPodLabels,
 	}
 	podID := framework.RunPodSandbox(rc, podConfig)
 
@@ -1031,7 +1032,7 @@ func seccompTestContainer(rc internalapi.RuntimeService, ic internalapi.ImageMan
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
-		Command:  []string{"top"},
+		Command:  pauseCmd,
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
 				SeccompProfilePath: seccompProfile,
@@ -1107,7 +1108,7 @@ func createContainerWithExpectation(rc internalapi.RuntimeService,
 	}
 	status := framework.ImageStatus(ic, imageName)
 	if status == nil {
-		framework.PullPublicImage(ic, imageName)
+		framework.PullPublicImage(ic, imageName, nil)
 	}
 	By("Create container.")
 	containerID, err := rc.CreateContainer(podID, config, podConfig)

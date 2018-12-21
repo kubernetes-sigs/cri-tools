@@ -50,6 +50,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 			config := &runtimeapi.PodSandboxConfig{
 				Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 				Linux:    &runtimeapi.LinuxPodSandboxConfig{},
+				Labels:   framework.DefaultPodLabels,
 			}
 
 			// TODO: add support of runtime

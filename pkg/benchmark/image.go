@@ -60,7 +60,7 @@ var _ = framework.KubeDescribe("Container", func() {
 			}
 
 			operation := b.Time("pull Image", func() {
-				framework.PullPublicImage(ic, testImageList[0])
+				framework.PullPublicImage(ic, testImageList[0], nil)
 			})
 			Expect(operation.Minutes()).Should(BeNumerically("<", 1), "pull Image shouldn't take too long.")
 
@@ -82,7 +82,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		Measure("benchmark about listing Image", func(b Benchmarker) {
 			for _, imageName := range testImageList {
-				framework.PullPublicImage(ic, imageName)
+				framework.PullPublicImage(ic, imageName, nil)
 			}
 
 			operation := b.Time("list Container", func() {

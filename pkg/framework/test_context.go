@@ -39,6 +39,9 @@ type TestContextType struct {
 
 	// Benchmark setting.
 	Number int
+
+	// Test configuration.
+	IsLcow bool
 }
 
 // TestContext is a test context.
@@ -68,4 +71,10 @@ func RegisterFlags() {
 	flag.DurationVar(&TestContext.RuntimeServiceTimeout, "runtime-service-timeout", 300*time.Second, "Timeout when trying to connect to a runtime service.")
 	flag.StringVar(&TestContext.RuntimeHandler, "runtime-handler", "", "Runtime handler to use in the test.")
 	flag.IntVar(&TestContext.Number, "number", 5, "Number of PodSandbox/container in listing benchmark test.")
+
+	if runtime.GOOS == "windows" {
+		flag.BoolVar(&TestContext.IsLcow, "lcow", false, "Run Linux container on Windows tests instead of Windows container tests")
+	} else {
+		TestContext.IsLcow = false
+	}
 }
