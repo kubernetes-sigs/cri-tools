@@ -71,6 +71,8 @@ type listOptions struct {
 	last int
 	// out with truncating the id
 	noTrunc bool
+	// image used by the container
+	image string
 }
 
 type execOptions struct {
@@ -320,4 +322,26 @@ func matchesRegex(pattern, target string) bool {
 		return false
 	}
 	return matched
+}
+
+func matchesImage(image, containerImage string) (bool, error) {
+	if image == "" {
+		return true, nil
+	}
+	if imageClient == nil {
+		getImageClient(nil)
+	}
+	r1, err := ImageStatus(imageClient, image, false)
+	if err != nil {
+		return false, err
+	}
+	r2, err := ImageStatus(imageClient, containerImage, false)
+	if err != nil {
+		return false, err
+	}
+	if r1.Image == nil || r2.Image == nil {
+		// Always return not match if the image doesn't exist.
+		return false, nil
+	}
+	return r1.Image.Id == r2.Image.Id, nil
 }
