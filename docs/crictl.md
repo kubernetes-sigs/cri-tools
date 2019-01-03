@@ -115,7 +115,7 @@ f84dd361f8dc5       17 seconds ago      Ready               busybox-sandbox     
 
 #### Run pod sandbox with runtime handler
 
-Runtime handler requires runtime support. The following example shows running a pod sandbox with `runsc` hanlder on containerd runtime.
+Runtime handler requires runtime support. The following example shows running a pod sandbox with `runsc` handler on containerd runtime.
 
 ```sh
 $ cat pod-config.json
