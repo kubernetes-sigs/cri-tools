@@ -275,6 +275,11 @@ var listContainersCommand = cli.Command{
 			Usage: "Filter by pod id",
 		},
 		cli.StringFlag{
+			Name:  "image",
+			Value: "",
+			Usage: "Filter by container image",
+		},
+		cli.StringFlag{
 			Name:  "state",
 			Value: "",
 			Usage: "Filter by container state",
@@ -313,6 +318,9 @@ var listContainersCommand = cli.Command{
 		if err = getRuntimeClient(context); err != nil {
 			return err
 		}
+		if err = getImageClient(context); err != nil {
+			return err
+		}
 
 		opts := listOptions{
 			id:         context.String("id"),
@@ -326,6 +334,7 @@ var listContainersCommand = cli.Command{
 			latest:     context.Bool("latest"),
 			last:       context.Int("last"),
 			noTrunc:    context.Bool("no-trunc"),
+			image:      context.String("image"),
 		}
 		opts.labels, err = parseLabelStringSlice(context.StringSlice("label"))
 		if err != nil {
@@ -637,6 +646,11 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 	for _, c := range r.Containers {
 		// Filter by pod name/namespace regular expressions.
 		if !matchesRegex(opts.nameRegexp, c.Metadata.Name) {
+			continue
+		}
+		if match, err := matchesImage(opts.image, c.GetImage().GetImage()); err != nil {
+			return fmt.Errorf("failed to check image match %v", err)
+		} else if !match {
 			continue
 		}
 		if opts.quiet {
