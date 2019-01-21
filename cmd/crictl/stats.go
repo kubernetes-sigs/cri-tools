@@ -82,6 +82,10 @@ var statsCommand = cli.Command{
 	},
 	Action: func(context *cli.Context) error {
 		var err error
+		if userID := os.Geteuid(); userID != 0 {
+			logrus.Fatalf("You're probably not root, your effective user id is %d", userID)
+			os.Exit(1)
+		}
 		if err = getRuntimeClient(context); err != nil {
 			return err
 		}
