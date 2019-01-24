@@ -58,32 +58,32 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 			})
 
 			framework.ExpectNoError(err, "failed to create PodSandbox: %v", err)
-			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "create PodSandbox shouldn't take too long.")
+			Expect(operation.Seconds()).Should(BeNumerically("<", 5), "create PodSandbox shouldn't take too long.")
 
 			operation = b.Time("PodSandbox status", func() {
 				_, err = c.PodSandboxStatus(podID)
 			})
 
 			framework.ExpectNoError(err, "failed to get PodSandbox status: %v", err)
-			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "get PodSandbox status shouldn't take too long.")
+			Expect(operation.Seconds()).Should(BeNumerically("<", 5), "get PodSandbox status shouldn't take too long.")
 
 			operation = b.Time("stop PodSandbox", func() {
 				err = c.StopPodSandbox(podID)
 			})
 
 			framework.ExpectNoError(err, "failed to stop PodSandbox: %v", err)
-			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "stop PodSandbox shouldn't take too long.")
+			Expect(operation.Seconds()).Should(BeNumerically("<", 5), "stop PodSandbox shouldn't take too long.")
 
 			operation = b.Time("remove PodSandbox", func() {
 				c.RemovePodSandbox(podID)
 			})
 
 			framework.ExpectNoError(err, "failed to remove PodSandbox: %v", err)
-			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "remove PodSandbox shouldn't take too long.")
+			Expect(operation.Seconds()).Should(BeNumerically("<", 5), "remove PodSandbox shouldn't take too long.")
 		}, defaultOperationTimes)
 
 		Measure("benchmark about listing PodSandbox", func(b Benchmarker) {
-			podList := make([]string, framework.TestContext.Number)
+			podList := make([]string, 0, framework.TestContext.Number)
 			var err error
 
 			for i := 0; i < framework.TestContext.Number; i++ {
@@ -96,7 +96,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 			})
 
 			framework.ExpectNoError(err, "failed to list PodSandbox: %v", err)
-			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "list PodSandbox shouldn't take too long.")
+			Expect(operation.Seconds()).Should(BeNumerically("<", 5), "list PodSandbox shouldn't take too long.")
 
 			for _, podID := range podList {
 				c.StopPodSandbox(podID)

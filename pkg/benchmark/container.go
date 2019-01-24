@@ -96,7 +96,7 @@ var _ = framework.KubeDescribe("Container", func() {
 		}, defaultOperationTimes)
 
 		Measure("benchmark about listing Container", func(b Benchmarker) {
-			containerList := make([]string, framework.TestContext.Number)
+			containerList := make([]string, 0, framework.TestContext.Number)
 			var err error
 
 			for i := 0; i < framework.TestContext.Number; i++ {
