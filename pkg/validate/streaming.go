@@ -76,14 +76,14 @@ var _ = framework.KubeDescribe("Streaming", func() {
 
 			execReq := &runtimeapi.ExecRequest{
 				ContainerId: containerID,
-				Cmd:         []string{"echo", "hello"},
+				Cmd:         []string{"echo", "-n", "hello"},
 				Stdout:      true,
 				Stderr:      true,
 			}
 			req := createExec(rc, execReq)
 
 			By("check the output of exec")
-			checkExec(rc, req, "hello\n", false)
+			checkExec(rc, req, "hello", false)
 		})
 
 		It("runtime should support exec with tty=true and stdin=true [Conformance]", func() {
@@ -97,7 +97,7 @@ var _ = framework.KubeDescribe("Streaming", func() {
 
 			execReq := &runtimeapi.ExecRequest{
 				ContainerId: containerID,
-				Cmd:         []string{"echo", "hello"},
+				Cmd:         []string{"echo", "-n", "hello"},
 				Stdout:      true,
 				Tty:         true,
 				Stdin:       true,
@@ -105,7 +105,7 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			req := createExec(rc, execReq)
 
 			By("check the output of exec")
-			checkExec(rc, req, "hello\r\n", true)
+			checkExec(rc, req, "hello", true)
 		})
 
 		It("runtime should support attach [Conformance]", func() {
