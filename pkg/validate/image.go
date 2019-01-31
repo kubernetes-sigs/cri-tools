@@ -18,6 +18,7 @@ package validate
 
 import (
 	"fmt"
+	"runtime"
 	"sort"
 
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
@@ -26,26 +27,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-)
-
-const (
-	// image reference without
-	testImageWithoutTag = "gcr.io/cri-tools/test-image-latest"
-
-	// name-tagged reference for test image
-	testImageWithTag = "gcr.io/cri-tools/test-image-tag:test"
-
-	// digested reference for test image
-	testImageWithDigest = "gcr.io/cri-tools/test-image-digest@sha256:9179135b4b4cc5a8721e09379244807553c318d92fa3111a65133241551ca343"
-
-	testImageUserUID           = "gcr.io/cri-tools/test-image-user-uid"
-	imageUserUID               = int64(1002)
-	testImageUserUsername      = "gcr.io/cri-tools/test-image-user-username"
-	imageUserUsername          = "www-data"
-	testImageUserUIDGroup      = "gcr.io/cri-tools/test-image-user-uid-group"
-	imageUserUIDGroup          = int64(1003)
-	testImageUserUsernameGroup = "gcr.io/cri-tools/test-image-user-username-group"
-	imageUserUsernameGroup     = "www-data"
 )
 
 var _ = framework.KubeDescribe("Image Manager", func() {
@@ -58,80 +39,75 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 	})
 
 	It("public image with tag should be pulled and removed [Conformance]", func() {
-		testPullPublicImage(c, testImageWithTag, func(s *runtimeapi.Image) {
+		testPullPublicImage(c, testImageWithTag, testImagePodSandbox, func(s *runtimeapi.Image) {
 			Expect(s.RepoTags).To(Equal([]string{testImageWithTag}))
 		})
 	})
 
 	It("public image without tag should be pulled and removed [Conformance]", func() {
-		testPullPublicImage(c, testImageWithoutTag, func(s *runtimeapi.Image) {
+		testPullPublicImage(c, testImageWithoutTag, testImagePodSandbox, func(s *runtimeapi.Image) {
 			Expect(s.RepoTags).To(Equal([]string{testImageWithoutTag + ":latest"}))
 		})
 	})
 
 	It("public image with digest should be pulled and removed [Conformance]", func() {
-		testPullPublicImage(c, testImageWithDigest, func(s *runtimeapi.Image) {
+		testPullPublicImage(c, testImageWithDigest, testImagePodSandbox, func(s *runtimeapi.Image) {
 			Expect(s.RepoTags).To(BeEmpty())
 			Expect(s.RepoDigests).To(Equal([]string{testImageWithDigest}))
 		})
 	})
 
-	It("image status get image fields should not have Uid|Username empty [Conformance]", func() {
-		for _, item := range []struct {
-			description string
-			image       string
-			uid         int64
-			username    string
-		}{
-			{
-				description: "UID only",
-				image:       testImageUserUID,
-				uid:         imageUserUID,
-				username:    "",
-			},
-			{
-				description: "Username only",
-				image:       testImageUserUsername,
-				uid:         int64(0),
-				username:    imageUserUsername,
-			},
-			{
-				description: "UID:group",
-				image:       testImageUserUIDGroup,
-				uid:         imageUserUIDGroup,
-				username:    "",
-			},
-			{
-				description: "Username:group",
-				image:       testImageUserUsernameGroup,
-				uid:         int64(0),
-				username:    imageUserUsernameGroup,
-			},
-		} {
-			framework.PullPublicImage(c, item.image)
-			defer removeImage(c, item.image)
+	if runtime.GOOS != "windows" || framework.TestContext.IsLcow {
+		It("image status get image fields should not have Uid|Username empty [Conformance]", func() {
+			for _, item := range []struct {
+				description string
+				image       string
+				uid         int64
+				username    string
+			}{
+				{
+					description: "UID only",
+					image:       testImageUserUID,
+					uid:         imageUserUID,
+					username:    "",
+				},
+				{
+					description: "Username only",
+					image:       testImageUserUsername,
+					uid:         int64(0),
+					username:    imageUserUsername,
+				},
+				{
+					description: "UID:group",
+					image:       testImageUserUIDGroup,
+					uid:         imageUserUIDGroup,
+					username:    "",
+				},
+				{
+					description: "Username:group",
+					image:       testImageUserUsernameGroup,
+					uid:         int64(0),
+					username:    imageUserUsernameGroup,
+				},
+			} {
+				framework.PullPublicImage(c, item.image, testImagePodSandbox)
+				defer removeImage(c, item.image)
 
-			status := framework.ImageStatus(c, item.image)
-			Expect(status.GetUid().GetValue()).To(Equal(item.uid), fmt.Sprintf("%s, Image Uid should be %d", item.description, item.uid))
-			Expect(status.GetUsername()).To(Equal(item.username), fmt.Sprintf("%s, Image Username should be %s", item.description, item.username))
-		}
-	})
+				status := framework.ImageStatus(c, item.image)
+				Expect(status.GetUid().GetValue()).To(Equal(item.uid), fmt.Sprintf("%s, Image Uid should be %d", item.description, item.uid))
+				Expect(status.GetUsername()).To(Equal(item.username), fmt.Sprintf("%s, Image Username should be %s", item.description, item.username))
+			}
+		})
+	}
 
 	It("listImage should get exactly 3 image in the result list [Conformance]", func() {
-		// different tags refer to different images
-		testImageList := []string{
-			"gcr.io/cri-tools/test-image-1:latest",
-			"gcr.io/cri-tools/test-image-2:latest",
-			"gcr.io/cri-tools/test-image-3:latest",
-		}
-
 		// Make sure test image does not exist.
-		removeImageList(c, testImageList)
-		ids := pullImageList(c, testImageList)
+		removeImageList(c, testDifferentTagDifferentImageList)
+		ids := pullImageList(c, testDifferentTagDifferentImageList, testImagePodSandbox)
 		ids = removeDuplicates(ids)
 		Expect(len(ids)).To(Equal(3), "3 image ids should be returned")
 
-		defer removeImageList(c, testImageList)
+		defer removeImageList(c, testDifferentTagDifferentImageList)
 
 		images := framework.ListImage(c, &runtimeapi.ImageFilter{})
 
@@ -139,7 +115,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 			for _, img := range images {
 				if img.Id == id {
 					Expect(len(img.RepoTags)).To(Equal(1), "Should only have 1 repo tag")
-					Expect(img.RepoTags[0]).To(Equal(testImageList[i]), "Repo tag should be correct")
+					Expect(img.RepoTags[0]).To(Equal(testDifferentTagDifferentImageList[i]), "Repo tag should be correct")
 					break
 				}
 			}
@@ -147,28 +123,21 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 	})
 
 	It("listImage should get exactly 3 repoTags in the result image [Conformance]", func() {
-		// different tags refer to the same image
-		testImageList := []string{
-			"gcr.io/cri-tools/test-image-tags:1",
-			"gcr.io/cri-tools/test-image-tags:2",
-			"gcr.io/cri-tools/test-image-tags:3",
-		}
-
 		// Make sure test image does not exist.
-		removeImageList(c, testImageList)
-		ids := pullImageList(c, testImageList)
+		removeImageList(c, testDifferentTagSameImageList)
+		ids := pullImageList(c, testDifferentTagSameImageList, testImagePodSandbox)
 		ids = removeDuplicates(ids)
 		Expect(len(ids)).To(Equal(1), "Only 1 image id should be returned")
 
-		defer removeImageList(c, testImageList)
+		defer removeImageList(c, testDifferentTagSameImageList)
 
 		images := framework.ListImage(c, &runtimeapi.ImageFilter{})
 
-		sort.Strings(testImageList)
+		sort.Strings(testDifferentTagSameImageList)
 		for _, img := range images {
 			if img.Id == ids[0] {
 				sort.Strings(img.RepoTags)
-				Expect(img.RepoTags).To(Equal(testImageList), "Should have 3 repoTags in single image")
+				Expect(img.RepoTags).To(Equal(testDifferentTagSameImageList), "Should have 3 repoTags in single image")
 				break
 			}
 		}
@@ -186,11 +155,11 @@ func testRemoveImage(c internalapi.ImageManagerService, imageName string) {
 }
 
 // testPullPublicImage pulls the image named imageName, make sure it success and remove the image.
-func testPullPublicImage(c internalapi.ImageManagerService, imageName string, statusCheck func(*runtimeapi.Image)) {
+func testPullPublicImage(c internalapi.ImageManagerService, imageName string, podConfig *runtimeapi.PodSandboxConfig, statusCheck func(*runtimeapi.Image)) {
 	// Make sure image does not exist before testing.
 	removeImage(c, imageName)
 
-	framework.PullPublicImage(c, imageName)
+	framework.PullPublicImage(c, imageName, podConfig)
 
 	By("Check image list to make sure pulling image success : " + imageName)
 	status := framework.ImageStatus(c, imageName)
@@ -205,10 +174,10 @@ func testPullPublicImage(c internalapi.ImageManagerService, imageName string, st
 }
 
 // pullImageList pulls the images listed in the imageList.
-func pullImageList(c internalapi.ImageManagerService, imageList []string) []string {
+func pullImageList(c internalapi.ImageManagerService, imageList []string, podConfig *runtimeapi.PodSandboxConfig) []string {
 	var ids []string
 	for _, imageName := range imageList {
-		ids = append(ids, framework.PullPublicImage(c, imageName))
+		ids = append(ids, framework.PullPublicImage(c, imageName, podConfig))
 	}
 	return ids
 }

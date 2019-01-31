@@ -41,7 +41,7 @@ type streamType string
 
 const (
 	defaultStopContainerTimeout int64      = 60
-	defaultExecSyncTimeout      int64      = 5
+	defaultExecSyncTimeout      int64      = 30
 	defaultLog                  string     = "hello World"
 	stdoutType                  streamType = "stdout"
 	stderrType                  streamType = "stderr"
@@ -126,9 +126,7 @@ var _ = framework.KubeDescribe("Container", func() {
 			startContainer(rc, containerID)
 
 			By("test execSync")
-			cmd := []string{"echo", "hello"}
-			expectedLogMessage := "hello\n"
-			verifyExecSyncOutput(rc, containerID, cmd, expectedLogMessage)
+			verifyExecSyncOutput(rc, containerID, echoHelloCmd, echoHelloOutput)
 		})
 
 		It("runtime should support execSync with timeout [Conformance]", func() {
@@ -139,13 +137,11 @@ var _ = framework.KubeDescribe("Container", func() {
 			startContainer(rc, containerID)
 
 			By("test execSync with timeout")
-			sleepCmd := []string{"sleep", "4321"}
 			_, _, err := rc.ExecSync(containerID, sleepCmd, time.Second)
 			Expect(err).Should(HaveOccurred(), "execSync should timeout")
 
 			By("timeout exec process should be gone")
-			checkCmd := []string{"sh", "-c", "pgrep sleep || true"}
-			stdout, stderr, err := rc.ExecSync(containerID, checkCmd, time.Second)
+			stdout, stderr, err := rc.ExecSync(containerID, checkSleepCmd, time.Second)
 			framework.ExpectNoError(err)
 			Expect(stderr).To(BeEmpty())
 			Expect(strings.TrimSpace(string(stdout))).To(BeEmpty())
@@ -180,8 +176,7 @@ var _ = framework.KubeDescribe("Container", func() {
 			testStartContainer(rc, containerID)
 
 			By("check whether 'hostPath' contains file or dir in container")
-			command := []string{"ls", "-A", hostPath}
-			output := execSyncContainer(rc, containerID, command)
+			output := execSyncContainer(rc, containerID, checkPathCmd(hostPath))
 			Expect(len(output)).NotTo(BeZero(), "len(output) should not be zero.")
 		})
 
@@ -201,8 +196,7 @@ var _ = framework.KubeDescribe("Container", func() {
 			testStartContainer(rc, containerID)
 
 			By("check whether 'symlink' contains file or dir in container")
-			command := []string{"ls", "-A", symlinkPath}
-			output := execSyncContainer(rc, containerID, command)
+			output := execSyncContainer(rc, containerID, checkPathCmd(symlinkPath))
 			Expect(len(output)).NotTo(BeZero(), "len(output) should not be zero.")
 		})
 
@@ -300,7 +294,7 @@ func createShellContainer(rc internalapi.RuntimeService, ic internalapi.ImageMan
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata:  framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:     &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
-		Command:   []string{"/bin/sh"},
+		Command:   shellCmd,
 		Linux:     &runtimeapi.LinuxContainerConfig{},
 		Stdin:     true,
 		StdinOnce: true,
@@ -398,7 +392,7 @@ func verifyExecSyncOutput(c internalapi.RuntimeService, containerID string, comm
 	By("verify execSync output")
 	stdout := execSyncContainer(c, containerID, command)
 	Expect(stdout).To(Equal(expectedLogMessage), "The stdout output of execSync should be %s", expectedLogMessage)
-	framework.Logf("verfiy Execsync output succeed")
+	framework.Logf("verify Execsync output succeed")
 }
 
 // createHostPath creates the hostPath and flagFile for volume.
@@ -427,7 +421,7 @@ func createVolumeContainer(rc internalapi.RuntimeService, ic internalapi.ImageMa
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
-		Command:  []string{"sh", "-c", "top"},
+		Command:  pauseCmd,
 		// mount host path to the same directory in container, and will check if hostPath isn't empty
 		Mounts: []*runtimeapi.Mount{
 			{
@@ -448,7 +442,7 @@ func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManag
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
-		Command:  []string{"echo", defaultLog},
+		Command:  logDefaultCmd,
 		LogPath:  path,
 	}
 	return containerConfig.LogPath, framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
@@ -462,7 +456,7 @@ func createKeepLoggingContainer(rc internalapi.RuntimeService, ic internalapi.Im
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
-		Command:  []string{"sh", "-c", "while true; do echo " + defaultLog + "; sleep 1; done"},
+		Command:  loopLogDefaultCmd,
 		LogPath:  path,
 	}
 	return containerConfig.LogPath, framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)

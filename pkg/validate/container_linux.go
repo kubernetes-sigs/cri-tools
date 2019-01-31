@@ -219,7 +219,7 @@ func createMountPropagationContainer(rc internalapi.RuntimeService, ic internala
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
-		Command:  []string{"sh", "-c", "top"},
+		Command:  pauseCmd,
 		// Set Privileged in order to executing mount command in container
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{

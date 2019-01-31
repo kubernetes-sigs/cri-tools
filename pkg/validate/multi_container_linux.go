@@ -121,6 +121,7 @@ func createMultiContainerTestPodSandbox(c internalapi.RuntimeService) (string, *
 				ContainerPort: httpdContainerPort,
 			},
 		},
+		Labels: framework.DefaultPodLabels,
 	}
 	return framework.RunPodSandbox(c, podConfig), podConfig, logDir
 }

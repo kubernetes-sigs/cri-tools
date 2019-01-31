@@ -18,6 +18,7 @@ package framework
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -37,6 +38,35 @@ var (
 
 	// lastUUID record last generated uuid from NewUUID()
 	lastUUID uuid.UUID
+
+	// the callbacks to run during BeforeSuite
+	beforeSuiteCallbacks []func()
+
+	// DefaultPodLabels are labels used by default in pods
+	DefaultPodLabels map[string]string
+
+	// DefaultContainerImage is the default image used for containers
+	DefaultContainerImage string
+
+	// DefaultContainerCommand is the default command used for containers
+	DefaultContainerCommand []string
+
+	// DefaultLinuxPodLabels default pod labels for Linux
+	DefaultLinuxPodLabels = map[string]string{}
+
+	// DefaultLinuxContainerCommand default container command for Linux
+	DefaultLinuxContainerCommand = []string{"top"}
+
+	// DefaultLcowPodLabels default pod labels for Linux containers on Windows
+	DefaultLcowPodLabels = map[string]string{
+		"sandbox-platform": "linux/amd64",
+	}
+
+	// DefaultWindowsPodLabels default pod labels for Windows
+	DefaultWindowsPodLabels = map[string]string{}
+
+	// DefaultWindowsContainerCommand default container command for Windows
+	DefaultWindowsContainerCommand = []string{"cmd", "/c", "ping -t localhost"}
 )
 
 const (
@@ -49,12 +79,42 @@ const (
 	// DefaultAttempt is a default attempt prefix of PodSandbox or container
 	DefaultAttempt uint32 = 2
 
-	// DefaultContainerImage is the default image for container using
-	DefaultContainerImage string = "busybox:1.28"
-
 	// DefaultStopContainerTimeout is the default timeout for stopping container
 	DefaultStopContainerTimeout int64 = 60
+
+	// DefaultLinuxContainerImage default container image for Linux
+	DefaultLinuxContainerImage string = "busybox:1.28"
+
+	// DefaultWindowsContainerImage default container image for Windows
+	DefaultWindowsContainerImage string = "mcr.microsoft.com/windows/servercore:ltsc2019"
 )
+
+// Set the constants based on operating system and flags
+var _ = BeforeSuite(func() {
+	if runtime.GOOS != "windows" || TestContext.IsLcow {
+		DefaultPodLabels = DefaultLinuxPodLabels
+		DefaultContainerImage = DefaultLinuxContainerImage
+		DefaultContainerCommand = DefaultLinuxContainerCommand
+
+		if TestContext.IsLcow {
+			DefaultPodLabels = DefaultLcowPodLabels
+		}
+	} else {
+		DefaultPodLabels = DefaultWindowsPodLabels
+		DefaultContainerImage = DefaultWindowsContainerImage
+		DefaultContainerCommand = DefaultWindowsContainerCommand
+	}
+
+	for _, callback := range beforeSuiteCallbacks {
+		callback()
+	}
+})
+
+// AddBeforeSuiteCallback adds a callback to run during BeforeSuite
+func AddBeforeSuiteCallback(callback func()) bool {
+	beforeSuiteCallbacks = append(beforeSuiteCallbacks, callback)
+	return true
+}
 
 // LoadCRIClient creates a InternalAPIClient.
 func LoadCRIClient() (*InternalAPIClient, error) {
@@ -132,6 +192,7 @@ func RunDefaultPodSandbox(c internalapi.RuntimeService, prefix string) string {
 	config := &runtimeapi.PodSandboxConfig{
 		Metadata: BuildPodSandboxMetadata(podSandboxName, uid, namespace, DefaultAttempt),
 		Linux:    &runtimeapi.LinuxPodSandboxConfig{},
+		Labels:   DefaultPodLabels,
 	}
 	return RunPodSandbox(c, config)
 }
@@ -161,6 +222,7 @@ func CreatePodSandboxForContainer(c internalapi.RuntimeService) (string, *runtim
 	config := &runtimeapi.PodSandboxConfig{
 		Metadata: BuildPodSandboxMetadata(podSandboxName, uid, namespace, DefaultAttempt),
 		Linux:    &runtimeapi.LinuxPodSandboxConfig{},
+		Labels:   DefaultPodLabels,
 	}
 
 	podID := RunPodSandbox(c, config)
@@ -181,7 +243,7 @@ func CreateDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageM
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: BuildContainerMetadata(containerName, DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: DefaultContainerImage},
-		Command:  []string{"top"},
+		Command:  DefaultContainerCommand,
 		Linux:    &runtimeapi.LinuxContainerConfig{},
 	}
 
@@ -199,7 +261,7 @@ func CreateContainerWithError(rc internalapi.RuntimeService, ic internalapi.Imag
 
 	status := ImageStatus(ic, imageName)
 	if status == nil {
-		PullPublicImage(ic, imageName)
+		PullPublicImage(ic, imageName, podConfig)
 	}
 
 	By("Create container.")
@@ -234,7 +296,7 @@ func ListImage(c internalapi.ImageManagerService, filter *runtimeapi.ImageFilter
 }
 
 // PullPublicImage pulls the public image named imageName.
-func PullPublicImage(c internalapi.ImageManagerService, imageName string) string {
+func PullPublicImage(c internalapi.ImageManagerService, imageName string, podConfig *runtimeapi.PodSandboxConfig) string {
 	if !strings.Contains(imageName, ":") {
 		imageName = imageName + ":latest"
 		Logf("Use latest as default image tag.")
@@ -244,7 +306,7 @@ func PullPublicImage(c internalapi.ImageManagerService, imageName string) string
 	imageSpec := &runtimeapi.ImageSpec{
 		Image: imageName,
 	}
-	id, err := c.PullImage(imageSpec, nil)
+	id, err := c.PullImage(imageSpec, nil, podConfig)
 	ExpectNoError(err, "failed to pull image: %v", err)
 	return id
 }
