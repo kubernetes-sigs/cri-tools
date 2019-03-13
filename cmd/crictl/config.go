@@ -119,9 +119,11 @@ var configCommand = cli.Command{
 			var debug bool
 			if value == "true" {
 				debug = true
+			} else if value == "false" {
+                                debug = false
 			} else {
-				logrus.Fatal("use true|false for debug")
-			}
+                                logrus.Fatal("use true|false for debug")
+                        }
 			config.Debug = debug
 		default:
 			logrus.Fatalf("No section named %s", key)
