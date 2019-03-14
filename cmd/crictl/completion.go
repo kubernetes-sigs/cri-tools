@@ -115,14 +115,13 @@ Examples:
 			return cli.ShowSubcommandHelp(c)
 		}
 
-		shell := c.Args().First()
-		switch shell {
+		switch c.Args().First() {
 		case "bash":
 			return bashCompletion(c)
 		case "zsh":
 			return zshCompletion(c)
 		default:
-			return fmt.Errorf("unknown shell: %q", shell)
+			return fmt.Errorf("only bash and zsh supported")
 		}
 	},
 }
