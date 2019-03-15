@@ -36,4 +36,6 @@ sleep 10
 critest -ginkgo.skip="runtime should support reopening container log|runtime should support execSync with timeout" -parallel 8
 
 # Run benchmark test cases
-critest -benchmark
+# Skip image operations benchmark because dockershim would panic on such cases.
+# TODO: enable it again after https://github.com/kubernetes/kubernetes/pull/75367 get fixed.
+critest -benchmark -ginkgo.skip="Image"
