@@ -19,7 +19,7 @@ set -o nounset
 set -o pipefail
 
 # Install kubelet
-! go get -d k8s.io/kubernetes
+git clone https://github.com/kubernetes/kubernetes $GOPATH/src/k8s.io/kubernetes
 cd $GOPATH/src/k8s.io/kubernetes
 if [ ${TRAVIS_BRANCH:-"master"} != "master" ]; then
   # We can do this because cri-tools have the same branch name with kubernetes.
@@ -27,4 +27,3 @@ if [ ${TRAVIS_BRANCH:-"master"} != "master" ]; then
 fi
 make WHAT='cmd/kubelet'
 sudo cp _output/bin/kubelet /usr/local/bin
-
