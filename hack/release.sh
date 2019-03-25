@@ -36,6 +36,8 @@ CRI_TEST_PLATFORMS=(
     linux/386
     linux/arm
     linux/arm64
+    windows/amd64
+    windows/386
 )
 
 # Create releases output directory.
