@@ -22,6 +22,7 @@ set -o pipefail
 
 VERSION=$(git describe --abbrev=0 --tag)
 CRI_CTL_PLATFORMS=(
+    darwin/amd64
     linux/amd64
     linux/386
     linux/arm
