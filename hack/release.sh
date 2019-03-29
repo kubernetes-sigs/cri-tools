@@ -20,6 +20,8 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+UPLOAD_GCS=${UPLOAD_GCS:-false}
+GCS_PATH=${GCS_PATH:-"kubernetes-release/crictl"}
 VERSION=$(git describe --abbrev=0 --tag)
 CRI_CTL_PLATFORMS=(
     linux/amd64
@@ -57,10 +59,15 @@ for platform in "${CRI_CTL_PLATFORMS[@]}"; do
         CRICTL_BIN="crictl.exe"
     fi
 
+    output_bin=${CRI_TOOLS_ROOT}/_output/bin/$arch-$os/${CRICTL_BIN}
     GOARCH="$arch" GOOS="$os" CGO_ENABLED=0 go build \
-        -o ${CRI_TOOLS_ROOT}/_output/bin/$arch-$os/${CRICTL_BIN} \
+        -o ${output_bin} \
         -ldflags "${GO_LDFLAGS}" \
         ${PROJECT}/cmd/crictl
+    if $UPLOAD_GCS; then
+      gsutil cp ${output_bin} gs://${GCS_PATH}/crictl-$VERSION-$os-$arch
+      sha1sum ${output_bin} | awk '{print $1}' | gsutil cp - gs://${GCS_PATH}/crictl-$VERSION-$os-$arch.sha1sum
+    fi
     tar zcvf ${CRI_TOOLS_ROOT}/_output/releases/crictl-$VERSION-$os-$arch.tar.gz \
         -C ${CRI_TOOLS_ROOT}/_output/bin/$arch-$os \
         ${CRICTL_BIN}
@@ -76,10 +83,15 @@ for platform in "${CRI_TEST_PLATFORMS[@]}"; do
         CRITEST_BIN="critest.exe"
     fi
 
+    output_bin=${CRI_TOOLS_ROOT}/_output/bin/$arch-$os/${CRITEST_BIN}
     GOARCH="$arch" GOOS="$os" CGO_ENABLED=0 go test -c \
-        -o ${CRI_TOOLS_ROOT}/_output/bin/$arch-$os/${CRITEST_BIN} \
+        -o ${output_bin} \
         -ldflags "${GO_LDFLAGS}" \
         ${PROJECT}/cmd/critest
+    if $UPLOAD_GCS; then
+      gsutil cp ${output_bin} gs://${GCS_PATH}/critest-$VERSION-$os-$arch
+      sha1sum ${output_bin} | awk '{print $1}' | gsutil cp - gs://${GCS_PATH}/critest-$VERSION-$os-$arch.sha1sum
+    fi
     tar zcvf ${CRI_TOOLS_ROOT}/_output/releases/critest-$VERSION-$os-$arch.tar.gz \
         -C ${CRI_TOOLS_ROOT}/_output/bin/$arch-$os \
         ${CRITEST_BIN}
