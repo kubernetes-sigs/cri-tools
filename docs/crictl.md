@@ -6,11 +6,22 @@ crictl is currently in Beta and still under quick iterations. It is hosted at th
 
 ## Install crictl
 
-crictl can be downloaded from cri-tools [release page](https://github.com/kubernetes-sigs/cri-tools/releases):
+`crictl` can be downloaded from cri-tools [release page](https://github.com/kubernetes-sigs/cri-tools/releases):
+
+- using `wget`:
 
 ```sh
 VERSION="v1.13.0"
 wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux-amd64.tar.gz
+sudo tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
+rm -f crictl-$VERSION-linux-amd64.tar.gz
+```
+
+- using `curl`:
+
+```sh
+VERSION="v1.13.0"
+curl -L https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-${VERSION}-linux-amd64.tar.gz --output crictl-${VERSION}-linux-amd64.tar.gz
 sudo tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f crictl-$VERSION-linux-amd64.tar.gz
 ```
