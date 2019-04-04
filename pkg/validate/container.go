@@ -425,8 +425,9 @@ func createVolumeContainer(rc internalapi.RuntimeService, ic internalapi.ImageMa
 		// mount host path to the same directory in container, and will check if hostPath isn't empty
 		Mounts: []*runtimeapi.Mount{
 			{
-				HostPath:      hostPath,
-				ContainerPath: hostPath,
+				HostPath:       hostPath,
+				ContainerPath:  hostPath,
+				SelinuxRelabel: true,
 			},
 		},
 	}
