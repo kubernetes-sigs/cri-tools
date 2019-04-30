@@ -59,7 +59,7 @@ func getRuntimeClientConnection(context *cli.Context) (*grpc.ClientConn, error) 
 
 	conn, err := grpc.Dial(addr, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(Timeout), grpc.WithDialer(dialer))
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect: %v", err)
+		return nil, fmt.Errorf("failed to connect, make sure you are running as root and the runtime has been started: %v", err)
 	}
 	return conn, nil
 }
@@ -79,7 +79,7 @@ func getImageClientConnection(context *cli.Context) (*grpc.ClientConn, error) {
 
 	conn, err := grpc.Dial(addr, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(Timeout), grpc.WithDialer(dialer))
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect: %v", err)
+		return nil, fmt.Errorf("failed to connect, make sure you are running as root and the runtime has been started: %v", err)
 	}
 	return conn, nil
 }
