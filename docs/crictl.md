@@ -107,7 +107,7 @@ $ cat pod-config.json
         "attempt": 1,
         "uid": "hdishd83djaidwnduwk28bcsb"
     },
-    "logDirectory": "/tmp",
+    "log_directory": "/tmp",
     "linux": {
     }
 }
@@ -137,7 +137,7 @@ $ cat pod-config.json
         "attempt": 1,
         "uid": "hdishd83djaidwnduwk28bcsb"
     },
-    "logDirectory": "/tmp",
+    "log_directory": "/tmp",
     "linux": {
     }
 }
