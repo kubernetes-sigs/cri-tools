@@ -19,6 +19,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"time"
 
@@ -128,7 +129,7 @@ func main() {
 			Name:   "config, c",
 			EnvVar: "CRI_CONFIG_FILE",
 			Value:  defaultConfigPath,
-			Usage:  "Location of the client config file",
+			Usage:  "Location of the client config file. If not specified and the default does not exist, the program's directory is searched as well",
 		},
 		cli.StringFlag{
 			Name:   "runtime-endpoint, r",
@@ -160,8 +161,20 @@ func main() {
 		} else {
 			if context.IsSet("config") || !os.IsNotExist(err) {
 				// note: the absence of default config file is normal case
-				// when user have not setted it in cli
-				logrus.Fatalf("Falied to load config file: %v", err)
+				// when user have not set it in cli
+				logrus.Fatalf("Failed to load config file: %v", err)
+			} else {
+				// If the default config was not found, and the user didn't
+				// explicitly specify a config, try looking in the program's
+				// directory as a fallback. This is a convenience for
+				// deployments of crictl so they don't have to place a file in a
+				// global location.
+				configFile = filepath.Join(filepath.Dir(os.Args[0]), "crictl.yaml")
+				if _, err := os.Stat(configFile); err == nil {
+					isUseConfig = true
+				} else if !os.IsNotExist(err) {
+					logrus.Fatalf("Failed to load config file: %v", err)
+				}
 			}
 		}
 
