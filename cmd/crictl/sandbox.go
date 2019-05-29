@@ -103,16 +103,38 @@ var removePodCommand = cli.Command{
 	Name:      "rmp",
 	Usage:     "Remove one or more pods",
 	ArgsUsage: "POD-ID [POD-ID...]",
-	Action: func(context *cli.Context) error {
-		if context.NArg() == 0 {
-			return cli.ShowSubcommandHelp(context)
+	Flags: []cli.Flag{
+		cli.BoolFlag{
+			Name:  "force, f",
+			Usage: "Force removal of the pod sandbox, disregarding if running",
+		},
+	},
+	Action: func(ctx *cli.Context) error {
+		if ctx.NArg() == 0 {
+			return cli.ShowSubcommandHelp(ctx)
 		}
-		if err := getRuntimeClient(context); err != nil {
+		if err := getRuntimeClient(ctx); err != nil {
 			return err
 		}
-		for i := 0; i < context.NArg(); i++ {
-			id := context.Args().Get(i)
-			err := RemovePodSandbox(runtimeClient, id)
+		for i := 0; i < ctx.NArg(); i++ {
+			id := ctx.Args().Get(i)
+
+			resp, err := runtimeClient.PodSandboxStatus(context.Background(),
+				&pb.PodSandboxStatusRequest{PodSandboxId: id})
+			if err != nil {
+				return err
+			}
+			if resp.Status.State == pb.PodSandboxState_SANDBOX_READY {
+				if ctx.Bool("force") {
+					if err := StopPodSandbox(runtimeClient, id); err != nil {
+						return fmt.Errorf("stopping the pod sandbox %q failed: %v", id, err)
+					}
+				} else {
+					return fmt.Errorf("pod sandbox %q is running, please stop it first", id)
+				}
+			}
+
+			err = RemovePodSandbox(runtimeClient, id)
 			if err != nil {
 				return fmt.Errorf("removing the pod sandbox %q failed: %v", id, err)
 			}
