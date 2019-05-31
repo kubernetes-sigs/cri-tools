@@ -57,6 +57,30 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 		})
 	})
 
+	It("image status should support all kinds of references [Conformance]", func() {
+		imageName := testImageWithTag
+		// Make sure image does not exist before testing.
+		removeImage(c, imageName)
+
+		framework.PullPublicImage(c, imageName, testImagePodSandbox)
+
+		status := framework.ImageStatus(c, imageName)
+		Expect(status).NotTo(BeNil(), "should get image status")
+		idStatus := framework.ImageStatus(c, status.GetId())
+		Expect(idStatus).To(Equal(status), "image status with %q", status.GetId())
+		for _, tag := range status.GetRepoTags() {
+			tagStatus := framework.ImageStatus(c, tag)
+			Expect(tagStatus).To(Equal(status), "image status with %q", tag)
+		}
+		for _, digest := range status.GetRepoDigests() {
+			digestStatus := framework.ImageStatus(c, digest)
+			Expect(digestStatus).To(Equal(status), "image status with %q", digest)
+		}
+
+		testRemoveImage(c, imageName)
+
+	})
+
 	if runtime.GOOS != "windows" || framework.TestContext.IsLcow {
 		It("image status get image fields should not have Uid|Username empty [Conformance]", func() {
 			for _, item := range []struct {
