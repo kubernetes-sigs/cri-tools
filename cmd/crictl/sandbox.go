@@ -20,13 +20,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"sort"
 	"strings"
-	"text/tabwriter"
 	"time"
 
-	units "github.com/docker/go-units"
+	"github.com/docker/go-units"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
@@ -450,9 +448,9 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 		return fmt.Errorf("unsupported output format %q", opts.output)
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
+	display := newTableDisplay(20, 1, 3, ' ', 0)
 	if !opts.verbose && !opts.quiet {
-		fmt.Fprintln(w, "POD ID\tCREATED\tSTATE\tNAME\tNAMESPACE\tATTEMPT")
+		display.AddRow([]string{columnPodID, columnCreated, columnState, columnName, columnNamespace, columnAttempt})
 	}
 	for _, pod := range r.Items {
 		// Filter by pod name/namespace regular expressions.
@@ -474,8 +472,8 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 			if !opts.noTrunc {
 				id = getTruncatedID(id, "")
 			}
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%d\n",
-				id, ctm, convertPodState(pod.State), pod.Metadata.Name, pod.Metadata.Namespace, pod.Metadata.Attempt)
+			display.AddRow([]string{id, ctm, convertPodState(pod.State), pod.Metadata.Name,
+				pod.Metadata.Namespace, fmt.Sprintf("%d", pod.Metadata.Attempt)})
 			continue
 		}
 
@@ -512,7 +510,7 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 		fmt.Println()
 	}
 
-	w.Flush()
+	display.Flush()
 	return nil
 }
 
