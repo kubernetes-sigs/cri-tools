@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"runtime"
 	"sort"
+	"sync"
+	"time"
 
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	internalapi "k8s.io/kubernetes/pkg/kubelet/apis/cri"
@@ -166,6 +168,188 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 			}
 		}
 	})
+})
+
+var _ = framework.KubeOptionalDescribe("Image Manager", func() {
+	f := framework.NewDefaultCRIFramework()
+
+	var (
+		rc internalapi.RuntimeService
+		ic internalapi.ImageManagerService
+	)
+
+	BeforeEach(func() {
+		rc = f.CRIClient.CRIRuntimeClient
+		ic = f.CRIClient.CRIImageClient
+	})
+
+	Context("parellel image pulling [Stress]", func() {
+		testImageList := []string{
+			"wordpress",
+			"mongo",
+			"ghost",
+			"docker",
+			"rabbitmq",
+			"perl",
+			"rocket.chat",
+			"elixir",
+			"node",
+			"opensuse",
+			"mariadb",
+			"memcached",
+			"hylang",
+			"haproxy",
+			"erlang",
+			"maven",
+			"drupal",
+			"websphere-liberty",
+			"open-liberty",
+			"adoptopenjdk",
+			"ibmjava",
+			"gazebo",
+			"solr",
+			"tomee",
+			"pypy",
+			"zookeeper",
+			"tomcat",
+			"sonarqube",
+			"rapidoid",
+			"nuxeo",
+			"orientdb",
+			"gradle",
+			"jruby",
+			"groovy",
+			"jetty",
+			"lightstreamer",
+			"flink",
+			"kaazing-gateway",
+			"clojure",
+			"openjdk",
+			"express-gateway",
+			"arangodb",
+			"ros",
+			"xwiki",
+			"teamspeak",
+			"percona",
+			"crate",
+			"alt",
+			"telegraf",
+			"influxdb",
+			"kapacitor",
+			"chronograf",
+			"rust",
+			"consul",
+			"swipl",
+			"photon",
+			"amazonlinux",
+			"amazoncorretto",
+			"logstash:7.1.0",
+			"kibana:7.1.0",
+			"elasticsearch:7.1.0",
+			"python",
+			"julia",
+			"golang",
+			"sourcemage",
+			"mageia",
+			"haskell",
+			"nextcloud",
+			"ruby",
+			"redis",
+			"geonetwork",
+			"buildpack-deps",
+			"swift",
+			"bonita",
+			"ubuntu",
+			"thrift",
+			"silverpeas",
+			"php-zendserver",
+			"neurodebian",
+			"couchbase",
+			"storm",
+			"clearlinux",
+			"yourls",
+			"joomla",
+			"postfixadmin",
+			"matomo",
+			"adminer",
+			"convertigo",
+			"mongo-express",
+			"composer",
+			"postgres",
+			"bash",
+			"php",
+			"httpd",
+			"spiped",
+			"nginx",
+			"fluentd",
+			"alpine",
+			"haxe",
+			"neo4j",
+		}
+
+		BeforeEach(func() {
+			for _, imageName := range testImageList {
+				imageSpec := &runtimeapi.ImageSpec{
+					Image: imageName,
+				}
+				ic.RemoveImage(imageSpec)
+			}
+		})
+
+		AfterEach(func() {
+			for _, imageName := range testImageList {
+				imageSpec := &runtimeapi.ImageSpec{
+					Image: imageName,
+				}
+				ic.RemoveImage(imageSpec)
+			}
+		})
+
+		It("should be stable", func() {
+			var wg sync.WaitGroup
+			wg.Add(len(testImageList))
+			for _, i := range testImageList {
+				go func(image string) {
+					defer GinkgoRecover()
+					defer func() {
+						wg.Done()
+					}()
+
+					podID, podConfig := framework.CreatePodSandboxForContainer(rc)
+					defer func() {
+						Expect(rc.StopPodSandbox(podID)).To(Succeed(), "stop pod sandbox", image)
+						Expect(rc.RemovePodSandbox(podID)).To(Succeed(), "remove pod sandbox", image)
+					}()
+
+					framework.PullPublicImage(ic, image, podConfig)
+
+					containerConfig := &runtimeapi.ContainerConfig{
+						Metadata: framework.BuildContainerMetadata(image, framework.DefaultAttempt),
+						Image:    &runtimeapi.ImageSpec{Image: image},
+						Command:  []string{"ls", "/"},
+					}
+
+					containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
+					Expect(rc.StartContainer(containerID)).To(Succeed(), "start container", image)
+
+					var (
+						status *runtimeapi.ContainerStatus
+						err    error
+					)
+					Eventually(func() runtimeapi.ContainerState {
+						status, err = rc.ContainerStatus(containerID)
+						Expect(err).NotTo(HaveOccurred(), "container status", image)
+						return status.GetState()
+					}, 2*time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED), "wait container exits", image)
+
+					Expect(status.GetExitCode()).To(BeZero(), "container exit code", image)
+				}(i)
+			}
+
+			wg.Wait()
+		})
+	})
+
 })
 
 // testRemoveImage removes the image name imageName and check if it successes.

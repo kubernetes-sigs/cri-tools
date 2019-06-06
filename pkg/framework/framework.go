@@ -69,5 +69,11 @@ func (f *Framework) AfterEach() {
 
 // KubeDescribe is a wrapper on Describe.
 func KubeDescribe(text string, body func()) bool {
+	return FDescribe("[k8s.io] "+text, body)
+}
+
+// KubeOptionalDescribe is a wrapper on Describe.
+// Tests only run when focused should use this.
+func KubeOptionalDescribe(text string, body func()) bool {
 	return Describe("[k8s.io] "+text, body)
 }
