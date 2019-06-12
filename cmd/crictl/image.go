@@ -404,8 +404,9 @@ func getAuth(creds string, auth string) (*pb.AuthConfig, error) {
 // Ideally repo tag should always be image:tag.
 // The repoTags is nil when pulling image by repoDigest,Then we will show image name instead.
 func normalizeRepoTagPair(repoTags []string, imageName string) (repoTagPairs [][]string) {
+	const none = "<none>"
 	if len(repoTags) == 0 {
-		repoTagPairs = append(repoTagPairs, []string{imageName, "<none>"})
+		repoTagPairs = append(repoTagPairs, []string{imageName, none})
 		return
 	}
 	for _, repoTag := range repoTags {
@@ -414,7 +415,11 @@ func normalizeRepoTagPair(repoTags []string, imageName string) (repoTagPairs [][
 			repoTagPairs = append(repoTagPairs, []string{"errorRepoTag", "errorRepoTag"})
 			continue
 		}
-		repoTagPairs = append(repoTagPairs, []string{repoTag[:idx], repoTag[idx+1:]})
+		name := repoTag[:idx]
+		if name == none {
+			name = imageName
+		}
+		repoTagPairs = append(repoTagPairs, []string{name, repoTag[idx+1:]})
 	}
 	return
 }
