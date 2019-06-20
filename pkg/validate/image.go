@@ -33,9 +33,11 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 	f := framework.NewDefaultCRIFramework()
 
 	var c internalapi.ImageManagerService
+	var r internalapi.RuntimeService
 
 	BeforeEach(func() {
 		c = f.CRIClient.CRIImageClient
+		r = f.CRIClient.CRIRuntimeClient
 	})
 
 	It("public image with tag should be pulled and removed [Conformance]", func() {
@@ -58,6 +60,13 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 	})
 
 	It("image status should support all kinds of references [Conformance]", func() {
+		version := getVersion(r)
+		if version.RuntimeName == "docker" {
+			// Refer https://github.com/kubernetes-sigs/cri-tools/issues/473. Dockershim would refuse
+			// the image inspect requests for digest-only references.
+			Skip("docker runtime (dockershim) doesn't support image status from digest-only references")
+		}
+
 		imageName := testImageWithTag
 		// Make sure image does not exist before testing.
 		removeImage(c, imageName)
