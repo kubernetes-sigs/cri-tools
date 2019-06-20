@@ -19,12 +19,10 @@ package main
 import (
 	"errors"
 	"fmt"
-	"os"
 	"sort"
 	"strings"
-	"text/tabwriter"
 
-	units "github.com/docker/go-units"
+	"github.com/docker/go-units"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/net/context"
@@ -146,16 +144,16 @@ var listImageCommand = cli.Command{
 		}
 
 		// output in table format by default.
-		w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
+		display := newTableDisplay(20, 1, 3, ' ', 0)
 		verbose := context.Bool("verbose")
 		showDigest := context.Bool("digests")
 		quiet := context.Bool("quiet")
 		noTrunc := context.Bool("no-trunc")
 		if !verbose && !quiet {
 			if showDigest {
-				fmt.Fprintln(w, "IMAGE\tTAG\tDIGEST\tIMAGE ID\tSIZE")
+				display.AddRow([]string{columnImage, columnTag, columnDigest, columnImageID, columnSize})
 			} else {
-				fmt.Fprintln(w, "IMAGE\tTAG\tIMAGE ID\tSIZE")
+				display.AddRow([]string{columnImage, columnTag, columnImageID, columnSize})
 			}
 		}
 		for _, image := range r.Images {
@@ -174,9 +172,9 @@ var listImageCommand = cli.Command{
 				}
 				for _, repoTagPair := range repoTagPairs {
 					if showDigest {
-						fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", repoTagPair[0], repoTagPair[1], repoDigest, id, size)
+						display.AddRow([]string{repoTagPair[0], repoTagPair[1], repoDigest, id, size})
 					} else {
-						fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", repoTagPair[0], repoTagPair[1], id, size)
+						display.AddRow([]string{repoTagPair[0], repoTagPair[1], id, size})
 					}
 				}
 				continue
@@ -199,7 +197,7 @@ var listImageCommand = cli.Command{
 			}
 			fmt.Printf("\n")
 		}
-		w.Flush()
+		display.Flush()
 		return nil
 	},
 }
