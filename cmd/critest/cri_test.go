@@ -118,7 +118,7 @@ func runParallelTestSuite(t *testing.T) {
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
 	if err != nil {
-		t.Fatalf("Failed to run tests in paralllel: %v", err)
+		t.Fatalf("Failed to run tests in parallel: %v", err)
 	}
 }
 
@@ -131,7 +131,7 @@ func TestCRISuite(t *testing.T) {
 	if *isBenchMark {
 		flag.Set("ginkgo.focus", "benchmark")
 	} else {
-		// Skip benchamark measurements for validation tests.
+		// Skip benchmark measurements for validation tests.
 		flag.Set("ginkgo.skipMeasurements", "true")
 	}
 	if *parallel > 1 {
