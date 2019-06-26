@@ -23,6 +23,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/docker/distribution/reference"
 	"github.com/pborman/uuid"
 	internalapi "k8s.io/kubernetes/pkg/kubelet/apis/cri"
 	runtimeapi "k8s.io/kubernetes/pkg/kubelet/apis/cri/runtime/v1alpha2"
@@ -297,9 +298,26 @@ func ListImage(c internalapi.ImageManagerService, filter *runtimeapi.ImageFilter
 
 // PullPublicImage pulls the public image named imageName.
 func PullPublicImage(c internalapi.ImageManagerService, imageName string, podConfig *runtimeapi.PodSandboxConfig) string {
-	if !strings.Contains(imageName, ":") {
-		imageName = imageName + ":latest"
-		Logf("Use latest as default image tag.")
+
+	ref, err := reference.ParseNamed(imageName)
+	if err == nil {
+		// Modify the image if it's a fully qualified image name
+		if TestContext.RegistryPrefix != DefaultRegistryPrefix {
+			r := fmt.Sprintf("%s/%s", TestContext.RegistryPrefix, reference.Path(ref))
+			ref, err = reference.ParseNamed(r)
+			ExpectNoError(err, "failed to parse new image name: %v", err)
+		}
+		imageName = ref.String()
+
+		if !strings.Contains(imageName, ":") {
+			imageName = imageName + ":latest"
+			Logf("Use latest as default image tag.")
+		}
+	} else if err == reference.ErrNameNotCanonical {
+		// Non canonical images can simply be prefixed
+		imageName = fmt.Sprintf("%s/%s", TestContext.RegistryPrefix, imageName)
+	} else {
+		Failf("Unable to parse imageName: %v", err)
 	}
 
 	By("Pull image : " + imageName)

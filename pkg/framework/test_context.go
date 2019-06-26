@@ -42,10 +42,15 @@ type TestContextType struct {
 
 	// Test configuration.
 	IsLcow bool
+
+	RegistryPrefix string
 }
 
 // TestContext is a test context.
 var TestContext TestContextType
+
+// DefaultRegistryPrefix specifies the default prefix used for images
+const DefaultRegistryPrefix = "docker.io/library"
 
 // RegisterFlags registers flags to e2e test suites.
 func RegisterFlags() {
@@ -77,4 +82,5 @@ func RegisterFlags() {
 	} else {
 		TestContext.IsLcow = false
 	}
+	flag.StringVar(&TestContext.RegistryPrefix, "registry-prefix", DefaultRegistryPrefix, "A possible registry prefix added to all images, like 'localhost:5000/'")
 }
