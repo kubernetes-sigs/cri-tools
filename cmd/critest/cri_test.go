@@ -130,6 +130,7 @@ func TestCRISuite(t *testing.T) {
 
 	if *isBenchMark {
 		flag.Set("ginkgo.focus", "benchmark")
+		flag.Set("ginkgo.succinct", "true")
 	} else {
 		// Skip benchmark measurements for validation tests.
 		flag.Set("ginkgo.skipMeasurements", "true")
