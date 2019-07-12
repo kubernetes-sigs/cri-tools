@@ -57,9 +57,9 @@ rm -f critest-$VERSION-linux-amd64.tar.gz
 
 ## Documentation
 
+- **[CRI `crictl` CLI](docs/crictl.md)**
 - [CRI validation test suite](docs/validation.md)
 - [CRI performance benchmarking](docs/benchmark.md)
-- [CRI CLI](docs/crictl.md)
 
 ## Community, discussion, contribution, and support
 
