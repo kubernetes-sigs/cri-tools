@@ -476,6 +476,64 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			checkNetworkManagement(rc, containerID, false)
 		})
+
+		It("runtime should support MaskedPaths", func() {
+			By("create pod")
+			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
+
+			By("create container with MaskedPaths")
+			containerName := "container-with-maskedpaths" + framework.NewUUID()
+			containerConfig := &runtimeapi.ContainerConfig{
+				Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+				Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+				Command:  pauseCmd,
+				Linux: &runtimeapi.LinuxContainerConfig{
+					SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
+						MaskedPaths: []string{"/bin/ls"},
+					},
+				},
+			}
+
+			containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+			cmd := []string{"/bin/sh", "-c", "ls"}
+			_, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+			Expect(err).To(HaveOccurred())
+			Expect(string(stderr)).To(Equal("/bin/sh: ls: Permission denied\n"))
+		})
+
+		It("runtime should support ReadonlyPaths", func() {
+			By("create pod")
+			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
+
+			By("create container with ReadonlyPaths")
+			containerName := "container-with-readonlypaths" + framework.NewUUID()
+			containerConfig := &runtimeapi.ContainerConfig{
+				Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+				Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+				Command:  pauseCmd,
+				Linux: &runtimeapi.LinuxContainerConfig{
+					SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
+						ReadonlyPaths: []string{"/tmp"},
+					},
+				},
+			}
+
+			containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+			cmd := []string{"touch", "/tmp/test"}
+			_, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+			Expect(err).To(HaveOccurred())
+			Expect(string(stderr)).To(Equal("touch: /tmp/test: Read-only file system\n"))
+		})
 	})
 
 	// TODO(random-liu): We should set apparmor to unconfined in seccomp test to prevent
