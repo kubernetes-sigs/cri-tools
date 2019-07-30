@@ -186,7 +186,7 @@ const (
 
 	// Linux defaults
 	webServerLinuxImage        = "nginx"
-	hostNetWebServerLinuxImage = "gcr.io/cri-tools/hostnet-nginx"
+	hostNetWebServerLinuxImage = "gcr.io/cri-tools/hostnet-nginx-" + runtime.GOARCH
 
 	// Windows defaults
 	webServerWindowsImage        = "mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019"
