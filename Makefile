@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+export GO111MODULE=off
+
 GO ?= go
 PROJECT := github.com/kubernetes-sigs/cri-tools
 BINDIR := /usr/local/bin
@@ -103,6 +105,12 @@ install.tools:
 release:
 	hack/release.sh
 
+vendor:
+	export GO111MODULE=on \
+		$(GO) mod tidy && \
+		$(GO) mod vendor && \
+		$(GO) mod verify
+
 .PHONY: \
 	help \
 	check-gopath \
@@ -119,4 +127,5 @@ release:
 	lint \
 	gofmt \
 	install.tools \
-	release
+	release \
+	vendor
