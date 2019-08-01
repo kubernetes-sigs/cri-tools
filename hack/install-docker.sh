@@ -18,6 +18,8 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+arch=$(uname -m)
+
 # Workarounds for error "Failed to fetch https://packagecloud.io/github/git-lfs/ubuntu/dists/trusty/InRelease"
 # TODO: remove it after the issue fixed in git-lfs.
 sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
@@ -38,7 +40,10 @@ sudo add-apt-repository \
 sudo apt-get update
 # Docker is downgraded because exec process in 18.x doesn't inherit additional group id from the init process.
 # See more details at https://github.com/moby/moby/issues/38865.
-sudo apt-get -y --allow-downgrades install docker-ce=5:18.09.5~3-0~ubuntu-xenial
-
+if [ "$arch" == x86_64 ]; then
+	sudo apt-get -y --allow-downgrades install docker-ce=5:18.09.5~3-0~ubuntu-xenial
+elif [ "$arch" == ppc64le ]; then
+	sudo apt-get -y --allow-downgrades install docker-ce=18.06.0~ce~3-0~ubuntu
+fi
 # Restart docker daemon.
 sudo service docker restart
