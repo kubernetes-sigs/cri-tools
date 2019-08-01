@@ -109,6 +109,7 @@ func main() {
 		runtimePortForwardCommand,
 		listContainersCommand,
 		pullImageCommand,
+		runContainerCommand,
 		runPodCommand,
 		removeContainerCommand,
 		removeImageCommand,
