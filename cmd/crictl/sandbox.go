@@ -67,10 +67,11 @@ var runPodCommand = cli.Command{
 		}
 
 		// Test RuntimeServiceClient.RunPodSandbox
-		err = RunPodSandbox(runtimeClient, podSandboxConfig, context.String("runtime"))
+		podID, err := RunPodSandbox(runtimeClient, podSandboxConfig, context.String("runtime"))
 		if err != nil {
 			return fmt.Errorf("run pod sandbox failed: %v", err)
 		}
+		fmt.Println(podID)
 		return nil
 	},
 }
@@ -262,7 +263,7 @@ var listPodCommand = cli.Command{
 
 // RunPodSandbox sends a RunPodSandboxRequest to the server, and parses
 // the returned RunPodSandboxResponse.
-func RunPodSandbox(client pb.RuntimeServiceClient, config *pb.PodSandboxConfig, runtime string) error {
+func RunPodSandbox(client pb.RuntimeServiceClient, config *pb.PodSandboxConfig, runtime string) (string, error) {
 	request := &pb.RunPodSandboxRequest{
 		Config:         config,
 		RuntimeHandler: runtime,
@@ -271,10 +272,9 @@ func RunPodSandbox(client pb.RuntimeServiceClient, config *pb.PodSandboxConfig, 
 	r, err := client.RunPodSandbox(context.Background(), request)
 	logrus.Debugf("RunPodSandboxResponse: %v", r)
 	if err != nil {
-		return err
+		return "", err
 	}
-	fmt.Println(r.PodSandboxId)
-	return nil
+	return r.PodSandboxId, nil
 }
 
 // StopPodSandbox sends a StopPodSandboxRequest to the server, and parses

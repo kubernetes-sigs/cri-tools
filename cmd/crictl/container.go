@@ -41,10 +41,16 @@ func (a containerByCreated) Less(i, j int) bool {
 }
 
 type createOptions struct {
-	// configPath is path to the config for container
-	configPath string
 	// podID of the container
 	podID string
+
+	// the config and pod options
+	*runOptions
+}
+
+type runOptions struct {
+	// configPath is path to the config for container
+	configPath string
 	// podConfig is path to the config for sandbox
 	podConfig string
 }
@@ -65,15 +71,18 @@ var createContainerCommand = cli.Command{
 		}
 
 		opts := createOptions{
-			podID:      context.Args().Get(0),
-			configPath: context.Args().Get(1),
-			podConfig:  context.Args().Get(2),
+			podID: context.Args().Get(0),
+			runOptions: &runOptions{
+				configPath: context.Args().Get(1),
+				podConfig:  context.Args().Get(2),
+			},
 		}
 
-		err := CreateContainer(runtimeClient, opts)
+		ctrID, err := CreateContainer(runtimeClient, opts)
 		if err != nil {
 			return fmt.Errorf("Creating container failed: %v", err)
 		}
+		fmt.Println(ctrID)
 		return nil
 	},
 }
@@ -346,18 +355,80 @@ var listContainersCommand = cli.Command{
 	},
 }
 
+var runContainerCommand = cli.Command{
+	Name:      "run",
+	Usage:     "Run a new container inside a sandbox",
+	ArgsUsage: "container-config.[json|yaml] pod-config.[json|yaml]",
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "runtime, r",
+			Usage: "Runtime handler to use. Available options are defined by the container runtime.",
+		},
+	},
+
+	Action: func(context *cli.Context) error {
+		if len(context.Args()) != 2 {
+			return cli.ShowSubcommandHelp(context)
+		}
+
+		if err := getRuntimeClient(context); err != nil {
+			return err
+		}
+
+		opts := runOptions{
+			configPath: context.Args().Get(0),
+			podConfig:  context.Args().Get(1),
+		}
+
+		err := RunContainer(runtimeClient, opts, context.String("runtime"))
+		if err != nil {
+			return fmt.Errorf("Running container failed: %v", err)
+		}
+		return nil
+	},
+}
+
+// RunContainer starts a container in the provided sandbox
+func RunContainer(
+	client pb.RuntimeServiceClient, opts runOptions, runtime string,
+) error {
+	// Create the pod
+	podSandboxConfig, err := loadPodSandboxConfig(opts.podConfig)
+	if err != nil {
+		return fmt.Errorf("load podSandboxConfig failed: %v", err)
+	}
+	podID, err := RunPodSandbox(runtimeClient, podSandboxConfig, runtime)
+	if err != nil {
+		return fmt.Errorf("run pod sandbox failed: %v", err)
+	}
+
+	// Create the container
+	containerOptions := createOptions{podID, &opts}
+	ctrID, err := CreateContainer(runtimeClient, containerOptions)
+	if err != nil {
+		return fmt.Errorf("creating container failed: %v", err)
+	}
+
+	// Start the container
+	err = StartContainer(runtimeClient, ctrID)
+	if err != nil {
+		return fmt.Errorf("starting the container %q failed: %v", ctrID, err)
+	}
+	return nil
+}
+
 // CreateContainer sends a CreateContainerRequest to the server, and parses
 // the returned CreateContainerResponse.
-func CreateContainer(client pb.RuntimeServiceClient, opts createOptions) error {
+func CreateContainer(client pb.RuntimeServiceClient, opts createOptions) (string, error) {
 	config, err := loadContainerConfig(opts.configPath)
 	if err != nil {
-		return err
+		return "", err
 	}
 	var podConfig *pb.PodSandboxConfig
 	if opts.podConfig != "" {
 		podConfig, err = loadPodSandboxConfig(opts.podConfig)
 		if err != nil {
-			return err
+			return "", err
 		}
 	}
 
@@ -370,10 +441,9 @@ func CreateContainer(client pb.RuntimeServiceClient, opts createOptions) error {
 	r, err := client.CreateContainer(context.Background(), request)
 	logrus.Debugf("CreateContainerResponse: %v", r)
 	if err != nil {
-		return err
+		return "", err
 	}
-	fmt.Println(r.ContainerId)
-	return nil
+	return r.ContainerId, nil
 }
 
 // StartContainer sends a StartContainerRequest to the server, and parses
