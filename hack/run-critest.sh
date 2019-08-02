@@ -20,8 +20,14 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+arch=$(uname -m)
+
 # Install nsenter
-docker run --rm -v /usr/local/bin:/target jpetazzo/nsenter
+if [ "$arch" == x86_64 ]; then
+	docker run --rm -v /usr/local/bin:/target jpetazzo/nsenter
+else
+	apt-get install util-linux
+fi
 
 # Start dockershim first
 /usr/local/bin/kubelet --v=3 --logtostderr --experimental-dockershim &
