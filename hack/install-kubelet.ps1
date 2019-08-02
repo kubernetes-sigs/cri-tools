@@ -34,6 +34,7 @@ if ( ! "$branch".Equals("master") ) {
 # Build kubelet
 $version = git describe --tags --dirty --always
 go build -ldflags "-X k8s.io/kubernetes/vendor/k8s.io/client-go/pkg/version.gitVersion=$version -X k8s.io/kubernetes/pkg/version.gitVersion=$version" ./cmd/kubelet/kubelet.go
+mkdir -p "$gopath/bin"
 cp ./kubelet.exe "$gopath/bin/"
 
 # Dump version

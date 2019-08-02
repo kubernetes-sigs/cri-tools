@@ -30,6 +30,17 @@ VERSION := $(shell git describe --tags --dirty --always)
 VERSION := $(VERSION:v%=%)
 GO_LDFLAGS := -X $(PROJECT)/pkg/version.Version=$(VERSION)
 
+BUILD_PATH := $(shell pwd)/build
+BUILD_BIN_PATH := $(BUILD_PATH)/bin
+
+define go-build
+	$(shell cd `pwd` && $(GO) build -o $(BUILD_BIN_PATH)/$(shell basename $(1)) $(1))
+	@echo > /dev/null
+endef
+
+GINKGO := $(BUILD_BIN_PATH)/ginkgo
+GOLANGCI_LINT := $(BUILD_BIN_PATH)/golangci-lint
+
 all: binaries
 
 help:
@@ -85,22 +96,21 @@ uninstall-critest:
 	rm -f $(BINDIR)/critest
 
 uninstall-crictl:
-		rm -f $(BINDIR)/crictl
+	rm -f $(BINDIR)/crictl
 
 uninstall: uninstall-critest uninstall-crictl
 
-lint:
-	./hack/repo-infra/verify/go-tools/verify-gometalinter.sh
-	./hack/repo-infra/verify/verify-go-src.sh -r $(shell pwd) -v
+lint: $(GOLANGCI_LINT)
+	$(GOLANGCI_LINT) run
 	./hack/repo-infra/verify/verify-boilerplate.sh
 
-gofmt:
-	./hack/repo-infra/verify/go-tools/verify-gofmt.sh
+install.tools: $(GOLANGCI_LINT) $(GINKGO)
 
-install.tools:
-	go get -u github.com/onsi/ginkgo/ginkgo
-	go get -u github.com/alecthomas/gometalinter
-	gometalinter --install
+$(GOLANGCI_LINT):
+	$(call go-build,./vendor/github.com/golangci/golangci-lint/cmd/golangci-lint)
+
+$(GINKGO):
+	$(call go-build,./vendor/github.com/onsi/ginkgo/ginkgo)
 
 release:
 	hack/release.sh
@@ -125,7 +135,6 @@ vendor:
 	uninstall-critest \
 	uninstall-crictl \
 	lint \
-	gofmt \
 	install.tools \
 	release \
 	vendor
