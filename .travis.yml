@@ -34,6 +34,7 @@ jobs:
       script:
         - make lint
         - make gofmt
+        - hack/verify-go-modules.sh
     - stage: Build
       os: linux # Only need to run on Linux
       script:
