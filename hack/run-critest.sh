@@ -39,7 +39,11 @@ sleep 10
 # Skip reopen container log test because docker doesn't support it.
 # Skip runtime should support execSync with timeout because docker doesn't
 # support it.
-critest -ginkgo.skip="runtime should support reopening container log|runtime should support execSync with timeout" -parallel 8
+if [ "$arch" == x86_64 ]; then
+	critest -ginkgo.skip="runtime should support reopening container log|runtime should support execSync with timeout" -parallel 8
+else
+	critest -ginkgo.skip="runtime should support reopening container log|runtime should support execSync with timeout|runtime should support SupplementalGroups" -parallel 8
+fi
 
 # Run benchmark test cases
 critest -benchmark

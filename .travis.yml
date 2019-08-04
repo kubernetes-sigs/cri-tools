@@ -7,6 +7,7 @@ go:
 
 os:
   - linux
+  - linux-ppc64le
   - windows
 
 go_import_path: github.com/kubernetes-sigs/cri-tools
@@ -30,17 +31,34 @@ install:
 jobs:
   include:
     - stage: Static check
-      os: linux # Only need to run on Linux
+      os: linux
+      script:
+        - make lint
+        - make gofmt
+        - hack/verify-go-modules.sh
+    - stage: Static check
+      os: linux-ppc64le
       script:
         - make lint
         - make gofmt
         - hack/verify-go-modules.sh
     - stage: Build
-      os: linux # Only need to run on Linux
+      os: linux
+      script:
+        -  make release
+    - stage: Build
+      os: linux-ppc64le
       script:
         -  make release
     - stage: Test
       os: linux
+      script:
+        - make
+        - travis_wait hack/install-docker.sh
+        - travis_wait hack/install-kubelet.sh
+        - sudo env PATH=$PATH GOPATH=$GOPATH hack/run-critest.sh
+    - stage: Test
+      os: linux-ppc64le
       script:
         - make
         - travis_wait hack/install-docker.sh
