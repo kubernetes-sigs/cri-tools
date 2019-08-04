@@ -20,6 +20,7 @@ import (
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	"runtime"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -37,12 +38,21 @@ var _ = framework.KubeDescribe("Container", func() {
 	Context("benchmark about operations on Image", func() {
 		var err error
 
-		testImageList := []string{
-			"busybox:1.26.2-uclibc",
-			"busybox:1-uclibc",
-			"busybox:1",
-			"busybox:1-glibc",
-			"busybox:1-musl",
+		var testImageList []string
+		if runtime.GOARCH == "amd64" {
+			testImageList = []string{
+				"busybox:1.26.2-glibc",
+				"busybox:1-uclibc",
+				"busybox:1",
+				"busybox:1-glibc",
+				"busybox:1-musl",
+			}
+		} else {
+			testImageList = []string{
+				"busybox:1",
+				"busybox:1-glibc",
+				"busybox:1-musl",
+			}
 		}
 
 		AfterEach(func() {
