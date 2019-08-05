@@ -90,6 +90,16 @@ timeout: 10
 debug: true
 ```
 
+### Connection troubleshooting
+
+Some runtimes might use [cmux](https://github.com/soheilhy/cmux) for connection
+multiplexing, which can cause issues during the initial [gRPC](https://grpc.io)
+connection setup. If it does not seem to be possible to connect to the runtime
+`*.sock`, then exporting the environment variable
+`GRPC_GO_REQUIRE_HANDSHAKE=off` might solve the issue. Please take into account
+that the environment has to be preserved when running
+via sudo (`sudo -E crictl ...`).
+
 ## Additional options
 
 - `--timeout`, `-t`: Timeout of connecting to server (default: 10s)
