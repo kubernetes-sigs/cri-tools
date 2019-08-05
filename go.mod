@@ -18,7 +18,7 @@ require (
 	github.com/urfave/cli v0.0.0-20180821064027-934abfb2f102
 	golang.org/x/net v0.0.0-20190724013045-ca1201d0de80
 	golang.org/x/sys v0.0.0-20190730183949-1393eb018365
-	google.golang.org/grpc v1.17.0
+	google.golang.org/grpc v1.22.1
 	gopkg.in/yaml.v2 v2.2.2
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0
