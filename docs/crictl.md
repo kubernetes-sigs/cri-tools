@@ -46,6 +46,7 @@ Subcommands includes:
 - `port-forward`: Forward local port to a pod
 - `ps`:           List containers
 - `pull`:         Pull an image from a registry
+- `run`:          Run a new container inside a sandbox
 - `runp`:         Run a new pod
 - `rm`:           Remove one or more containers
 - `rmi`:          Remove one or more images
@@ -245,6 +246,53 @@ CONTAINER ID        IMAGE               CREATED              STATE              
 ```sh
 crictl exec -i -t 3e025dd50a72d956c4f14881fbb5b1080c9275674e95fb67f965f6478a957d60 ls
 bin   dev   etc   home  proc  root  sys   tmp   usr   var
+```
+
+### Create and start a container within one command
+
+It is possible to start a container within a single command, whereas the image
+will be pulled automatically, too:
+
+```sh
+$ cat pod-config.json
+{
+    "metadata": {
+        "name": "nginx-sandbox",
+        "namespace": "default",
+        "attempt": 1,
+        "uid": "hdishd83djaidwnduwk28bcsb"
+    },
+    "log_directory": "/tmp",
+    "linux": {
+    }
+}
+
+$ cat container-config.json
+{
+  "metadata": {
+      "name": "busybox"
+  },
+  "image":{
+      "image": "busybox"
+  },
+  "command": [
+      "top"
+  ],
+  "log_path":"busybox/0.log",
+  "linux": {
+  }
+}
+
+$ crictl run container-config.json pod-config.json
+b25b4f26e342969eb40d05e98130eee0846557d667e93deac992471a3b8f1cf4
+```
+
+List containers and check the container is in Running state:
+
+```sh
+$ crictl ps
+CONTAINER           IMAGE               CREATED             STATE               NAME                ATTEMPT             POD ID
+b25b4f26e3429       busybox:latest      14 seconds ago      Running             busybox             0                   158d7a6665ff3
 ```
 
 ## More information
