@@ -34,13 +34,11 @@ jobs:
       os: linux
       script:
         - make lint
-        - make gofmt
         - hack/verify-go-modules.sh
     - stage: Static check
       os: linux-ppc64le
       script:
         - make lint
-        - make gofmt
         - hack/verify-go-modules.sh
     - stage: Build
       os: linux
@@ -56,6 +54,7 @@ jobs:
         - make
         - travis_wait hack/install-docker.sh
         - travis_wait hack/install-kubelet.sh
+        - cp build/bin/ginkgo $GOPATH/bin
         - sudo env PATH=$PATH GOPATH=$GOPATH hack/run-critest.sh
     - stage: Test
       os: linux-ppc64le
@@ -63,6 +62,7 @@ jobs:
         - make
         - travis_wait hack/install-docker.sh
         - travis_wait hack/install-kubelet.sh
+        - cp build/bin/ginkgo $GOPATH/bin
         - sudo env PATH=$PATH GOPATH=$GOPATH hack/run-critest.sh
     - stage: Test
       os: windows
