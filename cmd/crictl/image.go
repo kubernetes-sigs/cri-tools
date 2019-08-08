@@ -72,9 +72,11 @@ var pullImageCommand = cli.Command{
 			return cli.ShowSubcommandHelp(context)
 		}
 
-		if err := getImageClient(context); err != nil {
+		imageClient, conn, err := getImageClient(context)
+		if err != nil {
 			return err
 		}
+		defer closeConnection(context, conn)
 
 		auth, err := getAuth(context.String("creds"), context.String("auth"))
 		if err != nil {
@@ -126,9 +128,11 @@ var listImageCommand = cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
-		if err := getImageClient(context); err != nil {
+		imageClient, conn, err := getImageClient(context)
+		if err != nil {
 			return err
 		}
+		defer closeConnection(context, conn)
 
 		r, err := ListImages(imageClient, context.Args().First())
 		if err != nil {
@@ -222,9 +226,12 @@ var imageStatusCommand = cli.Command{
 		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-		if err := getImageClient(context); err != nil {
+		imageClient, conn, err := getImageClient(context)
+		if err != nil {
 			return err
 		}
+		defer closeConnection(context, conn)
+
 		verbose := !(context.Bool("quiet"))
 		output := context.String("output")
 		if output == "" { // default to json output
@@ -284,9 +291,12 @@ var removeImageCommand = cli.Command{
 		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-		if err := getImageClient(context); err != nil {
+		imageClient, conn, err := getImageClient(context)
+		if err != nil {
 			return err
 		}
+		defer closeConnection(context, conn)
+
 		for i := 0; i < context.NArg(); i++ {
 			id := context.Args().Get(i)
 
@@ -323,9 +333,12 @@ var imageFsInfoCommand = cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
-		if err := getImageClient(context); err != nil {
+		imageClient, conn, err := getImageClient(context)
+		if err != nil {
 			return err
 		}
+		defer closeConnection(context, conn)
+
 		output := context.String("output")
 		if output == "" { // default to json output
 			output = "json"

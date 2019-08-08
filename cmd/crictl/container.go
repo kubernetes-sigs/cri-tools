@@ -100,12 +100,17 @@ var createContainerCommand = cli.Command{
 			return cli.ShowSubcommandHelp(context)
 		}
 
-		if err := getRuntimeClient(context); err != nil {
+		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		if err != nil {
 			return err
 		}
-		if err := getImageClient(context); err != nil {
+		defer closeConnection(context, runtimeConn)
+
+		imageClient, imageConn, err := getImageClient(context)
+		if err != nil {
 			return err
 		}
+		defer closeConnection(context, imageConn)
 
 		opts := createOptions{
 			podID: context.Args().Get(0),
@@ -137,9 +142,11 @@ var startContainerCommand = cli.Command{
 		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-		if err := getRuntimeClient(context); err != nil {
+		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		if err != nil {
 			return err
 		}
+		defer closeConnection(context, runtimeConn)
 
 		for i := 0; i < context.NArg(); i++ {
 			containerID := context.Args().Get(i)
@@ -186,9 +193,11 @@ var updateContainerCommand = cli.Command{
 		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-		if err := getRuntimeClient(context); err != nil {
+		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		if err != nil {
 			return err
 		}
+		defer closeConnection(context, runtimeConn)
 
 		options := updateOptions{
 			CPUPeriod:          context.Int64("cpu-period"),
@@ -227,9 +236,11 @@ var stopContainerCommand = cli.Command{
 		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-		if err := getRuntimeClient(context); err != nil {
+		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		if err != nil {
 			return err
 		}
+		defer closeConnection(context, runtimeConn)
 
 		for i := 0; i < context.NArg(); i++ {
 			containerID := context.Args().Get(i)
@@ -250,9 +261,11 @@ var removeContainerCommand = cli.Command{
 		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-		if err := getRuntimeClient(context); err != nil {
+		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		if err != nil {
 			return err
 		}
+		defer closeConnection(context, runtimeConn)
 
 		for i := 0; i < context.NArg(); i++ {
 			containerID := context.Args().Get(i)
@@ -283,9 +296,11 @@ var containerStatusCommand = cli.Command{
 		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-		if err := getRuntimeClient(context); err != nil {
+		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		if err != nil {
 			return err
 		}
+		defer closeConnection(context, runtimeConn)
 
 		for i := 0; i < context.NArg(); i++ {
 			containerID := context.Args().Get(i)
@@ -363,13 +378,17 @@ var listContainersCommand = cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
-		var err error
-		if err = getRuntimeClient(context); err != nil {
+		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		if err != nil {
 			return err
 		}
-		if err = getImageClient(context); err != nil {
+		defer closeConnection(context, runtimeConn)
+
+		imageClient, imageConn, err := getImageClient(context)
+		if err != nil {
 			return err
 		}
+		defer closeConnection(context, imageConn)
 
 		opts := listOptions{
 			id:         context.String("id"),
@@ -390,7 +409,7 @@ var listContainersCommand = cli.Command{
 			return err
 		}
 
-		if err = ListContainers(runtimeClient, opts); err != nil {
+		if err = ListContainers(runtimeClient, imageClient, opts); err != nil {
 			return fmt.Errorf("listing containers failed: %v", err)
 		}
 		return nil
@@ -411,12 +430,17 @@ var runContainerCommand = cli.Command{
 			return cli.ShowSubcommandHelp(context)
 		}
 
-		if err := getRuntimeClient(context); err != nil {
+		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		if err != nil {
 			return err
 		}
-		if err := getImageClient(context); err != nil {
+		defer closeConnection(context, runtimeConn)
+
+		imageClient, imageConn, err := getImageClient(context)
+		if err != nil {
 			return err
 		}
+		defer closeConnection(context, imageConn)
 
 		opts := runOptions{
 			configPath: context.Args().Get(0),
@@ -428,7 +452,7 @@ var runContainerCommand = cli.Command{
 			},
 		}
 
-		err := RunContainer(imageClient, runtimeClient, opts, context.String("runtime"))
+		err = RunContainer(imageClient, runtimeClient, opts, context.String("runtime"))
 		if err != nil {
 			return fmt.Errorf("Running container failed: %v", err)
 		}
@@ -715,7 +739,7 @@ func ContainerStatus(client pb.RuntimeServiceClient, ID, output string, quiet bo
 
 // ListContainers sends a ListContainerRequest to the server, and parses
 // the returned ListContainerResponse.
-func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
+func ListContainers(runtimeClient pb.RuntimeServiceClient, imageClient pb.ImageServiceClient, opts listOptions) error {
 	filter := &pb.ContainerFilter{}
 	if opts.id != "" {
 		filter.Id = opts.id
@@ -758,7 +782,7 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 		Filter: filter,
 	}
 	logrus.Debugf("ListContainerRequest: %v", request)
-	r, err := client.ListContainers(context.Background(), request)
+	r, err := runtimeClient.ListContainers(context.Background(), request)
 	logrus.Debugf("ListContainerResponse: %v", r)
 	if err != nil {
 		return err
@@ -785,7 +809,7 @@ func ListContainers(client pb.RuntimeServiceClient, opts listOptions) error {
 		if !matchesRegex(opts.nameRegexp, c.Metadata.Name) {
 			continue
 		}
-		if match, err := matchesImage(opts.image, c.GetImage().GetImage()); err != nil {
+		if match, err := matchesImage(imageClient, opts.image, c.GetImage().GetImage()); err != nil {
 			return fmt.Errorf("failed to check image match %v", err)
 		} else if !match {
 			continue
