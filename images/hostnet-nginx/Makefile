@@ -31,4 +31,4 @@ hostnet-nginx:
 	$(foreach arch,$(ALL_ARCH),docker push $(REGISTRY)/$@-$(arch);)
 
 push-manifest: manifest-tool
-	$(foreach image,$(IMAGES_LIST),manifest-tool push from-args --platforms $(call join_platforms,$(ALL_ARCH)) --template $(REGISTRY)/$(image)-ARCH:$(TAG) --target $(REGISTRY)/$(image):$(TAG);)
+	$(foreach image,$(IMAGES_LIST),$(MANIFEST_TOOL) push from-args --platforms $(call join_platforms,$(ALL_ARCH)) --template $(REGISTRY)/$(image)-ARCH:$(TAG) --target $(REGISTRY)/$(image):$(TAG);)

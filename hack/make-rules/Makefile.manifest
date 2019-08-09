@@ -18,6 +18,9 @@ MANIFEST_TOOL_DIR := $(shell mktemp -d)
 export PATH := $(MANIFEST_TOOL_DIR):$(PATH)
 
 MANIFEST_TOOL_VERSION := v0.7.0
+USERNAME ?= oauth2accesstoken
+PASSWORD ?= $(shell gcloud auth print-access-token)
+MANIFEST_TOOL = manifest-tool --username=$(USERNAME) --password=$(PASSWORD)
 
 space :=
 space +=

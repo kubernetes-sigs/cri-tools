@@ -58,7 +58,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 	})
 
 	It("image status should support all kinds of references [Conformance]", func() {
-		imageName := testImageWithTag
+		imageName := testImageWithAllReferences
 		// Make sure image does not exist before testing.
 		removeImage(c, imageName)
 
@@ -78,7 +78,6 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 		}
 
 		testRemoveImage(c, imageName)
-
 	})
 
 	if runtime.GOOS != "windows" || framework.TestContext.IsLcow {
