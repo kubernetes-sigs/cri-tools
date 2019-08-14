@@ -94,7 +94,6 @@ var logsCommand = cli.Command{
 		}
 		return logs.ReadLogs(context.Background(), logPath, status.GetId(), logOptions, runtimeService, os.Stdout, os.Stderr)
 	},
-	After: closeConnection,
 }
 
 // parseTimestamp parses timestamp string as golang duration,

@@ -84,10 +84,11 @@ var statsCommand = cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
-		var err error
-		if err = getRuntimeClient(context); err != nil {
+		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		if err != nil {
 			return err
 		}
+		defer closeConnection(context, runtimeConn)
 
 		opts := statsOptions{
 			all:    context.Bool("all"),

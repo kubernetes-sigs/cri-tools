@@ -57,9 +57,11 @@ var runPodCommand = cli.Command{
 			return cli.ShowSubcommandHelp(context)
 		}
 
-		if err := getRuntimeClient(context); err != nil {
+		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		if err != nil {
 			return err
 		}
+		defer closeConnection(context, runtimeConn)
 
 		podSandboxConfig, err := loadPodSandboxConfig(sandboxSpec)
 		if err != nil {
@@ -84,9 +86,11 @@ var stopPodCommand = cli.Command{
 		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-		if err := getRuntimeClient(context); err != nil {
+		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		if err != nil {
 			return err
 		}
+		defer closeConnection(context, runtimeConn)
 		for i := 0; i < context.NArg(); i++ {
 			id := context.Args().Get(i)
 			err := StopPodSandbox(runtimeClient, id)
@@ -112,9 +116,11 @@ var removePodCommand = cli.Command{
 		if ctx.NArg() == 0 {
 			return cli.ShowSubcommandHelp(ctx)
 		}
-		if err := getRuntimeClient(ctx); err != nil {
+		runtimeClient, runtimeConn, err := getRuntimeClient(ctx)
+		if err != nil {
 			return err
 		}
+		defer closeConnection(ctx, runtimeConn)
 		for i := 0; i < ctx.NArg(); i++ {
 			id := ctx.Args().Get(i)
 
@@ -162,9 +168,11 @@ var podStatusCommand = cli.Command{
 		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-		if err := getRuntimeClient(context); err != nil {
+		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		if err != nil {
 			return err
 		}
+		defer closeConnection(context, runtimeConn)
 		for i := 0; i < context.NArg(); i++ {
 			id := context.Args().Get(i)
 
@@ -234,9 +242,11 @@ var listPodCommand = cli.Command{
 	},
 	Action: func(context *cli.Context) error {
 		var err error
-		if err = getRuntimeClient(context); err != nil {
+		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		if err != nil {
 			return err
 		}
+		defer closeConnection(context, runtimeConn)
 
 		opts := listOptions{
 			id:                 context.String("id"),

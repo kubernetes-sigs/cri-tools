@@ -66,9 +66,11 @@ var runtimeExecCommand = cli.Command{
 			return cli.ShowSubcommandHelp(context)
 		}
 
-		if err := getRuntimeClient(context); err != nil {
+		runtimeClient, conn, err := getRuntimeClient(context)
+		if err != nil {
 			return err
 		}
+		defer closeConnection(context, conn)
 
 		var opts = execOptions{
 			id:      context.Args().First(),
@@ -87,13 +89,12 @@ var runtimeExecCommand = cli.Command{
 			}
 			return nil
 		}
-		err := Exec(runtimeClient, opts)
+		err = Exec(runtimeClient, opts)
 		if err != nil {
 			return fmt.Errorf("execing command in container failed: %v", err)
 		}
 		return nil
 	},
-	After: closeConnection,
 }
 
 // ExecSync sends an ExecSyncRequest to the server, and parses
