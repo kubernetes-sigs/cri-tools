@@ -96,14 +96,16 @@ const (
 	imageUserUsernameGroup     = "www-data"
 
 	// Linux defaults
-	testLinuxImageWithoutTag = "gcr.io/cri-tools/test-image-latest"
-	testLinuxImageWithTag    = "gcr.io/cri-tools/test-image-tag:test"
-	testLinuxImageWithDigest = "gcr.io/cri-tools/test-image-digest@sha256:9179135b4b4cc5a8721e09379244807553c318d92fa3111a65133241551ca343"
+	testLinuxImageWithoutTag        = "gcr.io/cri-tools/test-image-latest"
+	testLinuxImageWithTag           = "gcr.io/cri-tools/test-image-tag:test"
+	testLinuxImageWithDigest        = "gcr.io/cri-tools/test-image-digest@sha256:9179135b4b4cc5a8721e09379244807553c318d92fa3111a65133241551ca343"
+	testLinuxImageWithAllReferences = "gcr.io/cri-tools/test-image-tag:all"
 
 	// Windows defaults
-	testWindowsImageWithoutTag = "gcr.io/cri-tools/win-test-image-latest"
-	testWindowsImageWithTag    = "gcr.io/cri-tools/win-test-image-tag:test"
-	testWindowsImageWithDigest = "gcr.io/cri-tools/win-test-image-digest@sha256:05c5e07eab041551e466d6e33a0a5649a23a929cd236391b2835ec79dc245090"
+	testWindowsImageWithoutTag        = "gcr.io/cri-tools/win-test-image-latest"
+	testWindowsImageWithTag           = "gcr.io/cri-tools/win-test-image-tag:test"
+	testWindowsImageWithDigest        = "gcr.io/cri-tools/win-test-image-digest@sha256:05c5e07eab041551e466d6e33a0a5649a23a929cd236391b2835ec79dc245090"
+	testWindowsImageWithAllReferences = "gcr.io/cri-tools/win-test-image-tag:all"
 )
 
 var (
@@ -115,6 +117,9 @@ var (
 
 	// digested reference for test image
 	testImageWithDigest string
+
+	// image used to test all kinds of references.
+	testImageWithAllReferences string
 
 	// image list where different tags refer to different images
 	testDifferentTagDifferentImageList []string
@@ -155,12 +160,14 @@ var _ = framework.AddBeforeSuiteCallback(func() {
 		testImageWithoutTag = testLinuxImageWithoutTag
 		testImageWithTag = testLinuxImageWithTag
 		testImageWithDigest = testLinuxImageWithDigest
+		testImageWithAllReferences = testLinuxImageWithAllReferences
 		testDifferentTagDifferentImageList = testLinuxDifferentTagDifferentImageList
 		testDifferentTagSameImageList = testLinuxDifferentTagSameImageList
 	} else {
 		testImageWithoutTag = testWindowsImageWithoutTag
 		testImageWithTag = testWindowsImageWithTag
 		testImageWithDigest = testWindowsImageWithDigest
+		testImageWithAllReferences = testWindowsImageWithAllReferences
 		testDifferentTagDifferentImageList = testWindowsDifferentTagDifferentImageList
 		testDifferentTagSameImageList = testWindowsDifferentTagSameImageList
 	}
