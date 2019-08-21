@@ -82,7 +82,7 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 			})
 
 			It("should fail with with an unloaded profile", func() {
-				profile := apparmorProfileNamePrefix + "non-existant-profile"
+				profile := apparmorProfileNamePrefix + "non-existent-profile"
 				containerID := createContainerWithAppArmor(rc, ic, sandboxID, sandboxConfig, profile, false)
 				checkContainerApparmor(rc, containerID, false)
 			})
