@@ -34,9 +34,9 @@ sub-push-%:
 	$(foreach tag,$(IMAGE_TAGS_LIST),touch $(tag) && docker build . -t $(REGISTRY)/test-image-tag-$*:$(tag) --build-arg TEST=$(tag) --build-arg ARCH=$($*) && rm -f $(tag);)
 	$(foreach tag,$(IMAGE_TAGS_LIST),docker push $(REGISTRY)/test-image-tag-$*:$(tag);)
 	$(foreach tag,$(SAME_IMAGE_TAGS_LIST),touch same-image && docker build . -t $(REGISTRY)/test-image-tags-$*:$(tag) --build-arg TEST=same-image --build-arg ARCH=$($*) && rm -f same-image;)
-	$(foreach tag,$(SAME_IMAGE_TAGS_LIST),docker push $(REGISTRY)/test-image-tag-$*:$(tag);)
+	$(foreach tag,$(SAME_IMAGE_TAGS_LIST),docker push $(REGISTRY)/test-image-tags-$*:$(tag);)
 
 push-manifest: manifest-tool
 	$(foreach image,$(IMAGES_LIST),$(MANIFEST_TOOL) push from-args --platforms $(call join_platforms,$(ALL_ARCH)) --template $(REGISTRY)/$(image)-ARCH:$(TAG) --target $(REGISTRY)/$(image):$(TAG);)
 	$(foreach tag,$(IMAGE_TAGS_LIST),$(MANIFEST_TOOL) push from-args --platforms $(call join_platforms,$(ALL_ARCH)) --template $(REGISTRY)/test-image-tag-ARCH:$(tag) --target $(REGISTRY)/test-image-tag:$(tag);)
-	$(foreach tag,$(SAME_IMAGE_TAGS_LIST),$(MANIFEST_TOOL) push from-args --platforms $(call join_platforms,$(ALL_ARCH)) --template $(REGISTRY)/test-image-tag-ARCH:$(tag) --target $(REGISTRY)/test-image-tag:$(tag);)
+	$(foreach tag,$(SAME_IMAGE_TAGS_LIST),$(MANIFEST_TOOL) push from-args --platforms $(call join_platforms,$(ALL_ARCH)) --template $(REGISTRY)/test-image-tags-ARCH:$(tag) --target $(REGISTRY)/test-image-tags:$(tag);)
