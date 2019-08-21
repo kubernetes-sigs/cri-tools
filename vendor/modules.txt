@@ -282,7 +282,7 @@ github.com/spf13/pflag
 github.com/spf13/viper
 # github.com/timakin/bodyclose v0.0.0-20190407043127-4a873e97b2bb
 github.com/timakin/bodyclose/passes/bodyclose
-# github.com/urfave/cli v0.0.0-20180821064027-934abfb2f102
+# github.com/urfave/cli v1.21.0
 github.com/urfave/cli
 # golang.org/x/crypto v0.0.0-20190313024323-a1f597ede03a
 golang.org/x/crypto/ssh/terminal
