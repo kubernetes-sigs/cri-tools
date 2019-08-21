@@ -430,6 +430,8 @@ gopkg.in/tomb.v1
 gopkg.in/yaml.v2
 # k8s.io/api v0.0.0 => k8s.io/kubernetes/staging/src/k8s.io/api v0.0.0-20190710032638-4485c6f18cee
 k8s.io/api/core/v1
+# k8s.io/apiextensions-apiserver v0.0.0 => k8s.io/kubernetes/staging/src/k8s.io/apiextensions-apiserver v0.0.0-20190710032638-4485c6f18cee
+k8s.io/apiextensions-apiserver/pkg/features
 # k8s.io/apimachinery v0.0.0 => k8s.io/kubernetes/staging/src/k8s.io/apimachinery v0.0.0-20190710032638-4485c6f18cee
 k8s.io/apimachinery/pkg/apis/meta/v1
 k8s.io/apimachinery/pkg/util/yaml
@@ -466,8 +468,13 @@ k8s.io/apimachinery/pkg/runtime/serializer/json
 k8s.io/apimachinery/pkg/runtime/serializer/protobuf
 k8s.io/apimachinery/pkg/runtime/serializer/recognizer
 k8s.io/apimachinery/pkg/runtime/serializer/versioning
+k8s.io/apimachinery/pkg/apis/meta/internalversion
 k8s.io/apimachinery/pkg/util/framer
 k8s.io/apimachinery/pkg/apis/meta/v1/unstructured
+k8s.io/apimachinery/pkg/apis/meta/v1beta1
+# k8s.io/apiserver v0.0.0 => k8s.io/kubernetes/staging/src/k8s.io/apiserver v0.0.0-20190710032638-4485c6f18cee
+k8s.io/apiserver/pkg/util/feature
+k8s.io/apiserver/pkg/features
 # k8s.io/client-go v11.0.0+incompatible => k8s.io/kubernetes/staging/src/k8s.io/client-go v0.0.0-20190710032638-4485c6f18cee
 k8s.io/client-go/rest
 k8s.io/client-go/tools/portforward
@@ -487,6 +494,8 @@ k8s.io/client-go/pkg/apis/clientauthentication/v1alpha1
 k8s.io/client-go/pkg/apis/clientauthentication/v1beta1
 k8s.io/client-go/util/connrotation
 k8s.io/client-go/util/keyutil
+# k8s.io/component-base v0.0.0 => k8s.io/kubernetes/staging/src/k8s.io/component-base v0.0.0-20190710032638-4485c6f18cee
+k8s.io/component-base/featuregate
 # k8s.io/cri-api v0.0.0 => k8s.io/kubernetes/staging/src/k8s.io/cri-api v0.0.0-20190710032638-4485c6f18cee
 k8s.io/cri-api/pkg/apis
 k8s.io/cri-api/pkg/apis/runtime/v1alpha2
@@ -497,11 +506,17 @@ k8s.io/kubernetes/pkg/kubectl/util/term
 k8s.io/kubernetes/pkg/kubelet/kuberuntime/logs
 k8s.io/kubernetes/pkg/kubelet/remote
 k8s.io/kubernetes/pkg/kubelet/util
+k8s.io/kubernetes/pkg/security/apparmor
 k8s.io/kubernetes/pkg/kubectl/util/interrupt
 k8s.io/kubernetes/pkg/util/tail
 k8s.io/kubernetes/pkg/kubelet/util/logreduction
+k8s.io/kubernetes/pkg/features
+k8s.io/kubernetes/pkg/kubelet/types
+k8s.io/kubernetes/pkg/apis/core
+k8s.io/kubernetes/pkg/apis/scheduling
 # k8s.io/utils v0.0.0-20190221042446-c2654d5206da
 k8s.io/utils/exec
+k8s.io/utils/path
 k8s.io/utils/integer
 # mvdan.cc/interfacer v0.0.0-20180901003855-c20040233aed
 mvdan.cc/interfacer/check

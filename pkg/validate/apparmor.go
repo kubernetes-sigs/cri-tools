@@ -27,6 +27,7 @@ import (
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	"k8s.io/kubernetes/pkg/security/apparmor"
 
 	"github.com/golang/glog"
 	. "github.com/onsi/ginkgo"
@@ -58,7 +59,7 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 	var rc internalapi.RuntimeService
 	var ic internalapi.ImageManagerService
 
-	if isAppArmorEnabled() {
+	if apparmor.IsAppArmorEnabled() {
 		BeforeEach(func() {
 			rc = f.CRIClient.CRIRuntimeClient
 			ic = f.CRIClient.CRIImageClient
@@ -176,19 +177,4 @@ func loadTestProfiles() error {
 
 	glog.V(2).Infof("Loaded profiles: %v", out)
 	return nil
-}
-
-// isAppArmorEnabled returns true if apparmor is enabled for the host.
-// This function is forked from
-// https://github.com/opencontainers/runc/blob/1a81e9ab1f138c091fe5c86d0883f87716088527/libcontainer/apparmor/apparmor.go
-// to avoid the libapparmor dependency.
-// TODO: replace with k8s.io/kubernetes/pkg/security/apparmor when vendor is possible.
-func isAppArmorEnabled() bool {
-	if _, err := os.Stat("/sys/kernel/security/apparmor"); err == nil && os.Getenv("container") == "" {
-		if _, err = os.Stat("/sbin/apparmor_parser"); err == nil {
-			buf, err := ioutil.ReadFile("/sys/module/apparmor/parameters/enabled")
-			return err == nil && len(buf) > 1 && buf[0] == 'Y'
-		}
-	}
-	return false
 }
