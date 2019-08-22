@@ -100,7 +100,7 @@ type portforwardOptions struct {
 }
 
 func getSortedKeys(m map[string]string) []string {
-	var keys []string
+	keys := make([]string, len(m))
 	for k := range m {
 		keys = append(keys, k)
 	}
@@ -210,7 +210,7 @@ func outputProtobufObjAsYAML(obj proto.Message) error {
 
 func outputStatusInfo(status string, info map[string]string, format string) error {
 	// Sort all keys
-	var keys []string
+	keys := make([]string, len(info))
 	for k := range info {
 		keys = append(keys, k)
 	}

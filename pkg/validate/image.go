@@ -198,7 +198,7 @@ func testPullPublicImage(c internalapi.ImageManagerService, imageName string, po
 
 // pullImageList pulls the images listed in the imageList.
 func pullImageList(c internalapi.ImageManagerService, imageList []string, podConfig *runtimeapi.PodSandboxConfig) []string {
-	var ids []string
+	ids := []string{}
 	for _, imageName := range imageList {
 		ids = append(ids, framework.PullPublicImage(c, imageName, podConfig))
 	}

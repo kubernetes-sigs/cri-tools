@@ -5,16 +5,19 @@ run:
 linters:
   disable-all: true
   enable:
+    - deadcode
     - depguard
     - gofmt
+    - goimports
     - govet
     - ineffassign
+    - misspell
     - nakedret
+    - prealloc
     - structcheck
     - typecheck
     - varcheck
     # - bodyclose
-    # - deadcode
     # - dupl
     # - errcheck
     # - gochecknoglobals
@@ -22,15 +25,12 @@ linters:
     # - goconst
     # - gocritic
     # - gocyclo
-    # - goimports
     # - golint
     # - gosec
     # - gosimple
     # - interfacer
     # - lll
     # - maligned
-    # - misspell
-    # - prealloc
     # - scopelint
     # - staticcheck
     # - stylecheck
