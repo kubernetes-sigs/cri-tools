@@ -40,7 +40,8 @@ Subcommands includes:
 - `version`:      Display runtime version information
 - `images`:       List images
 - `inspect`:      Display the status of one or more containers
-- `inspecti`:     Return the status of one ore more images
+- `inspecti`:     Return the status of one or more images
+- `imagefsinfo`:  Return image filesystem info
 - `inspectp`:     Display the status of one or more pods
 - `logs`:         Fetch the logs of a container
 - `port-forward`: Forward local port to a pod
