@@ -57,14 +57,6 @@ jobs:
         - cp build/bin/ginkgo $GOPATH/bin
         - sudo env PATH=$PATH GOPATH=$GOPATH hack/run-critest.sh
     - stage: Test
-      os: linux-ppc64le
-      script:
-        - make
-        - travis_wait hack/install-docker.sh
-        - travis_wait hack/install-kubelet.sh
-        - cp build/bin/ginkgo $GOPATH/bin
-        - sudo env PATH=$PATH GOPATH=$GOPATH hack/run-critest.sh
-    - stage: Test
       os: windows
       script:
         - make windows
