@@ -141,7 +141,8 @@ var _ = framework.KubeDescribe("Container", func() {
 			Expect(err).Should(HaveOccurred(), "execSync should timeout")
 
 			By("timeout exec process should be gone")
-			stdout, stderr, err := rc.ExecSync(containerID, checkSleepCmd, time.Second)
+			stdout, stderr, err := rc.ExecSync(containerID, checkSleepCmd,
+				time.Duration(defaultExecSyncTimeout)*time.Second)
 			framework.ExpectNoError(err)
 			Expect(stderr).To(BeEmpty())
 			Expect(strings.TrimSpace(string(stdout))).To(BeEmpty())
