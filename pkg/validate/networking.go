@@ -62,11 +62,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 			startContainer(rc, containerID)
 
 			By("check DNS config")
-			expectedContent := []string{
-				"nameserver " + defaultDNSServer,
-				"search " + defaultDNSSearch,
-				"options " + defaultDNSOption,
-			}
+			expectedContent := getDNSConfigContent
 			checkDNSConfig(rc, containerID, expectedContent)
 		})
 

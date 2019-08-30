@@ -104,7 +104,7 @@ const (
 	// Windows defaults
 	testWindowsImageWithoutTag        = "gcr.io/cri-tools/win-test-image-latest"
 	testWindowsImageWithTag           = "gcr.io/cri-tools/win-test-image-tag:test"
-	testWindowsImageWithDigest        = "gcr.io/cri-tools/win-test-image-digest@sha256:05c5e07eab041551e466d6e33a0a5649a23a929cd236391b2835ec79dc245090"
+	testWindowsImageWithDigest        = "gcr.io/cri-tools/win-test-image-digest@sha256:ed127b3a098d6ada53fff1b33ab3ea421dc7ebb06e0c2abded9d3e84bb6842b0"
 	testWindowsImageWithAllReferences = "gcr.io/cri-tools/win-test-image-tag:all"
 )
 
@@ -204,12 +204,24 @@ var (
 	webServerImage        string
 	hostNetWebServerImage string
 	getDNSConfigCmd       []string
+	getDNSConfigContent   []string
 
 	// Linux defaults
-	getDNSConfigLinuxCmd = []string{"cat", resolvConfigPath}
+	getDNSConfigLinuxCmd     = []string{"cat", resolvConfigPath}
+	getDNSConfigLinuxContent = []string{
+		"nameserver " + defaultDNSServer,
+		"search " + defaultDNSSearch,
+		"options " + defaultDNSOption,
+	}
 
 	// Windows defaults
-	getDNSConfigWindowsCmd = []string{"cmd", "/c", "\"powershell /c sleep 5; iex '(Get-NetIPConfiguration).DNSServer.ServerAddresses'\""}
+	// Windows doesn't support ndots options.
+	// https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
+	getDNSConfigWindowsCmd     = []string{"powershell", "/c", "ipconfig /all"}
+	getDNSConfigWindowsContent = []string{
+		"DNS Servers . . . . . . . . . . . : " + defaultDNSServer,
+		"DNS Suffix Search List. . . . . . : " + defaultDNSSearch,
+	}
 )
 
 var _ = framework.AddBeforeSuiteCallback(func() {
@@ -217,10 +229,12 @@ var _ = framework.AddBeforeSuiteCallback(func() {
 		webServerImage = webServerLinuxImage
 		hostNetWebServerImage = hostNetWebServerLinuxImage
 		getDNSConfigCmd = getDNSConfigLinuxCmd
+		getDNSConfigContent = getDNSConfigLinuxContent
 	} else {
 		webServerImage = webServerWindowsImage
 		hostNetWebServerImage = hostNetWebServerWindowsImage
 		getDNSConfigCmd = getDNSConfigWindowsCmd
+		getDNSConfigContent = getDNSConfigWindowsContent
 	}
 })
 
