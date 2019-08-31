@@ -39,6 +39,8 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+const defaultExecStdinCloseTimeout = 20 * time.Second
+
 var _ = framework.KubeDescribe("Streaming", func() {
 	f := framework.NewDefaultCRIFramework()
 
@@ -175,22 +177,28 @@ func createExec(c internalapi.RuntimeService, execReq *runtimeapi.ExecRequest) s
 }
 
 func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, stdoutExactMatch bool, isTty bool) {
-	localOut := &safeBuffer{buffer: bytes.Buffer{}}
-	localErr := &safeBuffer{buffer: bytes.Buffer{}}
-	localInRead, localInWrite := io.Pipe()
+	var (
+		localOut                  = &safeBuffer{buffer: bytes.Buffer{}}
+		localErr                  = &safeBuffer{buffer: bytes.Buffer{}}
+		localInRead, localInWrite = io.Pipe()
+		testDone                  = make(chan struct{})
+		wg                        sync.WaitGroup
+	)
 
+	wg.Add(1)
 	// Wait until output read and then shutdown localIn pipe.
 	go func() {
-		ticker := time.NewTicker(5 * time.Second)
-		for {
-			switch {
-			case len(localOut.String()) >= len(stdout):
-				fallthrough
-			case <-ticker.C != time.Time{}:
-				localInWrite.Close()
-				break
-			}
+		defer wg.Done()
+		defer localInWrite.Close()
+		ticker := time.NewTicker(defaultExecStdinCloseTimeout)
+		select {
+		case <-testDone:
+		case <-ticker.C:
 		}
+	}()
+	defer func() {
+		close(testDone)
+		wg.Wait()
 	}()
 
 	// Only http is supported now.
