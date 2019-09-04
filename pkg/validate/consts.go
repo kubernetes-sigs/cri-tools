@@ -50,7 +50,7 @@ var (
 	// Windows defaults
 	echoHelloWindowsCmd      = []string{"powershell", "-c", "echo hello"}
 	sleepWindowsCmd          = []string{"powershell", "-c", "sleep", "4321"}
-	checkSleepWindowsCmd     = []string{"powershell", "-c", "tasklist powershell | findstr sleep"}
+	checkSleepWindowsCmd     = []string{"powershell", "-c", "tasklist | findstr sleep; exit 0"}
 	shellWindowsCmd          = []string{"cmd", "/Q"}
 	pauseWindowsCmd          = []string{"powershell", "-c", "ping -t localhost"}
 	logDefaultWindowsCmd     = []string{"powershell", "-c", "echo '" + defaultLog + "'"}
