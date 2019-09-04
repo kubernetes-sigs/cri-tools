@@ -19,10 +19,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -73,13 +75,17 @@ func runTestSuite(t *testing.T) {
 	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "CRI validation", reporter)
 }
 
-func generateTempTestName() string {
+func generateTempTestName() (string, error) {
 	suffix := make([]byte, 10)
 	for i := range suffix {
 		suffix[i] = letterBytes[rand.Intn(len(letterBytes))]
 	}
 
-	return "/tmp/critest-" + string(suffix) + ".test"
+	dir, err := ioutil.TempDir("", "cri-test")
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "critest-"+string(suffix)+".test"), nil
 }
 
 func runParallelTestSuite(t *testing.T) {
@@ -88,7 +94,10 @@ func runParallelTestSuite(t *testing.T) {
 		t.Fatalf("Failed to lookup path of critest: %v", err)
 	}
 
-	tempFileName := generateTempTestName()
+	tempFileName, err := generateTempTestName()
+	if err != nil {
+		t.Fatalf("Failed to generate temp test name: %v", err)
+	}
 	err = os.Symlink(criPath, tempFileName)
 	if err != nil {
 		t.Fatalf("Failed to lookup path of critest: %v", err)
