@@ -254,25 +254,79 @@ var stopContainerCommand = cli.Command{
 }
 
 var removeContainerCommand = cli.Command{
-	Name:      "rm",
-	Usage:     "Remove one or more containers",
-	ArgsUsage: "CONTAINER-ID [CONTAINER-ID...]",
-	Action: func(context *cli.Context) error {
-		if context.NArg() == 0 {
-			return cli.ShowSubcommandHelp(context)
-		}
-		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+	Name:                   "rm",
+	Usage:                  "Remove one or more containers",
+	ArgsUsage:              "CONTAINER-ID [CONTAINER-ID...]",
+	SkipArgReorder:         true,
+	UseShortOptionHandling: true,
+	Flags: []cli.Flag{
+		cli.BoolFlag{
+			Name:  "force, f",
+			Usage: "Force removal of the container, disregarding if running",
+		},
+		cli.BoolFlag{
+			Name:  "all, a",
+			Usage: "Remove all containers",
+		},
+	},
+	Action: func(ctx *cli.Context) error {
+		runtimeClient, runtimeConn, err := getRuntimeClient(ctx)
 		if err != nil {
 			return err
 		}
-		defer closeConnection(context, runtimeConn)
+		defer closeConnection(ctx, runtimeConn)
 
-		for i := 0; i < context.NArg(); i++ {
-			containerID := context.Args().Get(i)
-			err := RemoveContainer(runtimeClient, containerID)
+		ids := ctx.Args()
+		if ctx.Bool("all") {
+			r, err := runtimeClient.ListContainers(context.Background(),
+				&pb.ListContainersRequest{})
 			if err != nil {
-				fmt.Printf("Removing the container %q failed: %v\n", containerID, err)
+				return err
 			}
+			ids = nil
+			for _, ctr := range r.GetContainers() {
+				ids = append(ids, ctr.GetId())
+			}
+		}
+
+		if len(ids) == 0 {
+			return cli.ShowSubcommandHelp(ctx)
+		}
+
+		errored := false
+		for _, id := range ids {
+			resp, err := runtimeClient.ContainerStatus(context.Background(),
+				&pb.ContainerStatusRequest{ContainerId: id})
+			if err != nil {
+				logrus.Error(err)
+				errored = true
+				continue
+			}
+			if resp.GetStatus().GetState() == pb.ContainerState_CONTAINER_RUNNING {
+				if ctx.Bool("force") {
+					if err := RemoveContainer(runtimeClient, id); err != nil {
+						logrus.Errorf("stopping the container %q failed: %v", id, err)
+						errored = true
+						continue
+					}
+					continue
+				} else {
+					logrus.Errorf("container %q is running, please stop it first", id)
+					errored = true
+					continue
+				}
+			}
+
+			err = RemoveContainer(runtimeClient, id)
+			if err != nil {
+				logrus.Errorf("removing container %q failed: %v", id, err)
+				errored = true
+				continue
+			}
+		}
+
+		if errored {
+			return fmt.Errorf("unable to remove container(s)")
 		}
 		return nil
 	},
