@@ -101,6 +101,7 @@ var pullImageCommand = cli.Command{
 
 var listImageCommand = cli.Command{
 	Name:                   "images",
+	Aliases:                []string{"image", "img"},
 	Usage:                  "List images",
 	ArgsUsage:              "[REPOSITORY[:TAG]]",
 	SkipArgReorder:         true,
