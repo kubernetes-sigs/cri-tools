@@ -15,16 +15,13 @@
 export GO111MODULE=off
 
 GO ?= go
+GOOS := $(shell $(GO) env GOOS)
+ifeq ($(GOOS),windows)
+	BIN_EXT := .exe
+endif
+
 PROJECT := github.com/kubernetes-sigs/cri-tools
 BINDIR := /usr/local/bin
-ifeq ($(GOPATH),)
-export GOPATH := $(CURDIR)/_output
-unexport GOBIN
-endif
-GOBINDIR := $(word 1,$(subst :, ,$(GOPATH)))
-PATH := $(GOBINDIR)/bin:$(PATH)
-GOPKGDIR := $(GOPATH)/src/$(PROJECT)
-GOPKGBASEDIR := $(shell dirname "$(GOPKGDIR)")
 
 VERSION := $(shell git describe --tags --dirty --always)
 VERSION := $(VERSION:v%=%)
@@ -50,45 +47,28 @@ help:
 	@echo " * 'binaries' - Build critest and crictl."
 	@echo " * 'clean' - Clean artifacts."
 
-check-gopath:
-ifeq ("$(wildcard $(GOPKGDIR))","")
-	mkdir -p "$(GOPKGBASEDIR)"
-	ln -s "$(CURDIR)" "$(GOPKGBASEDIR)/cri-tools"
-endif
-ifndef GOPATH
-	$(error GOPATH is not set)
-endif
+critest:
+	CGO_ENABLED=0 $(GO) test -c -o $(CURDIR)/_output/critest$(BIN_EXT) \
+	     -ldflags '$(GO_LDFLAGS)' \
+	     $(PROJECT)/cmd/critest
 
-critest: check-gopath
-		CGO_ENABLED=0 $(GO) test -c \
-		-ldflags '$(GO_LDFLAGS)' \
-		$(PROJECT)/cmd/critest \
-		-o $(GOBINDIR)/bin/critest
-
-crictl: check-gopath
-		CGO_ENABLED=0 $(GO) install \
+crictl:
+	CGO_ENABLED=0 $(GO) build -o $(CURDIR)/_output/crictl$(BIN_EXT) \
 		-ldflags '$(GO_LDFLAGS)' \
 		$(PROJECT)/cmd/crictl
 
 clean:
 	find . -name \*~ -delete
 	find . -name \#\* -delete
-
-windows: check-gopath
-	GOOS=windows $(GO) test -c -o $(CURDIR)/_output/critest.exe \
-		-ldflags '$(GO_LDFLAGS)' \
-		$(PROJECT)/cmd/critest
-	GOOS=windows $(GO) build -o $(CURDIR)/_output/crictl.exe \
-		-ldflags '$(GO_LDFLAGS)' \
-		$(PROJECT)/cmd/crictl
+	rm -rf _output/*
 
 binaries: critest crictl
 
-install-critest: check-gopath
-	install -D -m 755 $(GOBINDIR)/bin/critest $(BINDIR)/critest
+install-critest:
+	install -D -m 755 $(CURDIR)/_output/critest$(BIN_EXT) $(BINDIR)/critest
 
-install-crictl: check-gopath
-	install -D -m 755 $(GOBINDIR)/bin/crictl $(BINDIR)/crictl
+install-crictl:
+	install -D -m 755 $(CURDIR)/_output/crictl$(BIN_EXT) $(BINDIR)/crictl
 
 install: install-critest install-crictl
 
@@ -123,7 +103,6 @@ vendor:
 
 .PHONY: \
 	help \
-	check-gopath \
 	critest \
 	crictl \
 	clean \
