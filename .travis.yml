@@ -52,14 +52,15 @@ jobs:
       os: linux
       script:
         - make
+        - sudo make install
         - travis_wait hack/install-docker.sh
         - travis_wait hack/install-kubelet.sh
-        - cp build/bin/ginkgo $GOPATH/bin
-        - sudo env PATH=$PATH GOPATH=$GOPATH hack/run-critest.sh
+        - sudo cp build/bin/ginkgo /usr/local/bin
+        - sudo env PATH=$PATH hack/run-critest.sh
     - stage: Test
       os: windows
       script:
-        - make windows
+        - make
         - powershell -c "Set-ExecutionPolicy Bypass -Scope CURRENTUSER -Force"
         - travis_wait powershell hack/install-kubelet.ps1
         # Skip hack/run-critest.sh temporarily.
