@@ -65,10 +65,10 @@ clean:
 binaries: critest crictl
 
 install-critest:
-	install -D -m 755 $(CURDIR)/_output/critest$(BIN_EXT) $(BINDIR)/critest
+	install -D -m 755 $(CURDIR)/_output/critest$(BIN_EXT) $(BINDIR)/critest$(BIN_EXT)
 
 install-crictl:
-	install -D -m 755 $(CURDIR)/_output/crictl$(BIN_EXT) $(BINDIR)/crictl
+	install -D -m 755 $(CURDIR)/_output/crictl$(BIN_EXT) $(BINDIR)/crictl$(BIN_EXT)
 
 install: install-critest install-crictl
 
