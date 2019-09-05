@@ -12,9 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-export GO111MODULE=off
-
 GO ?= go
+
+# test for go module support
+ifeq ($(shell go help mod >/dev/null 2>&1 && echo true), true)
+export GO_BUILD=GO111MODULE=on $(GO) build -mod=vendor
+export GO_TEST=GO111MODULE=on $(GO) test -mod=vendor
+else
+export GO_BUILD=$(GO) build
+export GO_TEST=$(GO) test
+endif
+
 GOOS := $(shell $(GO) env GOOS)
 ifeq ($(GOOS),windows)
 	BIN_EXT := .exe
@@ -31,7 +39,7 @@ BUILD_PATH := $(shell pwd)/build
 BUILD_BIN_PATH := $(BUILD_PATH)/bin
 
 define go-build
-	$(shell cd `pwd` && $(GO) build -o $(BUILD_BIN_PATH)/$(shell basename $(1)) $(1))
+	$(shell cd `pwd` && $(GO_BUILD) -o $(BUILD_BIN_PATH)/$(shell basename $(1)) $(1))
 	@echo > /dev/null
 endef
 
@@ -48,12 +56,12 @@ help:
 	@echo " * 'clean' - Clean artifacts."
 
 critest:
-	CGO_ENABLED=0 $(GO) test -c -o $(CURDIR)/_output/critest$(BIN_EXT) \
+	CGO_ENABLED=0 $(GO_TEST) -c -o $(CURDIR)/_output/critest$(BIN_EXT) \
 	     -ldflags '$(GO_LDFLAGS)' \
 	     $(PROJECT)/cmd/critest
 
 crictl:
-	CGO_ENABLED=0 $(GO) build -o $(CURDIR)/_output/crictl$(BIN_EXT) \
+	CGO_ENABLED=0 $(GO_BUILD) -o $(CURDIR)/_output/crictl$(BIN_EXT) \
 		-ldflags '$(GO_LDFLAGS)' \
 		$(PROJECT)/cmd/crictl
 
