@@ -103,6 +103,15 @@ $(GINKGO):
 release:
 	hack/release.sh
 
+# needs to run as root to work
+test-e2e: $(GINKGO)
+	$(GINKGO) $(TESTFLAGS) \
+		-r -p \
+		--randomizeAllSpecs \
+		--randomizeSuites \
+		--succinct \
+		test
+
 vendor:
 	export GO111MODULE=on \
 		$(GO) mod tidy && \
@@ -124,4 +133,5 @@ vendor:
 	lint \
 	install.tools \
 	release \
+	test-e2e \
 	vendor
