@@ -5,6 +5,10 @@ dist: xenial
 go:
   - 1.12.x
 
+env:
+  - GOPROXY=https://proxy.golang.org
+  - GOSUMDB=https://sum.golang.org
+
 os:
   - linux
   - linux-ppc64le
