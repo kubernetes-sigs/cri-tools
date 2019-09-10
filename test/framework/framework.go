@@ -147,14 +147,15 @@ func (t *TestFramework) StartCrio() (string, string, *Session) {
 	lcmd("cp %s %s", filepath.Join(t.crioDir, "test", "policy.json"),
 		tmpDir).Wait()
 
-	lcmd("cp %s %s", filepath.Join(t.crioDir, "contrib", "cni",
-		"10-crio-bridge.conf"), tmpDir).Wait()
-
 	for _, d := range []string{
 		"cni-config", "root", "runroot", "log", "exits", "attach",
 	} {
 		Expect(os.MkdirAll(filepath.Join(tmpDir, d), 0755)).To(BeNil())
 	}
+
+	lcmd("cp %s %s", filepath.Join(t.crioDir, "contrib", "cni",
+		"10-crio-bridge.conf"),
+		filepath.Join(tmpDir, "cni-config")).Wait()
 
 	endpoint := filepath.Join(tmpDir, "crio.sock")
 
