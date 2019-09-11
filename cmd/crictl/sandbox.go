@@ -423,7 +423,10 @@ func PodSandboxStatus(client pb.RuntimeServiceClient, ID, output string, quiet b
 	fmt.Printf("Created: %v\n", ctm)
 
 	if r.Status.Network != nil {
-		fmt.Printf("IP Address: %v\n", r.Status.Network.Ip)
+		fmt.Printf("IP Addresses: %v\n", r.Status.Network.Ip)
+		for _, ip := range r.Status.Network.AdditionalIps {
+			fmt.Printf("Additional IP: %v\n", ip.Ip)
+		}
 	}
 	if r.Status.Labels != nil {
 		fmt.Println("Labels:")
