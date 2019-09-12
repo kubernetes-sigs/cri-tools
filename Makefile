@@ -110,6 +110,7 @@ test-e2e: $(GINKGO)
 		--randomizeAllSpecs \
 		--randomizeSuites \
 		--succinct \
+		--slowSpecThreshold 60 \
 		test
 
 vendor:
