@@ -292,12 +292,19 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 	go func() {
 		defer GinkgoRecover()
 		defer writer.Close()
+		header := localOut.String()
+		time.Sleep(1 * time.Second)
+		Eventually(func() bool {
+			oldHeader := header
+			header = localOut.String()
+			return len(header) == len(oldHeader)
+		}, 10*time.Second, time.Second).Should(BeTrue(), "The container should stop output when there is no input")
 		writer.Write([]byte(strings.Join(echoHelloCmd, " ") + "\n"))
 		Eventually(func() string {
-			return localOut.String()
+			return strings.TrimPrefix(localOut.String(), header)
 		}, time.Minute, time.Second).Should(Equal(attachEchoHelloOutput), "The stdout of attach should be hello")
 		Consistently(func() string {
-			return localOut.String()
+			return strings.TrimPrefix(localOut.String(), header)
 		}, 3*time.Second, time.Second).Should(Equal(attachEchoHelloOutput), "The stdout of attach should not contain other things")
 	}()
 
