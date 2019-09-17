@@ -11,7 +11,7 @@ crictl is currently in Beta and still under quick iterations. It is hosted at th
 - using `wget`:
 
 ```sh
-VERSION="v1.15.0"
+VERSION="v1.16.0"
 wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux-amd64.tar.gz
 sudo tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f crictl-$VERSION-linux-amd64.tar.gz
@@ -20,7 +20,7 @@ rm -f crictl-$VERSION-linux-amd64.tar.gz
 - using `curl`:
 
 ```sh
-VERSION="v1.15.0"
+VERSION="v1.16.0"
 curl -L https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-${VERSION}-linux-amd64.tar.gz --output crictl-${VERSION}-linux-amd64.tar.gz
 sudo tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f crictl-$VERSION-linux-amd64.tar.gz
