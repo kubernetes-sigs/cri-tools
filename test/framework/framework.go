@@ -87,7 +87,7 @@ func (t *TestFramework) Crictl(args string) *Session {
 
 // Run crictl on the specified endpoint and return the resulting session
 func (t *TestFramework) CrictlWithEndpoint(endpoint, args string) *Session {
-	return lcmd("crictl --runtime-endpoint=%s %s", endpoint, args).Wait()
+	return lcmd("crictl --runtime-endpoint=%s %s", endpoint, args).Wait(time.Minute)
 }
 
 // Run crictl and expect success containing the specified output
@@ -110,8 +110,15 @@ func (t *TestFramework) CrictlExpectSuccessWithEndpoint(endpoint, args, expected
 func (t *TestFramework) CrictlExpectFailure(
 	args string, expectedOut, expectedErr string,
 ) {
+	t.CrictlExpectFailureWithEndpoint("", args, expectedOut, expectedErr)
+}
+
+// Run crictl and expect failure containing the specified output
+func (t *TestFramework) CrictlExpectFailureWithEndpoint(
+	endpoint, args, expectedOut, expectedErr string,
+) {
 	// When
-	res := t.Crictl(args)
+	res := t.CrictlWithEndpoint(endpoint, args)
 
 	// Then
 	Expect(res).To(Exit(1))
