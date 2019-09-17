@@ -27,7 +27,7 @@ import (
 	restclient "k8s.io/client-go/rest"
 	remoteclient "k8s.io/client-go/tools/remotecommand"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	"k8s.io/kubernetes/pkg/kubectl/util/term"
+	"k8s.io/kubectl/pkg/util/term"
 )
 
 const (
