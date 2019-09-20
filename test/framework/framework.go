@@ -128,18 +128,25 @@ func (t *TestFramework) CrictlExpectFailureWithEndpoint(
 
 func SetupCrio() string {
 	const (
-		crioURL = "https://github.com/cri-o/cri-o"
-		timeout = 10 * time.Minute
+		crioURL   = "https://github.com/cri-o/cri-o"
+		conmonURL = "https://github.com/containers/conmon"
+		timeout   = 10 * time.Minute
 	)
-	tmpDir := filepath.Join(os.TempDir(), "crio-tmp")
 
-	if _, err := os.Stat(tmpDir); os.IsNotExist(err) {
+	crioTmp := filepath.Join(os.TempDir(), "crio-tmp")
+	if _, err := os.Stat(crioTmp); os.IsNotExist(err) {
 		logrus.Info("cloning and building CRI-O")
-		lcmd("git clone --depth=1 %s %s", crioURL, tmpDir).Wait(timeout)
-		cmd(tmpDir, "make").Wait(timeout)
+		lcmd("git clone --depth=1 %s %s", crioURL, crioTmp).Wait(timeout)
+		cmd(crioTmp, "make").Wait(timeout)
 	}
 
-	return tmpDir
+	conmonTmp := filepath.Join(crioTmp, "conmon")
+	if _, err := os.Stat(conmonTmp); os.IsNotExist(err) {
+		lcmd("git clone --depth=1 %s %s", conmonURL, conmonTmp).Wait(timeout)
+		cmd(conmonTmp, "make").Wait(timeout)
+	}
+
+	return crioTmp
 }
 
 // Start the container runtime process
@@ -179,7 +186,7 @@ func (t *TestFramework) StartCrio() (string, string, *Session) {
 		" --storage-driver=vfs",
 		filepath.Join(tmpDir, "bin", "crio"),
 		endpoint,
-		filepath.Join(tmpDir, "bin", "conmon"),
+		filepath.Join(t.crioDir, "conmon", "bin", "conmon"),
 		filepath.Join(tmpDir, "exits"),
 		filepath.Join(tmpDir, "attach"),
 		filepath.Join(tmpDir, "log"),
