@@ -143,28 +143,6 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			checkPortForward(rc, req, webServerHostPortForPortForward, webServerContainerPort)
 		})
 
-		It("runtime should support portforward in host network", func() {
-			By("create a PodSandbox with container port port mapping in host network")
-			var podConfig *runtimeapi.PodSandboxConfig
-			portMappings := []*runtimeapi.PortMapping{
-				{
-					ContainerPort: webServerHostNetContainerPort,
-				},
-			}
-			podID, podConfig = createPodSandboxWithPortMapping(rc, portMappings, true)
-
-			By("create a web server container")
-			containerID := createHostNetWebServerContainer(rc, ic, podID, podConfig, "container-for-host-net-portforward-test")
-
-			By("start the web server container")
-			startContainer(rc, containerID)
-
-			req := createDefaultPortForward(rc, podID)
-
-			By("check the output of portforward")
-			checkPortForward(rc, req, webServerHostPortForHostNetPortFroward, webServerHostNetContainerPort)
-		})
-
 	})
 })
 
