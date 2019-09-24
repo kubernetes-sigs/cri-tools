@@ -19,6 +19,7 @@ package validate
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
@@ -66,6 +67,22 @@ var _ = framework.KubeDescribe("Networking", func() {
 			checkDNSConfig(rc, containerID, expectedContent)
 		})
 
+		It("runtime should support set hostname [Conformance]", func() {
+			By("create a PodSandbox with hostname")
+			var podConfig *runtimeapi.PodSandboxConfig
+			const testHostname = "test-hostname"
+			podID, podConfig = createPodSandWithHostname(rc, testHostname)
+
+			By("create container")
+			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-hostname-test-")
+
+			By("start container")
+			startContainer(rc, containerID)
+
+			By("check hostname")
+			checkHostname(rc, containerID, testHostname)
+		})
+
 		It("runtime should support port mapping with only container port [Conformance]", func() {
 			By("create a PodSandbox with container port port mapping")
 			var podConfig *runtimeapi.PodSandboxConfig
@@ -109,6 +126,21 @@ var _ = framework.KubeDescribe("Networking", func() {
 	})
 })
 
+// createPodSandWithHostname create a PodSandbox with hostname.
+func createPodSandWithHostname(c internalapi.RuntimeService, hostname string) (string, *runtimeapi.PodSandboxConfig) {
+	podSandboxName := "create-PodSandbox-with-hostname" + framework.NewUUID()
+	uid := framework.DefaultUIDPrefix + framework.NewUUID()
+	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
+	config := &runtimeapi.PodSandboxConfig{
+		Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
+		Hostname: hostname,
+		Labels:   framework.DefaultPodLabels,
+	}
+
+	podID := framework.RunPodSandbox(c, config)
+	return podID, config
+}
+
 // createPodSandWithDNSConfig create a PodSandbox with DNS config.
 func createPodSandWithDNSConfig(c internalapi.RuntimeService) (string, *runtimeapi.PodSandboxConfig) {
 	podSandboxName := "create-PodSandbox-with-DNS-config" + framework.NewUUID()
@@ -150,6 +182,16 @@ func createPodSandboxWithPortMapping(c internalapi.RuntimeService, portMappings 
 
 	podID := framework.RunPodSandbox(c, config)
 	return podID, config
+}
+
+// checkHostname checks the container hostname.
+func checkHostname(c internalapi.RuntimeService, containerID string, hostname string) {
+	By("get the current hostname via execSync")
+	stdout, stderr, err := c.ExecSync(containerID, getHostnameCmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	framework.ExpectNoError(err, "failed to execSync in container %q", containerID)
+	Expect(strings.EqualFold(strings.TrimSpace(string(stdout)), hostname)).To(BeTrue())
+	Expect(stderr).To(BeNil(), "The stderr should be nil.")
+	framework.Logf("check hostname succeed")
 }
 
 // checkDNSConfig checks the content of /etc/resolv.conf.
