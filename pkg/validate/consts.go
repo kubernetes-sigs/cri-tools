@@ -205,6 +205,7 @@ var (
 	hostNetWebServerImage string
 	getDNSConfigCmd       []string
 	getDNSConfigContent   []string
+	getHostnameCmd        []string
 
 	// Linux defaults
 	getDNSConfigLinuxCmd     = []string{"cat", resolvConfigPath}
@@ -213,6 +214,7 @@ var (
 		"search " + defaultDNSSearch,
 		"options " + defaultDNSOption,
 	}
+	getHostnameLinuxCmd = []string{"hostname"}
 
 	// Windows defaults
 	// Windows doesn't support ndots options.
@@ -222,6 +224,7 @@ var (
 		"DNS Servers . . . . . . . . . . . : " + defaultDNSServer,
 		"DNS Suffix Search List. . . . . . : " + defaultDNSSearch,
 	}
+	getHostnameWindowsCmd = []string{"powershell", "/c", "$env:computername"}
 )
 
 var _ = framework.AddBeforeSuiteCallback(func() {
@@ -230,11 +233,13 @@ var _ = framework.AddBeforeSuiteCallback(func() {
 		hostNetWebServerImage = hostNetWebServerLinuxImage
 		getDNSConfigCmd = getDNSConfigLinuxCmd
 		getDNSConfigContent = getDNSConfigLinuxContent
+		getHostnameCmd = getHostnameLinuxCmd
 	} else {
 		webServerImage = webServerWindowsImage
 		hostNetWebServerImage = hostNetWebServerWindowsImage
 		getDNSConfigCmd = getDNSConfigWindowsCmd
 		getDNSConfigContent = getDNSConfigWindowsContent
+		getHostnameCmd = getHostnameWindowsCmd
 	}
 })
 

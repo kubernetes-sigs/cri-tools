@@ -268,7 +268,6 @@ var _ = framework.KubeDescribe("Container", func() {
 			}, 5*time.Second, time.Second).Should(Equal(oldLength), "old container log should not change")
 		})
 	})
-
 })
 
 // containerFound returns whether containers is found.
