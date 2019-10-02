@@ -32,6 +32,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const timeout = 10 * time.Minute
+
 // TestFramework is used to support commonly used test features
 type TestFramework struct {
 	crioDir string
@@ -128,18 +130,37 @@ func (t *TestFramework) CrictlExpectFailureWithEndpoint(
 
 func SetupCrio() string {
 	const (
-		crioURL = "https://github.com/cri-o/cri-o"
-		timeout = 10 * time.Minute
+		// TODO: update to 1.16.0 once released
+		crioURL       = "https://github.com/cri-o/cri-o"
+		crioVersion   = "aabfe2eb73c92dc2378b36f0fc782033d9460fda"
+		conmonURL     = "https://github.com/containers/conmon"
+		conmonVersion = "v2.0.1"
 	)
 	tmpDir := filepath.Join(os.TempDir(), "crio-tmp")
 
 	if _, err := os.Stat(tmpDir); os.IsNotExist(err) {
 		logrus.Info("cloning and building CRI-O")
-		lcmd("git clone --depth=1 %s %s", crioURL, tmpDir).Wait(timeout)
-		cmd(tmpDir, "make").Wait(timeout)
+
+		Expect(checkoutAndBuild(tmpDir, crioURL, crioVersion)).To(BeNil())
+
+		conmonTmp := filepath.Join(tmpDir, "conmon")
+		checkoutAndBuild(conmonTmp, conmonURL, conmonVersion)
 	}
 
 	return tmpDir
+}
+
+func checkoutAndBuild(dir, url, rev string) error {
+	// A much faster approach than just cloning the whole repository
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+	cmd(dir, "git init").Wait(timeout)
+	cmd(dir, "git remote add origin %s", url).Wait(timeout)
+	cmd(dir, "git fetch --depth=1 origin %s", rev).Wait(timeout)
+	cmd(dir, "git checkout -f FETCH_HEAD").Wait(timeout)
+	cmd(dir, "make").Wait(timeout)
+	return nil
 }
 
 // Start the container runtime process
@@ -179,7 +200,7 @@ func (t *TestFramework) StartCrio() (string, string, *Session) {
 		" --storage-driver=vfs",
 		filepath.Join(tmpDir, "bin", "crio"),
 		endpoint,
-		filepath.Join(tmpDir, "bin", "conmon"),
+		filepath.Join(t.crioDir, "conmon", "bin", "conmon"),
 		filepath.Join(tmpDir, "exits"),
 		filepath.Join(tmpDir, "attach"),
 		filepath.Join(tmpDir, "log"),

@@ -73,8 +73,6 @@ jobs:
       name: crictl e2e
       os: linux
       script:
-        # TODO: Re-enable the test when it is fixed.
-        - exit 0
         - |
           sudo apt-get update &&\
           sudo apt-get install -y libseccomp-dev
