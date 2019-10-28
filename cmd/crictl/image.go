@@ -60,9 +60,10 @@ var pullImageCommand = cli.Command{
 			Usage: "Use `AUTH_STRING` for accessing the registry. AUTH_STRING is a base64 encoded 'USERNAME[:PASSWORD]'",
 		},
 		cli.StringFlag{
-			Name:  "pod-config",
-			Value: "",
-			Usage: "Use `pod-config.[json|yaml]` to override the the pull context",
+			Name:      "pod-config",
+			Value:     "",
+			Usage:     "Use `pod-config.[json|yaml]` to override the the pull context",
+			TakesFile: true,
 		},
 	},
 	ArgsUsage: "NAME[:TAG|@DIGEST]",

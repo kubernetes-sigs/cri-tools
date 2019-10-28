@@ -7,6 +7,8 @@ github.com/BurntSushi/toml
 github.com/Microsoft/go-winio
 # github.com/OpenPeeDeeP/depguard v0.0.0-20180806142446-a69c782687b2
 github.com/OpenPeeDeeP/depguard
+# github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d
+github.com/cpuguy83/go-md2man/v2/md2man
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/docker/distribution v2.7.1+incompatible
@@ -265,6 +267,10 @@ github.com/pborman/uuid
 github.com/pelletier/go-toml
 # github.com/pkg/errors v0.8.0
 github.com/pkg/errors
+# github.com/russross/blackfriday/v2 v2.0.1
+github.com/russross/blackfriday/v2
+# github.com/shurcooL/sanitized_anchor_name v1.0.0
+github.com/shurcooL/sanitized_anchor_name
 # github.com/sirupsen/logrus v1.4.2
 github.com/sirupsen/logrus
 # github.com/sourcegraph/go-diff v0.5.1
@@ -284,7 +290,7 @@ github.com/spf13/pflag
 github.com/spf13/viper
 # github.com/timakin/bodyclose v0.0.0-20190407043127-4a873e97b2bb
 github.com/timakin/bodyclose/passes/bodyclose
-# github.com/urfave/cli v1.21.0
+# github.com/urfave/cli v1.22.1
 github.com/urfave/cli
 # golang.org/x/crypto v0.0.0-20190611184440-5c40567a22f8
 golang.org/x/crypto/ssh/terminal
