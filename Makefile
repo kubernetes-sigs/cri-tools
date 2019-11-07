@@ -95,7 +95,12 @@ lint: $(GOLANGCI_LINT)
 install.tools: $(GOLANGCI_LINT) $(GINKGO)
 
 $(GOLANGCI_LINT):
-	$(call go-build,./vendor/github.com/golangci/golangci-lint/cmd/golangci-lint)
+	export \
+		VERSION=v1.17.1 \
+		URL=https://raw.githubusercontent.com/golangci/golangci-lint \
+		BINDIR=${BUILD_BIN_PATH} && \
+	curl -sfL $$URL/$$VERSION/install.sh | sh -s $$VERSION
+
 
 $(GINKGO):
 	$(call go-build,./vendor/github.com/onsi/ginkgo/ginkgo)

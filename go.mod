@@ -9,7 +9,6 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/protobuf v1.3.2
-	github.com/golangci/golangci-lint v1.17.1
 	github.com/onsi/ginkgo v1.10.1
 	github.com/onsi/gomega v1.7.0
 	github.com/opencontainers/go-digest v1.0.0-rc1
@@ -17,8 +16,8 @@ require (
 	github.com/pborman/uuid v1.2.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/urfave/cli v1.22.1
-	golang.org/x/net v0.0.0-20190812203447-cdfb69ac37fc
-	golang.org/x/sys v0.0.0-20190730183949-1393eb018365
+	golang.org/x/net v0.0.0-20190923162816-cdfb69ac37fc
+	golang.org/x/sys v0.0.0-20190922100055-1393eb018365
 	google.golang.org/grpc v1.23.0
 	gopkg.in/yaml.v2 v2.2.2
 	k8s.io/api v0.0.0
