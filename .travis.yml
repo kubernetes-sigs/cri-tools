@@ -40,11 +40,6 @@ jobs:
       script:
         - make lint
         - hack/verify-go-modules.sh
-    - stage: Static check
-      os: linux-ppc64le
-      script:
-        - make lint
-        - hack/verify-go-modules.sh
     - stage: Build
       os: linux
       script:
