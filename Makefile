@@ -92,7 +92,10 @@ lint: $(GOLANGCI_LINT)
 	$(GOLANGCI_LINT) run
 	./hack/repo-infra/verify/verify-boilerplate.sh
 
-install.tools: $(GOLANGCI_LINT) $(GINKGO)
+install.tools: install.lint install.ginkgo
+
+install.ginkgo: $(GINKGO)
+install.lint: $(GOLANGCI_LINT)
 
 $(GOLANGCI_LINT):
 	export \

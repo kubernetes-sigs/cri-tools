@@ -31,13 +31,14 @@ before_install:
 
 
 install:
-  - make install.tools
+  - make install.ginkgo
 
 jobs:
   include:
     - stage: Static check
       os: linux
       script:
+        - make install.lint
         - make lint
         - hack/verify-go-modules.sh
     - stage: Build
