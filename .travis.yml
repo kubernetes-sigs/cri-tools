@@ -3,7 +3,7 @@ sudo: required
 dist: xenial
 
 go:
-  - 1.12.x
+  - 1.13.x
 
 env:
   - GOPROXY=https://proxy.golang.org
@@ -31,18 +31,14 @@ before_install:
 
 
 install:
-  - make install.tools
+  - make install.ginkgo
 
 jobs:
   include:
     - stage: Static check
       os: linux
       script:
-        - make lint
-        - hack/verify-go-modules.sh
-    - stage: Static check
-      os: linux-ppc64le
-      script:
+        - make install.lint
         - make lint
         - hack/verify-go-modules.sh
     - stage: Build

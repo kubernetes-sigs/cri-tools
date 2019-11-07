@@ -92,10 +92,18 @@ lint: $(GOLANGCI_LINT)
 	$(GOLANGCI_LINT) run
 	./hack/repo-infra/verify/verify-boilerplate.sh
 
-install.tools: $(GOLANGCI_LINT) $(GINKGO)
+install.tools: install.lint install.ginkgo
+
+install.ginkgo: $(GINKGO)
+install.lint: $(GOLANGCI_LINT)
 
 $(GOLANGCI_LINT):
-	$(call go-build,./vendor/github.com/golangci/golangci-lint/cmd/golangci-lint)
+	export \
+		VERSION=v1.21.0 \
+		URL=https://raw.githubusercontent.com/golangci/golangci-lint \
+		BINDIR=${BUILD_BIN_PATH} && \
+	curl -sfL $$URL/$$VERSION/install.sh | sh -s $$VERSION
+
 
 $(GINKGO):
 	$(call go-build,./vendor/github.com/onsi/ginkgo/ginkgo)
