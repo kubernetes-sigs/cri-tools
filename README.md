@@ -23,7 +23,8 @@ Version matrix:
 
 | Kubernetes Version | cri-tools Version | cri-tools branch |
 |--------------------|-------------------|------------------|
-| 1.16.x             | v1.16.0           | master           |
+| 1.17.x             | v1.17.0           | master           |
+| 1.16.x             | v1.16.0           | release-1.16     |
 | 1.15.X             | v1.15.0           | release-1.15     |
 | 1.14.X             | v1.14.0           | release-1.14     |
 | 1.13.X             | v1.13.0           | release-1.13     |
@@ -41,7 +42,7 @@ See the [roadmap](docs/roadmap.md) for information about current and future mile
 ### Install crictl
 
 ```sh
-VERSION="v1.15.0"
+VERSION="v1.16.1"
 wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux-amd64.tar.gz
 sudo tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f crictl-$VERSION-linux-amd64.tar.gz
@@ -50,7 +51,7 @@ rm -f crictl-$VERSION-linux-amd64.tar.gz
 ### Install critest
 
 ```sh
-VERSION="v1.15.0"
+VERSION="v1.16.1"
 wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/critest-$VERSION-linux-amd64.tar.gz
 sudo tar zxvf critest-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f critest-$VERSION-linux-amd64.tar.gz
