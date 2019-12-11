@@ -7,7 +7,7 @@ CRI performance benchmarking provides a benchmarking framework for CRI-compatibl
 The benchmarking tests binary `critest` can be downloaded from [Releasing page](https://github.com/kubernetes-sigs/cri-tools/releases):
 
 ```sh
-VERSION="v1.16.0"
+VERSION="v1.17.0"
 wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/critest-$VERSION-linux-amd64.tar.gz
 sudo tar zxvf critest-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f critest-$VERSION-linux-amd64.tar.gz

@@ -22,9 +22,8 @@ cri-tools aims to provide a series of debugging and validation tools for Kubelet
 Version matrix:
 
 | Kubernetes Version | cri-tools Version | cri-tools branch |
-|--------------------|-------------------|------------------|
-| 1.17.x             | v1.17.0           | master           |
-| 1.16.x             | v1.16.0           | release-1.16     |
+| ------------------ | ----------------- | ---------------- |
+| 1.16.x/1.17.x      | 1.16.x/1.17.x     | master           |
 | 1.15.X             | v1.15.0           | release-1.15     |
 | 1.14.X             | v1.14.0           | release-1.14     |
 | 1.13.X             | v1.13.0           | release-1.13     |
@@ -42,7 +41,7 @@ See the [roadmap](docs/roadmap.md) for information about current and future mile
 ### Install crictl
 
 ```sh
-VERSION="v1.16.1"
+VERSION="v1.17.0"
 wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux-amd64.tar.gz
 sudo tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f crictl-$VERSION-linux-amd64.tar.gz
@@ -51,7 +50,7 @@ rm -f crictl-$VERSION-linux-amd64.tar.gz
 ### Install critest
 
 ```sh
-VERSION="v1.16.1"
+VERSION="v1.17.0"
 wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/critest-$VERSION-linux-amd64.tar.gz
 sudo tar zxvf critest-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f critest-$VERSION-linux-amd64.tar.gz
