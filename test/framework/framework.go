@@ -105,7 +105,7 @@ func (t *TestFramework) CrictlExpectSuccessWithEndpoint(endpoint, args, expected
 	// Then
 	Expect(res).To(Exit(0))
 	Expect(res.Out).To(Say(expectedOut))
-	Expect(res.Err.Contents()).To(BeEmpty())
+	Expect(string(res.Err.Contents())).To(BeEmpty())
 }
 
 // Run crictl and expect error containing the specified outputs
@@ -130,11 +130,10 @@ func (t *TestFramework) CrictlExpectFailureWithEndpoint(
 
 func SetupCrio() string {
 	const (
-		// TODO: update to 1.16.0 once released
 		crioURL       = "https://github.com/cri-o/cri-o"
-		crioVersion   = "aabfe2eb73c92dc2378b36f0fc782033d9460fda"
+		crioVersion   = "v1.16.1"
 		conmonURL     = "https://github.com/containers/conmon"
-		conmonVersion = "v2.0.1"
+		conmonVersion = "v2.0.4"
 	)
 	tmpDir := filepath.Join(os.TempDir(), "crio-tmp")
 
@@ -188,6 +187,7 @@ func (t *TestFramework) StartCrio() (string, string, *Session) {
 	endpoint := filepath.Join(tmpDir, "crio.sock")
 
 	session := cmd(tmpDir, "%s"+
+		" --config=%s"+
 		" --listen=%s"+
 		" --conmon=%s"+
 		" --container-exits-dir=%s"+
@@ -199,6 +199,7 @@ func (t *TestFramework) StartCrio() (string, string, *Session) {
 		" --runroot=%s"+
 		" --storage-driver=vfs",
 		filepath.Join(tmpDir, "bin", "crio"),
+		filepath.Join(t.crioDir, "crio.conf"),
 		endpoint,
 		filepath.Join(t.crioDir, "conmon", "bin", "conmon"),
 		filepath.Join(tmpDir, "exits"),
@@ -209,6 +210,8 @@ func (t *TestFramework) StartCrio() (string, string, *Session) {
 		filepath.Join(tmpDir, "root"),
 		filepath.Join(tmpDir, "runroot"),
 	)
+
+	endpoint = "unix://" + endpoint
 
 	// Wait for the connection to be available
 	for i := 0; i < 100; i++ {
