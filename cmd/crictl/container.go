@@ -304,7 +304,7 @@ var removeContainerCommand = cli.Command{
 			}
 			if resp.GetStatus().GetState() == pb.ContainerState_CONTAINER_RUNNING {
 				if ctx.Bool("force") {
-					if err := RemoveContainer(runtimeClient, id); err != nil {
+					if err := StopContainer(runtimeClient, id, 0); err != nil {
 						logrus.Errorf("stopping the container %q failed: %v", id, err)
 						errored = true
 						continue
