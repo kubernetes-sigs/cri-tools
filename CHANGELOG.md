@@ -1,42 +1,44 @@
 <!-- TOC -->
-
-- [v1.16.0](#v1160)
+- [v1.17.0](#v1170)
   - [CRI CLI (crictl)](#cri-cli-crictl)
-  - [CRI validation testing (critest)](#cri-validation-testing-critest)
   - [Downloads](#downloads)
-- [v1.15.0](#v1150)
+- [v1.16.0](#v1160)
   - [CRI CLI (crictl)](#cri-cli-crictl-1)
-  - [CRI validation testing (critest)](#cri-validation-testing-critest-1)
+  - [CRI validation testing (critest)](#cri-validation-testing-critest)
   - [Downloads](#downloads-1)
-- [v1.14.0](#v1140)
+- [v1.15.0](#v1150)
   - [CRI CLI (crictl)](#cri-cli-crictl-2)
-  - [CRI validation testing (critest)](#cri-validation-testing-critest-2)
+  - [CRI validation testing (critest)](#cri-validation-testing-critest-1)
   - [Downloads](#downloads-2)
-- [v1.13.0](#v1130)
+- [v1.14.0](#v1140)
   - [CRI CLI (crictl)](#cri-cli-crictl-3)
-  - [CRI validation testing (critest)](#cri-validation-testing-critest-3)
+  - [CRI validation testing (critest)](#cri-validation-testing-critest-2)
   - [Downloads](#downloads-3)
-- [v1.12.0](#v1120)
+- [v1.13.0](#v1130)
   - [CRI CLI (crictl)](#cri-cli-crictl-4)
-  - [CRI validation testing (critest)](#cri-validation-testing-critest-4)
+  - [CRI validation testing (critest)](#cri-validation-testing-critest-3)
   - [Downloads](#downloads-4)
-- [v1.11.1](#v1111)
+- [v1.12.0](#v1120)
   - [CRI CLI (crictl)](#cri-cli-crictl-5)
+  - [CRI validation testing (critest)](#cri-validation-testing-critest-4)
+  - [Downloads](#downloads-5)
+- [v1.11.1](#v1111)
+  - [CRI CLI (crictl)](#cri-cli-crictl-6)
 - [v1.11.0](#v1110)
   - [CRI validation testing (critest)](#cri-validation-testing-critest-5)
-  - [CRI CLI (crictl)](#cri-cli-crictl-6)
+  - [CRI CLI (crictl)](#cri-cli-crictl-7)
 - [v1.0.0-beta.1](#v100-beta1)
   - [CRI validation testing (critest)](#cri-validation-testing-critest-6)
-  - [CRI CLI (crictl)](#cri-cli-crictl-7)
+  - [CRI CLI (crictl)](#cri-cli-crictl-8)
 - [v1.0.0-beta.0](#v100-beta0)
   - [CRI validation testing (critest)](#cri-validation-testing-critest-7)
-  - [CRI CLI (crictl)](#cri-cli-crictl-8)
+  - [CRI CLI (crictl)](#cri-cli-crictl-9)
 - [v1.0.0-alpha.0](#v100-alpha0)
   - [CRI validation testing (critest)](#cri-validation-testing-critest-8)
-  - [CRI CLI (crictl)](#cri-cli-crictl-9)
+  - [CRI CLI (crictl)](#cri-cli-crictl-10)
 - [v0.2](#v02)
   - [CRI validation testing (critest)](#cri-validation-testing-critest-9)
-  - [CRI CLI (crictl)](#cri-cli-crictl-10)
+  - [CRI CLI (crictl)](#cri-cli-crictl-11)
 - [v0.1](#v01)
   - [Features](#features)
     - [CRI validation testing](#cri-validation-testing)
@@ -45,6 +47,43 @@
   - [Documentation](#documentation)
 
 <!-- /TOC -->
+
+# v1.17.0
+
+cri-tools v1.17.0 mainly focuses on bug fixes and stability improvements.
+
+## CRI CLI (crictl)
+
+- [#562](https://github.com/kubernetes-sigs/cri-tools/pull/562) Bump cri-tools version in markdown docs
+- [#561](https://github.com/kubernetes-sigs/cri-tools/pull/561) Vendor kubernetes v1.17.0
+- [#557](https://github.com/kubernetes-sigs/cri-tools/pull/557) Update golang dependencies
+- [#556](https://github.com/kubernetes-sigs/cri-tools/pull/556) Print the previous log of the container(just like kubectl)
+- [#555](https://github.com/kubernetes-sigs/cri-tools/pull/555) Add rmi --prune command
+- [#553](https://github.com/kubernetes-sigs/cri-tools/pull/553) Update README.md to contain latest version hint
+- [#552](https://github.com/kubernetes-sigs/cri-tools/pull/552) Download golangci-lint via wget
+- [#550](https://github.com/kubernetes-sigs/cri-tools/pull/550) Fix pod and container name filter for JSON/YAML output
+- [#545](https://github.com/kubernetes-sigs/cri-tools/pull/545) Fix e2e tests by pinning CRI-O and conmon
+- [#544](https://github.com/kubernetes-sigs/cri-tools/pull/544) Fixed Tim St. Clair's username
+- [#537](https://github.com/kubernetes-sigs/cri-tools/pull/537) Add fish shell completion support
+
+## Downloads
+
+| file                                                                                                                                                | sha256                                                           |
+| --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [crictl-v1.17.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.17.0/crictl-v1.17.0-linux-386.tar.gz)           | cffa443cf76ab4b760a68d4db555d1854cb692e8b20b3360cf23221815ca151e |
+| [crictl-v1.17.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.17.0/crictl-v1.17.0-linux-amd64.tar.gz)       | 7b72073797f638f099ed19550d52e9b9067672523fc51b746e65d7aa0bafa414 |
+| [crictl-v1.17.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.17.0/crictl-v1.17.0-linux-arm.tar.gz)           | 9700957218e8e7bdc02cbc8fda4c189f5b6223a93ba89d876bdfd77b6117e9b7 |
+| [crictl-v1.17.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.17.0/crictl-v1.17.0-linux-arm64.tar.gz)       | d89afd89c2852509fafeaff6534d456272360fcee732a8d0cb89476377387e12 |
+| [crictl-v1.17.0-linux-ppc64le.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.17.0/crictl-v1.17.0-linux-ppc64le.tar.gz)   | a61c52b9ac5bffe94ae4c09763083c60f3eccd30eb351017b310f32d1cafb855 |
+| [crictl-v1.17.0-linux-s390x.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.17.0/crictl-v1.17.0-linux-s390x.tar.gz)       | 0db445f0b74ecb51708b710480a462b728174155c5f2709a39d1cc2dc975e350 |
+| [crictl-v1.17.0-windows-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.17.0/crictl-v1.17.0-windows-386.tar.gz)       | 2e285250d36b5cb3e8c047b191c0c0af606fed7c0034bb140ba95cc1498f4996 |
+| [crictl-v1.17.0-windows-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.17.0/crictl-v1.17.0-windows-amd64.tar.gz)   | e18150d5546d3ddf6b165bd9aec0f65c18aacf75b94fb28bb26bfc0238f07b28 |
+| [critest-v1.17.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.17.0/critest-v1.17.0-linux-386.tar.gz)         | 60745268547a4979e668289bf9c19b1308d4bdcc2d1c6246901ac2300defcf8f |
+| [critest-v1.17.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.17.0/critest-v1.17.0-linux-amd64.tar.gz)     | 17088d99f70f3e03d8215de3594cbec367749b0a187f147cc3b2b975e497b433 |
+| [critest-v1.17.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.17.0/critest-v1.17.0-linux-arm.tar.gz)         | c5d4299d52000e43f39ebe2d9122eeae6a5867801f93c76ed97dde6b6253f646 |
+| [critest-v1.17.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.17.0/critest-v1.17.0-linux-arm64.tar.gz)     | c125f4fb8b944909c7ff6e3019d9a0c2997df9074a0ace3bf79b4ee353760366 |
+| [critest-v1.17.0-windows-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.17.0/critest-v1.17.0-windows-386.tar.gz)     | 9748549bc3b7c87b9168fd92e369ed6975f82af4ab619ffecf60668816b3ab9a |
+| [critest-v1.17.0-windows-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.17.0/critest-v1.17.0-windows-amd64.tar.gz) | a178771cc1a369e0132cd8ade95e7c28225a67d8d44db462cc3614dcfffea41b |
 
 # v1.16.0
 
@@ -85,21 +124,21 @@ cri-tools v1.16.0 has upgraded to kubernetes v1.16. It mainly focus on bug fixes
 
 ## Downloads
 
-| file                                | sha256                                                       |
-| ----------------------------------- | ------------------------------------------------------------ |
-| [crictl-v1.16.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-linux-386.tar.gz) | b6311cb75f37930721bf3e9e415dc503216c1020ca2bcde4d9b175f30cb270c6 |
-| [crictl-v1.16.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-linux-amd64.tar.gz) | a3eefa10a483c643ad85aee3d7832a720976ef7e80dde46b212eaaacd7d09512 |
-| [crictl-v1.16.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-linux-arm64.tar.gz) | aa118c31d6f6fd2d24bb2de4a33598a14a5952e1d01f93d5c3267c2b5334743b |
-| [crictl-v1.16.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-linux-arm.tar.gz) | 331c49bd9196009b8230f7a36ec272924a7bcf4c1614ecddf0eb9598c787da0e |
-| [crictl-v1.16.0-linux-ppc64le.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-linux-ppc64le.tar.gz) | 3545a8872abee65bcacdcbf80c7ac1beb3c115c53f71d10c4786f1306125f405 |
-| [crictl-v1.16.0-linux-s390x.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-linux-s390x.tar.gz) | 5af5fa1879cc487f41784c0d0fc2dc179553aa588d795f6607d150d3ffa83615 |
-| [crictl-v1.16.0-windows-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-windows-386.tar.gz) | 781e4d76feddc1709716aecebeb46502d6d9485d4c6f4e083201b9798f508c58 |
-| [crictl-v1.16.0-windows-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-windows-amd64.tar.gz) | df15b2d0ad4fcde7580672f950022cbc6f273d3214bc12d5765ae9daa4baf7b5 |
-| [critest-v1.16.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-linux-386.tar.gz) | c90d49eceae58b0ffb9384cd9b53a8d8bb2329ce5125c2302d7941298939529c |
-| [critest-v1.16.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-linux-amd64.tar.gz) | 909ba3e1404c86b82a957d4c69ae9a40e418a09e104fc017e708b877f78eaa73 |
-| [critest-v1.16.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-linux-arm64.tar.gz) | f28f7965b688b1b2f6756a265f460517a4633c85e00df15575be79d4668b0c06 |
-| [critest-v1.16.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-linux-arm.tar.gz) | c0a85d2216f7f45ce9306cf33de786f99eedce1d62b0d983fe4301b51c761598 |
-| [critest-v1.16.0-windows-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-windows-386.tar.gz) | 56796161d8437eea9d82636857bb899263601637ab2e911cff9f6fc7deaebc3f |
+| file                                                                                                                                               | sha256                                                           |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [crictl-v1.16.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-linux-386.tar.gz)          | b6311cb75f37930721bf3e9e415dc503216c1020ca2bcde4d9b175f30cb270c6 |
+| [crictl-v1.16.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-linux-amd64.tar.gz)      | a3eefa10a483c643ad85aee3d7832a720976ef7e80dde46b212eaaacd7d09512 |
+| [crictl-v1.16.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-linux-arm64.tar.gz)      | aa118c31d6f6fd2d24bb2de4a33598a14a5952e1d01f93d5c3267c2b5334743b |
+| [crictl-v1.16.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-linux-arm.tar.gz)          | 331c49bd9196009b8230f7a36ec272924a7bcf4c1614ecddf0eb9598c787da0e |
+| [crictl-v1.16.0-linux-ppc64le.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-linux-ppc64le.tar.gz)  | 3545a8872abee65bcacdcbf80c7ac1beb3c115c53f71d10c4786f1306125f405 |
+| [crictl-v1.16.0-linux-s390x.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-linux-s390x.tar.gz)      | 5af5fa1879cc487f41784c0d0fc2dc179553aa588d795f6607d150d3ffa83615 |
+| [crictl-v1.16.0-windows-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-windows-386.tar.gz)      | 781e4d76feddc1709716aecebeb46502d6d9485d4c6f4e083201b9798f508c58 |
+| [crictl-v1.16.0-windows-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-windows-amd64.tar.gz)  | df15b2d0ad4fcde7580672f950022cbc6f273d3214bc12d5765ae9daa4baf7b5 |
+| [critest-v1.16.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-linux-386.tar.gz)         | c90d49eceae58b0ffb9384cd9b53a8d8bb2329ce5125c2302d7941298939529c |
+| [critest-v1.16.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-linux-amd64.tar.gz)     | 909ba3e1404c86b82a957d4c69ae9a40e418a09e104fc017e708b877f78eaa73 |
+| [critest-v1.16.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-linux-arm64.tar.gz)     | f28f7965b688b1b2f6756a265f460517a4633c85e00df15575be79d4668b0c06 |
+| [critest-v1.16.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-linux-arm.tar.gz)         | c0a85d2216f7f45ce9306cf33de786f99eedce1d62b0d983fe4301b51c761598 |
+| [critest-v1.16.0-windows-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-windows-386.tar.gz)     | 56796161d8437eea9d82636857bb899263601637ab2e911cff9f6fc7deaebc3f |
 | [critest-v1.16.0-windows-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.16.0/crictl-v1.16.0-windows-amd64.tar.gz) | f69ce1a962e53a72f034dedfe38a20d5db85a5694bda5ad703c63806e56c2947 |
 
 # v1.15.0
@@ -127,22 +166,22 @@ cri-tools v1.15.0 has upgraded to kubernetes v1.15. It mainly focus on bug fixes
 
 ## Downloads
 
-| file                                | sha256                                                       |
-| ----------------------------------- | ------------------------------------------------------------ |
-|[crictl-v1.15.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-linux-386.tar.gz)| 51bbab1fad26f8d012344707fdefecc9ffa6b99e536c14b62a9b0ee3f81a519c|
-|[crictl-v1.15.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-linux-amd64.tar.gz)| c3b71be1f363e16078b51334967348aab4f72f46ef64a61fe7754e029779d45a|
-|[crictl-v1.15.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-linux-arm64.tar.gz)| 785c3da7e058f6fd00b0a48de24b9199eb6bae940d13f509c44ea6dd7ad9ffcd|
-|[crictl-v1.15.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-linux-arm.tar.gz)| f31f8c3b4791608a48d030d1aa1a694a73849ae057b23a90ce4ef17e5afde9e8|
-|[crictl-v1.15.0-linux-ppc64le.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-linux-ppc64le.tar.gz)| df6559d7d5e6d83e60e654ae88114d3a008111a752c886791985690e3e9070ce|
-|[crictl-v1.15.0-linux-s390x.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-linux-s390x.tar.gz)| 3fdbfe9b4fe51faf3cad9b235fefa728dc2742df9604bacef03ae5bff99caf25|
-|[crictl-v1.15.0-windows-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-windows-386.tar.gz)| bd5b22c21b18f415afe37c93c676a32a28ea75f11872c39acff62d452e8fbe91|
-|[crictl-v1.15.0-windows-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-windows-amd64.tar.gz)| 13d5050d45f67b008f68c6b65c55d3bb2f69517a5467ea9017e445f05aa01781|
-|[critest-v1.15.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/critest-v1.15.0-linux-386.tar.gz)| 24995a20f54252a667c05d797867c4d051cab842da132db04c950ad28d9909ad|
-|[critest-v1.15.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/critest-v1.15.0-linux-amd64.tar.gz)| 099ac7f169b2c1b080448788b21969118659a24cd345e16836a4c959b95493e5|
-|[critest-v1.15.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/critest-v1.15.0-linux-arm64.tar.gz)| 06df914f5b9b81708450eb9b50514b7db6b762e99d625534046dfc42bf60eca9|
-|[critest-v1.15.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/critest-v1.15.0-linux-arm.tar.gz)| 64e2e858b88144ee6c1af712e280a42f6d90c6ceb9b0cb23fc388649f6afb62e|
-|[critest-v1.15.0-windows-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/critest-v1.15.0-windows-386.tar.gz)| 694956163c41bfb84137fd6be15290a8acb4769ce823ad8cc8018fe6a2e6ce49|
-|[critest-v1.15.0-windows-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/critest-v1.15.0-windows-amd64.tar.gz)| 297d813272048d61e6b5e5cc2f8a18e766200404add87f601e4704b7e6858cbe|
+| file                                                                                                                                                | sha256                                                           |
+| --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [crictl-v1.15.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-linux-386.tar.gz)           | 51bbab1fad26f8d012344707fdefecc9ffa6b99e536c14b62a9b0ee3f81a519c |
+| [crictl-v1.15.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-linux-amd64.tar.gz)       | c3b71be1f363e16078b51334967348aab4f72f46ef64a61fe7754e029779d45a |
+| [crictl-v1.15.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-linux-arm64.tar.gz)       | 785c3da7e058f6fd00b0a48de24b9199eb6bae940d13f509c44ea6dd7ad9ffcd |
+| [crictl-v1.15.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-linux-arm.tar.gz)           | f31f8c3b4791608a48d030d1aa1a694a73849ae057b23a90ce4ef17e5afde9e8 |
+| [crictl-v1.15.0-linux-ppc64le.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-linux-ppc64le.tar.gz)   | df6559d7d5e6d83e60e654ae88114d3a008111a752c886791985690e3e9070ce |
+| [crictl-v1.15.0-linux-s390x.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-linux-s390x.tar.gz)       | 3fdbfe9b4fe51faf3cad9b235fefa728dc2742df9604bacef03ae5bff99caf25 |
+| [crictl-v1.15.0-windows-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-windows-386.tar.gz)       | bd5b22c21b18f415afe37c93c676a32a28ea75f11872c39acff62d452e8fbe91 |
+| [crictl-v1.15.0-windows-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/crictl-v1.15.0-windows-amd64.tar.gz)   | 13d5050d45f67b008f68c6b65c55d3bb2f69517a5467ea9017e445f05aa01781 |
+| [critest-v1.15.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/critest-v1.15.0-linux-386.tar.gz)         | 24995a20f54252a667c05d797867c4d051cab842da132db04c950ad28d9909ad |
+| [critest-v1.15.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/critest-v1.15.0-linux-amd64.tar.gz)     | 099ac7f169b2c1b080448788b21969118659a24cd345e16836a4c959b95493e5 |
+| [critest-v1.15.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/critest-v1.15.0-linux-arm64.tar.gz)     | 06df914f5b9b81708450eb9b50514b7db6b762e99d625534046dfc42bf60eca9 |
+| [critest-v1.15.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/critest-v1.15.0-linux-arm.tar.gz)         | 64e2e858b88144ee6c1af712e280a42f6d90c6ceb9b0cb23fc388649f6afb62e |
+| [critest-v1.15.0-windows-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/critest-v1.15.0-windows-386.tar.gz)     | 694956163c41bfb84137fd6be15290a8acb4769ce823ad8cc8018fe6a2e6ce49 |
+| [critest-v1.15.0-windows-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.15.0/critest-v1.15.0-windows-amd64.tar.gz) | 297d813272048d61e6b5e5cc2f8a18e766200404add87f601e4704b7e6858cbe |
 
 # v1.14.0
 
@@ -170,22 +209,22 @@ cri-tools v1.14.0 has upgraded to kubernetes v1.14, and Go version to 1.12. It m
 
 ## Downloads
 
-| file                                | sha256                                                       |
-| ----------------------------------- | ------------------------------------------------------------ |
-| [crictl-v1.14.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/crictl-v1.14.0-linux-386.tar.gz)     | 665d5f1d31979039b85ff3756db66e377be69618dcefae077ddd42422a09b79f |
-| [crictl-v1.14.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/crictl-v1.14.0-linux-amd64.tar.gz)   | 483c90a9fe679590df4332ba807991c49232e8cd326c307c575ecef7fe22327b |
-| [crictl-v1.14.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/crictl-v1.14.0-linux-arm64.tar.gz)   | f76b3d00a272c8d210e9a45f77d07d3770bee310d99c4fd9a72d6f55278882e5 |
-| [crictl-v1.14.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/crictl-v1.14.0-linux-arm.tar.gz)     | 9910cecfd6558239ba015323066c7233d8371af359b9ddd0b2a35d5223bcf945 |
-| [crictl-v1.14.0-linux-ppc64le.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/crictl-v1.14.0-linux-ppc64le.tar.gz) | 1e2cd11a1e025ed9755521cf13bb1bda986afa0052597a9bb44d31e62583413b |
-| [crictl-v1.14.0-linux-s390x.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/crictl-v1.14.0-linux-s390x.tar.gz)   | 8b7b5749cba88ef337997ae90aa04380e3cab2c040b44b505b2fcd691c4935e4 |
-| [crictl-v1.14.0-windows-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/crictl-v1.14.0-windows-386.tar.gz)   | 02b1ba64c6fa7bbc7319e7c637ed89b4f898acd1b6f25f2012ac4a538de5be89 |
-| [crictl-v1.14.0-windows-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/crictl-v1.14.0-windows-amd64.tar.gz) | 1f2d2e6612e930ff77640a10308a2cd40393a449a35b2dfbfeb06ae8d31e072d |
-| [critest-v1.14.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/critest-v1.14.0-linux-386.tar.gz)    | 1eeaf7fdd386e14940326c83ed2a47fb28f6512c8d93b08d3c2a2f9e3d4270bb |
-| [critest-v1.14.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/critest-v1.14.0-linux-amd64.tar.gz)  | 4c640219e297c877b56e7b13dcd0f10ab2a76092dd7bdb888d83c64372f0a3f9 |
-| [critest-v1.14.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/critest-v1.14.0-linux-arm64.tar.gz)  | e4d5e9cc9b6eb22a96a37477e392d17a5e091c40aad1ae96ec06da3708fe605a |
-| [critest-v1.14.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/critest-v1.14.0-linux-arm.tar.gz)    | bb29da5ff3405dae0442a5e2672524bf46837d6dea5c3b1ac4a99f0ad8bf78c4 |
-| [critest-v1.14.0-windows-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/critest-v1.14.0-windows-386.tar.gz)    | 8003a50ae0e0398237e42bb26da7cbfd8675deb4258ec812cb28ed989a03d7df |
-| [critest-v1.14.0-windows-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/critest-v1.14.0-windows-amd64.tar.gz)  | 07dd737b207b12d22f68425dbe5347483059a9b48f47e95c37044de960023147 |
+| file                                                                                                                                                | sha256                                                           |
+| --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [crictl-v1.14.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/crictl-v1.14.0-linux-386.tar.gz)           | 665d5f1d31979039b85ff3756db66e377be69618dcefae077ddd42422a09b79f |
+| [crictl-v1.14.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/crictl-v1.14.0-linux-amd64.tar.gz)       | 483c90a9fe679590df4332ba807991c49232e8cd326c307c575ecef7fe22327b |
+| [crictl-v1.14.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/crictl-v1.14.0-linux-arm64.tar.gz)       | f76b3d00a272c8d210e9a45f77d07d3770bee310d99c4fd9a72d6f55278882e5 |
+| [crictl-v1.14.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/crictl-v1.14.0-linux-arm.tar.gz)           | 9910cecfd6558239ba015323066c7233d8371af359b9ddd0b2a35d5223bcf945 |
+| [crictl-v1.14.0-linux-ppc64le.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/crictl-v1.14.0-linux-ppc64le.tar.gz)   | 1e2cd11a1e025ed9755521cf13bb1bda986afa0052597a9bb44d31e62583413b |
+| [crictl-v1.14.0-linux-s390x.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/crictl-v1.14.0-linux-s390x.tar.gz)       | 8b7b5749cba88ef337997ae90aa04380e3cab2c040b44b505b2fcd691c4935e4 |
+| [crictl-v1.14.0-windows-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/crictl-v1.14.0-windows-386.tar.gz)       | 02b1ba64c6fa7bbc7319e7c637ed89b4f898acd1b6f25f2012ac4a538de5be89 |
+| [crictl-v1.14.0-windows-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/crictl-v1.14.0-windows-amd64.tar.gz)   | 1f2d2e6612e930ff77640a10308a2cd40393a449a35b2dfbfeb06ae8d31e072d |
+| [critest-v1.14.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/critest-v1.14.0-linux-386.tar.gz)         | 1eeaf7fdd386e14940326c83ed2a47fb28f6512c8d93b08d3c2a2f9e3d4270bb |
+| [critest-v1.14.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/critest-v1.14.0-linux-amd64.tar.gz)     | 4c640219e297c877b56e7b13dcd0f10ab2a76092dd7bdb888d83c64372f0a3f9 |
+| [critest-v1.14.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/critest-v1.14.0-linux-arm64.tar.gz)     | e4d5e9cc9b6eb22a96a37477e392d17a5e091c40aad1ae96ec06da3708fe605a |
+| [critest-v1.14.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/critest-v1.14.0-linux-arm.tar.gz)         | bb29da5ff3405dae0442a5e2672524bf46837d6dea5c3b1ac4a99f0ad8bf78c4 |
+| [critest-v1.14.0-windows-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/critest-v1.14.0-windows-386.tar.gz)     | 8003a50ae0e0398237e42bb26da7cbfd8675deb4258ec812cb28ed989a03d7df |
+| [critest-v1.14.0-windows-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/critest-v1.14.0-windows-amd64.tar.gz) | 07dd737b207b12d22f68425dbe5347483059a9b48f47e95c37044de960023147 |
 
 # v1.13.0
 
@@ -212,20 +251,20 @@ cri-tools v1.13.0 has upgraded to kubernetes v1.13. It mainly focus on bug fixes
 
 ## Downloads
 
-| file                                | sha256                                                       |
-| ----------------------------------- | ------------------------------------------------------------ |
-| [crictl-v1.13.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/crictl-v1.13.0-linux-386.tar.gz)     | 8a289d86b97f678fd5ddbd973503f772cfab9c29ef5e391930130c6214feecc9 |
-| [crictl-v1.13.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/crictl-v1.13.0-linux-amd64.tar.gz)   | 9bdbea7a2b382494aff2ff014da328a042c5aba9096a7772e57fdf487e5a1d51 |
-| [crictl-v1.13.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/crictl-v1.13.0-linux-arm64.tar.gz)   | 68949c0cb5a37e7604c145d189cf1e109c08c93d9c710ba663db026b9c6f2746 |
-| [crictl-v1.13.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/crictl-v1.13.0-linux-arm.tar.gz)     | 2e478ebed85f9d70d49fd8f1d1089c8fba6e37d3461aeef91813f1ab0f0df586 |
+| file                                                                                                                                              | sha256                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [crictl-v1.13.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/crictl-v1.13.0-linux-386.tar.gz)         | 8a289d86b97f678fd5ddbd973503f772cfab9c29ef5e391930130c6214feecc9 |
+| [crictl-v1.13.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/crictl-v1.13.0-linux-amd64.tar.gz)     | 9bdbea7a2b382494aff2ff014da328a042c5aba9096a7772e57fdf487e5a1d51 |
+| [crictl-v1.13.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/crictl-v1.13.0-linux-arm64.tar.gz)     | 68949c0cb5a37e7604c145d189cf1e109c08c93d9c710ba663db026b9c6f2746 |
+| [crictl-v1.13.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/crictl-v1.13.0-linux-arm.tar.gz)         | 2e478ebed85f9d70d49fd8f1d1089c8fba6e37d3461aeef91813f1ab0f0df586 |
 | [crictl-v1.13.0-linux-ppc64le.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/crictl-v1.13.0-linux-ppc64le.tar.gz) | e85c3f95afd9752c65ec5d94a374a33e80576548ce95c2771a0973d7e3d9e6fa |
-| [crictl-v1.13.0-linux-s390x.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/crictl-v1.13.0-linux-s390x.tar.gz)   | fe623c98ddff7e4b8679169bc9bb222d1c5dc81867234f95e9966dcd410e7b6b |
-| [crictl-v1.13.0-windows-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/crictl-v1.13.0-windows-386.tar.gz)   | 641db1383708735d00a82fa947cc43850eb1a80de7129120967af59b24c2cf13 |
+| [crictl-v1.13.0-linux-s390x.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/crictl-v1.13.0-linux-s390x.tar.gz)     | fe623c98ddff7e4b8679169bc9bb222d1c5dc81867234f95e9966dcd410e7b6b |
+| [crictl-v1.13.0-windows-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/crictl-v1.13.0-windows-386.tar.gz)     | 641db1383708735d00a82fa947cc43850eb1a80de7129120967af59b24c2cf13 |
 | [crictl-v1.13.0-windows-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/crictl-v1.13.0-windows-amd64.tar.gz) | 1a8468d4b67f8f73b05d38e7df146160033561b25fe7e2cee7d3aa374842e72c |
-| [critest-v1.13.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/critest-v1.13.0-linux-386.tar.gz)    | 020f3dea6a6360655b85c2180a8958aab9ae458d33cb50d12ac1faa329704aac |
-| [critest-v1.13.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/critest-v1.13.0-linux-amd64.tar.gz)  | 0161bbaf1a891fc87a852659da103165fa788aa773a32fa2a1ed584b5dd04d99 |
-| [critest-v1.13.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/critest-v1.13.0-linux-arm64.tar.gz)  | 76ad6796aa1bcff6412d18b45ee4015f32b9cd96589704af414930ddeb7dff91 |
-| [critest-v1.13.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/critest-v1.13.0-linux-arm.tar.gz)    | fb8ff0a90cd59f18878cb81b40dd2b4223973d068d9a5c484de4f8f3224d249e |
+| [critest-v1.13.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/critest-v1.13.0-linux-386.tar.gz)       | 020f3dea6a6360655b85c2180a8958aab9ae458d33cb50d12ac1faa329704aac |
+| [critest-v1.13.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/critest-v1.13.0-linux-amd64.tar.gz)   | 0161bbaf1a891fc87a852659da103165fa788aa773a32fa2a1ed584b5dd04d99 |
+| [critest-v1.13.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/critest-v1.13.0-linux-arm64.tar.gz)   | 76ad6796aa1bcff6412d18b45ee4015f32b9cd96589704af414930ddeb7dff91 |
+| [critest-v1.13.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/critest-v1.13.0-linux-arm.tar.gz)       | fb8ff0a90cd59f18878cb81b40dd2b4223973d068d9a5c484de4f8f3224d249e |
 
 # v1.12.0
 
@@ -253,20 +292,20 @@ cri-tools v1.12.0 has upgraded to kubernetes v1.12. It mainly focus on bug fixes
 
 ## Downloads
 
-| file                                | sha256                                                       |
-| ----------------------------------- | ------------------------------------------------------------ |
-| [crictl-v1.12.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-linux-386.tar.gz)     | 028ccea08422e011fcf11db4ebed772b1c434b44c4dd717cecd80bd0d1e57417 |
-| [crictl-v1.12.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-linux-amd64.tar.gz)   | e7d913bcce40bf54e37ab1d4b75013c823d0551e6bc088b217bc1893207b4844 |
-| [crictl-v1.12.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-linux-arm64.tar.gz)   | 8466f08b59bf36d2eebcb9428c3d4e6e224c3065d800ead09ad730ce374da6fe |
-| [crictl-v1.12.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-linux-arm.tar.gz)     | ca6b4ac80278d32d9cc8b8b19de140fd1cc35640f088969f7068fea2df625490 |
+| file                                                                                                                                              | sha256                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [crictl-v1.12.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-linux-386.tar.gz)         | 028ccea08422e011fcf11db4ebed772b1c434b44c4dd717cecd80bd0d1e57417 |
+| [crictl-v1.12.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-linux-amd64.tar.gz)     | e7d913bcce40bf54e37ab1d4b75013c823d0551e6bc088b217bc1893207b4844 |
+| [crictl-v1.12.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-linux-arm64.tar.gz)     | 8466f08b59bf36d2eebcb9428c3d4e6e224c3065d800ead09ad730ce374da6fe |
+| [crictl-v1.12.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-linux-arm.tar.gz)         | ca6b4ac80278d32d9cc8b8b19de140fd1cc35640f088969f7068fea2df625490 |
 | [crictl-v1.12.0-linux-ppc64le.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-linux-ppc64le.tar.gz) | ec6254f1f6ffa064ba41825aab5612b7b005c8171fbcdac2ca3927d4e393000f |
-| [crictl-v1.12.0-linux-s390x.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-linux-s390x.tar.gz)   | 814aa9cd496be416612c2653097a1c9eb5784e38aa4889034b44ebf888709057 |
-| [crictl-v1.12.0-windows-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-windows-386.tar.gz)   | 4520520b106b232a8a6e99ecece19a83bf58b94d48e28b4c0483a4a0f59fe161 |
+| [crictl-v1.12.0-linux-s390x.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-linux-s390x.tar.gz)     | 814aa9cd496be416612c2653097a1c9eb5784e38aa4889034b44ebf888709057 |
+| [crictl-v1.12.0-windows-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-windows-386.tar.gz)     | 4520520b106b232a8a6e99ecece19a83bf58b94d48e28b4c0483a4a0f59fe161 |
 | [crictl-v1.12.0-windows-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/crictl-v1.12.0-windows-amd64.tar.gz) | e401db715a9f843acaae40846a4c18f6938df95c34d06af08aac2fc3e591b2a7 |
-| [critest-v1.12.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/critest-v1.12.0-linux-386.tar.gz)    | ae9da4a95147e1486575d649b4384e91ba701a0aecadbc91c70ea3a963ba1b6b |
-| [critest-v1.12.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/critest-v1.12.0-linux-amd64.tar.gz)  | 681055657a19b8ce2ecb2571e71cc7b069f33847f2f5ae72e220f55292a5e976 |
-| [critest-v1.12.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/critest-v1.12.0-linux-arm64.tar.gz)  | b3eb282ab6d845e8c640c51aa266dc9d373d991a824cf550fbc12c36f98dcc5d |
-| [critest-v1.12.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/critest-v1.12.0-linux-arm.tar.gz)    | 4593d86afffa373ab2ec5ae3b66fc0ca5413db3dd8268603e13a4820e0f8633d |
+| [critest-v1.12.0-linux-386.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/critest-v1.12.0-linux-386.tar.gz)       | ae9da4a95147e1486575d649b4384e91ba701a0aecadbc91c70ea3a963ba1b6b |
+| [critest-v1.12.0-linux-amd64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/critest-v1.12.0-linux-amd64.tar.gz)   | 681055657a19b8ce2ecb2571e71cc7b069f33847f2f5ae72e220f55292a5e976 |
+| [critest-v1.12.0-linux-arm64.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/critest-v1.12.0-linux-arm64.tar.gz)   | b3eb282ab6d845e8c640c51aa266dc9d373d991a824cf550fbc12c36f98dcc5d |
+| [critest-v1.12.0-linux-arm.tar.gz](https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.12.0/critest-v1.12.0-linux-arm.tar.gz)       | 4593d86afffa373ab2ec5ae3b66fc0ca5413db3dd8268603e13a4820e0f8633d |
 
 # v1.11.1
 
