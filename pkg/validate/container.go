@@ -82,7 +82,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support creating container [Conformance]", func() {
 			By("test create a default container")
-			containerID := testCreateDefaultContainer(rc, ic, podID, podConfig)
+			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-create-")
 
 			By("test list container")
 			containers := listContainerForID(rc, containerID)
@@ -302,15 +302,6 @@ func createShellContainer(rc internalapi.RuntimeService, ic internalapi.ImageMan
 	}
 
 	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
-}
-
-// testCreateDefaultContainer creates a container in the pod which ID is podID and make sure it's ready.
-func testCreateDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig) string {
-	containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-create-test-")
-	Eventually(func() runtimeapi.ContainerState {
-		return getContainerStatus(rc, containerID).State
-	}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_CREATED))
-	return containerID
 }
 
 // startContainer start the container for containerID.
