@@ -116,8 +116,8 @@ github.com/shurcooL/sanitized_anchor_name
 github.com/sirupsen/logrus
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
-# github.com/urfave/cli v1.22.2
-github.com/urfave/cli
+# github.com/urfave/cli/v2 v2.0.0
+github.com/urfave/cli/v2
 # golang.org/x/crypto v0.0.0-20190820162420-60c769a6c586
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/net v0.0.0-20191204025024-5ee1b9f4859a
