@@ -147,6 +147,18 @@ var _ = framework.KubeDescribe("Container", func() {
 			Expect(stderr).To(BeEmpty())
 			Expect(strings.TrimSpace(string(stdout))).To(BeEmpty())
 		})
+
+		It("runtime should support listing container stats [Conformance]", func() {
+			By("create container")
+			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-stats-")
+
+			By("test container stats")
+			stats := listContainerStatsForID(rc, containerID)
+			Expect(stats.Attributes.Id).To(Equal(containerID))
+			Expect(stats.Attributes.Metadata.Name).To(ContainSubstring("container-for-stats-"))
+			Expect(stats.Cpu.Timestamp).NotTo(BeZero())
+			Expect(stats.Memory.Timestamp).NotTo(BeZero())
+		})
 	})
 
 	Context("runtime should support adding volume and device", func() {
@@ -557,4 +569,12 @@ func verifyLogContents(podConfig *runtimeapi.PodSandboxConfig, logPath string, l
 		}
 	}
 	Expect(found).To(BeTrue(), "expected log %q (stream=%q) not found in logs %+v", log, stream, msgs)
+}
+
+// listContainerStatsForID lists container for containerID.
+func listContainerStatsForID(c internalapi.RuntimeService, containerID string) *runtimeapi.ContainerStats {
+	By("List container stats for containerID: " + containerID)
+	stats, err := c.ContainerStats(containerID)
+	framework.ExpectNoError(err, "failed to list container stats for %q status: %v", containerID, err)
+	return stats
 }
