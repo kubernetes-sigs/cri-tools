@@ -214,7 +214,7 @@ $ cat container-config.json
   "command": [
       "top"
   ],
-  "log_path":"busybox/0.log",
+  "log_path":"busybox.0.log",
   "linux": {
   }
 }
@@ -279,7 +279,7 @@ $ cat container-config.json
   "command": [
       "top"
   ],
-  "log_path":"busybox/0.log",
+  "log_path":"busybox.0.log",
   "linux": {
   }
 }
