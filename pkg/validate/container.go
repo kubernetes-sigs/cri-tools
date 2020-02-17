@@ -152,6 +152,9 @@ var _ = framework.KubeDescribe("Container", func() {
 			By("create container")
 			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-stats-")
 
+			By("start container")
+			startContainer(rc, containerID)
+
 			By("test container stats")
 			stats := listContainerStatsForID(rc, containerID)
 			Expect(stats.Attributes.Id).To(Equal(containerID))
