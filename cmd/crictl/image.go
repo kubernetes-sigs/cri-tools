@@ -218,12 +218,16 @@ var imageStatusCommand = &cli.Command{
 		&cli.StringFlag{
 			Name:    "output",
 			Aliases: []string{"o"},
-			Usage:   "Output format, One of: json|yaml|table",
+			Usage:   "Output format, One of: json|yaml|go-template|table",
 		},
 		&cli.BoolFlag{
 			Name:    "quiet",
 			Aliases: []string{"q"},
 			Usage:   "Do not show verbose information",
+		},
+		&cli.StringFlag{
+			Name:  "template",
+			Usage: "The template string is only used when output is go-template; The Template format is golang template",
 		},
 	},
 	Action: func(context *cli.Context) error {
@@ -241,6 +245,7 @@ var imageStatusCommand = &cli.Command{
 		if output == "" { // default to json output
 			output = "json"
 		}
+		tmplStr := context.String("template")
 		for i := 0; i < context.NArg(); i++ {
 			id := context.Args().Get(i)
 
@@ -258,8 +263,8 @@ var imageStatusCommand = &cli.Command{
 				return fmt.Errorf("failed to marshal status to json for %q: %v", id, err)
 			}
 			switch output {
-			case "json", "yaml":
-				if err := outputStatusInfo(status, r.Info, output); err != nil {
+			case "json", "yaml", "go-template":
+				if err := outputStatusInfo(status, r.Info, output, tmplStr); err != nil {
 					return fmt.Errorf("failed to output status for %q: %v", id, err)
 				}
 				continue
@@ -417,7 +422,11 @@ var imageFsInfoCommand = &cli.Command{
 		&cli.StringFlag{
 			Name:    "output",
 			Aliases: []string{"o"},
-			Usage:   "Output format, One of: json|yaml|table",
+			Usage:   "Output format, One of: json|yaml|go-template|table",
+		},
+		&cli.StringFlag{
+			Name:  "template",
+			Usage: "The template string is only used when output is go-template; The Template format is golang template",
 		},
 	},
 	Action: func(context *cli.Context) error {
@@ -431,6 +440,7 @@ var imageFsInfoCommand = &cli.Command{
 		if output == "" { // default to json output
 			output = "json"
 		}
+		tmplStr := context.String("template")
 
 		r, err := ImageFsInfo(imageClient)
 		if err != nil {
@@ -443,8 +453,8 @@ var imageFsInfoCommand = &cli.Command{
 			}
 
 			switch output {
-			case "json", "yaml":
-				if err := outputStatusInfo(status, nil, output); err != nil {
+			case "json", "yaml", "go-template":
+				if err := outputStatusInfo(status, nil, output, tmplStr); err != nil {
 					return fmt.Errorf("failed to output image filesystem info %v", err)
 				}
 				continue

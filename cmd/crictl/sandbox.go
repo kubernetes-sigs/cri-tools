@@ -191,12 +191,16 @@ var podStatusCommand = &cli.Command{
 		&cli.StringFlag{
 			Name:    "output",
 			Aliases: []string{"o"},
-			Usage:   "Output format, One of: json|yaml|table",
+			Usage:   "Output format, One of: json|yaml|go-template|table",
 		},
 		&cli.BoolFlag{
 			Name:    "quiet",
 			Aliases: []string{"q"},
 			Usage:   "Do not show verbose information",
+		},
+		&cli.StringFlag{
+			Name:  "template",
+			Usage: "The template string is only used when output is go-template; The Template format is golang template",
 		},
 	},
 	Action: func(context *cli.Context) error {
@@ -211,7 +215,7 @@ var podStatusCommand = &cli.Command{
 		for i := 0; i < context.NArg(); i++ {
 			id := context.Args().Get(i)
 
-			err := PodSandboxStatus(runtimeClient, id, context.String("output"), context.Bool("quiet"))
+			err := PodSandboxStatus(runtimeClient, id, context.String("output"), context.Bool("quiet"), context.String("template"))
 			if err != nil {
 				return fmt.Errorf("getting the pod sandbox status for %q failed: %v", id, err)
 			}
@@ -264,6 +268,7 @@ var listPodCommand = &cli.Command{
 			Name:    "output",
 			Aliases: []string{"o"},
 			Usage:   "Output format, One of: json|yaml|table",
+			Value:   "table",
 		},
 		&cli.BoolFlag{
 			Name:    "latest",
@@ -380,7 +385,7 @@ func marshalPodSandboxStatus(ps *pb.PodSandboxStatus) (string, error) {
 
 // PodSandboxStatus sends a PodSandboxStatusRequest to the server, and parses
 // the returned PodSandboxStatusResponse.
-func PodSandboxStatus(client pb.RuntimeServiceClient, ID, output string, quiet bool) error {
+func PodSandboxStatus(client pb.RuntimeServiceClient, ID, output string, quiet bool, tmplStr string) error {
 	verbose := !(quiet)
 	if output == "" { // default to json output
 		output = "json"
@@ -405,8 +410,8 @@ func PodSandboxStatus(client pb.RuntimeServiceClient, ID, output string, quiet b
 		return err
 	}
 	switch output {
-	case "json", "yaml":
-		return outputStatusInfo(status, r.Info, output)
+	case "json", "yaml", "go-template":
+		return outputStatusInfo(status, r.Info, output, tmplStr)
 	case "table": // table output is after this switch block
 	default:
 		return fmt.Errorf("output option cannot be %s", output)
@@ -495,7 +500,7 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 		return outputProtobufObjAsJSON(r)
 	case "yaml":
 		return outputProtobufObjAsYAML(r)
-	case "table", "":
+	case "table":
 	// continue; output will be generated after the switch block ends.
 	default:
 		return fmt.Errorf("unsupported output format %q", opts.output)

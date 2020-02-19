@@ -341,12 +341,16 @@ var containerStatusCommand = &cli.Command{
 		&cli.StringFlag{
 			Name:    "output",
 			Aliases: []string{"o"},
-			Usage:   "Output format, One of: json|yaml|table",
+			Usage:   "Output format, One of: json|yaml|go-template|table",
 		},
 		&cli.BoolFlag{
 			Name:    "quiet",
 			Aliases: []string{"q"},
 			Usage:   "Do not show verbose information",
+		},
+		&cli.StringFlag{
+			Name:  "template",
+			Usage: "The template string is only used when output is go-template; The Template format is golang template",
 		},
 	},
 	Action: func(context *cli.Context) error {
@@ -361,7 +365,7 @@ var containerStatusCommand = &cli.Command{
 
 		for i := 0; i < context.NArg(); i++ {
 			containerID := context.Args().Get(i)
-			err := ContainerStatus(runtimeClient, containerID, context.String("output"), context.Bool("quiet"))
+			err := ContainerStatus(runtimeClient, containerID, context.String("output"), context.String("template"), context.Bool("quiet"))
 			if err != nil {
 				return fmt.Errorf("Getting the status of the container %q failed: %v", containerID, err)
 			}
@@ -419,6 +423,7 @@ var listContainersCommand = &cli.Command{
 			Name:    "output",
 			Aliases: []string{"o"},
 			Usage:   "Output format, One of: json|yaml|table",
+			Value:   "table",
 		},
 		&cli.BoolFlag{
 			Name:    "all",
@@ -726,7 +731,7 @@ func marshalContainerStatus(cs *pb.ContainerStatus) (string, error) {
 
 // ContainerStatus sends a ContainerStatusRequest to the server, and parses
 // the returned ContainerStatusResponse.
-func ContainerStatus(client pb.RuntimeServiceClient, ID, output string, quiet bool) error {
+func ContainerStatus(client pb.RuntimeServiceClient, ID, output string, tmplStr string, quiet bool) error {
 	verbose := !(quiet)
 	if output == "" { // default to json output
 		output = "json"
@@ -751,8 +756,8 @@ func ContainerStatus(client pb.RuntimeServiceClient, ID, output string, quiet bo
 	}
 
 	switch output {
-	case "json", "yaml":
-		return outputStatusInfo(status, r.Info, output)
+	case "json", "yaml", "go-template":
+		return outputStatusInfo(status, r.Info, output, tmplStr)
 	case "table": // table output is after this switch block
 	default:
 		return fmt.Errorf("output option cannot be %s", output)
@@ -858,7 +863,7 @@ func ListContainers(runtimeClient pb.RuntimeServiceClient, imageClient pb.ImageS
 		return outputProtobufObjAsJSON(r)
 	case "yaml":
 		return outputProtobufObjAsYAML(r)
-	case "table", "":
+	case "table":
 	// continue; output will be generated after the switch block ends.
 	default:
 		return fmt.Errorf("unsupported output format %q", opts.output)
