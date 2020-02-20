@@ -35,12 +35,16 @@ var runtimeStatusCommand = &cli.Command{
 			Name:    "output",
 			Aliases: []string{"o"},
 			Value:   "json",
-			Usage:   "Output format, One of: json|yaml",
+			Usage:   "Output format, One of: json|yaml|go-template",
 		},
 		&cli.BoolFlag{
 			Name:    "quiet",
 			Aliases: []string{"q"},
 			Usage:   "Do not show verbose information",
+		},
+		&cli.StringFlag{
+			Name:  "template",
+			Usage: "The template string is only used when output is go-template; The Template format is golang template",
 		},
 	},
 	Action: func(context *cli.Context) error {
@@ -72,5 +76,5 @@ func Info(cliContext *cli.Context, client pb.RuntimeServiceClient) error {
 	if err != nil {
 		return err
 	}
-	return outputStatusInfo(status, r.Info, cliContext.String("output"))
+	return outputStatusInfo(status, r.Info, cliContext.String("output"), cliContext.String("template"))
 }

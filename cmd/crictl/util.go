@@ -208,7 +208,7 @@ func outputProtobufObjAsYAML(obj proto.Message) error {
 	return nil
 }
 
-func outputStatusInfo(status string, info map[string]string, format string) error {
+func outputStatusInfo(status string, info map[string]string, format string, tmplStr string) error {
 	// Sort all keys
 	keys := []string{}
 	for k := range info {
@@ -242,6 +242,12 @@ func outputStatusInfo(status string, info map[string]string, format string) erro
 			return err
 		}
 		fmt.Println(output.String())
+	case "go-template":
+		output, err := tmplExecuteRawJSON(tmplStr, jsonInfo)
+		if err != nil {
+			return err
+		}
+		fmt.Println(output)
 	default:
 		fmt.Printf("Don't support %q format\n", format)
 	}
