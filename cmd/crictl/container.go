@@ -25,6 +25,8 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/kubernetes/pkg/kubelet/types"
+
 	"github.com/docker/go-units"
 	godigest "github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
@@ -498,6 +500,11 @@ var listContainersCommand = &cli.Command{
 			Name:  "no-trunc",
 			Usage: "Show output without truncating the ID",
 		},
+		&cli.BoolFlag{
+			Name:    "resolve-image-path",
+			Aliases: []string{"r"},
+			Usage:   "Show image path instead of image id",
+		},
 	},
 	Action: func(context *cli.Context) error {
 		runtimeClient, runtimeConn, err := getRuntimeClient(context)
@@ -513,18 +520,19 @@ var listContainersCommand = &cli.Command{
 		defer closeConnection(context, imageConn)
 
 		opts := listOptions{
-			id:         context.String("id"),
-			podID:      context.String("pod"),
-			state:      context.String("state"),
-			verbose:    context.Bool("verbose"),
-			quiet:      context.Bool("quiet"),
-			output:     context.String("output"),
-			all:        context.Bool("all"),
-			nameRegexp: context.String("name"),
-			latest:     context.Bool("latest"),
-			last:       context.Int("last"),
-			noTrunc:    context.Bool("no-trunc"),
-			image:      context.String("image"),
+			id:               context.String("id"),
+			podID:            context.String("pod"),
+			state:            context.String("state"),
+			verbose:          context.Bool("verbose"),
+			quiet:            context.Bool("quiet"),
+			output:           context.String("output"),
+			all:              context.Bool("all"),
+			nameRegexp:       context.String("name"),
+			latest:           context.Bool("latest"),
+			last:             context.Int("last"),
+			noTrunc:          context.Bool("no-trunc"),
+			image:            context.String("image"),
+			resolveImagePath: context.Bool("resolve-image-path"),
 		}
 		opts.labels, err = parseLabelStringSlice(context.StringSlice("label"))
 		if err != nil {
@@ -977,7 +985,7 @@ func ListContainers(runtimeClient pb.RuntimeServiceClient, imageClient pb.ImageS
 
 	display := newTableDisplay(20, 1, 3, ' ', 0)
 	if !opts.verbose && !opts.quiet {
-		display.AddRow([]string{columnContainer, columnImage, columnCreated, columnState, columnName, columnAttempt, columnPodID})
+		display.AddRow([]string{columnContainer, columnImage, columnCreated, columnState, columnName, columnAttempt, columnPodID, columnPodname})
 	}
 	for _, c := range r.Containers {
 		if match, err := matchesImage(imageClient, opts.image, c.GetImage().GetImage()); err != nil {
@@ -1003,9 +1011,17 @@ func ListContainers(runtimeClient pb.RuntimeServiceClient, imageClient pb.ImageS
 					image = getTruncatedID(digest.String(), string(digest.Algorithm())+":")
 				}
 			}
+			if opts.resolveImagePath {
+				orig, err := getRepoImage(imageClient, image)
+				if err != nil {
+					return fmt.Errorf("failed to fetch repo image %v", err)
+				}
+				image = orig
+			}
 			PodID := getTruncatedID(c.PodSandboxId, "")
+			podName := getPodNameFromLabels(c.Labels)
 			display.AddRow([]string{id, image, ctm, convertContainerState(c.State), c.Metadata.Name,
-				fmt.Sprintf("%d", c.Metadata.Attempt), PodID})
+				fmt.Sprintf("%d", c.Metadata.Attempt), PodID, podName})
 			continue
 		}
 
@@ -1055,6 +1071,14 @@ func convertContainerState(state pb.ContainerState) string {
 		log.Fatalf("Unknown container state %q", state)
 		return ""
 	}
+}
+
+func getPodNameFromLabels(label map[string]string) string {
+	podName, ok := label[types.KubernetesPodNameLabel]
+	if ok {
+		return podName
+	}
+	return "unknown"
 }
 
 func getContainersList(containersList []*pb.Container, opts listOptions) []*pb.Container {
