@@ -84,7 +84,7 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 			It("should fail with with an unloaded profile", func() {
 				profile := apparmorProfileNamePrefix + "non-existent-profile"
 				containerID := createContainerWithAppArmor(rc, ic, sandboxID, sandboxConfig, profile, false)
-				checkContainerApparmor(rc, containerID, false)
+				Expect(containerID).To(BeEmpty())
 			})
 
 			It("should enforce a profile blocking writes", func() {
@@ -102,7 +102,7 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 	}
 })
 
-func createContainerWithAppArmor(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, sandboxID string, sandboxConfig *runtimeapi.PodSandboxConfig, profile string, shouldStart bool) string {
+func createContainerWithAppArmor(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, sandboxID string, sandboxConfig *runtimeapi.PodSandboxConfig, profile string, shouldSucceed bool) string {
 	By("create a container with apparmor")
 	containerName := "apparmor-test-" + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
@@ -115,20 +115,21 @@ func createContainerWithAppArmor(rc internalapi.RuntimeService, ic internalapi.I
 			},
 		},
 	}
-	containerID := framework.CreateContainer(rc, ic, containerConfig, sandboxID, sandboxConfig)
 
-	By("start container with apparmor")
-	err := rc.StartContainer(containerID)
-	if shouldStart {
+	containerID, err := framework.CreateContainerWithError(rc, ic, containerConfig, sandboxID, sandboxConfig)
+	if shouldSucceed {
+		Expect(err).To(BeNil())
+		By("start container with apparmor")
+		err := rc.StartContainer(containerID)
 		Expect(err).NotTo(HaveOccurred())
+
+		// wait container started and check the status.
+		Eventually(func() runtimeapi.ContainerState {
+			return getContainerStatus(rc, containerID).State
+		}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
 	} else {
 		Expect(err).To(HaveOccurred())
 	}
-
-	// wait container started and check the status.
-	Eventually(func() runtimeapi.ContainerState {
-		return getContainerStatus(rc, containerID).State
-	}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
 
 	return containerID
 }
