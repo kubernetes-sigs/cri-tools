@@ -25,10 +25,12 @@ import (
 	"time"
 
 	"github.com/docker/go-units"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/net/context"
 
+	errorUtils "k8s.io/apimachinery/pkg/util/errors"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
@@ -140,45 +142,39 @@ var removePodCommand = &cli.Command{
 			}
 		}
 
-		if len(ids) == 0 {
+		lenIDs := len(ids)
+		if lenIDs == 0 {
 			return cli.ShowSubcommandHelp(ctx)
 		}
 
-		errored := false
+		funcs := []func() error{}
 		for _, id := range ids {
-			resp, err := runtimeClient.PodSandboxStatus(context.Background(),
-				&pb.PodSandboxStatusRequest{PodSandboxId: id})
-			if err != nil {
-				logrus.Error(err)
-				errored = true
-				continue
-			}
-			if resp.Status.State == pb.PodSandboxState_SANDBOX_READY {
-				if ctx.Bool("force") {
-					if err := StopPodSandbox(runtimeClient, id); err != nil {
-						logrus.Errorf("stopping the pod sandbox %q failed: %v", id, err)
-						errored = true
-						continue
-					}
-				} else {
-					logrus.Errorf("pod sandbox %q is running, please stop it first", id)
-					errored = true
-					continue
+			funcs = append(funcs, func() error {
+				resp, err := runtimeClient.PodSandboxStatus(context.Background(),
+					&pb.PodSandboxStatusRequest{PodSandboxId: id})
+				if err != nil {
+					return errors.Wrapf(err, "getting sandbox status of pod %q", id)
 				}
-			}
+				if resp.Status.State == pb.PodSandboxState_SANDBOX_READY {
+					if ctx.Bool("force") {
+						if err := StopPodSandbox(runtimeClient, id); err != nil {
+							return errors.Wrapf(err, "stopping the pod sandbox %q failed", id)
+						}
+					} else {
+						return errors.Errorf("pod sandbox %q is running, please stop it first", id)
+					}
+				}
 
-			err = RemovePodSandbox(runtimeClient, id)
-			if err != nil {
-				logrus.Errorf("removing the pod sandbox %q failed: %v", id, err)
-				errored = true
-				continue
-			}
+				err = RemovePodSandbox(runtimeClient, id)
+				if err != nil {
+					return errors.Wrapf(err, "removing the pod sandbox %q", id)
+				}
+
+				return nil
+			})
 		}
 
-		if errored {
-			return fmt.Errorf("unable to remove sandbox(es)")
-		}
-		return nil
+		return errorUtils.AggregateGoroutines(funcs...)
 	},
 }
 
