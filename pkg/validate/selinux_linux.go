@@ -18,10 +18,11 @@ package validate
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
-	"github.com/opencontainers/selinux/go-selinux"
+	selinux "github.com/opencontainers/selinux/go-selinux"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
@@ -45,112 +46,127 @@ var _ = framework.KubeDescribe("SELinux", func() {
 			var sandboxID string
 			var sandboxConfig *runtimeapi.PodSandboxConfig
 
-			BeforeEach(func() {
-				sandboxID, sandboxConfig = framework.CreatePodSandboxForContainer(rc)
+			var sandboxTests = func(privileged bool) {
+				It("should work with just selinux level set", func() {
+					options := &runtimeapi.SELinuxOption{
+						Level: "s0",
+					}
+					containerID := createContainerWithSelinux(rc, ic, sandboxID, sandboxConfig, options, privileged, true, true)
+					checkContainerSelinux(rc, containerID, true)
+				})
+
+				It("should work with selinux set", func() {
+					options := &runtimeapi.SELinuxOption{
+						User:  "system_u",
+						Role:  "system_r",
+						Type:  "svirt_lxc_net_t",
+						Level: "s0:c4,c5",
+					}
+					containerID := createContainerWithSelinux(rc, ic, sandboxID, sandboxConfig, options, privileged, true, true)
+					checkContainerSelinux(rc, containerID, true)
+				})
+
+				It("should error on create with wrong options", func() {
+					options := &runtimeapi.SELinuxOption{
+						User: "system_u",
+						Role: "system_r",
+						Type: "svirt_lxc_net_t",
+						// s0,c4,c5 is wrong, should have been s0:c4,c5
+						Level: "s0,c4,c5",
+					}
+					createContainerWithSelinux(rc, ic, sandboxID, sandboxConfig, options, privileged, false, false)
+				})
+
+				It("mount label should have correct role and type", func() {
+					containerID := createContainerWithSelinux(rc, ic, sandboxID, sandboxConfig, nil, privileged, true, true)
+					checkMountLabelRoleType(rc, containerID)
+				})
+
+				It("mount label should have category", func() {
+					containerID := createContainerWithSelinux(rc, ic, sandboxID, sandboxConfig, nil, privileged, true, true)
+					checkMountLabelMCS(rc, containerID)
+				})
+
+				It("process label should have correct role and type", func() {
+					containerID := createContainerWithSelinux(rc, ic, sandboxID, sandboxConfig, nil, privileged, true, true)
+					checkProcessLabelRoleType(rc, containerID, privileged)
+				})
+
+				It("process label should have category", func() {
+					containerID := createContainerWithSelinux(rc, ic, sandboxID, sandboxConfig, nil, privileged, true, true)
+					checkProcessLabelMCS(rc, containerID, privileged)
+				})
+
+				It("should create containers with the same process label", func() {
+					containerID := createContainerWithSelinux(rc, ic, sandboxID, sandboxConfig, nil, privileged, true, true)
+					containerID2 := createContainerWithSelinux(rc, ic, sandboxID, sandboxConfig, nil, privileged, true, true)
+					label1 := checkProcessLabelMCS(rc, containerID, privileged)
+					label2 := checkProcessLabelMCS(rc, containerID2, privileged)
+					Expect(label1).To(Equal(label2))
+				})
+			}
+
+			Context("when single pod sandbox is not privileged", func() {
+				BeforeEach(func() {
+					sandboxID, sandboxConfig = framework.CreatePodSandboxForContainer(rc)
+				})
+
+				AfterEach(func() {
+					cleanupSandbox(rc, sandboxID)
+				})
+
+				sandboxTests(false)
 			})
 
-			AfterEach(func() {
-				By("stop PodSandbox")
-				rc.StopPodSandbox(sandboxID)
-				By("delete PodSandbox")
-				rc.RemovePodSandbox(sandboxID)
+			Context("when single pod sandbox is privileged", func() {
+				BeforeEach(func() {
+					sandboxID, sandboxConfig = createPrivilegedPodSandbox(rc, true)
+				})
+
+				AfterEach(func() {
+					cleanupSandbox(rc, sandboxID)
+				})
+
+				sandboxTests(true)
 			})
 
-			It("should work with just selinux level set", func() {
-				options := &runtimeapi.SELinuxOption{
-					Level: "s0",
-				}
-				containerID := createContainerWithSelinux(rc, ic, sandboxID, sandboxConfig, options, true, true)
-				checkContainerSelinux(rc, containerID, true)
-			})
+			Context("when multiple pod sandboxes are not privileged", func() {
+				var sandboxID2 string
+				var sandboxConfig2 *runtimeapi.PodSandboxConfig
 
-			It("should work with selinux set", func() {
-				options := &runtimeapi.SELinuxOption{
-					User:  "system_u",
-					Role:  "system_r",
-					Type:  "svirt_lxc_net_t",
-					Level: "s0:c4,c5",
-				}
-				containerID := createContainerWithSelinux(rc, ic, sandboxID, sandboxConfig, options, true, true)
-				checkContainerSelinux(rc, containerID, true)
-			})
+				BeforeEach(func() {
+					sandboxID, sandboxConfig = framework.CreatePodSandboxForContainer(rc)
+					sandboxID2, sandboxConfig2 = framework.CreatePodSandboxForContainer(rc)
+				})
 
-			It("should error on create with wrong options", func() {
-				options := &runtimeapi.SELinuxOption{
-					User: "system_u",
-					Role: "system_r",
-					Type: "svirt_lxc_net_t",
-					// s0,c4,c5 is wrong, should have been s0:c4,c5
-					Level: "s0,c4,c5",
-				}
-				_ = createContainerWithSelinux(rc, ic, sandboxID, sandboxConfig, options, false, false)
-			})
+				AfterEach(func() {
+					cleanupSandbox(rc, sandboxID)
+					cleanupSandbox(rc, sandboxID2)
+				})
 
-			It("selinux mount label should persist when container is privileged", func() {
-				By("create pod")
-				privileged := true
-				podID, podConfig := createPrivilegedPodSandbox(rc, privileged)
-
-				By("create container for security context Privileged is true")
-				containerID := createPrivilegedContainer(rc, ic, podID, podConfig, "container-with-isPrivileged-mount-and-process-label-test-", privileged)
-
-				By("start container")
-				startContainer(rc, containerID)
-				Eventually(func() runtimeapi.ContainerState {
-					return getContainerStatus(rc, containerID).State
-				}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
-
-				By("check the Privileged container")
-				checkMountLabel(rc, containerID)
-			})
-
-			It("check selinux process label for privileged and unprivileged containers", func() {
-				By("create pod")
-				privileged := true
-				podID, podConfig := createPrivilegedPodSandbox(rc, privileged)
-
-				By("create container for security context Privileged is true")
-				containerID := createPrivilegedContainer(rc, ic, podID, podConfig, "container-with-isPrivileged-process-label-test-", privileged)
-
-				By("start container")
-				startContainer(rc, containerID)
-				Eventually(func() runtimeapi.ContainerState {
-					return getContainerStatus(rc, containerID).State
-				}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
-
-				By("check the Privileged container")
-				checkProcessLabel(rc, containerID, privileged)
-
-				By("create pod")
-				privileged = false
-				podID, podConfig = createPrivilegedPodSandbox(rc, privileged)
-
-				By("create container for security context Privileged is true")
-				containerID = createPrivilegedContainer(rc, ic, podID, podConfig, "container-with-notPrivileged-process-label-test-", privileged)
-
-				By("start container")
-				startContainer(rc, containerID)
-				Eventually(func() runtimeapi.ContainerState {
-					return getContainerStatus(rc, containerID).State
-				}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
-
-				By("check the Privileged container")
-				checkProcessLabel(rc, containerID, privileged)
+				It("should create containers with different process labels", func() {
+					containerID := createContainerWithSelinux(rc, ic, sandboxID, sandboxConfig, nil, false, true, true)
+					containerID2 := createContainerWithSelinux(rc, ic, sandboxID2, sandboxConfig2, nil, false, true, true)
+					label1 := checkProcessLabelMCS(rc, containerID, false)
+					label2 := checkProcessLabelMCS(rc, containerID2, false)
+					Expect(label1).NotTo(Equal(label2))
+				})
 			})
 		})
 	}
 })
 
-func createContainerWithSelinux(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, sandboxID string, sandboxConfig *runtimeapi.PodSandboxConfig, options *runtimeapi.SELinuxOption, shouldStart, shouldCreate bool) string {
+func createContainerWithSelinux(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, sandboxID string, sandboxConfig *runtimeapi.PodSandboxConfig, options *runtimeapi.SELinuxOption, privileged bool, shouldStart, shouldCreate bool) string {
 	By("create a container with selinux")
 	containerName := "selinux-test-" + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
-		Command:  []string{"touch", "foo"},
+		Command:  pauseCmd,
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
 				SelinuxOptions: options,
+				Privileged:     privileged,
 			},
 		},
 	}
@@ -170,10 +186,10 @@ func createContainerWithSelinux(rc internalapi.RuntimeService, ic internalapi.Im
 		Expect(err).To(HaveOccurred())
 	}
 
-	// wait container exited and check the status.
+	// wait container running
 	Eventually(func() runtimeapi.ContainerState {
 		return getContainerStatus(rc, containerID).State
-	}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
+	}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 	return containerID
 }
@@ -187,28 +203,68 @@ func checkContainerSelinux(rc internalapi.RuntimeService, containerID string, sh
 		Expect(status.GetExitCode()).To(Equal(int32(0)))
 	} else {
 		Expect(status.GetExitCode()).NotTo(Equal(int32(0)))
+		return
 	}
+
+	cmd := []string{"touch", "foo"}
+	stdout, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
+	Expect(err).NotTo(HaveOccurred(), msg)
 }
 
-func checkMountLabel(rc internalapi.RuntimeService, containerID string) {
-	// Check that the mount label is set for privileged containers
+func cleanupSandbox(rc internalapi.RuntimeService, sandboxID string) {
+	By("stop PodSandbox")
+	rc.StopPodSandbox(sandboxID)
+	By("delete PodSandbox")
+	rc.RemovePodSandbox(sandboxID)
+}
+
+func checkMountLabelRoleType(rc internalapi.RuntimeService, containerID string) {
+	// Check that the mount label policy is correct
 	cmd := []string{"cat", "/proc/1/mountinfo"}
 	stdout, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
 	Expect(err).NotTo(HaveOccurred(), msg)
-	Expect(string(stdout)).To(ContainSubstring("object_r:container_file_t"))
+	Expect(string(stdout)).To(ContainSubstring(":object_r:container_file_t:"))
 }
 
-func checkProcessLabel(rc internalapi.RuntimeService, containerID string, privileged bool) {
-	// Check that the correct process label is set for privileged and unprivileged containers
+func checkProcessLabelRoleType(rc internalapi.RuntimeService, containerID string, privileged bool) {
+	// Check that the process label policy is correct
 	cmd := []string{"cat", "/proc/self/attr/current"}
+	stdout, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	label := strings.Trim(string(stdout), "\x00")
+	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
+	Expect(err).NotTo(HaveOccurred(), msg)
+	if privileged {
+		Expect(label).To(ContainSubstring(":system_r:spc_t:"))
+	} else {
+		Expect(label).To(ContainSubstring(":system_r:container_t:"))
+	}
+}
+
+func checkMountLabelMCS(rc internalapi.RuntimeService, containerID string) {
+	// Check that the mount label MCS is correct
+	cmd := []string{"cat", "/proc/1/mountinfo"}
 	stdout, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
 	Expect(err).NotTo(HaveOccurred(), msg)
+	// check that a mount exists with MCS, where level is always s0 and there are two or more categories
+	Expect(string(stdout)).To(MatchRegexp(`,context="[^"]*:s0(-s0)?:c[0-9]+(,c[0-9]+)+",`))
+}
 
+func checkProcessLabelMCS(rc internalapi.RuntimeService, containerID string, privileged bool) string {
+	// Check that the process label MCS is correct
+	cmd := []string{"cat", "/proc/self/attr/current"}
+	stdout, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	label := strings.Trim(string(stdout), "\x00")
+	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
+	Expect(err).NotTo(HaveOccurred(), msg)
 	if privileged {
-		Expect(string(stdout)).To(ContainSubstring("system_r:spc_t"))
+		// check that a process label exists with optional MCS, where level is always s0 and we permit all categories
+		Expect(label).To(MatchRegexp(`:s0(-s0)?(:c0\.c1023)?$`))
 	} else {
-		Expect(string(stdout)).To(ContainSubstring("system_r:container_t"))
+		// check that a process label exists with MCS, where level is always s0 and there are two or more categories
+		Expect(label).To(MatchRegexp(`:s0(-s0)?:c[0-9]+(,c[0-9]+)+$`))
 	}
+	return label
 }
