@@ -32,6 +32,8 @@ CRI_CTL_PLATFORMS=(
     linux/s390x
     windows/amd64
     windows/386
+    darwin/amd64
+    darwin/386
 )
 CRI_TEST_PLATFORMS=(
     linux/amd64
@@ -40,6 +42,8 @@ CRI_TEST_PLATFORMS=(
     linux/arm64
     windows/amd64
     windows/386
+    darwin/amd64
+    darwin/386
 )
 
 # Create releases output directory.

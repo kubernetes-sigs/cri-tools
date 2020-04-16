@@ -46,6 +46,10 @@ jobs:
       script:
         -  make release
     - stage: Build
+      os: osx
+      script:
+        -  make release
+    - stage: Build
       os: linux-ppc64le
       script:
         -  make release
