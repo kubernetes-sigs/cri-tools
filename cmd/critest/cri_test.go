@@ -89,10 +89,11 @@ func generateTempTestName() (string, error) {
 }
 
 func runParallelTestSuite(t *testing.T) {
-	criPath, err := exec.LookPath("critest")
+	criPath, err := os.Executable()
 	if err != nil {
 		t.Fatalf("Failed to lookup path of critest: %v", err)
 	}
+	t.Logf("critest path: %s", criPath)
 
 	tempFileName, err := generateTempTestName()
 	if err != nil {
