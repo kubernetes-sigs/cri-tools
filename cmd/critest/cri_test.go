@@ -33,11 +33,11 @@ import (
 	"github.com/onsi/ginkgo/reporters"
 	"github.com/onsi/gomega"
 
-	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
-	versionconst "github.com/kubernetes-sigs/cri-tools/pkg/version"
-
 	_ "github.com/kubernetes-sigs/cri-tools/pkg/benchmark"
+	"github.com/kubernetes-sigs/cri-tools/pkg/common"
+	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	_ "github.com/kubernetes-sigs/cri-tools/pkg/validate"
+	versionconst "github.com/kubernetes-sigs/cri-tools/pkg/version"
 )
 
 const (
@@ -57,6 +57,36 @@ var (
 func init() {
 	framework.RegisterFlags()
 	rand.Seed(time.Now().UnixNano())
+	getConfigFromFile()
+}
+
+// Load server configuration from file and use each config settings if that
+// option is not set in the CLI
+func getConfigFromFile() {
+	var configFromFile *common.ServerConfiguration
+
+	currentPath, _ := os.Getwd()
+	configFromFile, _ = common.GetServerConfigFromFile(framework.TestContext.ConfigPath, currentPath)
+
+	if configFromFile != nil {
+		// Command line flags take precedence over config file.
+		if !isFlagSet("runtime-endpoint") && configFromFile.RuntimeEndpoint != "" {
+			framework.TestContext.RuntimeServiceAddr = configFromFile.RuntimeEndpoint
+		}
+		if !isFlagSet("image-endpoint") && configFromFile.ImageEndpoint != "" {
+			framework.TestContext.ImageServiceAddr = configFromFile.ImageEndpoint
+		}
+	}
+}
+
+func isFlagSet(name string) bool {
+	found := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == name {
+			found = true
+		}
+	})
+	return found
 }
 
 // runTestSuite runs cri validation tests and benchmark tests.
