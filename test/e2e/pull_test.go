@@ -62,6 +62,6 @@ var _ = t.Describe("pull", func() {
 
 	It("should fail on not existing image", func() {
 		t.CrictlExpectFailureWithEndpoint(endpoint, "pull localhost/wrong",
-			"", "pulling image failed")
+			"", "pulling image")
 	})
 })

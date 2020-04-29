@@ -68,13 +68,13 @@ var runPodCommand = &cli.Command{
 
 		podSandboxConfig, err := loadPodSandboxConfig(sandboxSpec)
 		if err != nil {
-			return fmt.Errorf("load podSandboxConfig failed: %v", err)
+			return errors.Wrap(err, "load podSandboxConfig")
 		}
 
 		// Test RuntimeServiceClient.RunPodSandbox
 		podID, err := RunPodSandbox(runtimeClient, podSandboxConfig, context.String("runtime"))
 		if err != nil {
-			return fmt.Errorf("run pod sandbox failed: %v", err)
+			return errors.Wrap(err, "run pod sandbox")
 		}
 		fmt.Println(podID)
 		return nil
@@ -98,7 +98,7 @@ var stopPodCommand = &cli.Command{
 			id := context.Args().Get(i)
 			err := StopPodSandbox(runtimeClient, id)
 			if err != nil {
-				return fmt.Errorf("stopping the pod sandbox %q failed: %v", id, err)
+				return errors.Wrapf(err, "stopping the pod sandbox %q", id)
 			}
 		}
 		return nil
@@ -213,7 +213,7 @@ var podStatusCommand = &cli.Command{
 
 			err := PodSandboxStatus(runtimeClient, id, context.String("output"), context.Bool("quiet"), context.String("template"))
 			if err != nil {
-				return fmt.Errorf("getting the pod sandbox status for %q failed: %v", id, err)
+				return errors.Wrapf(err, "getting the pod sandbox status for %q", id)
 			}
 		}
 		return nil
@@ -306,7 +306,7 @@ var listPodCommand = &cli.Command{
 			return err
 		}
 		if err = ListPodSandboxes(runtimeClient, opts); err != nil {
-			return fmt.Errorf("listing pod sandboxes failed: %v", err)
+			return errors.Wrap(err, "listing pod sandboxes")
 		}
 		return nil
 	},
