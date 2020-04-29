@@ -18,6 +18,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
 	"sort"
 	"time"
 
@@ -151,6 +153,12 @@ func ContainerStats(client pb.RuntimeServiceClient, opts statsOptions) error {
 			return err
 		}
 	} else {
+		s := make(chan os.Signal)
+		signal.Notify(s, os.Interrupt)
+		go func() {
+			<-s
+			os.Exit(0)
+		}()
 		for range time.Tick(500 * time.Millisecond) {
 			if err := displayStats(client, request, display, opts); err != nil {
 				return err
