@@ -18,6 +18,8 @@ package framework
 
 import (
 	"flag"
+	"os"
+	"path/filepath"
 	"runtime"
 	"time"
 
@@ -31,6 +33,7 @@ type TestContextType struct {
 	ReportPrefix string
 
 	// CRI client configurations.
+	ConfigPath            string
 	ImageServiceAddr      string
 	ImageServiceTimeout   time.Duration
 	RuntimeServiceAddr    string
@@ -69,10 +72,13 @@ func RegisterFlags() {
 	flag.DurationVar(&TestContext.ImageServiceTimeout, "image-service-timeout", 300*time.Second, "Timeout when trying to connect to image service.")
 
 	svcaddr := "unix:///var/run/dockershim.sock"
+	defaultConfigPath := "/etc/crictl.yaml"
 	if runtime.GOOS == "windows" {
 		svcaddr = "npipe:////./pipe/dockershim"
+		defaultConfigPath = filepath.Join(os.Getenv("USERPROFILE"), ".crictl", "crictl.yaml")
 	}
-	flag.StringVar(&TestContext.RuntimeServiceAddr, "runtime-endpoint", svcaddr, "Runtime service socket for client to connect..")
+	flag.StringVar(&TestContext.ConfigPath, "config", defaultConfigPath, "Location of the client config file. If not specified and the default does not exist, the program's directory is searched as well")
+	flag.StringVar(&TestContext.RuntimeServiceAddr, "runtime-endpoint", svcaddr, "Runtime service socket for client to connect.")
 	flag.DurationVar(&TestContext.RuntimeServiceTimeout, "runtime-service-timeout", 300*time.Second, "Timeout when trying to connect to a runtime service.")
 	flag.StringVar(&TestContext.RuntimeHandler, "runtime-handler", "", "Runtime handler to use in the test.")
 	flag.IntVar(&TestContext.Number, "number", 5, "Number of PodSandbox/container in listing benchmark test.")

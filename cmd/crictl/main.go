@@ -19,17 +19,20 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"sort"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+
 	"google.golang.org/grpc"
+
 	internalapi "k8s.io/cri-api/pkg/apis"
 	"k8s.io/kubernetes/pkg/kubelet/remote"
 	"k8s.io/kubernetes/pkg/kubelet/util"
 
+	"github.com/kubernetes-sigs/cri-tools/pkg/common"
 	"github.com/kubernetes-sigs/cri-tools/pkg/version"
 )
 
@@ -60,7 +63,7 @@ func getRuntimeClientConnection(context *cli.Context) (*grpc.ClientConn, error) 
 
 	conn, err := grpc.Dial(addr, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(Timeout), grpc.WithContextDialer(dialer))
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect, make sure you are running as root and the runtime has been started: %v", err)
+		return nil, errors.Wrap(err, "connect, make sure you are running as root and the runtime has been started")
 	}
 	return conn, nil
 }
@@ -80,7 +83,7 @@ func getImageClientConnection(context *cli.Context) (*grpc.ClientConn, error) {
 
 	conn, err := grpc.Dial(addr, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(Timeout), grpc.WithContextDialer(dialer))
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect, make sure you are running as root and the runtime has been started: %v", err)
+		return nil, errors.Wrap(err, "connect, make sure you are running as root and the runtime has been started")
 	}
 	return conn, nil
 }
@@ -127,12 +130,11 @@ func main() {
 
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{
-			Name:      "config",
-			Aliases:   []string{"c"},
-			EnvVars:   []string{"CRI_CONFIG_FILE"},
-			Value:     defaultConfigPath,
-			Usage:     "Location of the client config file. If not specified and the default does not exist, the program's directory is searched as well",
-			TakesFile: true,
+			Name:    "config",
+			Aliases: []string{"c"},
+			EnvVars: []string{"CRI_CONFIG_FILE"},
+			Value:   defaultConfigPath,
+			Usage:   "Location of the client config file. If not specified and the default does not exist, the program's directory is searched as well",
 		},
 		&cli.StringFlag{
 			Name:    "runtime-endpoint",
@@ -160,43 +162,25 @@ func main() {
 		},
 	}
 
-	app.Before = func(context *cli.Context) error {
-		isUseConfig := false
-		configFile := context.String("config")
-		if _, err := os.Stat(configFile); err == nil {
-			isUseConfig = true
-		} else {
-			if context.IsSet("config") || !os.IsNotExist(err) {
-				// note: the absence of default config file is normal case
-				// when user have not set it in cli
-				logrus.Fatalf("Failed to load config file: %v", err)
-			} else {
-				// If the default config was not found, and the user didn't
-				// explicitly specify a config, try looking in the program's
-				// directory as a fallback. This is a convenience for
-				// deployments of crictl so they don't have to place a file in a
-				// global location.
-				configFile = filepath.Join(filepath.Dir(os.Args[0]), "crictl.yaml")
-				if _, err := os.Stat(configFile); err == nil {
-					isUseConfig = true
-				} else if !os.IsNotExist(err) {
-					logrus.Fatalf("Failed to load config file: %v", err)
-				}
+	app.Before = func(context *cli.Context) (err error) {
+		var config *common.ServerConfiguration
+		var exePath string
+
+		if exePath, err = os.Executable(); err != nil {
+			logrus.Fatal(err)
+		}
+		if config, err = common.GetServerConfigFromFile(context.String("config"), exePath); err != nil {
+			if context.IsSet("config") {
+				logrus.Fatal(err)
 			}
 		}
 
-		if !isUseConfig {
+		if config == nil {
 			RuntimeEndpoint = context.String("runtime-endpoint")
 			ImageEndpoint = context.String("image-endpoint")
 			Timeout = context.Duration("timeout")
 			Debug = context.Bool("debug")
 		} else {
-			// Get config from file.
-			config, err := ReadConfig(configFile)
-			if err != nil {
-				logrus.Fatalf("Falied to load config file: %v", err)
-			}
-
 			// Command line flags overrides config file.
 			if context.IsSet("runtime-endpoint") {
 				RuntimeEndpoint = context.String("runtime-endpoint")

@@ -18,50 +18,15 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
-	gofilepath "path/filepath"
 	"strconv"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"gopkg.in/yaml.v2"
+
+	"github.com/kubernetes-sigs/cri-tools/pkg/common"
 )
-
-// Config is the internal representation of the yaml that determines how
-// the app start
-type Config struct {
-	RuntimeEndpoint string `yaml:"runtime-endpoint"`
-	ImageEndpoint   string `yaml:"image-endpoint"`
-	Timeout         int    `yaml:"timeout"`
-	Debug           bool   `yaml:"debug"`
-}
-
-// ReadConfig reads from a file with the given name and returns a config or
-// an error if the file was unable to be parsed.
-func ReadConfig(filepath string) (*Config, error) {
-	data, err := ioutil.ReadFile(filepath)
-	if err != nil {
-		return nil, err
-	}
-	config := Config{}
-	err = yaml.Unmarshal(data, &config)
-	if err != nil {
-		return nil, err
-	}
-	return &config, err
-}
-
-func writeConfig(c *Config, filepath string) error {
-	data, err := yaml.Marshal(c)
-	if err != nil {
-		return err
-	}
-	if err := os.MkdirAll(gofilepath.Dir(filepath), 0755); err != nil {
-		return err
-	}
-	return ioutil.WriteFile(filepath, data, 0644)
-}
 
 var configCommand = &cli.Command{
 	Name:                   "config",
@@ -77,14 +42,14 @@ var configCommand = &cli.Command{
 	Action: func(context *cli.Context) error {
 		configFile := context.String("config")
 		if _, err := os.Stat(configFile); err != nil {
-			if err := writeConfig(nil, configFile); err != nil {
+			if err := common.WriteConfig(nil, configFile); err != nil {
 				return err
 			}
 		}
 		// Get config from file.
-		config, err := ReadConfig(configFile)
+		config, err := common.ReadConfig(configFile)
 		if err != nil {
-			return fmt.Errorf("Failed to load config file: %v", err)
+			return errors.Wrap(err, "load config file")
 		}
 		if context.IsSet("get") {
 			get := context.String("get")
@@ -132,6 +97,6 @@ var configCommand = &cli.Command{
 			logrus.Fatalf("No section named %s", key)
 		}
 
-		return writeConfig(config, configFile)
+		return common.WriteConfig(config, configFile)
 	},
 }
