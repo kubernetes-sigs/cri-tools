@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	defaultRuntimeEndpoint = "npipe:////./pipe/dockershim"
+	defaultRuntimeEndpoint = "npipe:////./pipe/dockershim npipe:////./pipe/containerd npipe:////./pipe/crio"
 )
 
 var defaultConfigPath string
