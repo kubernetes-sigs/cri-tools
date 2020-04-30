@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -55,17 +56,8 @@ func getRuntimeClientConnection(context *cli.Context) (*grpc.ClientConn, error) 
 	if RuntimeEndpoint == "" {
 		return nil, fmt.Errorf("--runtime-endpoint is not set")
 	}
-
-	addr, dialer, err := util.GetAddressAndDialer(RuntimeEndpoint)
-	if err != nil {
-		return nil, err
-	}
-
-	conn, err := grpc.Dial(addr, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(Timeout), grpc.WithContextDialer(dialer))
-	if err != nil {
-		return nil, errors.Wrap(err, "connect, make sure you are running as root and the runtime has been started")
-	}
-	return conn, nil
+	logrus.Debugf("get runtime connection")
+	return getConnection(strings.Split(RuntimeEndpoint, " "))
 }
 
 func getImageClientConnection(context *cli.Context) (*grpc.ClientConn, error) {
@@ -75,15 +67,49 @@ func getImageClientConnection(context *cli.Context) (*grpc.ClientConn, error) {
 		}
 		ImageEndpoint = RuntimeEndpoint
 	}
+	logrus.Debugf("get image connection")
+	return getConnection(strings.Split(ImageEndpoint, " "))
+}
 
-	addr, dialer, err := util.GetAddressAndDialer(ImageEndpoint)
-	if err != nil {
-		return nil, err
+func getConnection(endPoints []string) (*grpc.ClientConn, error) {
+	if endPoints == nil || len(endPoints) == 0 {
+		return nil, fmt.Errorf("endpoint is not set")
+	}
+	endPointsLen := len(endPoints)
+	if endPointsLen > 1 {
+		logrus.Warningf("using default endpoints: %s", endPoints)
 	}
 
-	conn, err := grpc.Dial(addr, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(Timeout), grpc.WithContextDialer(dialer))
-	if err != nil {
-		return nil, errors.Wrap(err, "connect, make sure you are running as root and the runtime has been started")
+	var conn *grpc.ClientConn
+	for indx, endPoint := range endPoints {
+		if endPointsLen > 1 {
+			if strings.Contains(endPoint, "dockershim") {
+				logrus.Warningf("connect using default endpoint: %s. Note: Dockershim endpoint is now deprecated.", endPoint)
+			} else {
+				logrus.Warningf("connect using default endpoint: %s", endPoint)
+			}
+		} else {
+			logrus.Debugf("connect using endpoint: %s", endPoint)
+		}
+		addr, dialer, err := util.GetAddressAndDialer(endPoint)
+		if err != nil {
+			if indx == endPointsLen-1 {
+				return nil, err
+			}
+			logrus.Error(err)
+			continue
+		}
+
+		conn, err = grpc.Dial(addr, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(Timeout), grpc.WithContextDialer(dialer))
+		if err != nil {
+			errMsg := errors.Wrapf(err, "connect endpoint '%s', make sure you are running as root and the endpoint has been started", endPoint)
+			if indx == endPointsLen-1 {
+				return nil, errMsg
+			}
+			logrus.Error(errMsg)
+		} else {
+			break
+		}
 	}
 	return conn, nil
 }
