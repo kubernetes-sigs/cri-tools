@@ -24,9 +24,10 @@ import (
 )
 
 const (
-	defaultRuntimeEndpoint = "npipe:////./pipe/dockershim npipe:////./pipe/containerd npipe:////./pipe/crio"
+	defaultRuntimeEndpoint = "npipe:////./pipe/dockershim"
 )
 
+var defaultRuntimeEndpoints = []string{"npipe:////./pipe/dockershim", "npipe:////./pipe/containerd", "npipe:////./pipe/crio"}
 var defaultConfigPath string
 
 func init() {

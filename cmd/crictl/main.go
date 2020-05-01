@@ -57,7 +57,13 @@ func getRuntimeClientConnection(context *cli.Context) (*grpc.ClientConn, error) 
 		return nil, fmt.Errorf("--runtime-endpoint is not set")
 	}
 	logrus.Debugf("get runtime connection")
-	return getConnection(strings.Split(RuntimeEndpoint, " "))
+	// As dockershim is deprecated as a default CRI server, it still needs to
+	// be supported. This allows other default endpoint types to be
+	// checked if cannot connect to dockershim
+	if strings.Contains(RuntimeEndpoint, "dockershim") {
+		return getConnection(defaultRuntimeEndpoints)
+	}
+	return getConnection([]string{RuntimeEndpoint})
 }
 
 func getImageClientConnection(context *cli.Context) (*grpc.ClientConn, error) {
@@ -68,7 +74,13 @@ func getImageClientConnection(context *cli.Context) (*grpc.ClientConn, error) {
 		ImageEndpoint = RuntimeEndpoint
 	}
 	logrus.Debugf("get image connection")
-	return getConnection(strings.Split(ImageEndpoint, " "))
+	// As dockershim is deprecated as a default CRI server, it still needs to
+	// be supported. This allows other default endpoint types to be
+	// checked if cannot connect to dockershim
+	if strings.Contains(ImageEndpoint, "dockershim") {
+		return getConnection(defaultRuntimeEndpoints)
+	}
+	return getConnection([]string{ImageEndpoint})
 }
 
 func getConnection(endPoints []string) (*grpc.ClientConn, error) {
