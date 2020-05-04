@@ -407,9 +407,10 @@ var listContainersCommand = &cli.Command{
 			Usage: "Filter by container image",
 		},
 		&cli.StringFlag{
-			Name:  "state",
-			Value: "",
-			Usage: "Filter by container state",
+			Name:    "state",
+			Aliases: []string{"s"},
+			Value:   "",
+			Usage:   "Filter by container state",
 		},
 		&cli.StringSliceFlag{
 			Name:  "label",
