@@ -101,7 +101,7 @@ type portforwardOptions struct {
 }
 
 func getSortedKeys(m map[string]string) []string {
-	keys := make([]string, len(m))
+	keys := make([]string, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)
 	}
