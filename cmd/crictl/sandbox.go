@@ -504,7 +504,15 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 
 	display := newTableDisplay(20, 1, 3, ' ', 0)
 	if !opts.verbose && !opts.quiet {
-		display.AddRow([]string{columnPodID, columnCreated, columnState, columnName, columnNamespace, columnAttempt})
+		display.AddRow([]string{
+			columnPodID,
+			columnCreated,
+			columnState,
+			columnName,
+			columnNamespace,
+			columnAttempt,
+			columnPodRuntime,
+		})
 	}
 	for _, pod := range r.Items {
 		if opts.quiet {
@@ -518,8 +526,15 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 			if !opts.noTrunc {
 				id = getTruncatedID(id, "")
 			}
-			display.AddRow([]string{id, ctm, convertPodState(pod.State), pod.Metadata.Name,
-				pod.Metadata.Namespace, fmt.Sprintf("%d", pod.Metadata.Attempt)})
+			display.AddRow([]string{
+				id,
+				ctm,
+				convertPodState(pod.State),
+				pod.Metadata.Name,
+				pod.Metadata.Namespace,
+				fmt.Sprintf("%d", pod.Metadata.Attempt),
+				getSandboxesRuntimeHandler(pod),
+			})
 			continue
 		}
 
@@ -553,6 +568,10 @@ func ListPodSandboxes(client pb.RuntimeServiceClient, opts listOptions) error {
 				fmt.Printf("\t%s -> %s\n", k, pod.Annotations[k])
 			}
 		}
+		fmt.Printf("%s: %s\n",
+			strings.Title(strings.ToLower(columnPodRuntime)),
+			getSandboxesRuntimeHandler(pod))
+
 		fmt.Println()
 	}
 
@@ -570,6 +589,13 @@ func convertPodState(state pb.PodSandboxState) string {
 		log.Fatalf("Unknown pod state %q", state)
 		return ""
 	}
+}
+
+func getSandboxesRuntimeHandler(sandbox *pb.PodSandbox) string {
+	if sandbox.RuntimeHandler == "" {
+		return "(default)"
+	}
+	return sandbox.RuntimeHandler
 }
 
 func getSandboxesList(sandboxesList []*pb.PodSandbox, opts listOptions) []*pb.PodSandbox {
