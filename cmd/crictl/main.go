@@ -44,8 +44,12 @@ const (
 var (
 	// RuntimeEndpoint is CRI server runtime endpoint
 	RuntimeEndpoint string
+	// RuntimeEndpointIsSet is true when RuntimeEndpoint is configured
+	RuntimeEndpointIsSet bool
 	// ImageEndpoint is CRI server image endpoint, default same as runtime endpoint
 	ImageEndpoint string
+	// ImageEndpointIsSet is true when ImageEndpoint is configured
+	ImageEndpointIsSet bool
 	// Timeout  of connecting to server (default: 10s)
 	Timeout time.Duration
 	// Debug enable debug output
@@ -60,7 +64,7 @@ func getRuntimeClientConnection(context *cli.Context) (*grpc.ClientConn, error) 
 	// As dockershim is deprecated as a default CRI server, it still needs to
 	// be supported. This allows other default endpoint types to be
 	// checked if cannot connect to dockershim
-	if strings.Contains(RuntimeEndpoint, "dockershim") {
+	if !RuntimeEndpointIsSet {
 		return getConnection(defaultRuntimeEndpoints)
 	}
 	return getConnection([]string{RuntimeEndpoint})
@@ -72,12 +76,13 @@ func getImageClientConnection(context *cli.Context) (*grpc.ClientConn, error) {
 			return nil, fmt.Errorf("--image-endpoint is not set")
 		}
 		ImageEndpoint = RuntimeEndpoint
+		ImageEndpointIsSet = RuntimeEndpointIsSet
 	}
 	logrus.Debugf("get image connection")
 	// As dockershim is deprecated as a default CRI server, it still needs to
 	// be supported. This allows other default endpoint types to be
 	// checked if cannot connect to dockershim
-	if strings.Contains(ImageEndpoint, "dockershim") {
+	if !ImageEndpointIsSet {
 		return getConnection(defaultRuntimeEndpoints)
 	}
 	return getConnection([]string{ImageEndpoint})
@@ -215,22 +220,32 @@ func main() {
 
 		if config == nil {
 			RuntimeEndpoint = context.String("runtime-endpoint")
+			if context.IsSet("runtime-endpoint") {
+				RuntimeEndpointIsSet = true
+			}
 			ImageEndpoint = context.String("image-endpoint")
+			if context.IsSet("image-endpoint") {
+				ImageEndpointIsSet = true
+			}
 			Timeout = context.Duration("timeout")
 			Debug = context.Bool("debug")
 		} else {
 			// Command line flags overrides config file.
 			if context.IsSet("runtime-endpoint") {
 				RuntimeEndpoint = context.String("runtime-endpoint")
+				RuntimeEndpointIsSet = true
 			} else if config.RuntimeEndpoint != "" {
 				RuntimeEndpoint = config.RuntimeEndpoint
+				RuntimeEndpointIsSet = true
 			} else {
 				RuntimeEndpoint = context.String("runtime-endpoint")
 			}
 			if context.IsSet("image-endpoint") {
 				ImageEndpoint = context.String("image-endpoint")
+				ImageEndpointIsSet = true
 			} else if config.ImageEndpoint != "" {
 				ImageEndpoint = config.ImageEndpoint
+				ImageEndpointIsSet = true
 			} else {
 				ImageEndpoint = context.String("image-endpoint")
 			}
