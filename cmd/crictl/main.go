@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -60,9 +59,15 @@ func getRuntimeClientConnection(context *cli.Context) (*grpc.ClientConn, error) 
 	if RuntimeEndpointIsSet && RuntimeEndpoint == "" {
 		return nil, fmt.Errorf("--runtime-endpoint is not set")
 	}
-	logrus.Debugf("get runtime connection")
+	logrus.Debug("get runtime connection")
 	// If no EP set then use the default endpoint types
 	if !RuntimeEndpointIsSet {
+		logrus.Warningf("runtime connect using default endpoints: %v. "+
+			"As the default settings are now deprecated, you should set the "+
+			"endpoint instead.", defaultRuntimeEndpoints)
+		logrus.Debug("Note that performance maybe affected as each default " +
+			"connection attempt takes n-seconds to complete before timing out " +
+			"and going to the next in sequence.")
 		return getConnection(defaultRuntimeEndpoints)
 	}
 	return getConnection([]string{RuntimeEndpoint})
@@ -79,6 +84,12 @@ func getImageClientConnection(context *cli.Context) (*grpc.ClientConn, error) {
 	logrus.Debugf("get image connection")
 	// If no EP set then use the default endpoint types
 	if !ImageEndpointIsSet {
+		logrus.Warningf("image connect using default endpoints: %v. "+
+			"As the default settings are now deprecated, you should set the "+
+			"endpoint instead.", defaultRuntimeEndpoints)
+		logrus.Debug("Note that performance maybe affected as each default " +
+			"connection attempt takes n-seconds to complete before timing out " +
+			"and going to the next in sequence.")
 		return getConnection(defaultRuntimeEndpoints)
 	}
 	return getConnection([]string{ImageEndpoint})
@@ -89,21 +100,9 @@ func getConnection(endPoints []string) (*grpc.ClientConn, error) {
 		return nil, fmt.Errorf("endpoint is not set")
 	}
 	endPointsLen := len(endPoints)
-	if endPointsLen > 1 {
-		logrus.Warningf("using default endpoints: %s", endPoints)
-	}
-
 	var conn *grpc.ClientConn
 	for indx, endPoint := range endPoints {
-		if endPointsLen > 1 {
-			if strings.Contains(endPoint, "dockershim") {
-				logrus.Warningf("connect using default endpoint: %s. Note: Dockershim endpoint is now deprecated.", endPoint)
-			} else {
-				logrus.Warningf("connect using default endpoint: %s", endPoint)
-			}
-		} else {
-			logrus.Debugf("connect using endpoint: %s", endPoint)
-		}
+		logrus.Debugf("connect using endpoint: %s", endPoint)
 		addr, dialer, err := util.GetAddressAndDialer(endPoint)
 		if err != nil {
 			if indx == endPointsLen-1 {
@@ -112,7 +111,6 @@ func getConnection(endPoints []string) (*grpc.ClientConn, error) {
 			logrus.Error(err)
 			continue
 		}
-
 		conn, err = grpc.Dial(addr, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(Timeout), grpc.WithContextDialer(dialer))
 		if err != nil {
 			errMsg := errors.Wrapf(err, "connect endpoint '%s', make sure you are running as root and the endpoint has been started", endPoint)
@@ -121,6 +119,7 @@ func getConnection(endPoints []string) (*grpc.ClientConn, error) {
 			}
 			logrus.Error(errMsg)
 		} else {
+			logrus.Debugf("connected successfully using endpoint: %s", endPoint)
 			break
 		}
 	}
@@ -167,6 +166,11 @@ func main() {
 		completionCommand,
 	}
 
+	runtimeEndpointUsage := fmt.Sprintf("Endpoint of CRI container runtime "+
+		"service (default: uses in order the first successful one of %v). "+
+		"Default is now deprecated and the endpoint should be set instead.",
+		defaultRuntimeEndpoints)
+
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{
 			Name:    "config",
@@ -179,13 +183,14 @@ func main() {
 			Name:    "runtime-endpoint",
 			Aliases: []string{"r"},
 			EnvVars: []string{"CONTAINER_RUNTIME_ENDPOINT"},
-			Usage:   "Endpoint of CRI container runtime service",
+			Usage:   runtimeEndpointUsage,
 		},
 		&cli.StringFlag{
 			Name:    "image-endpoint",
 			Aliases: []string{"i"},
 			EnvVars: []string{"IMAGE_SERVICE_ENDPOINT"},
-			Usage:   "Endpoint of CRI image manager service",
+			Usage: "Endpoint of CRI image manager service (default: uses " +
+				"'runtime-endpoint' setting)",
 		},
 		&cli.DurationFlag{
 			Name:    "timeout",
