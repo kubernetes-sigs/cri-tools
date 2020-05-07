@@ -75,6 +75,17 @@ The endpoint can be set in three ways:
 - By setting environment variables `CONTAINER_RUNTIME_ENDPOINT` and `IMAGE_SERVICE_ENDPOINT`
 - By setting the endpoint in the config file `--config=/etc/crictl.yaml`
 
+If the endpoint is not set then it works as follows:
+
+- If the runtime endpoint is not set `crictl` will, by default, try to connect using:
+  - dockershim
+  - containerd
+  - cri-o
+- If the image endpoint is not set `crictl` will, by default, use the runtime endpoint setting
+
+> Note: The default endpoints are now deprecated and the runtime endpoint should always be set instead.
+The performance maybe affected as each default connection attempt takes n-seconds to complete before timing out and going to the next in sequence.
+
 Unix:
 ```sh
 $ cat /etc/crictl.yaml

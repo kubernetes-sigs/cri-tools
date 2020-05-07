@@ -19,6 +19,7 @@ limitations under the License.
 package main
 
 const (
-	defaultConfigPath      = "/etc/crictl.yaml"
-	defaultRuntimeEndpoint = "unix:///var/run/dockershim.sock"
+	defaultConfigPath = "/etc/crictl.yaml"
 )
+
+var defaultRuntimeEndpoints = []string{"unix:///var/run/dockershim.sock", "unix:///run/containerd/containerd.sock", "unix:///run/crio/crio.sock"}
