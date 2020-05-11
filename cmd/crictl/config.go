@@ -29,9 +29,19 @@ import (
 	"github.com/kubernetes-sigs/cri-tools/pkg/common"
 )
 
+const configDesc = `Get and set crictl options.
+
+The options are as follows:
+
+- runtime-endpoint: Container runtime endpoint
+- image-endpoint: Image endpoint
+- timeout: Timeout of connecting to server
+- debug: Enable debug output
+`
+
 var configCommand = &cli.Command{
 	Name:                   "config",
-	Usage:                  "Get and set crictl options",
+	Usage:                  configDesc,
 	ArgsUsage:              "[<options>]",
 	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
@@ -68,7 +78,7 @@ var configCommand = &cli.Command{
 			case "debug":
 				fmt.Println(config.Debug)
 			default:
-				logrus.Fatalf("No section named %s", get)
+				logrus.Fatalf("no configuration option named %s", get)
 			}
 			return nil
 		} else if context.IsSet("set") {
@@ -82,35 +92,50 @@ var configCommand = &cli.Command{
 					}
 					key := pair[0]
 					value := pair[1]
-					switch key {
-					case "runtime-endpoint":
-						config.RuntimeEndpoint = value
-					case "image-endpoint":
-						config.ImageEndpoint = value
-					case "timeout":
-						n, err := strconv.Atoi(value)
-						if err != nil {
-							logrus.Fatal(err)
-						}
-						config.Timeout = n
-					case "debug":
-						var debug bool
-						if value == "true" {
-							debug = true
-						} else if value == "false" {
-							debug = false
-						} else {
-							logrus.Fatal("use true|false for debug")
-						}
-						config.Debug = debug
-					default:
-						logrus.Fatalf("No section named %s", key)
+					if err := setValue(key, value, config); err != nil {
+						logrus.Fatal(err)
 					}
 				}
 			}
 			return common.WriteConfig(config, configFile)
-		} else {
-			return cli.ShowSubcommandHelp(context)
+		} else { // default for backwards compatibility
+			key := context.Args().First()
+			if key == "" {
+				return cli.ShowSubcommandHelp(context)
+			}
+			value := context.Args().Get(1)
+			if err := setValue(key, value, config); err != nil {
+				logrus.Fatal(err)
+			}
+			return common.WriteConfig(config, configFile)
 		}
 	},
+}
+
+func setValue(key, value string, config *common.Config) error {
+	switch key {
+	case "runtime-endpoint":
+		config.RuntimeEndpoint = value
+	case "image-endpoint":
+		config.ImageEndpoint = value
+	case "timeout":
+		n, err := strconv.Atoi(value)
+		if err != nil {
+			return err
+		}
+		config.Timeout = n
+	case "debug":
+		var debug bool
+		if value == "true" {
+			debug = true
+		} else if value == "false" {
+			debug = false
+		} else {
+			return fmt.Errorf("use true|false for 'debug'")
+		}
+		config.Debug = debug
+	default:
+		return fmt.Errorf("no configuration option named %s", key)
+	}
+	return nil
 }
