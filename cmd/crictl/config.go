@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -36,7 +37,11 @@ var configCommand = &cli.Command{
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:  "get",
-			Usage: "get value: name",
+			Usage: "show the option value",
+		},
+		&cli.StringSliceFlag{
+			Name:  "set",
+			Usage: "set option (can specify multiple or separate values with commas: opt1=val1,opt2=val2)",
 		},
 	},
 	Action: func(context *cli.Context) error {
@@ -66,37 +71,46 @@ var configCommand = &cli.Command{
 				logrus.Fatalf("No section named %s", get)
 			}
 			return nil
-		}
-		key := context.Args().First()
-		if key == "" {
+		} else if context.IsSet("set") {
+			settings := context.StringSlice("set")
+			for _, setting := range settings {
+				options := strings.Split(setting, ",")
+				for _, option := range options {
+					pair := strings.Split(option, "=")
+					if len(pair) != 2 {
+						return fmt.Errorf("incorrectly specified option: %v", setting)
+					}
+					key := pair[0]
+					value := pair[1]
+					switch key {
+					case "runtime-endpoint":
+						config.RuntimeEndpoint = value
+					case "image-endpoint":
+						config.ImageEndpoint = value
+					case "timeout":
+						n, err := strconv.Atoi(value)
+						if err != nil {
+							logrus.Fatal(err)
+						}
+						config.Timeout = n
+					case "debug":
+						var debug bool
+						if value == "true" {
+							debug = true
+						} else if value == "false" {
+							debug = false
+						} else {
+							logrus.Fatal("use true|false for debug")
+						}
+						config.Debug = debug
+					default:
+						logrus.Fatalf("No section named %s", key)
+					}
+				}
+			}
+			return common.WriteConfig(config, configFile)
+		} else {
 			return cli.ShowSubcommandHelp(context)
 		}
-		value := context.Args().Get(1)
-		switch key {
-		case "runtime-endpoint":
-			config.RuntimeEndpoint = value
-		case "image-endpoint":
-			config.ImageEndpoint = value
-		case "timeout":
-			n, err := strconv.Atoi(value)
-			if err != nil {
-				logrus.Fatal(err)
-			}
-			config.Timeout = n
-		case "debug":
-			var debug bool
-			if value == "true" {
-				debug = true
-			} else if value == "false" {
-				debug = false
-			} else {
-				logrus.Fatal("use true|false for debug")
-			}
-			config.Debug = debug
-		default:
-			logrus.Fatalf("No section named %s", key)
-		}
-
-		return common.WriteConfig(config, configFile)
 	},
 }
