@@ -130,6 +130,13 @@ func getRuntimeService(context *cli.Context) (internalapi.RuntimeService, error)
 	return remote.NewRemoteRuntimeService(RuntimeEndpoint, Timeout)
 }
 
+func getTimeout(timeDuration time.Duration) time.Duration {
+	if timeDuration.Seconds() > 0 {
+		return timeDuration
+	}
+	return defaultTimeout // use default
+}
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "crictl"
@@ -196,12 +203,12 @@ func main() {
 			Name:    "timeout",
 			Aliases: []string{"t"},
 			Value:   defaultTimeout,
-			Usage:   "Timeout of connecting to the server",
+			Usage:   "Timeout of connecting to the server (default: 2s)",
 		},
 		&cli.BoolFlag{
 			Name:    "debug",
 			Aliases: []string{"D"},
-			Usage:   "Enable debug mode",
+			Usage:   "Enable debug mode (Default: false)",
 		},
 	}
 
@@ -227,7 +234,11 @@ func main() {
 			if context.IsSet("image-endpoint") {
 				ImageEndpointIsSet = true
 			}
-			Timeout = context.Duration("timeout")
+			if context.IsSet("timeout") {
+				Timeout = getTimeout(context.Duration("timeout"))
+			} else {
+				Timeout = context.Duration("timeout")
+			}
 			Debug = context.Bool("debug")
 		} else {
 			// Command line flags overrides config file.
@@ -250,9 +261,9 @@ func main() {
 				ImageEndpoint = context.String("image-endpoint")
 			}
 			if context.IsSet("timeout") {
-				Timeout = context.Duration("timeout")
-			} else if config.Timeout != 0 {
-				Timeout = time.Duration(config.Timeout) * time.Second
+				Timeout = getTimeout(context.Duration("timeout"))
+			} else if config.Timeout > 0 { // 0/neg value set to default timeout
+				Timeout = config.Timeout
 			} else {
 				Timeout = context.Duration("timeout")
 			}

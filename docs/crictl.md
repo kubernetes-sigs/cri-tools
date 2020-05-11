@@ -91,7 +91,7 @@ Unix:
 $ cat /etc/crictl.yaml
 runtime-endpoint: unix:///var/run/dockershim.sock
 image-endpoint: unix:///var/run/dockershim.sock
-timeout: 10
+timeout: 2
 debug: true
 ```
 Windows:
@@ -99,7 +99,7 @@ Windows:
 C:\> type %USERPROFILE%\.crictl\crictl.yaml
 runtime-endpoint: tcp://localhost:3735
 image-endpoint: tcp://localhost:3735
-timeout: 10
+timeout: 2
 debug: true
 ```
 
@@ -115,7 +115,7 @@ via sudo (`sudo -E crictl ...`).
 
 ## Additional options
 
-- `--timeout`, `-t`: Timeout of connecting to server (default: 10s)
+- `--timeout`, `-t`: Timeout of connecting to server (default: 2s)
 - `--debug`, `-D`: Enable debug output
 - `--help`, `-h`: show help
 - `--version`, `-v`: print the version information of crictl

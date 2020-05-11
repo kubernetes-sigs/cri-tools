@@ -62,9 +62,7 @@ func GetServerConfigFromFile(configFileName, currentDir string) (*ServerConfigur
 	// Set the config from file to the server config struct for return
 	serverConfig.RuntimeEndpoint = config.RuntimeEndpoint
 	serverConfig.ImageEndpoint = config.ImageEndpoint
-	if config.Timeout != 0 {
-		serverConfig.Timeout = time.Duration(config.Timeout) * time.Second
-	}
+	serverConfig.Timeout = time.Duration(config.Timeout) * time.Second
 	serverConfig.Debug = config.Debug
 	return &serverConfig, nil
 }
