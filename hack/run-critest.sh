@@ -30,7 +30,7 @@ else
 fi
 
 # Start dockershim first
-/usr/local/bin/kubelet --v=3 --logtostderr &
+/usr/local/bin/kubelet --v=3 --logtostderr --experimental-dockershim &
 
 # Wait a while for dockershim starting.
 sleep 10
