@@ -203,12 +203,13 @@ func main() {
 			Name:    "timeout",
 			Aliases: []string{"t"},
 			Value:   defaultTimeout,
-			Usage:   "Timeout of connecting to the server (default: 2s)",
+			Usage: "Timeout of connecting to the server. " +
+				"0 or less is set to default",
 		},
 		&cli.BoolFlag{
 			Name:    "debug",
 			Aliases: []string{"D"},
-			Usage:   "Enable debug mode (Default: false)",
+			Usage:   "Enable debug mode",
 		},
 	}
 
