@@ -102,7 +102,7 @@ func getConnection(endPoints []string) (*grpc.ClientConn, error) {
 	endPointsLen := len(endPoints)
 	var conn *grpc.ClientConn
 	for indx, endPoint := range endPoints {
-		logrus.Debugf("connect using endpoint: %s", endPoint)
+		logrus.Debugf("connect using endpoint '%s' with '%s' timeout", endPoint, Timeout)
 		addr, dialer, err := util.GetAddressAndDialer(endPoint)
 		if err != nil {
 			if indx == endPointsLen-1 {
@@ -203,7 +203,7 @@ func main() {
 			Name:    "timeout",
 			Aliases: []string{"t"},
 			Value:   defaultTimeout,
-			Usage: "Timeout of connecting to the server. " +
+			Usage: "Timeout of connecting to the server in seconds (e.g. 2s, 20s.). " +
 				"0 or less is set to default",
 		},
 		&cli.BoolFlag{
