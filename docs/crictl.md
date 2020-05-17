@@ -91,7 +91,7 @@ Unix:
 $ cat /etc/crictl.yaml
 runtime-endpoint: unix:///var/run/dockershim.sock
 image-endpoint: unix:///var/run/dockershim.sock
-timeout: 10
+timeout: 2
 debug: true
 ```
 Windows:
@@ -99,7 +99,7 @@ Windows:
 C:\> type %USERPROFILE%\.crictl\crictl.yaml
 runtime-endpoint: tcp://localhost:3735
 image-endpoint: tcp://localhost:3735
-timeout: 10
+timeout: 2
 debug: true
 ```
 
@@ -115,11 +115,13 @@ via sudo (`sudo -E crictl ...`).
 
 ## Additional options
 
-- `--timeout`, `-t`: Timeout of connecting to server (default: 10s)
+- `--timeout`, `-t`: Timeout of connecting to server in seconds (default: 2s).
+0 or less is interpreted as unset and converted to the default. There is no
+option for no timeout value set and the smallest supported timeout is `1s`
 - `--debug`, `-D`: Enable debug output
 - `--help`, `-h`: show help
 - `--version`, `-v`: print the version information of crictl
-- `--config`, `-c`: Config file in yaml format. Overrided by flags or environment variables.
+- `--config`, `-c`: Config file in yaml format. Overrided by flags or environment variables
 
 ## Examples
 

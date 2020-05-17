@@ -102,7 +102,7 @@ func getConnection(endPoints []string) (*grpc.ClientConn, error) {
 	endPointsLen := len(endPoints)
 	var conn *grpc.ClientConn
 	for indx, endPoint := range endPoints {
-		logrus.Debugf("connect using endpoint: %s", endPoint)
+		logrus.Debugf("connect using endpoint '%s' with '%s' timeout", endPoint, Timeout)
 		addr, dialer, err := util.GetAddressAndDialer(endPoint)
 		if err != nil {
 			if indx == endPointsLen-1 {
@@ -128,6 +128,13 @@ func getConnection(endPoints []string) (*grpc.ClientConn, error) {
 
 func getRuntimeService(context *cli.Context) (internalapi.RuntimeService, error) {
 	return remote.NewRemoteRuntimeService(RuntimeEndpoint, Timeout)
+}
+
+func getTimeout(timeDuration time.Duration) time.Duration {
+	if timeDuration.Seconds() > 0 {
+		return timeDuration
+	}
+	return defaultTimeout // use default
 }
 
 func main() {
@@ -196,7 +203,8 @@ func main() {
 			Name:    "timeout",
 			Aliases: []string{"t"},
 			Value:   defaultTimeout,
-			Usage:   "Timeout of connecting to the server",
+			Usage: "Timeout of connecting to the server in seconds (e.g. 2s, 20s.). " +
+				"0 or less is set to default",
 		},
 		&cli.BoolFlag{
 			Name:    "debug",
@@ -227,7 +235,11 @@ func main() {
 			if context.IsSet("image-endpoint") {
 				ImageEndpointIsSet = true
 			}
-			Timeout = context.Duration("timeout")
+			if context.IsSet("timeout") {
+				Timeout = getTimeout(context.Duration("timeout"))
+			} else {
+				Timeout = context.Duration("timeout")
+			}
 			Debug = context.Bool("debug")
 		} else {
 			// Command line flags overrides config file.
@@ -250,9 +262,9 @@ func main() {
 				ImageEndpoint = context.String("image-endpoint")
 			}
 			if context.IsSet("timeout") {
-				Timeout = context.Duration("timeout")
-			} else if config.Timeout != 0 {
-				Timeout = time.Duration(config.Timeout) * time.Second
+				Timeout = getTimeout(context.Duration("timeout"))
+			} else if config.Timeout > 0 { // 0/neg value set to default timeout
+				Timeout = config.Timeout
 			} else {
 				Timeout = context.Duration("timeout")
 			}
