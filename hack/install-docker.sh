@@ -20,6 +20,18 @@ set -o pipefail
 
 arch=$(dpkg --print-architecture)
 
+# readiness_check checks readiness of a daemon with specified command.
+readiness_check() {
+  local command=$1
+  local MAX_ATTEMPTS=5
+  local attempt_num=1
+  until ${command} &> /dev/null || (( attempt_num == MAX_ATTEMPTS ))
+  do
+      echo "$attempt_num attempt \"$command\"! Trying again in $attempt_num seconds..."
+      sleep $(( attempt_num++ ))
+  done
+}
+
 # Workarounds for error "Failed to fetch https://packagecloud.io/github/git-lfs/ubuntu/dists/trusty/InRelease"
 # TODO: remove it after the issue fixed in git-lfs.
 sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
@@ -47,3 +59,6 @@ elif [ "$arch" == ppc64el ]; then
 fi
 # Restart docker daemon.
 sudo service docker restart
+
+# Check for when docker daemon is ready
+readiness_check "sudo ls -al /var/run/docker.sock"

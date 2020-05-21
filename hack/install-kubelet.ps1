@@ -26,11 +26,6 @@ git clone -c core.symlinks=true https://github.com/kubernetes/kubernetes
 
 cd $kubernetespath
 
-# This is a workaround due to build issues caused by Kublet removing
-# Docker support: in kubernetes/kubernetes#87746
-# TODO: This should be removed once issues in kubelet are resolved
-git checkout 6f9c0f9edd835367116971074fb743c39a6b3863
-
 $branch = [System.Environment]::GetEnvironmentVariable("TRAVIS_BRANCH")
 if ( ! "$branch".Equals("master") ) {
   # We can do this because cri-tools have the same branch name with kubernetes.

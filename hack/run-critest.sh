@@ -20,6 +20,18 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+# readiness_check checks readiness of a daemon with specified command.
+readiness_check() {
+  local command=$1
+  local MAX_ATTEMPTS=5
+  local attempt_num=1
+  until ${command} &> /dev/null || (( attempt_num == MAX_ATTEMPTS ))
+  do
+      echo "$attempt_num attempt \"$command\"! Trying again in $attempt_num seconds..."
+      sleep $(( attempt_num++ ))
+  done
+}
+
 arch=$(uname -m)
 
 # Install nsenter
@@ -30,10 +42,13 @@ else
 fi
 
 # Start dockershim first
-/usr/local/bin/kubelet --v=3 --logtostderr --experimental-dockershim &
+/usr/local/bin/kubelet --network-plugin=kubenet --pod-cidr=10.88.0.0/16 --v=3 --logtostderr &
 
 # Wait a while for dockershim starting.
 sleep 10
+
+# Check for when dockershim is ready
+readiness_check "sudo ls -al /var/run/dockershim.sock"
 
 # Run e2e test cases
 # Skip reopen container log test because docker doesn't support it.

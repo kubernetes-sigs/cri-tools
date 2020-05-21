@@ -22,10 +22,10 @@ set -o pipefail
 git clone https://github.com/kubernetes/kubernetes $GOPATH/src/k8s.io/kubernetes
 cd $GOPATH/src/k8s.io/kubernetes
 
-# This is a workaround due to build issues caused by Kublet removing
-# Docker support: in kubernetes/kubernetes#87746
-# TODO: This should be removed once issues in kubelet are resolved
-git checkout 6f9c0f9edd835367116971074fb743c39a6b3863
+# Addign this temporarily to use PR inetrim fix
+# https://github.com/kubernetes/kubernetes/pull/91447
+# TODO: remove when PR merged
+git checkout f07d2ec8de18a6b8cc09810f064e26553f1d374d
 
 if [ ${TRAVIS_BRANCH:-"master"} != "master" ]; then
   # We can do this because cri-tools have the same branch name with kubernetes.
