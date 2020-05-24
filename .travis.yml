@@ -54,6 +54,7 @@ jobs:
       script:
         -  make release
     - stage: Test
+      name: critest
       os: linux
       script:
         - make

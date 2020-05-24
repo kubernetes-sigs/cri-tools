@@ -23,9 +23,14 @@ arch=$(dpkg --print-architecture)
 # Workarounds for error "Failed to fetch https://packagecloud.io/github/git-lfs/ubuntu/dists/trusty/InRelease"
 # TODO: remove it after the issue fixed in git-lfs.
 sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
+sudo apt-get update
+
+# Install prereqs
+sudo apt-get install -y\
+      conntrack iptables iproute2 ethtool socat util-linux mount ebtables udev kmod \
+      libseccomp2
 
 # Install docker.
-sudo apt-get update
 sudo apt-get install -y\
     apt-transport-https \
     ca-certificates \
