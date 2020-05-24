@@ -33,8 +33,9 @@ fi
 /usr/local/bin/kubelet --v=3 --logtostderr &
 
 # Wait a while for dockershim starting.
-sleep 10
+sleep 30
 
+set +o errexit
 # Run e2e test cases
 # Skip reopen container log test because docker doesn't support it.
 # Skip runtime should support execSync with timeout because docker doesn't
