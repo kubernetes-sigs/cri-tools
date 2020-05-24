@@ -1,13 +1,15 @@
 language: go
 sudo: required
 dist: bionic
-
 go:
   - 1.13.x
 
 env:
-  - GOPROXY=https://proxy.golang.org
-  - GOSUMDB=https://sum.golang.org
+  global:
+    - LANG=C
+    - LC_ALL=C
+    - GOPROXY=https://proxy.golang.org
+    - GOSUMDB=https://sum.golang.org
 
 os:
   - linux

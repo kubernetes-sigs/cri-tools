@@ -30,7 +30,7 @@ else
 fi
 
 # Start dockershim first
-/usr/local/bin/kubelet --v=3 --logtostderr --network-plugin=kubenet --pod-cidr=10.180.0.0/24 &
+/usr/local/bin/kubelet --v=3 --logtostderr &
 
 # Wait a while for dockershim starting.
 sleep 30
