@@ -18,6 +18,8 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+set -x
+
 arch=$(dpkg --print-architecture)
 
 # Workarounds for error "Failed to fetch https://packagecloud.io/github/git-lfs/ubuntu/dists/trusty/InRelease"
