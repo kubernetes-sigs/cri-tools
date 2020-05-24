@@ -11,8 +11,6 @@ env:
 
 os:
   - linux
-  - linux-ppc64le
-  - windows
 
 go_import_path: github.com/kubernetes-sigs/cri-tools
 
@@ -35,24 +33,6 @@ install:
 
 jobs:
   include:
-    - stage: Static check
-      os: linux
-      script:
-        - make install.lint
-        - make lint
-        - hack/verify-go-modules.sh
-    - stage: Build
-      os: linux
-      script:
-        -  make release
-    - stage: Build
-      os: osx
-      script:
-        -  make release
-    - stage: Build
-      os: linux-ppc64le
-      script:
-        -  make release
     - stage: Test
       name: critest
       os: linux
@@ -63,36 +43,6 @@ jobs:
         - travis_wait hack/install-kubelet.sh
         - sudo cp build/bin/ginkgo /usr/local/bin
         - sudo env PATH=$PATH hack/run-critest.sh
-    - stage: Test
-      os: windows
-      script:
-        - make
-        - powershell -c "Set-ExecutionPolicy Bypass -Scope CURRENTUSER -Force"
-        - travis_wait powershell hack/install-kubelet.ps1
-        # Skip hack/run-critest.sh temporarily.
-    - stage: Test
-      name: crictl e2e
-      os: linux
-      script:
-        - |
-          sudo apt-get update &&\
-          sudo apt-get install -y libseccomp-dev
-        - |
-          VERSION=v0.8.2 &&\
-          sudo mkdir -p /opt/cni/bin &&\
-          sudo wget -qO- https://github.com/containernetworking/plugins/releases/download/$VERSION/cni-plugins-linux-amd64-$VERSION.tgz \
-              | sudo tar xfz - -C /opt/cni/bin &&\
-          ls -lah /opt/cni/bin
-        - |
-          VERSION=v1.0.0-rc8 &&\
-          sudo wget -q -O \
-            /usr/bin/runc \
-            https://github.com/opencontainers/runc/releases/download/$VERSION/runc.amd64 &&\
-          sudo chmod +x /usr/bin/runc &&\
-          runc --version
-        - sudo -E env "PATH=$PATH" make all install test-e2e TESTFLAGS=-v
 
 stages:
-  - Static check
   - Build
-  - Test
