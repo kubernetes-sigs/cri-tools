@@ -31,7 +31,6 @@ echo "Installing CNI binaries ..." \
     && rm -rf /tmp/cni.tgz
 
 # Install kubelet
-git clone https://github.com/kubernetes/kubernetes $GOPATH/src/k8s.io/kubernetes
 cd $GOPATH/src/k8s.io/kubernetes
 
 make WHAT='cmd/kubelet'
