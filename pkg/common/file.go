@@ -29,10 +29,10 @@ import (
 // Config is the internal representation of the yaml that defines
 // server configuration
 type Config struct {
-	RuntimeEndpoint string     //`yaml:"runtime-endpoint"`
-	ImageEndpoint   string     //`yaml:"image-endpoint"`
-	Timeout         int        //`yaml:"timeout"`
-	Debug           bool       //`yaml:"debug"`
+	RuntimeEndpoint string
+	ImageEndpoint   string
+	Timeout         int
+	Debug           bool
 	yamlData        *yaml.Node //YAML representation of config
 }
 
@@ -48,7 +48,6 @@ func ReadConfig(filepath string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	config, err := getConfigOptions(yamlConfig)
 	if err != nil {
 		return nil, err
@@ -62,6 +61,7 @@ func ReadConfig(filepath string) (*Config, error) {
 func WriteConfig(c *Config, filepath string) error {
 	setConfigOptions(c)
 
+	//fmt.Printf("YAML data to save: %#v", c.yamlData)
 	data, err := yaml.Marshal(c.yamlData)
 	if err != nil {
 		return err
@@ -77,9 +77,14 @@ func WriteConfig(c *Config, filepath string) error {
 func getConfigOptions(yamlData yaml.Node) (*Config, error) {
 	config := Config{}
 	config.yamlData = &yamlData
+
+	if yamlData.Content == nil || len(yamlData.Content) == 0 ||
+		yamlData.Content[0].Content == nil {
+		return &config, nil
+	}
 	contentLen := len(yamlData.Content[0].Content)
 
-	// YAML respreentation contains 2 yaml.ScalarNodes per config option
+	// YAML representation contains 2 yaml.ScalarNodes per config option
 	// One is config option name and other is the value of the option
 	// These  ScalarNodes help preserve comments associated with
 	// the YAML entry
@@ -121,8 +126,19 @@ func setConfigOptions(config *Config) {
 
 // Set config option on yaml
 func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
-	contentLen := len(yamlData.Content[0].Content)
+	if yamlData.Content == nil || len(yamlData.Content) == 0 {
+		yamlData.Kind = yaml.DocumentNode
+		yamlData.Content = make([]*yaml.Node, 1)
+		yamlData.Content[0] = &yaml.Node{
+			Kind: yaml.MappingNode,
+			Tag:  "!!map",
+		}
+	}
+	var contentLen = 0
 	var foundOption = false
+	if yamlData.Content[0].Content != nil {
+		contentLen = len(yamlData.Content[0].Content)
+	}
 
 	// Set value on existing config option
 	for indx := 0; indx < contentLen-1; {
@@ -136,7 +152,7 @@ func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
 	}
 
 	// New config option to set
-	// YAML respreentation contains 2 yaml.ScalarNodes per config option
+	// YAML representation contains 2 yaml.ScalarNodes per config option
 	// One is config option name and other is the value of the option
 	// These  ScalarNodes help preserve comments associated with
 	// the YAML entry
@@ -144,6 +160,7 @@ func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
 		name := &yaml.Node{
 			Kind:  yaml.ScalarNode,
 			Value: configName,
+			Tag:   "!!string",
 		}
 		var tagType string
 		switch configName {
@@ -154,6 +171,7 @@ func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
 		default:
 			tagType = "!!string"
 		}
+
 		value := &yaml.Node{
 			Kind:  yaml.ScalarNode,
 			Value: configValue,
