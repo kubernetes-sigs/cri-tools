@@ -1,0 +1,70 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  #
+  # Run CRI tests against containerd
+  #
+  linux-build-and-test-containerd:
+    name: critest - containerd (linux amd64)
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: '1.13.11'
+
+      - name: Set env
+        shell: bash
+        run: |
+          echo "::set-env name=GOPATH::${{ github.workspace }}"
+          echo "::add-path::${{ github.workspace }}/bin"
+
+      - name: Checkout containerd/cri repo
+        uses: actions/checkout@v2
+        with:
+          path: ${{ github.workspace }}/src/github.com/containerd/cri
+          repository: containerd/cri
+          fetch-depth: 150
+
+      - name: disable ipv6
+        run: |
+          sudo sysctl net.ipv6.conf.all.disable_ipv6=0
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get install -y \
+            btrfs-tools \
+            libseccomp2 \
+            libseccomp-dev
+          make install.deps
+        working-directory: ${{ github.workspace }}/src/github.com/containerd/cri
+
+      - name: Install containerd
+        run: |
+          make containerd
+          sudo PATH=$PATH GOPATH=$GOPATH make install-containerd
+        working-directory: ${{ github.workspace }}/src/github.com/containerd/cri
+
+      - name: Checkout cri-tools for this commit
+        uses: actions/checkout@v2
+        with:
+          path: ${{github.workspace}}/src/github.com/kubernetes-sigs/cri-tools
+          fetch-depth: 150
+
+      - name: Build this cri-tools
+        run: |
+          make
+          sudo make install
+        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
+
+      - name: CRI Test on this cri-tools commit
+        run: |
+          make test-cri
+        working-directory: ${{ github.workspace }}/src/github.com/containerd/cri
+
+      - name: Upload CRI Test log file
+        uses: actions/upload-artifact@v1
+        with:
+          name: cri-test-${{github.sha}}.log
+          path: /tmp/test-cri/containerd.log
