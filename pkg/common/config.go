@@ -42,14 +42,13 @@ func GetServerConfigFromFile(configFileName, currentDir string) (*ServerConfigur
 	if _, err := os.Stat(configFileName); err != nil {
 		if !os.IsNotExist(err) {
 			return nil, errors.Wrap(err, "load config file")
-		} else {
-			// If the config file was not found, try looking in the program's
-			// directory as a fallback. This is to accommodate where the config file
-			// is placed with the cri tools binary.
-			configFileName = filepath.Join(filepath.Dir(currentDir), "crictl.yaml")
-			if _, err := os.Stat(configFileName); err != nil {
-				return nil, errors.Wrap(err, "load config file")
-			}
+		}
+		// If the config file was not found, try looking in the program's
+		// directory as a fallback. This is to accommodate where the config file
+		// is placed with the cri tools binary.
+		configFileName = filepath.Join(filepath.Dir(currentDir), "crictl.yaml")
+		if _, err := os.Stat(configFileName); err != nil {
+			return nil, errors.Wrap(err, "load config file")
 		}
 	}
 

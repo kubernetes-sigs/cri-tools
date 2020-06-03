@@ -23,7 +23,6 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 
 	"github.com/kubernetes-sigs/cri-tools/pkg/common"
@@ -78,7 +77,7 @@ var configCommand = &cli.Command{
 			case "debug":
 				fmt.Println(config.Debug)
 			default:
-				logrus.Fatalf("no configuration option named %s", get)
+				return errors.Errorf("no configuration option named %s", get)
 			}
 			return nil
 		} else if context.IsSet("set") {
@@ -88,12 +87,12 @@ var configCommand = &cli.Command{
 				for _, option := range options {
 					pair := strings.Split(option, "=")
 					if len(pair) != 2 {
-						return fmt.Errorf("incorrectly specified option: %v", setting)
+						return errors.Errorf("incorrectly specified option: %v", setting)
 					}
 					key := pair[0]
 					value := pair[1]
 					if err := setValue(key, value, config); err != nil {
-						logrus.Fatal(err)
+						return err
 					}
 				}
 			}
@@ -105,7 +104,7 @@ var configCommand = &cli.Command{
 			}
 			value := context.Args().Get(1)
 			if err := setValue(key, value, config); err != nil {
-				logrus.Fatal(err)
+				return err
 			}
 			return common.WriteConfig(config, configFile)
 		}
@@ -121,21 +120,17 @@ func setValue(key, value string, config *common.Config) error {
 	case "timeout":
 		n, err := strconv.Atoi(value)
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "parse timeout value '%s'", value)
 		}
 		config.Timeout = n
 	case "debug":
-		var debug bool
-		if value == "true" {
-			debug = true
-		} else if value == "false" {
-			debug = false
-		} else {
-			return fmt.Errorf("use true|false for 'debug'")
+		debug, err := strconv.ParseBool(value)
+		if err != nil {
+			return errors.Wrapf(err, "parse debug value '%s'", value)
 		}
 		config.Debug = debug
 	default:
-		return fmt.Errorf("no configuration option named %s", key)
+		return errors.Errorf("no configuration option named %s", key)
 	}
 	return nil
 }
