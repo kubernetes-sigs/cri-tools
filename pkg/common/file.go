@@ -52,16 +52,19 @@ func ReadConfig(filepath string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return config, err
 }
 
 // WriteConfig writes config to file
 // an error if the file was unable to be written to.
 func WriteConfig(c *Config, filepath string) error {
+	if c == nil {
+		c = new(Config)
+		c.yamlData = new(yaml.Node)
+	}
+
 	setConfigOptions(c)
 
-	//fmt.Printf("YAML data to save: %#v", c.yamlData)
 	data, err := yaml.Marshal(c.yamlData)
 	if err != nil {
 		return err
@@ -84,9 +87,9 @@ func getConfigOptions(yamlData yaml.Node) (*Config, error) {
 	}
 	contentLen := len(yamlData.Content[0].Content)
 
-	// YAML representation contains 2 yaml.ScalarNodes per config option
+	// YAML representation contains 2 yaml ScalarNodes per config option.
 	// One is config option name and other is the value of the option
-	// These  ScalarNodes help preserve comments associated with
+	// These ScalarNodes help preserve comments associated with
 	// the YAML entry
 	for indx := 0; indx < contentLen-1; {
 		configOption := yamlData.Content[0].Content[indx]
@@ -113,6 +116,7 @@ func getConfigOptions(yamlData yaml.Node) (*Config, error) {
 		}
 		indx += 2
 	}
+
 	return &config, nil
 }
 
@@ -152,15 +156,15 @@ func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
 	}
 
 	// New config option to set
-	// YAML representation contains 2 yaml.ScalarNodes per config option
+	// YAML representation contains 2 yaml ScalarNodes per config option.
 	// One is config option name and other is the value of the option
-	// These  ScalarNodes help preserve comments associated with
+	// These ScalarNodes help preserve comments associated with
 	// the YAML entry
 	if !foundOption {
 		name := &yaml.Node{
 			Kind:  yaml.ScalarNode,
 			Value: configName,
-			Tag:   "!!string",
+			Tag:   "!!str",
 		}
 		var tagType string
 		switch configName {
@@ -169,7 +173,7 @@ func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
 		case "debug":
 			tagType = "!!bool"
 		default:
-			tagType = "!!string"
+			tagType = "!!str"
 		}
 
 		value := &yaml.Node{
