@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   #
-  # Run CRI tests against containerd
+  # Run CRI tests against containerd (master)
   #
   linux-build-and-test-containerd:
     name: critest - containerd (linux amd64)
@@ -68,3 +68,79 @@ jobs:
         with:
           name: cri-test-${{github.sha}}.log
           path: /tmp/test-cri/containerd.log
+
+  #
+  # Run CRI tests against CRI-O (master)
+  #
+  linux-build-and-test-cri-o:
+    name: critest - CRI-O (linux amd64)
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Install go
+        uses: actions/setup-go@v1
+        with:
+          go-version: '1.13.11'
+
+      - name: Setup environment
+        shell: bash
+        run: |
+          echo "::set-env name=GOPATH::${{ github.workspace }}"
+          echo "::add-path::${{ github.workspace }}/bin"
+
+      - name: Setup system
+        run: |
+          # enable necessary kernel modules
+          sudo ip6tables --list >/dev/null
+
+          # enable necessary sysctls
+          sudo sysctl -w net.ipv4.conf.all.route_localnet=1
+          sudo sysctl -w net.bridge.bridge-nf-call-iptables=1
+          sudo sysctl -w net.ipv4.ip_forward=1
+          sudo iptables -t nat -I POSTROUTING -s 127.0.0.1 ! -d 127.0.0.1 -j MASQUERADE
+
+      - name: Install ginkgo
+        run: |
+          go get -u github.com/onsi/ginkgo/ginkgo
+          ginkgo version
+          sudo cp $(command -v ginkgo) /usr/local/bin
+
+      - name: Setup GCloud
+        uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+
+      - name: Install CRI-O
+        run: |
+          LATEST=$(gsutil ls -l gs://k8s-conform-cri-o/artifacts |
+                   sort -r -k 2 |
+                   head -2 |
+                   tail -1 |
+                   awk '{ print $3 }')
+          gsutil cp "$LATEST" .
+
+          TARBALL=$(basename "$LATEST")
+          tar xf "$TARBALL"
+
+          FILENAME=${TARBALL##*/}
+          DIR=${FILENAME%%.*}
+          pushd "$DIR" || exit
+          sudo make install
+          sudo systemctl daemon-reload
+          sudo systemctl start crio
+
+      - name: Checkout cri-tools for this commit
+        uses: actions/checkout@v2
+        with:
+          path: ${{github.workspace}}/src/github.com/kubernetes-sigs/cri-tools
+          fetch-depth: 150
+
+      - name: Build cri-tools
+        run: |
+          make
+          sudo make install
+        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
+
+      - name: Run critest
+        run: |
+          sudo critest \
+            --runtime-endpoint=unix:///var/run/crio/crio.sock \
+            --ginkgo.flakeAttempts=3 \
+            --parallel=$(nproc)
