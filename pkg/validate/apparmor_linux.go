@@ -81,7 +81,7 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 				rc.RemovePodSandbox(sandboxID)
 			})
 
-			It("should fail with with an unloaded profile", func() {
+			It("should fail with an unloaded profile", func() {
 				profile := apparmorProfileNamePrefix + "non-existent-profile"
 				containerID := createContainerWithAppArmor(rc, ic, sandboxID, sandboxConfig, profile, false)
 				Expect(containerID).To(BeEmpty())
