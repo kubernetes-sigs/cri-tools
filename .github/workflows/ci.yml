@@ -6,7 +6,7 @@ jobs:
   # Run CRI tests against containerd (master)
   #
   linux-build-and-test-containerd:
-    name: critest - containerd (linux amd64)
+    name: critest - containerd / master / linux amd64
     runs-on: ubuntu-18.04
     steps:
       - name: Install Go
@@ -70,12 +70,19 @@ jobs:
           path: /tmp/test-cri/containerd.log
 
   #
-  # Run CRI tests against CRI-O (master)
+  # Run CRI tests against CRI-O
   #
   linux-build-and-test-cri-o:
-    name: critest - CRI-O (linux amd64)
+    strategy:
+      matrix:
+        version: [master, v1.18.1]
+    name: critest - CRI-O / ${{matrix.version}} / linux amd64
     runs-on: ubuntu-18.04
     steps:
+      # TODO: remove with the v1.19.0 release
+      - name: Install dependencies
+        run: sudo apt-get install -y socat
+
       - name: Install go
         uses: actions/setup-go@v1
         with:
@@ -107,7 +114,8 @@ jobs:
       - name: Setup GCloud
         uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
 
-      - name: Install CRI-O
+      - name: Install CRI-O latest master
+        if: ${{matrix.version == 'master'}}
         run: |
           LATEST=$(gsutil ls -l gs://k8s-conform-cri-o/artifacts |
                    sort -r -k 2 |
@@ -123,6 +131,24 @@ jobs:
           DIR=${FILENAME%%.*}
           pushd "$DIR" || exit
           sudo make install
+
+      - name: Install CRI-O latest version
+        if: ${{matrix.version == 'v1.18.1'}}
+        run: |
+          DIR=crio-${{matrix.version}}
+          TARBALL=$DIR.tar.gz
+          RELEASE=gs://k8s-conform-cri-o/artifacts/$TARBALL
+
+          gsutil cp $RELEASE .
+          tar xf $TARBALL
+          pushd $DIR || exit
+          sudo make install
+
+      - name: Configure and start CRI-O
+        run: |
+          sudo mkdir -p /etc/crio/crio.conf.d
+          printf '[crio.runtime]\nlog_level = "debug"\n' | sudo tee /etc/crio/crio.conf.d/01-log-level.conf
+
           sudo systemctl daemon-reload
           sudo systemctl start crio
 
@@ -149,5 +175,5 @@ jobs:
       - name: Upload CRI-O logs
         uses: actions/upload-artifact@v1
         with:
-          name: cri-o-${{github.sha}}.log
+          name: cri-o-${{matrix.version}}-${{github.sha}}.log
           path: cri-o.log
