@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   #
-  # Run CRI tests against containerd (master)
+  # Run CRI tests against containerd
   #
   linux-build-and-test-containerd:
     strategy:
