@@ -32,3 +32,6 @@ Session.vim
 .netrwhist
 
 build
+
+# built binary 
+cmd/crictl/crictl
