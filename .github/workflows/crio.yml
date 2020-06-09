@@ -1,95 +1,7 @@
-name: CI
+name: critest
 on: [push, pull_request]
 
 jobs:
-  #
-  # Run CRI tests against containerd
-  #
-  linux-build-and-test-containerd:
-    strategy:
-      matrix:
-        version: [master, v1.4.0-beta.1]
-    name: critest - containerd ${{matrix.version}} (linux amd64)
-    runs-on: ubuntu-18.04
-    steps:
-      - name: Install Go
-        uses: actions/setup-go@v1
-        with:
-          go-version: '1.13.11'
-
-      - name: Set env
-        shell: bash
-        run: |
-          echo "::set-env name=GOPATH::${{ github.workspace }}"
-          echo "::add-path::${{ github.workspace }}/bin"
-          echo "::set-env name=CONTD_CRI_REPO_REF::master"
-
-      - name: Checkout containerd/containerd ${{matrix.version}}
-        uses: actions/checkout@v2
-        if: ${{matrix.version != 'master'}}
-        with:
-          path: ${{ github.workspace }}/src/github.com/containerd/containerd
-          repository: containerd/containerd
-          ref: ${{matrix.version}}
-          fetch-depth: 150
-
-      - name: Set latest containerd cri repo ref
-        shell: bash
-        if: ${{matrix.version != 'master'}}
-        run: |
-          CONTD_CRI_REPO=$(grep containerd/cri ${{ github.workspace }}/src/github.com/containerd/containerd/vendor.conf | awk '{print $2}')
-          echo "::set-env name=CONTD_CRI_REPO_REF::$CONTD_CRI_REPO"
-
-      - name: Checkout containerd/cri ${{matrix.version}}
-        uses: actions/checkout@v2
-        with:
-          path: ${{ github.workspace }}/src/github.com/containerd/cri
-          repository: containerd/cri
-          ref: ${{env.CONTD_CRI_REPO_REF}}
-          fetch-depth: 150
-
-      - name: disable ipv6
-        run: |
-          sudo sysctl net.ipv6.conf.all.disable_ipv6=0
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get install -y \
-            btrfs-tools \
-            libseccomp2 \
-            libseccomp-dev
-          make install.deps
-        working-directory: ${{ github.workspace }}/src/github.com/containerd/cri
-
-      - name: Install containerd
-        run: |
-          make containerd
-          sudo PATH=$PATH GOPATH=$GOPATH make install-containerd
-        working-directory: ${{ github.workspace }}/src/github.com/containerd/cri
-
-      - name: Checkout cri-tools for this commit
-        uses: actions/checkout@v2
-        with:
-          path: ${{github.workspace}}/src/github.com/kubernetes-sigs/cri-tools
-          fetch-depth: 150
-
-      - name: Build this cri-tools
-        run: |
-          make
-          sudo make install
-        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
-
-      - name: CRI Test on this cri-tools commit
-        run: |
-          make test-cri
-        working-directory: ${{ github.workspace }}/src/github.com/containerd/cri
-
-      - name: Upload containerd ${{matrix.version}} logs
-        uses: actions/upload-artifact@v1
-        with:
-          name: containerd-${{matrix.version}}-${{github.sha}}.log
-          path: /tmp/test-cri/containerd.log
-
   #
   # Run CRI tests against CRI-O
   #
@@ -97,7 +9,7 @@ jobs:
     strategy:
       matrix:
         version: [master, v1.18.1]
-    name: critest - CRI-O / ${{matrix.version}} / linux amd64
+    name: CRI-O ${{matrix.version}} / linux amd64
     runs-on: ubuntu-18.04
     steps:
       # TODO: remove with the v1.19.0 release
@@ -133,14 +45,12 @@ jobs:
                    tail -1 |
                    awk '{ print $3 }')
           gsutil cp "$LATEST" .
-
           TARBALL=$(basename "$LATEST")
           tar xf "$TARBALL"
-
           FILENAME=${TARBALL##*/}
           DIR=${FILENAME%%.*}
           pushd "$DIR" || exit
-          sudo make install
+          sudo PATH=$PATH GOPATH=$GOPATH make install
 
       - name: Install CRI-O latest version
         if: ${{matrix.version == 'v1.18.1'}}
@@ -148,17 +58,15 @@ jobs:
           DIR=crio-${{matrix.version}}
           TARBALL=$DIR.tar.gz
           RELEASE=gs://k8s-conform-cri-o/artifacts/$TARBALL
-
           gsutil cp $RELEASE .
           tar xf $TARBALL
           pushd $DIR || exit
-          sudo make install
+          sudo PATH=$PATH GOPATH=$GOPATH make install
 
       - name: Configure and start CRI-O
         run: |
           sudo mkdir -p /etc/crio/crio.conf.d
           printf '[crio.runtime]\nlog_level = "debug"\n' | sudo tee /etc/crio/crio.conf.d/01-log-level.conf
-
           sudo systemctl daemon-reload
           sudo systemctl start crio
 
@@ -171,7 +79,7 @@ jobs:
       - name: Build cri-tools
         run: |
           make
-          sudo make install
+          sudo PATH=$PATH GOPATH=$GOPATH make install
         working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
 
       - name: Run critest
@@ -180,13 +88,13 @@ jobs:
           # https://unix.stackexchange.com/questions/466105/iptables-masquerade-breaks-dns-lookups
           # https://unix.stackexchange.com/questions/304050/how-to-avoid-conflicts-between-dnsmasq-and-systemd-resolved
           SKIP="runtime should support port mapping with host port and container port"
-          sudo critest \
+          sudo PATH=$PATH GOPATH=$GOPATH critest \
             --runtime-endpoint=unix:///var/run/crio/crio.sock \
             --ginkgo.flakeAttempts=3 \
             --ginkgo.skip="$SKIP" \
             --parallel=$(nproc)
           sudo journalctl -u crio > cri-o.log
-
+          
       - name: Upload CRI-O logs
         uses: actions/upload-artifact@v1
         with:
