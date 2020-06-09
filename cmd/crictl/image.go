@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -129,6 +130,11 @@ var listImageCommand = &cli.Command{
 			Name:  "no-trunc",
 			Usage: "Show output without truncating the ID",
 		},
+		&cli.BoolFlag{
+			Name:    "all",
+			Aliases: []string{"a"},
+			Usage:   "Show all images (default hides intermediate images)",
+		},
 	},
 	Action: func(context *cli.Context) error {
 		imageClient, conn, err := getImageClient(context)
@@ -156,6 +162,7 @@ var listImageCommand = &cli.Command{
 		showDigest := context.Bool("digests")
 		quiet := context.Bool("quiet")
 		noTrunc := context.Bool("no-trunc")
+		showAll := context.Bool("all")
 		if !verbose && !quiet {
 			if showDigest {
 				display.AddRow([]string{columnImage, columnTag, columnDigest, columnImageID, columnSize})
@@ -164,6 +171,27 @@ var listImageCommand = &cli.Command{
 			}
 		}
 		for _, image := range r.Images {
+			// don't show intermediate images if showAll is not set
+			if !showAll {
+				status, err := ImageStatus(imageClient, image.Id, true)
+				if err != nil {
+					return errors.Wrapf(err, "failed to get status of %q", image.Id)
+				}
+
+				if status.GetInfo() != nil {
+					var info map[string]interface{}
+					err := json.Unmarshal([]byte(status.Info["info"]), &info)
+					if err != nil {
+						return errors.Wrapf(err, "failed to read json info of %q : %q", image.Id, status.Info["Info"])
+					}
+
+					// if showAll is not set, do not show images with Intermediate flag set
+					if info["Intermediate"] == true {
+						continue
+					}
+				}
+			}
+
 			if quiet {
 				fmt.Printf("%s\n", image.Id)
 				continue
