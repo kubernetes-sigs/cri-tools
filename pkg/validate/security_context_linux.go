@@ -94,7 +94,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("get nginx container pid")
-			command := []string{"cat", "/var/run/nginx.pid"}
+			command := []string{"sh", "-c", "while [ ! -f /var/run/nginx.pid ]; do sleep 1; done", "&&", "cat", "/var/run/nginx.pid"}
 			output := execSyncContainer(rc, containerID, command)
 			nginxPid := strings.TrimSpace(string(output))
 			framework.Logf("Nginx's pid is %q", nginxPid)
@@ -212,6 +212,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			By("get nginx container pid")
 			command := []string{"cat", "/proc/1/cmdline"}
+			time.Sleep(time.Second) // waits for nginx to be up-and-running
 			o := execSyncContainer(rc, containerID, command)
 			Expect(o).ToNot(ContainSubstring("master process"))
 		})
@@ -236,9 +237,8 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("get nginx container pid")
-			command := []string{"cat", "/proc/1/cmdline"}
-			o := execSyncContainer(rc, containerID, command)
-			Expect(o).To(ContainSubstring("master process"))
+			command := []string{"sh", "-c", `while ! cat /proc/1/cmdline | grep "master process"; do sleep 1; done`}
+			execSyncContainer(rc, containerID, command)
 		})
 
 		It("runtime should support HostNetwork is true", func() {
