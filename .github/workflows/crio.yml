@@ -29,7 +29,7 @@ jobs:
 
       - name: Install ginkgo
         run: |
-          sudo go get -u github.com/onsi/ginkgo/ginkgo
+          go get -u github.com/onsi/ginkgo/ginkgo
           ginkgo version
           sudo cp $(command -v ginkgo) /usr/local/bin
 
