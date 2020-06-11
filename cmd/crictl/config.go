@@ -36,6 +36,7 @@ The options are as follows:
 - image-endpoint: Image endpoint
 - timeout: Timeout of connecting to server
 - debug: Enable debug output
+- pull-image-on-create: Enable pulling image on create requests
 `
 
 var configCommand = &cli.Command{
@@ -76,6 +77,8 @@ var configCommand = &cli.Command{
 				fmt.Println(config.Timeout)
 			case "debug":
 				fmt.Println(config.Debug)
+			case "pull-image-on-create":
+				fmt.Println(config.PullImageOnCreate)
 			default:
 				return errors.Errorf("no configuration option named %s", get)
 			}
@@ -129,6 +132,12 @@ func setValue(key, value string, config *common.Config) error {
 			return errors.Wrapf(err, "parse debug value '%s'", value)
 		}
 		config.Debug = debug
+	case "pull-image-on-create":
+		pi, err := strconv.ParseBool(value)
+		if err != nil {
+			return errors.Wrapf(err, "parse pull-image-on-create value '%s'", value)
+		}
+		config.PullImageOnCreate = pi
 	default:
 		return errors.Errorf("no configuration option named %s", key)
 	}

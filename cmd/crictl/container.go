@@ -76,7 +76,7 @@ type pullOptions struct {
 var pullFlags = []cli.Flag{
 	&cli.BoolFlag{
 		Name:  "no-pull",
-		Usage: "Do not pull the image on container creation",
+		Usage: "Do not pull the image on container creation (if pull-image-on-create in config is set to true use no-pull on the cli to disable pulling for this create)",
 	},
 	&cli.StringFlag{
 		Name:  "creds",
@@ -583,7 +583,11 @@ func CreateContainer(
 		}
 	}
 
-	if !opts.dontPull {
+	// When the default mode is to pull-image-on-create(true) and the no-pull on
+	// create option is not set we pull the image when they ask for a create as a
+	// helper on the cli to reduce extra steps. As a reminder if the image is
+	// already in cache only the manifest will be pulled down to verify.
+	if !opts.dontPull && PullImageOnCreate {
 		auth, err := getAuth(opts.creds, opts.auth)
 		if err != nil {
 			return "", err

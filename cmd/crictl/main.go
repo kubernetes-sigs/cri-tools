@@ -53,6 +53,8 @@ var (
 	Timeout time.Duration
 	// Debug enable debug output
 	Debug bool
+	// PullImageOnCreate enables pulling image on create requests
+	PullImageOnCreate bool
 )
 
 func getRuntimeClientConnection(context *cli.Context) (*grpc.ClientConn, error) {
@@ -273,6 +275,7 @@ func main() {
 			} else {
 				Debug = config.Debug
 			}
+			PullImageOnCreate = config.PullImageOnCreate
 		}
 
 		if Debug {

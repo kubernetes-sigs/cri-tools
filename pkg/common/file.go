@@ -33,6 +33,7 @@ type Config struct {
 	ImageEndpoint   string
 	Timeout         int
 	Debug           bool
+	PullImageOnCreate bool
 	yamlData        *yaml.Node //YAML representation of config
 }
 
@@ -111,6 +112,11 @@ func getConfigOptions(yamlData yaml.Node) (*Config, error) {
 			if err != nil {
 				return nil, errors.Wrapf(err, "parsing config option '%s'", name)
 			}
+		case "pull-image-on-create":
+			config.PullImageOnCreate, err = strconv.ParseBool(value)
+			if err != nil {
+				return nil, errors.Wrapf(err, "parsing config option '%s'", name)
+			}
 		default:
 			return nil, errors.Errorf("Config option '%s' is not valid", name)
 		}
@@ -126,6 +132,7 @@ func setConfigOptions(config *Config) {
 	setConfigOption("image-endpoint", config.ImageEndpoint, config.yamlData)
 	setConfigOption("timeout", strconv.Itoa(config.Timeout), config.yamlData)
 	setConfigOption("debug", strconv.FormatBool(config.Debug), config.yamlData)
+	setConfigOption("pull-image-on-create", strconv.FormatBool(config.PullImageOnCreate), config.yamlData)
 }
 
 // Set config option on yaml
@@ -171,6 +178,8 @@ func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
 		case "timeout":
 			tagType = "!!int"
 		case "debug":
+			tagType = "!!bool"
+		case "pull-image-on-create":
 			tagType = "!!bool"
 		default:
 			tagType = "!!str"
