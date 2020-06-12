@@ -28,21 +28,20 @@ import (
 	"github.com/kubernetes-sigs/cri-tools/pkg/common"
 )
 
-const configDesc = `Get and set crictl options.
-
-The options are as follows:
-
-- runtime-endpoint: Container runtime endpoint
-- image-endpoint: Image endpoint
-- timeout: Timeout of connecting to server
-- debug: Enable debug output
-- pull-image-on-create: Enable pulling image on create requests
-`
-
 var configCommand = &cli.Command{
-	Name:                   "config",
-	Usage:                  configDesc,
-	ArgsUsage:              "[<options>]",
+	Name:  "config",
+	Usage: "Get and set crictl client configuration options",
+	ArgsUsage: `[<crictl options>]
+
+EXAMPLE:
+   crictl config --set debug=true
+
+CRICTL OPTIONS:
+	 runtime-endpoint:	Container runtime endpoint
+	 image-endpoint:	Image endpoint
+	 timeout:	Timeout of connecting to server
+	 debug:	Enable debug output
+	 pull-image-on-create: 	Enable pulling image on create requests`,
 	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		&cli.StringFlag{
