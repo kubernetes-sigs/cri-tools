@@ -1,16 +1,17 @@
-name: critest
+name: critest containerd
 on: [push, pull_request]
 
 jobs:
   #
   # Run CRI tests against containerd
   #
-  linux-build-and-test-containerd:
+  build-and-critest-containerd:
     strategy:
       matrix:
+        os: [ubuntu-18.04, windows-2019]
         version: [master, v1.4.0-beta.1]
-    name: containerd ${{matrix.version}} / linux amd64
-    runs-on: ubuntu-18.04
+    name: ${{matrix.version}} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Install Go
         uses: actions/setup-go@v1
@@ -33,38 +34,51 @@ jobs:
           ref: ${{matrix.version}}
           fetch-depth: 150
 
-      - name: Set latest containerd cri repo ref
+      - name: Set containerd ${{matrix.version}} cri repo version 
         shell: bash
         if: ${{matrix.version != 'master'}}
         run: |
-          CONTD_CRI_REPO=$(grep containerd/cri ${{ github.workspace }}/src/github.com/containerd/containerd/vendor.conf | awk '{print $2}')
-          echo "::set-env name=CONTD_CRI_REPO_REF::$CONTD_CRI_REPO"
+          CONTD_CRI_REPO=$(grep containerd/cri src/github.com/containerd/containerd/vendor.conf | awk '{print $2}')
+          echo "::set-env name=CONTD_CRI_REPO_REF::$CONTD_CRI_REPO_VER"
 
-      - name: Checkout containerd/cri ${{matrix.version}}
+      - name: Checkout containerd ${{matrix.version}} cri
         uses: actions/checkout@v2
         with:
           path: ${{ github.workspace }}/src/github.com/containerd/cri
           repository: containerd/cri
-          ref: ${{env.CONTD_CRI_REPO_REF}}
+          ref: ${{env.CONTD_CRI_REPO_REF_VER}}
           fetch-depth: 150
 
       - name: disable ipv6
+        if: startsWith(matrix.os, 'ubuntu')
         run: |
           sudo sysctl net.ipv6.conf.all.disable_ipv6=0
 
-      - name: Install dependencies
+      - name: Install Linux dependencies for containerd
+        if: startsWith(matrix.os, 'ubuntu')
         run: |
           sudo apt-get install -y \
             btrfs-tools \
             libseccomp2 \
             libseccomp-dev
+
+      - name: Install build dependencies for containerd
+        run: |
           make install.deps
         working-directory: ${{ github.workspace }}/src/github.com/containerd/cri
 
-      - name: Install containerd
+      - name: Install containerd on Linux
+        if: startsWith(matrix.os, 'ubuntu')
         run: |
           make containerd
           sudo PATH=$PATH GOPATH=$GOPATH make install-containerd
+        working-directory: ${{ github.workspace }}/src/github.com/containerd/cri
+
+      - name: Install containerd on Windows
+        if: startsWith(matrix.os, 'windows')
+        run: |
+          make containerd
+          make install-containerd
         working-directory: ${{ github.workspace }}/src/github.com/containerd/cri
 
       - name: Checkout cri-tools for this commit
@@ -73,19 +87,57 @@ jobs:
           path: ${{github.workspace}}/src/github.com/kubernetes-sigs/cri-tools
           fetch-depth: 150
 
-      - name: Build cri-tools
+      - name: Build cri-tools on Linux
+        if: startsWith(matrix.os, 'ubuntu')
         run: |
           make
           sudo PATH=$PATH GOPATH=$GOPATH make install
         working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
 
-      - name: Run critest
+      - name: Build cri-tools on Windows
+        if: startsWith(matrix.os, 'windows')
         run: |
-          make test-cri
+          make
+          make install
+        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
+
+      - name: Run critest on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          GOPATH=$GOPATH make test-cri
         working-directory: ${{ github.workspace }}/src/github.com/containerd/cri
 
-      - name: Upload containerd ${{matrix.version}} logs
+      - name: Run critest on Windows
+        if: startsWith(matrix.os, 'windows')
+        shell: bash
+        run: |
+          set -o errexit
+          set -o nounset
+          set -o pipefail
+
+          export PATH="/c/Program Files/Containerd:$PATH"
+          FOCUS="${FOCUS:-"Conformance"}"
+          SKIP="${SKIP:-""}"
+          REPORT_DIR="${REPORT_DIR:-"/c/_artifacts"}"
+
+          make install -e BINDIR="/c/Program Files/Containerd"
+
+          mkdir -p "${REPORT_DIR}"
+          containerd -log-level debug &> "${REPORT_DIR}/containerd.log" &
+          pid=$!
+          ctr version
+
+          set +o errexit
+          critest --runtime-endpoint=npipe:////./pipe/containerd-containerd --ginkgo.focus="${FOCUS}" --ginkgo.skip="${SKIP}" --report-dir="${REPORT_DIR}" --report-prefix="windows"
+          TEST_RC=$?
+          set -o errexit
+          kill -9 $pid
+          exit ${TEST_RC}
+        working-directory: ${{ github.workspace }}/src/github.com/containerd/cri
+
+      - name: Upload containerd ${{matrix.version}} Linux logs
+        if: startsWith(matrix.os, 'ubuntu')
         uses: actions/upload-artifact@v1
         with:
-          name: containerd-${{matrix.version}}-${{github.sha}}.log
+          name: containerd-${{matrix.version}}-${{ matrix.os }}-${{github.sha}}.log
           path: /tmp/test-cri/containerd.log

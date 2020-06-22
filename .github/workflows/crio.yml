@@ -1,15 +1,15 @@
-name: critest
+name: critest CRI-O
 on: [push, pull_request]
 
 jobs:
   #
   # Run CRI tests against CRI-O
   #
-  linux-build-and-test-cri-o:
+  linux-build-and-critest-cri-o:
     strategy:
       matrix:
         version: [master, v1.18.1]
-    name: CRI-O ${{matrix.version}} / linux amd64
+    name: ${{matrix.version}} / linux amd64
     runs-on: ubuntu-18.04
     steps:
       # TODO: remove with the v1.19.0 release
