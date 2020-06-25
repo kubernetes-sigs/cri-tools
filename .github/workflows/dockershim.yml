@@ -1,0 +1,71 @@
+name: critest dockershim
+on: [push, pull_request]
+jobs:
+  #
+  # Run CRI tests against dockershim
+  #
+  build-and-critest-dockershim:
+    strategy:
+      matrix:
+        os: [ubuntu-18.04]
+    name: / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install Go 1.14
+        uses: actions/setup-go@v1
+        with:
+          go-version: '1.14'
+
+      - name: Set Go binary path
+        shell: bash
+        run: |
+          echo "::set-env name=GOPATH::${{ github.workspace }}"
+          echo "::add-path::${{ github.workspace }}/bin"
+
+      - name: Checkout cri-tools for this commit
+        uses: actions/checkout@v2
+        with:
+          path: ${{github.workspace}}/src/github.com/kubernetes-sigs/cri-tools
+          fetch-depth: 150
+
+      - name: Checkout k8s
+        uses: actions/checkout@v2
+        with:
+          repository: kubernetes/kubernetes
+          path: src/k8s.io/kubernetes
+
+      - name: Checkout dockershim
+        uses: actions/checkout@v2
+        with:
+          repository: dims/cri-dockerd
+          path: src/github.com/dims/cri-dockerd
+
+      - name: Build & Test
+        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
+        run: |
+          export LANG=C
+          export LC_ALL=C
+          export GOPROXY=https://proxy.golang.org
+          export GOSUMDB=https://sum.golang.org
+          set -xeu
+          sudo ip link
+          sudo ifconfig -a
+          sudo make install.ginkgo critest crictl test
+          export PATH=$(pwd)/build/bin:$(pwd)/_output:$PATH
+          sudo env PATH=$PATH hack/install-docker.sh
+          sudo env PATH=$PATH GOPATH=$GOPATH hack/install-kubelet.sh
+          sudo env GITHUB_WORKSPACE=$GITHUB_WORKSPACE PATH=$PATH hack/run-critest.sh
+      
+      - name: Dump docker logs
+        if: always()
+        run: |
+          mkdir -p ${{ github.workspace }}/logs
+          sudo journalctl -eu docker | sudo tee ${{ github.workspace }}/logs/docker.log
+          ls -atrl ${{ github.workspace }}/logs
+      
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v1
+        with:
+          name: logs
+          path: logs
