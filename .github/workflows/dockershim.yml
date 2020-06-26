@@ -26,36 +26,33 @@ jobs:
         uses: actions/checkout@v2
         with:
           path: ${{github.workspace}}/src/github.com/kubernetes-sigs/cri-tools
-          fetch-depth: 150
 
-      - name: Checkout k8s
-        uses: actions/checkout@v2
-        with:
-          repository: kubernetes/kubernetes
-          path: src/k8s.io/kubernetes
-
-      - name: Checkout dockershim
-        uses: actions/checkout@v2
-        with:
-          repository: dims/cri-dockerd
-          path: src/github.com/dims/cri-dockerd
-
-      - name: Build & Test
-        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
+      - name: Install docker
+        shell: bash
         run: |
-          export LANG=C
-          export LC_ALL=C
-          export GOPROXY=https://proxy.golang.org
-          export GOSUMDB=https://sum.golang.org
-          set -xeu
-          sudo ip link
-          sudo ifconfig -a
-          sudo make install.ginkgo critest crictl test
-          export PATH=$(pwd)/build/bin:$(pwd)/_output:$PATH
-          sudo env PATH=$PATH hack/install-docker.sh
-          sudo env PATH=$PATH GOPATH=$GOPATH hack/install-kubelet.sh
-          sudo env GITHUB_WORKSPACE=$GITHUB_WORKSPACE PATH=$PATH hack/run-critest.sh
-      
+          sudo hack/install-docker.sh
+        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
+
+      - name: Build cri-tools
+        shell: bash
+        run: |
+          make
+          sudo PATH=$PATH GOPATH=$GOPATH make install
+        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
+
+      - name: Build cri-dockerd
+        shell: bash
+        run: |
+          sudo env GOPATH=$GOPATH hack/install-cri-dockerd.sh
+        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
+
+      - name: Run critest
+        shell: bash
+        run: |
+          sudo make install.ginkgo
+          sudo env GOPATH=$GOPATH hack/run-critest.sh
+        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
+
       - name: Dump docker logs
         if: always()
         run: |

@@ -19,6 +19,9 @@
 set -o errexit
 set -o nounset
 set -o pipefail
+set -x
+export LANG=C
+export LC_ALL=C
 
 arch=$(uname -m)
 
@@ -30,7 +33,9 @@ else
 fi
 
 # Start dockershim first
-/usr/local/bin/kubelet --v=3 --logtostderr --experimental-dockershim &
+logs_dir="$GOPATH/logs"
+mkdir -p $logs_dir
+sudo /usr/local/bin/cri-dockerd --v=10 --network-plugin="" --logtostderr >$logs_dir/cri-dockerd.log 2>&1 &
 
 # Wait a while for dockershim starting.
 sleep 10
@@ -39,11 +44,9 @@ sleep 10
 # Skip reopen container log test because docker doesn't support it.
 # Skip runtime should support execSync with timeout because docker doesn't
 # support it.
-if [ "$arch" == x86_64 ]; then
-	critest -ginkgo.skip="runtime should support reopening container log|runtime should support execSync with timeout" -parallel 8
-else
-	critest -ginkgo.skip="runtime should support reopening container log|runtime should support execSync with timeout|runtime should support SupplementalGroups" -parallel 8
-fi
+# Skip apparmor test as we don't enable apparmor yet in this CI job.
+critest -ginkgo.skip="runtime should support apparmor|runtime should support reopening container log|runtime should support execSync with timeout" -parallel 1
+
 
 # Run benchmark test cases
 critest -benchmark
