@@ -138,9 +138,11 @@ CRICTL OPTIONS:
 ```
    runtime-endpoint:       Container runtime endpoint
    image-endpoint:         Image endpoint
-   timeout:                Timeout of connecting to server
-   debug:                  Enable debug output
-   pull-image-on-create:   Enable pulling image on create requests (default false)
+   timeout:                Timeout of connecting to server (default: 2s)
+   debug:                  Enable debug output (default: false)
+   pull-image-on-create:   Enable pulling image on create requests (default: false)
+   disable-pull-on-run:    Disable pulling image on run requests (default: false)
+
 ```
 OPTIONS:
 ```
@@ -148,12 +150,15 @@ OPTIONS:
    --set value  set option (can specify multiple or separate values with commas: opt1=val1,opt2=val2)
    --help, -h   show help (default: false)
 ```
-> When enabled `pull-image-on-create` modifies the create container command to first pull the container's image. 
+> When enabled `pull-image-on-create` modifies the create container command to first pull the container's image.
 This feature is used as a helper to make creating containers easier and faster.
 Some users of `crictl` may desire to not pull the image necessary to create the container.
 For example, the image may have already been pulled or otherwise loaded into the container runtime, or the user may be running without a network. For this reason the default for `pull-image-on-create` is false.
-When set to true a `--no-pull` option has been provided for the create command.
-Thus there are two ways to avoid pulling the container image when creating the container.
+
+> By default the run command first pulls the container image, and `disable-pull-on-run` is false.
+Some users of `crictl` may desire to set `disable-pull-on-run` to true to not pull the image by default when using the run command.
+
+> To override these default pull configuration settings, `--no-pull` and `--with-pull` options are provided for the create and run commands.
 
 ## Examples
 

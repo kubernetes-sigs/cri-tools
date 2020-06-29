@@ -39,9 +39,10 @@ EXAMPLE:
 CRICTL OPTIONS:
 	 runtime-endpoint:	Container runtime endpoint
 	 image-endpoint:	Image endpoint
-	 timeout:	Timeout of connecting to server
-	 debug:	Enable debug output
-	 pull-image-on-create: 	Enable pulling image on create requests`,
+	 timeout:	Timeout of connecting to server (default: 2s)
+	 debug:	Enable debug output (default: false)
+	 pull-image-on-create:	Enable pulling image on create requests (default: false)
+	 disable-pull-on-run:	Disable pulling image on run requests (default: false)`,
 	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		&cli.StringFlag{
@@ -78,6 +79,8 @@ CRICTL OPTIONS:
 				fmt.Println(config.Debug)
 			case "pull-image-on-create":
 				fmt.Println(config.PullImageOnCreate)
+			case "disable-pull-on-run":
+				fmt.Println(config.DisablePullOnRun)
 			default:
 				return errors.Errorf("no configuration option named %s", get)
 			}
@@ -137,6 +140,12 @@ func setValue(key, value string, config *common.Config) error {
 			return errors.Wrapf(err, "parse pull-image-on-create value '%s'", value)
 		}
 		config.PullImageOnCreate = pi
+	case "disable-pull-on-run":
+		pi, err := strconv.ParseBool(value)
+		if err != nil {
+			return errors.Wrapf(err, "parse disable-pull-on-run value '%s'", value)
+		}
+		config.DisablePullOnRun = pi
 	default:
 		return errors.Errorf("no configuration option named %s", key)
 	}

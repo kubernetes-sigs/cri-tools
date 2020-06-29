@@ -36,6 +36,8 @@ type ServerConfiguration struct {
 	Debug bool
 	// PullImageOnCreate enables also pulling an image for create requests
 	PullImageOnCreate bool
+	// DisablePullOnRun disables pulling an image for run requests
+	DisablePullOnRun bool
 }
 
 // GetServerConfigFromFile returns the CRI server configuration from file
@@ -66,5 +68,6 @@ func GetServerConfigFromFile(configFileName, currentDir string) (*ServerConfigur
 	serverConfig.Timeout = time.Duration(config.Timeout) * time.Second
 	serverConfig.Debug = config.Debug
 	serverConfig.PullImageOnCreate = config.PullImageOnCreate
+	serverConfig.DisablePullOnRun = config.DisablePullOnRun
 	return &serverConfig, nil
 }
