@@ -29,7 +29,7 @@ arch=$(uname -m)
 if [ "$arch" == x86_64 ]; then
 	docker run --rm -v /usr/local/bin:/target jpetazzo/nsenter
 else
-	apt-get install util-linux
+	sudo apt-get install -y util-linux
 fi
 
 # Start dockershim first

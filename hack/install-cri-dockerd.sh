@@ -25,4 +25,4 @@ git clone https://github.com/dims/cri-dockerd $GOPATH/src/github.com/dims/cri-do
 cd $GOPATH/src/github.com/dims/cri-dockerd
 
 go install .
-sudo mv $GOPATH/bin/cri-dockerd /usr/local/bin
+mv $GOPATH/bin/cri-dockerd /usr/local/bin
