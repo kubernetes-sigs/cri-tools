@@ -108,9 +108,38 @@ var _ = framework.KubeDescribe("Container", func() {
 			testStopContainer(rc, containerID)
 		})
 
-		It("runtime should support removing container [Conformance]", func() {
+		It("runtime should support removing created container [Conformance]", func() {
 			By("create container")
-			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-remove-test-")
+			containerID := framework.CreatePauseContainer(rc, ic, podID, podConfig, "container-for-remove-created-test-")
+
+			By("test remove container")
+			removeContainer(rc, containerID)
+			containers := listContainerForID(rc, containerID)
+			Expect(containerFound(containers, containerID)).To(BeFalse(), "Container should be removed")
+		})
+
+		It("runtime should support removing running container [Conformance]", func() {
+			By("create container")
+			containerID := framework.CreatePauseContainer(rc, ic, podID, podConfig, "container-for-remove-running-test-")
+
+			By("start container")
+			startContainer(rc, containerID)
+
+			By("test remove container")
+			removeContainer(rc, containerID)
+			containers := listContainerForID(rc, containerID)
+			Expect(containerFound(containers, containerID)).To(BeFalse(), "Container should be removed")
+		})
+
+		It("runtime should support removing stopped container [Conformance]", func() {
+			By("create container")
+			containerID := framework.CreatePauseContainer(rc, ic, podID, podConfig, "container-for-remove-stopped-test-")
+
+			By("start container")
+			startContainer(rc, containerID)
+
+			By("test stop container")
+			testStopContainer(rc, containerID)
 
 			By("test remove container")
 			removeContainer(rc, containerID)
