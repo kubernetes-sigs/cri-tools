@@ -8,8 +8,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-18.04] # Need to fix windows-2019 critest
-                                         # It was also disabled in travis ci
-    name: / ${{ matrix.os }}
+                           # It was also disabled in travis ci
+    name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:
       - name: Install Go 1.14

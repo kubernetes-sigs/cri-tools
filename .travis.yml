@@ -29,10 +29,6 @@ before_install:
       fi
     )
 
-
-install:
-  - make install.ginkgo
-
 jobs:
   include:
     - stage: Static check
@@ -53,22 +49,6 @@ jobs:
       os: linux-ppc64le
       script:
         -  make release
-    - stage: Test
-      os: linux
-      script:
-        - make
-        - sudo make install
-        - travis_wait hack/install-docker.sh
-        - travis_wait hack/install-kubelet.sh
-        - sudo cp build/bin/ginkgo /usr/local/bin
-        - sudo env PATH=$PATH hack/run-critest.sh
-    - stage: Test
-      os: windows
-      script:
-        - make
-        - powershell -c "Set-ExecutionPolicy Bypass -Scope CURRENTUSER -Force"
-        - travis_wait powershell hack/install-kubelet.ps1
-        # Skip hack/run-critest.sh temporarily.
     - stage: Test
       name: crictl e2e
       os: linux
