@@ -22,6 +22,7 @@ set -o pipefail
 set -x
 export LANG=C
 export LC_ALL=C
+SKIP="runtime should support apparmor|runtime should support reopening container log|runtime should support execSync with timeout"
 
 arch=$(uname -m)
 
@@ -29,7 +30,9 @@ arch=$(uname -m)
 if [ "$arch" == x86_64 ]; then
 	docker run --rm -v /usr/local/bin:/target jpetazzo/nsenter
 else
+	sudo apt-get update
 	sudo apt-get install -y util-linux
+	SKIP="${SKIP}|runtime should support SupplementalGroups"
 fi
 
 # Start dockershim first
@@ -45,7 +48,7 @@ sleep 10
 # Skip runtime should support execSync with timeout because docker doesn't
 # support it.
 # Skip apparmor test as we don't enable apparmor yet in this CI job.
-critest -ginkgo.skip="runtime should support apparmor|runtime should support reopening container log|runtime should support execSync with timeout" -parallel 1
+critest -ginkgo.skip=${SKIP} -parallel 1
 
 
 # Run benchmark test cases

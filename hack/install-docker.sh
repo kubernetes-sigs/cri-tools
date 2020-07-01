@@ -20,7 +20,7 @@ set -o pipefail
 
 arch=$(dpkg --print-architecture)
 
-# Workarounds for error "Failed to fetch https://packagecloud.io/github/git-lfs/ubuntu/dists/trusty/InRelease"
+# Workarounds for error "Failed to fetch https://packagecloud.io/github/git-lfs/ubuntu/dists/bionic/InRelease"
 # TODO: remove it after the issue fixed in git-lfs.
 sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
 sudo apt-get update

@@ -7,7 +7,7 @@ jobs:
   build-and-critest-dockershim:
     strategy:
       matrix:
-        os: [ubuntu-18.04] # Need to fix windows-2019 critest
+        os: [ubuntu-18.04] # TODO: Need to fix windows-2019 critest
                            # It was also disabled in travis ci
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}

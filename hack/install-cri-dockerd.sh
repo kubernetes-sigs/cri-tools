@@ -20,7 +20,7 @@ set -o pipefail
 
 # Build cri-dockerd
 
-# TODO: This should change when a premanent repo is available.
+# TODO: This should change when a permanent repo is available.
 git clone https://github.com/dims/cri-dockerd $GOPATH/src/github.com/dims/cri-dockerd
 cd $GOPATH/src/github.com/dims/cri-dockerd
 
