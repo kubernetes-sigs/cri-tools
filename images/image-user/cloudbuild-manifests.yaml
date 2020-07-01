@@ -1,5 +1,5 @@
 # See https://cloud.google.com/cloud-build/docs/build-config
-# Building multi-arch images for non-x86 architecture
+# Building multi-arch test images for non-x86 architecture
 
 timeout: 1200s
 options:
