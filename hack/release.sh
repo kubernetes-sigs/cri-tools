@@ -102,6 +102,12 @@ for platform in "${CRI_TEST_PLATFORMS[@]}"; do
 done
 
 # Show sha256 for release files
-for file in $(ls ${CRI_TOOLS_ROOT}/_output/releases); do
+if [[ "${OSTYPE}" == "darwin"* ]]; then
+  for file in $(ls ${CRI_TOOLS_ROOT}/_output/releases); do
+    echo "$file $(shasum -a 256 ${CRI_TOOLS_ROOT}/_output/releases/$file | awk '{print $1}')"
+  done
+else
+  for file in $(ls ${CRI_TOOLS_ROOT}/_output/releases); do
     echo "$file $(sha256sum -b ${CRI_TOOLS_ROOT}/_output/releases/$file | awk '{print $1}')"
-done
+  done
+fi
