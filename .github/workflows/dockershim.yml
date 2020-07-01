@@ -7,7 +7,7 @@ jobs:
   build-and-critest-dockershim:
     strategy:
       matrix:
-        os: [ubuntu-18.04] # TODO: Need to fix windows-2019 critest
+        os: [ubuntu-18.04] # TODO: Need to add windows-2019
                            # It was also disabled in travis ci
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -33,88 +33,29 @@ jobs:
           hack/install-docker.sh
         working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
 
-      - name: Build cri-tools on Linux
-        if: startsWith(matrix.os, 'ubuntu')
+      - name: Build cri-tools
         run: |
           make
           sudo PATH=$PATH GOPATH=$GOPATH make install
         working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
 
-      - name: Build cri-tools on Windows
-        if: startsWith(matrix.os, 'windows')
-        run: |
-          make
-          make install
-        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
-
-      - name: Build cri-dockerd on Linux
-        if: startsWith(matrix.os, 'ubuntu')
+      - name: Build cri-dockerd
         run: |
           sudo env GOPATH=$GOPATH hack/install-cri-dockerd.sh
         working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
 
-      - name: Build cri-dockerd on Windows
-        if: startsWith(matrix.os, 'windows')
-        shell: bash
-        run: |
-          GOPATH=$GOPATH hack/install-cri-dockerd.sh
-        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
-
-      - name: Run critest on Linux
-        if: startsWith(matrix.os, 'ubuntu')
+      - name: Run critest
         run: |
           sudo make install.ginkgo
           sudo env GOPATH=$GOPATH hack/run-dockershim-critest.sh
         working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
 
-      - name: Run critest on Windows
-        if: startsWith(matrix.os, 'windows')
-        shell: bash
-        run: |
-          set -o errexit
-          set -o nounset
-          set -o pipefail
-          set -x
-          export LANG=C
-          export LC_ALL=C
-          FOCUS="${FOCUS:-"Conformance"}"
-          SKIP="runtime should support apparmor|runtime should support reopening container log|runtime should support execSync with timeout|"
-          REPORT_DIR="${REPORT_DIR:-"/c/_artifacts"}"
-          
-          # Start dockershim first
-          logs_dir="$GOPATH/logs"
-          mkdir -p $logs_dir
-          /usr/local/bin/cri-dockerd --v=10 --network-plugin="" --logtostderr >$logs_dir/cri-dockerd.log 2>&1 &
-
-          # Wait a while for dockershim starting.
-          sleep 10
-
-          # Run e2e test cases
-          # Skip reopen container log test because docker doesn't support it.
-          # Skip runtime should support execSync with timeout because docker doesn't
-          # support it.
-          # Skip apparmor test as we don't enable apparmor yet in this CI job.
-          mkdir -p "${REPORT_DIR}"
-          /usr/local/bin/critest --ginkgo.focus="${FOCUS}" --ginkgo.skip="${SKIP}" --report-dir="${REPORT_DIR}" --report-prefix="windows"
-
-          # Run benchmark test cases
-          /usr/local/bin/critest -benchmark
-        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
-
-      - name: Dump docker logs on Linux
-        if: startsWith(matrix.os, 'ubuntu') && always()
+      - name: Dump docker logs
         run: |
           mkdir -p ${{ github.workspace }}/logs
           sudo journalctl -eu docker | sudo tee ${{ github.workspace }}/logs/docker.log
           ls -atrl ${{ github.workspace }}/logs
 
-      - name: Dump docker logs on Windows
-        if: startsWith(matrix.os, 'windows') && always()
-        run: |
-          mkdir -p ${{ github.workspace }}/logs
-          journalctl -eu docker | tee ${{ github.workspace }}/logs/docker.log
-          ls -atrl ${{ github.workspace }}/logs
-      
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v1

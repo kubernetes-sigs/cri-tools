@@ -48,8 +48,8 @@ sleep 10
 # Skip runtime should support execSync with timeout because docker doesn't
 # support it.
 # Skip apparmor test as we don't enable apparmor yet in this CI job.
-critest -ginkgo.skip=${SKIP} -parallel 1
+sudo critest -ginkgo.skip=${SKIP} -parallel 1
 
 
 # Run benchmark test cases
-critest -benchmark
+sudo critest -benchmark
