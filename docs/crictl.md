@@ -29,10 +29,10 @@ rm -f crictl-$VERSION-linux-amd64.tar.gz
 ## Usage
 
 ```sh
-crictl SUBCOMMAND [FLAGS]
+crictl  [global options] command [command options] [arguments...]
 ```
 
-Subcommands includes:
+COMMANDS:
 
 - `attach`:             Attach to a running container
 - `create`:             Create a new container
@@ -58,7 +58,7 @@ Subcommands includes:
 - `stop`:               Stop one or more running containers
 - `stopp`:              Stop one or more running pods
 - `update`:             Update one or more running containers
-- `config`:             Get and set crictl options
+- `config`:             Get and set crictl client configuration options
 - `stats`:              List container(s) resource usage statistics
 - `completion`:         Output bash shell completion code
 - `help, h`:            Shows a list of commands or help for one command
@@ -66,12 +66,12 @@ Subcommands includes:
 crictl by default connects to Unix: `unix:///var/run/dockershim.sock` or Windows: `tcp://localhost:3735`.  For other runtimes, use:
 
 * [containerd](https://containerd.io): `unix:///run/containerd/containerd.sock`
-* [cri-o](https://cri-o.io): `unix:///var/run/crio/crio.sock` 
+* [cri-o](https://cri-o.io): `unix:///var/run/crio/crio.sock`
 * [frakti](https://github.com/kubernetes/frakti): `unix:///var/run/frakti.sock`
 
 The endpoint can be set in three ways:
 
-- By setting flags `--runtime-endpoint` (`-r`) and `--image-endpoint` (`-i`)
+- By setting global option flags `--runtime-endpoint` (`-r`) and `--image-endpoint` (`-i`)
 - By setting environment variables `CONTAINER_RUNTIME_ENDPOINT` and `IMAGE_SERVICE_ENDPOINT`
 - By setting the endpoint in the config file `--config=/etc/crictl.yaml`
 
@@ -93,6 +93,7 @@ runtime-endpoint: unix:///var/run/dockershim.sock
 image-endpoint: unix:///var/run/dockershim.sock
 timeout: 2
 debug: true
+pull-image-on-create: false
 ```
 Windows:
 ```cmd
@@ -101,6 +102,7 @@ runtime-endpoint: tcp://localhost:3735
 image-endpoint: tcp://localhost:3735
 timeout: 2
 debug: true
+pull-image-on-create: false
 ```
 
 ### Connection troubleshooting
@@ -121,7 +123,42 @@ option for no timeout value set and the smallest supported timeout is `1s`
 - `--debug`, `-D`: Enable debug output
 - `--help`, `-h`: show help
 - `--version`, `-v`: print the version information of crictl
-- `--config`, `-c`: Config file in yaml format. Overrided by flags or environment variables
+- `--config`, `-c`: Location of the client config file. If not specified and the default does not exist, the program's directory is searched as well (default: "/etc/crictl.yaml") [$CRI_CONFIG_FILE]
+
+## Client Configuration Options
+Use the crictl config command to get and set the crictl client configuration
+options.
+```
+USAGE:
+   crictl config [command options] [<crictl options>]
+```
+For example `crictl config --set debug=true` will enable debug mode when giving subsequent crictl commands.
+
+CRICTL OPTIONS:
+```
+   runtime-endpoint:       Container runtime endpoint
+   image-endpoint:         Image endpoint
+   timeout:                Timeout of connecting to server (default: 2s)
+   debug:                  Enable debug output (default: false)
+   pull-image-on-create:   Enable pulling image on create requests (default: false)
+   disable-pull-on-run:    Disable pulling image on run requests (default: false)
+
+```
+OPTIONS:
+```
+   --get value  show the option value
+   --set value  set option (can specify multiple or separate values with commas: opt1=val1,opt2=val2)
+   --help, -h   show help (default: false)
+```
+> When enabled `pull-image-on-create` modifies the create container command to first pull the container's image.
+This feature is used as a helper to make creating containers easier and faster.
+Some users of `crictl` may desire to not pull the image necessary to create the container.
+For example, the image may have already been pulled or otherwise loaded into the container runtime, or the user may be running without a network. For this reason the default for `pull-image-on-create` is false.
+
+> By default the run command first pulls the container image, and `disable-pull-on-run` is false.
+Some users of `crictl` may desire to set `disable-pull-on-run` to true to not pull the image by default when using the run command.
+
+> To override these default pull configuration settings, `--no-pull` and `--with-pull` options are provided for the create and run commands.
 
 ## Examples
 

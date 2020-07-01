@@ -30,6 +30,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
@@ -61,8 +62,8 @@ type runOptions struct {
 }
 
 type pullOptions struct {
-	// do not pull the image on container creation
-	dontPull bool
+	// pull the image on container creation; overrides default
+	withPull bool
 
 	// creds is string in the format `USERNAME[:PASSWORD]` for accessing the
 	// registry during image pull
@@ -73,10 +74,35 @@ type pullOptions struct {
 	auth string
 }
 
-var pullFlags = []cli.Flag{
+var createPullFlags = []cli.Flag{
 	&cli.BoolFlag{
 		Name:  "no-pull",
-		Usage: "Do not pull the image on container creation",
+		Usage: "Do not pull the image on container creation (overrides pull-image-on-create=true in config)",
+	},
+	&cli.BoolFlag{
+		Name:  "with-pull",
+		Usage: "Pull the image on container creation (overrides pull-image-on-create=false in config)",
+	},
+	&cli.StringFlag{
+		Name:  "creds",
+		Value: "",
+		Usage: "Use `USERNAME[:PASSWORD]` for accessing the registry",
+	},
+	&cli.StringFlag{
+		Name:  "auth",
+		Value: "",
+		Usage: "Use `AUTH_STRING` for accessing the registry. AUTH_STRING is a base64 encoded 'USERNAME[:PASSWORD]'",
+	},
+}
+
+var runPullFlags = []cli.Flag{
+	&cli.BoolFlag{
+		Name:  "no-pull",
+		Usage: "Do not pull the image (overrides disable-pull-on-run=false in config)",
+	},
+	&cli.BoolFlag{
+		Name:  "with-pull",
+		Usage: "Pull the image (overrides disable-pull-on-run=true in config)",
 	},
 	&cli.StringFlag{
 		Name:  "creds",
@@ -94,11 +120,14 @@ var createContainerCommand = &cli.Command{
 	Name:      "create",
 	Usage:     "Create a new container",
 	ArgsUsage: "POD container-config.[json|yaml] pod-config.[json|yaml]",
-	Flags:     pullFlags,
+	Flags:     createPullFlags,
 
 	Action: func(context *cli.Context) error {
 		if context.Args().Len() != 3 {
 			return cli.ShowSubcommandHelp(context)
+		}
+		if context.Bool("no-pull") == true && context.Bool("with-pull") == true {
+			return errors.New("confict: no-pull and with-pull are both set")
 		}
 
 		runtimeClient, runtimeConn, err := getRuntimeClient(context)
@@ -107,11 +136,18 @@ var createContainerCommand = &cli.Command{
 		}
 		defer closeConnection(context, runtimeConn)
 
-		imageClient, imageConn, err := getImageClient(context)
-		if err != nil {
-			return err
+		withPull := (!context.Bool("no-pull") && PullImageOnCreate) || context.Bool("with-pull")
+
+		var imageClient pb.ImageServiceClient
+		var imageConn *grpc.ClientConn
+
+		if withPull {
+			imageClient, imageConn, err = getImageClient(context)
+			if err != nil {
+				return err
+			}
+			defer closeConnection(context, imageConn)
 		}
-		defer closeConnection(context, imageConn)
 
 		opts := createOptions{
 			podID: context.Args().Get(0),
@@ -119,7 +155,7 @@ var createContainerCommand = &cli.Command{
 				configPath: context.Args().Get(1),
 				podConfig:  context.Args().Get(2),
 				pullOptions: &pullOptions{
-					dontPull: context.Bool("no-pull"),
+					withPull: withPull,
 					creds:    context.String("creds"),
 					auth:     context.String("auth"),
 				},
@@ -490,7 +526,7 @@ var runContainerCommand = &cli.Command{
 	Name:      "run",
 	Usage:     "Run a new container inside a sandbox",
 	ArgsUsage: "container-config.[json|yaml] pod-config.[json|yaml]",
-	Flags: append(pullFlags, &cli.StringFlag{
+	Flags: append(runPullFlags, &cli.StringFlag{
 		Name:    "runtime",
 		Aliases: []string{"r"},
 		Usage:   "Runtime handler to use. Available options are defined by the container runtime.",
@@ -500,6 +536,9 @@ var runContainerCommand = &cli.Command{
 		if context.Args().Len() != 2 {
 			return cli.ShowSubcommandHelp(context)
 		}
+		if context.Bool("no-pull") == true && context.Bool("with-pull") == true {
+			return errors.New("confict: no-pull and with-pull are both set")
+		}
 
 		runtimeClient, runtimeConn, err := getRuntimeClient(context)
 		if err != nil {
@@ -507,17 +546,26 @@ var runContainerCommand = &cli.Command{
 		}
 		defer closeConnection(context, runtimeConn)
 
-		imageClient, imageConn, err := getImageClient(context)
-		if err != nil {
-			return err
+		withPull := (!DisablePullOnRun && !context.Bool("no-pull")) || context.Bool("with-pull")
+
+		var (
+			imageClient pb.ImageServiceClient
+			imageConn   *grpc.ClientConn
+		)
+
+		if withPull {
+			imageClient, imageConn, err = getImageClient(context)
+			if err != nil {
+				return err
+			}
+			defer closeConnection(context, imageConn)
 		}
-		defer closeConnection(context, imageConn)
 
 		opts := runOptions{
 			configPath: context.Args().Get(0),
 			podConfig:  context.Args().Get(1),
 			pullOptions: &pullOptions{
-				dontPull: context.Bool("no-pull"),
+				withPull: withPull,
 				creds:    context.String("creds"),
 				auth:     context.String("auth"),
 			},
@@ -583,7 +631,12 @@ func CreateContainer(
 		}
 	}
 
-	if !opts.dontPull {
+	// When there is a with-pull request or the image default mode is to
+	// pull-image-on-create(true) and no-pull was not set we pull the image when
+	// they ask for a create as a helper on the cli to reduce extra steps. As a
+	// reminder if the image is already in cache only the manifest will be pulled
+	// down to verify.
+	if opts.withPull {
 		auth, err := getAuth(opts.creds, opts.auth)
 		if err != nil {
 			return "", err

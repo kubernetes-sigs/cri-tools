@@ -24,7 +24,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// ServerConfiguration is the config for connecting to a CRI server
+// ServerConfiguration is the config for connecting to and using a CRI server
 type ServerConfiguration struct {
 	// RuntimeEndpoint is CRI server runtime endpoint
 	RuntimeEndpoint string
@@ -34,6 +34,10 @@ type ServerConfiguration struct {
 	Timeout time.Duration
 	// Debug enable debug output
 	Debug bool
+	// PullImageOnCreate enables also pulling an image for create requests
+	PullImageOnCreate bool
+	// DisablePullOnRun disables pulling an image for run requests
+	DisablePullOnRun bool
 }
 
 // GetServerConfigFromFile returns the CRI server configuration from file
@@ -63,5 +67,7 @@ func GetServerConfigFromFile(configFileName, currentDir string) (*ServerConfigur
 	serverConfig.ImageEndpoint = config.ImageEndpoint
 	serverConfig.Timeout = time.Duration(config.Timeout) * time.Second
 	serverConfig.Debug = config.Debug
+	serverConfig.PullImageOnCreate = config.PullImageOnCreate
+	serverConfig.DisablePullOnRun = config.DisablePullOnRun
 	return &serverConfig, nil
 }

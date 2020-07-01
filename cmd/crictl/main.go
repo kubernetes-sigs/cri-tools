@@ -53,6 +53,10 @@ var (
 	Timeout time.Duration
 	// Debug enable debug output
 	Debug bool
+	// PullImageOnCreate enables pulling image on create requests
+	PullImageOnCreate bool
+	// DisablePullOnRun disable pulling image on run requests
+	DisablePullOnRun bool
 )
 
 func getRuntimeClientConnection(context *cli.Context) (*grpc.ClientConn, error) {
@@ -241,6 +245,7 @@ func main() {
 				Timeout = context.Duration("timeout")
 			}
 			Debug = context.Bool("debug")
+			DisablePullOnRun = false
 		} else {
 			// Command line flags overrides config file.
 			if context.IsSet("runtime-endpoint") {
@@ -273,6 +278,8 @@ func main() {
 			} else {
 				Debug = config.Debug
 			}
+			PullImageOnCreate = config.PullImageOnCreate
+			DisablePullOnRun = config.DisablePullOnRun
 		}
 
 		if Debug {
