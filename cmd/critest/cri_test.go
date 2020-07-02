@@ -163,8 +163,10 @@ func runParallelTestSuite(t *testing.T) {
 }
 
 func TestCRISuite(t *testing.T) {
+	fmt.Printf("critest version: %s\n", versionconst.Version)
+
 	if *version {
-		fmt.Printf("critest version: %s\n", versionconst.Version)
+		// print version only and exit
 		return
 	}
 

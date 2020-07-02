@@ -34,7 +34,7 @@ jobs:
           ref: ${{matrix.version}}
           fetch-depth: 150
 
-      - name: Set containerd ${{matrix.version}} cri repo version 
+      - name: Set containerd ${{matrix.version}} cri repo version
         shell: bash
         if: ${{matrix.version != 'master'}}
         run: |
@@ -105,6 +105,8 @@ jobs:
       - name: Run critest on Linux
         if: startsWith(matrix.os, 'ubuntu')
         run: |
+          # have to copy here because cri-tools install and containerd/cri test-cri presume different paths
+          mkdir -p "${GOPATH}/bin" && cp /usr/local/bin/critest $_
           GOPATH=$GOPATH make test-cri
         working-directory: ${{ github.workspace }}/src/github.com/containerd/cri
 
