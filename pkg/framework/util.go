@@ -52,11 +52,17 @@ var (
 	// DefaultContainerCommand is the default command used for containers
 	DefaultContainerCommand []string
 
+	// DefaultPauseCommand is the default command used for containers
+	DefaultPauseCommand []string
+
 	// DefaultLinuxPodLabels default pod labels for Linux
 	DefaultLinuxPodLabels = map[string]string{}
 
 	// DefaultLinuxContainerCommand default container command for Linux
 	DefaultLinuxContainerCommand = []string{"top"}
+
+	// DefaultLinuxPauseCommand default container command for Linux pause
+	DefaultLinuxPauseCommand = []string{"sh", "-c", "top"}
 
 	// DefaultLcowPodLabels default pod labels for Linux containers on Windows
 	DefaultLcowPodLabels = map[string]string{
@@ -68,6 +74,9 @@ var (
 
 	// DefaultWindowsContainerCommand default container command for Windows
 	DefaultWindowsContainerCommand = []string{"cmd", "/c", "ping -t localhost"}
+
+	// DefaultWindowsPauseCommand default container pause command for Windows
+	DefaultWindowsPauseCommand = []string{"powershell", "-c", "ping -t localhost"}
 )
 
 const (
@@ -96,6 +105,7 @@ var _ = BeforeSuite(func() {
 		DefaultPodLabels = DefaultLinuxPodLabels
 		DefaultContainerImage = DefaultLinuxContainerImage
 		DefaultContainerCommand = DefaultLinuxContainerCommand
+		DefaultPauseCommand = DefaultLinuxPauseCommand
 
 		if TestContext.IsLcow {
 			DefaultPodLabels = DefaultLcowPodLabels
@@ -104,6 +114,7 @@ var _ = BeforeSuite(func() {
 		DefaultPodLabels = DefaultWindowsPodLabels
 		DefaultContainerImage = DefaultWindowsContainerImage
 		DefaultContainerCommand = DefaultWindowsContainerCommand
+		DefaultPauseCommand = DefaultWindowsPauseCommand
 	}
 
 	for _, callback := range beforeSuiteCallbacks {
@@ -245,6 +256,19 @@ func CreateDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageM
 		Metadata: BuildContainerMetadata(containerName, DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: DefaultContainerImage},
 		Command:  DefaultContainerCommand,
+		Linux:    &runtimeapi.LinuxContainerConfig{},
+	}
+
+	return CreateContainer(rc, ic, containerConfig, podID, podConfig)
+}
+
+// CreatePauseContainer creates a container with default pause options.
+func CreatePauseContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
+	containerName := prefix + NewUUID()
+	containerConfig := &runtimeapi.ContainerConfig{
+		Metadata: BuildContainerMetadata(containerName, DefaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: DefaultContainerImage},
+		Command:  DefaultPauseCommand,
 		Linux:    &runtimeapi.LinuxContainerConfig{},
 	}
 
