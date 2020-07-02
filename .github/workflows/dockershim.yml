@@ -1,0 +1,64 @@
+name: critest dockershim
+on: [push, pull_request]
+jobs:
+  #
+  # Run CRI tests against dockershim
+  #
+  build-and-critest-dockershim:
+    strategy:
+      matrix:
+        os: [ubuntu-18.04] # TODO: Need to add windows-2019
+                           # It was also disabled in travis ci
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install Go 1.14
+        uses: actions/setup-go@v1
+        with:
+          go-version: '1.14'
+
+      - name: Set Go binary path
+        shell: bash
+        run: |
+          echo "::set-env name=GOPATH::${{ github.workspace }}"
+          echo "::add-path::${{ github.workspace }}/bin"
+
+      - name: Checkout cri-tools for this commit
+        uses: actions/checkout@v2
+        with:
+          path: ${{github.workspace}}/src/github.com/kubernetes-sigs/cri-tools
+
+      - name: Install docker
+        run: |
+          hack/install-docker.sh
+        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
+
+      - name: Build cri-tools
+        run: |
+          make
+          sudo PATH=$PATH GOPATH=$GOPATH make install
+        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
+
+      - name: Build cri-dockerd
+        run: |
+          sudo env GOPATH=$GOPATH hack/install-cri-dockerd.sh
+        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
+
+      - name: Run critest
+        run: |
+          sudo make install.ginkgo
+          sudo env GOPATH=$GOPATH hack/run-dockershim-critest.sh
+        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
+
+      - name: Dump docker logs
+        run: |
+          mkdir -p ${{ github.workspace }}/logs
+          sudo journalctl -eu docker | sudo tee ${{ github.workspace }}/logs/docker.log
+          ls -atrl ${{ github.workspace }}/logs
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v1
+        with:
+          name: logs
+          path: logs

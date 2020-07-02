@@ -20,12 +20,17 @@ set -o pipefail
 
 arch=$(dpkg --print-architecture)
 
-# Workarounds for error "Failed to fetch https://packagecloud.io/github/git-lfs/ubuntu/dists/trusty/InRelease"
+# Workarounds for error "Failed to fetch https://packagecloud.io/github/git-lfs/ubuntu/dists/bionic/InRelease"
 # TODO: remove it after the issue fixed in git-lfs.
 sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
+sudo apt-get update
+
+# Install prereqs
+sudo apt-get install -y \
+  conntrack iptables iproute2 ethtool socat util-linux mount ebtables udev kmod \
+  libseccomp2
 
 # Install docker.
-sudo apt-get update
 sudo apt-get install -y\
     apt-transport-https \
     ca-certificates \
@@ -38,12 +43,14 @@ sudo add-apt-repository \
    $(lsb_release -cs) \
    stable"
 sudo apt-get update
+
 # Docker is downgraded because exec process in 18.x doesn't inherit additional group id from the init process.
 # See more details at https://github.com/moby/moby/issues/38865.
 if [ "$arch" == amd64 ]; then
-	sudo apt-get -y --allow-downgrades install docker-ce=5:18.09.5~3-0~ubuntu-xenial
+	sudo apt-get -y --allow-downgrades install docker-ce=5:18.09.5~3-0~ubuntu-bionic
 elif [ "$arch" == ppc64el ]; then
 	sudo apt-get -y --allow-downgrades install docker-ce=18.06.0~ce~3-0~ubuntu
 fi
+
 # Restart docker daemon.
 sudo service docker restart
