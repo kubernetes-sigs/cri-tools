@@ -74,7 +74,6 @@ jobs:
         uses: actions/checkout@v2
         with:
           path: ${{github.workspace}}/src/github.com/kubernetes-sigs/cri-tools
-          fetch-depth: 150
 
       - name: Build cri-tools
         run: |
