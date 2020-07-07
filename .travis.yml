@@ -22,6 +22,8 @@ before_install:
 
 jobs:
   include:
+    # TODO: Remove when OS support for linux-ppc64le is available 
+    #       in GH workflows
     - stage: Build
       os: linux-ppc64le
       script:

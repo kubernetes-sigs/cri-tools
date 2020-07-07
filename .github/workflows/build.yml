@@ -2,19 +2,19 @@ name: build
 on: [push, pull_request]
 jobs:
   linters:
-    name: linters / on ${{ matrix.os }}
+    name: lint and vendor check/ on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
 
     strategy:
       matrix:
-        os: [ubuntu-18.04, macos-10.15]  # TODO: pass linters on 'windows-2019'
+        os: [ubuntu-18.04]  # TODO: pass linters on 'macos-10.15' and 'windows-2019'
 
     steps:
       - name: Install Go
         uses: actions/setup-go@v1
         with:
-          go-version: '1.14'
+          go-version: '1.13'
 
       - name: Set env
         shell: bash
@@ -37,7 +37,7 @@ jobs:
   releases:
     name: releases / on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     strategy:
       matrix:
@@ -47,7 +47,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v1
         with:
-          go-version: '1.14'
+          go-version: '1.13'
 
       - name: Set env
         shell: bash
