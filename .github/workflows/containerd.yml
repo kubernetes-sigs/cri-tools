@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-18.04, windows-2019]
-        version: [master, v1.4.0-beta.1]
+        version: [master, v1.4.0-beta.2]
     name: ${{matrix.version}} / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:
@@ -19,33 +19,28 @@ jobs:
           go-version: '1.13'
 
       - name: Set env
-        shell: bash
         run: |
           echo "::set-env name=GOPATH::${{ github.workspace }}"
           echo "::add-path::${{ github.workspace }}/bin"
-          echo "::set-env name=CONTD_CRI_REPO_REF::master"
 
       - name: Checkout containerd/containerd ${{matrix.version}}
         uses: actions/checkout@v2
-        if: ${{matrix.version != 'master'}}
         with:
           path: ${{ github.workspace }}/src/github.com/containerd/containerd
           repository: containerd/containerd
           ref: ${{matrix.version}}
 
-      - name: Set containerd ${{matrix.version}} cri repo version
-        shell: bash
-        if: ${{matrix.version != 'master'}}
-        run: |
-          CONTD_CRI_REPO=$(grep containerd/cri src/github.com/containerd/containerd/vendor.conf | awk '{print $2}')
-          echo "::set-env name=CONTD_CRI_REPO_REF::$CONTD_CRI_REPO_VER"
+      - name: Checkout Microsoft/hcsshim
+        uses: actions/checkout@v2
+        if: startsWith(matrix.os, 'windows')
+        with:
+          repository: Microsoft/hcsshim
+          path: src/github.com/Microsoft/hcsshim
 
-      - name: Checkout containerd ${{matrix.version}} cri
+      - name: Checkout cri-tools for this commit
         uses: actions/checkout@v2
         with:
-          path: ${{ github.workspace }}/src/github.com/containerd/cri
-          repository: containerd/cri
-          ref: ${{env.CONTD_CRI_REPO_REF_VER}}
+          path: ${{github.workspace}}/src/github.com/kubernetes-sigs/cri-tools
 
       - name: disable ipv6
         if: startsWith(matrix.os, 'ubuntu')
@@ -59,31 +54,38 @@ jobs:
           sudo apt-get install -y \
             btrfs-tools \
             libseccomp2 \
-            libseccomp-dev
-
-      - name: Install build dependencies for containerd
-        run: |
-          make install.deps
-        working-directory: ${{ github.workspace }}/src/github.com/containerd/cri
+            libseccomp-dev \
+            socat
 
       - name: Install containerd on Linux
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          make containerd
-          sudo PATH=$PATH GOPATH=$GOPATH make install-containerd
-        working-directory: ${{ github.workspace }}/src/github.com/containerd/cri
+          make
+          sudo PATH=$PATH GOPATH=$GOPATH make install
+        working-directory: ${{ github.workspace }}/src/github.com/containerd/containerd
 
       - name: Install containerd on Windows
         if: startsWith(matrix.os, 'windows')
         run: |
-          make containerd
-          make install-containerd
-        working-directory: ${{ github.workspace }}/src/github.com/containerd/cri
+          make
+          make install
+        working-directory: ${{ github.workspace }}/src/github.com/containerd/containerd
 
-      - name: Checkout cri-tools for this commit
-        uses: actions/checkout@v2
-        with:
-          path: ${{github.workspace}}/src/github.com/kubernetes-sigs/cri-tools
+      - name: Build Windows container shims
+        if: startsWith(matrix.os, 'windows')
+        shell: bash
+        run: |
+          set -o xtrace
+          export CGO_ENABLED=1
+          cd src/github.com/containerd/containerd
+          mingw32-make.exe binaries
+          bindir="$(pwd)"/bin
+          SHIM_COMMIT=$(grep Microsoft/hcsshim vendor.conf | awk '{print $2}')
+          cd ../../Microsoft/hcsshim
+          git fetch --tags origin "${SHIM_COMMIT}"
+          git checkout "${SHIM_COMMIT}"
+          GO111MODULE=on go build -mod=vendor -o "${bindir}/containerd-shim-runhcs-v1.exe" ./cmd/containerd-shim-runhcs-v1
+          cp "${bindir}"/*.exe /usr/local/bin
 
       - name: Build cri-tools on Linux
         if: startsWith(matrix.os, 'ubuntu')
@@ -99,13 +101,146 @@ jobs:
           make install
         working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
 
+      - name: Install ginkgo on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        shell: bash
+        run: |
+          go get -u github.com/onsi/ginkgo/ginkgo
+          ginkgo version
+          sudo cp $(command -v ginkgo) /usr/local/bin
+
+      - name: Install ginkgo on Windows
+        if: startsWith(matrix.os, 'windows')
+        shell: bash
+        run: |
+          go get -u github.com/onsi/ginkgo/ginkgo
+          ginkgo version
+          cp $(command -v ginkgo) /usr/local/bin      
+
+      - name: Install cni on Windows
+        if: startsWith(matrix.os, 'windows')
+        shell: bash
+        run: |
+          set -o errexit
+          set -o nounset
+          set -o pipefail
+
+          # WINCNI_BIN_DIR is the cni plugin directory
+          WINCNI_BIN_DIR="${WINCNI_BIN_DIR:-"C:\\Program Files\\containerd\\cni\\bin"}"
+          WINCNI_PKG=github.com/Microsoft/windows-container-networking
+          WINCNI_VERSION=aa10a0b31e9f72937063436454def1760b858ee2
+
+          # Create a temporary GOPATH for cni installation.
+          GOPATH="$(mktemp -d /tmp/cri-install-cni.XXXX)"
+
+          # Install cni
+          win_cni_src="${GOPATH}/src/${WINCNI_PKG}"
+          mkdir -p ${win_cni_src}
+          git clone https://${WINCNI_PKG} ${win_cni_src}
+          cd ${win_cni_src}
+          git checkout ${WINCNI_VERSION}
+          make all
+          install -D -m 755 "out/nat.exe" "${WINCNI_BIN_DIR}/nat.exe"
+          install -D -m 755 "out/sdnbridge.exe" "${WINCNI_BIN_DIR}/sdnbridge.exe"
+          install -D -m 755 "out/sdnoverlay.exe" "${WINCNI_BIN_DIR}/sdnoverlay.exe"
+
+          # Clean the tmp GOPATH dir.
+          rm -rf "${GOPATH}"
+
+      - name: Configure cni on Windows
+        if: startsWith(matrix.os, 'windows')
+        shell: bash
+        run: |
+          set -o errexit
+          set -o nounset
+          set -o pipefail
+
+          CNI_CONFIG_DIR="${CNI_CONFIG_DIR:-"C:\\Program Files\\containerd\\cni\\conf"}"
+          mkdir -p "${CNI_CONFIG_DIR}"
+
+          # split_ip splits ip into a 4-element array.
+          split_ip() {
+            local -r varname="$1"
+            local -r ip="$2"
+            for i in {0..3}; do
+              eval "$varname"[$i]=$( echo "$ip" | cut -d '.' -f $((i + 1)) )
+            done
+          }
+
+          # subnet gets subnet for a gateway, e.g. 192.168.100.0/24.
+          calculate_subnet() {
+            local -r gateway="$1"
+            local -r prefix_len="$2"
+            split_ip gateway_array "$gateway"
+            local len=$prefix_len
+            for i in {0..3}; do
+              if (( len >= 8 )); then
+                mask=255
+              elif (( len > 0 )); then
+                mask=$(( 256 - 2 ** ( 8 - len ) ))
+              else
+                mask=0
+              fi
+              (( len -= 8 ))
+              result_array[i]=$(( gateway_array[i] & mask ))
+            done
+            result="$(printf ".%s" "${result_array[@]}")"
+            result="${result:1}"
+            echo "$result/$((32 - prefix_len))"
+          }
+
+          # nat already exists on the Windows VM, the subnet and gateway
+          # we specify should match that.
+          gateway="$(powershell -c "(Get-NetIPAddress -InterfaceAlias 'vEthernet (nat)' -AddressFamily IPv4).IPAddress")"
+          prefix_len="$(powershell -c "(Get-NetIPAddress -InterfaceAlias 'vEthernet (nat)' -AddressFamily IPv4).PrefixLength")"
+
+          subnet="$(calculate_subnet "$gateway" "$prefix_len")"
+
+          # The "name" field in the config is used as the underlying
+          # network type right now (see
+          # https://github.com/microsoft/windows-container-networking/pull/45),
+          # so it must match a network type in:
+          # https://docs.microsoft.com/en-us/windows-server/networking/technologies/hcn/hcn-json-document-schemas
+          bash -c 'cat >"'"${CNI_CONFIG_DIR}"'"/0-containerd-nat.conf <<EOF
+          {
+              "cniVersion": "0.2.0",
+              "name": "nat",
+              "type": "nat",
+              "master": "Ethernet",
+              "ipam": {
+                  "subnet": "'$subnet'",
+                  "routes": [
+                      {
+                          "GW": "'$gateway'"
+                      }
+                  ]
+              },
+              "capabilities": {
+                  "portMappings": true,
+                  "dns": true
+              }
+          }
+          EOF'
+
       - name: Run critest on Linux
         if: startsWith(matrix.os, 'ubuntu')
+        shell: bash
         run: |
-          # have to copy here because cri-tools install and containerd/cri test-cri presume different paths
-          mkdir -p "${GOPATH}/bin" && cp /usr/local/bin/critest $_
-          GOPATH=$GOPATH make test-cri
-        working-directory: ${{ github.workspace }}/src/github.com/containerd/cri
+          set -o errexit
+          set -o nounset
+          set -o pipefail
+
+          BDIR="$(mktemp -d -p $PWD)"
+          echo "containerd temp dir: ${BDIR}"
+          mkdir -p ${BDIR}/{root,state}
+          sudo PATH=$PATH BDIR=$BDIR /usr/local/bin/containerd -a ${BDIR}/c.sock -root ${BDIR}/root -state ${BDIR}/state -log-level debug &> ${BDIR}/containerd-cri.log &
+          sudo BDIR=$BDIR /usr/local/bin/ctr -a ${BDIR}/c.sock version
+          sudo PATH=$PATH BDIR=$BDIR GOPATH=$GOPATH critest --runtime-endpoint=unix:///${BDIR}/c.sock --parallel=8
+          TEST_RC=$?
+          test $TEST_RC -ne 0 && cat ${BDIR}/containerd-cri.log
+          sudo pkill containerd
+          echo "::set-env name=CONTD_CRI_DIR::$BDIR"
+          test $TEST_RC -eq 0 || /bin/false
 
       - name: Run critest on Windows
         if: startsWith(matrix.os, 'windows')
@@ -115,29 +250,41 @@ jobs:
           set -o nounset
           set -o pipefail
 
-          export PATH="/c/Program Files/Containerd:$PATH"
+          export PATH="/usr/local/bin:$PATH"
           FOCUS="${FOCUS:-"Conformance"}"
           SKIP="${SKIP:-""}"
-          REPORT_DIR="${REPORT_DIR:-"/c/_artifacts"}"
-
-          make install -e BINDIR="/c/Program Files/Containerd"
-
+          REPORT_DIR="${REPORT_DIR:-"c/_artifacts"}"
           mkdir -p "${REPORT_DIR}"
-          containerd -log-level debug &> "${REPORT_DIR}/containerd.log" &
+
+          PATH=$PATH containerd -log-level debug &> "${REPORT_DIR}/containerd-cri.log" &
           pid=$!
-          ctr version
+          PATH=$PATH ctr version
 
           set +o errexit
-          critest --runtime-endpoint=npipe:////./pipe/containerd-containerd --ginkgo.focus="${FOCUS}" --ginkgo.skip="${SKIP}" --report-dir="${REPORT_DIR}" --report-prefix="windows"
+          PATH=$PATH GOPATH=$GOPATH critest --runtime-endpoint=npipe:////./pipe/containerd-containerd --ginkgo.focus="${FOCUS}" --ginkgo.skip="${SKIP}" --report-dir="${REPORT_DIR}" --report-prefix="windows"
           TEST_RC=$?
+          test $TEST_RC -ne 0 && cat ${REPORT_DIR}/containerd.log
           set -o errexit
           kill -9 $pid
+          echo "::set-env name=CONTD_CRI_DIR::$REPORT_DIR"
           exit ${TEST_RC}
-        working-directory: ${{ github.workspace }}/src/github.com/containerd/cri
 
-      - name: Upload containerd ${{matrix.version}} Linux logs
-        if: startsWith(matrix.os, 'ubuntu')
+      - name: Upload containerd ${{matrix.version}} logs
         uses: actions/upload-artifact@v1
         with:
           name: containerd-${{matrix.version}}-${{ matrix.os }}-${{github.sha}}.log
-          path: /tmp/test-cri/containerd.log
+          path: ${{env.CONTD_CRI_DIR}}/containerd-cri.log
+
+      - name: Cleanup temp directory on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        shell: bash
+        run: |
+          echo "Cleanup temp directory ${{env.CONTD_CRI_DIR}} created for cri tests"
+          sudo rm -rf ${{env.CONTD_CRI_DIR}}
+
+      - name: Cleanup temp directory on Windows
+        if: startsWith(matrix.os, 'windows')
+        shell: bash
+        run: |
+          echo "Cleanup temp directory ${{env.CONTD_CRI_DIR}} created for cri tests"
+          rm -rf ${{env.CONTD_CRI_DIR}}
