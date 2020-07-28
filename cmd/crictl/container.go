@@ -869,7 +869,18 @@ func ListContainers(runtimeClient pb.RuntimeServiceClient, imageClient pb.ImageS
 		filter.Id = opts.id
 	}
 	if opts.podID != "" {
-		filter.PodSandboxId = opts.podID
+		// translate to full pod ID
+		request := &pb.PodSandboxStatusRequest{
+			PodSandboxId: opts.podID,
+		}
+		logrus.Debugf("PodSandboxStatusRequest to find full pod ID: %v", request)
+		r, err := runtimeClient.PodSandboxStatus(context.Background(), request)
+		logrus.Debugf("PodSandboxStatusReponse to find full pod ID: %v", r)
+		if err != nil {
+			return errors.Wrapf(err, "failed to translate pod ID %s to full pod ID", opts.podID)
+		}
+
+		filter.PodSandboxId = r.Status.Id
 	}
 	st := &pb.ContainerStateValue{}
 	if !opts.all && opts.state == "" {
