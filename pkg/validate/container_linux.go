@@ -163,7 +163,7 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 
 // createHostPath creates the hostPath for mount propagation test.
 func createHostPathForMountPropagation(podID string, propagationOpt runtimeapi.MountPropagation) (string, string, string, func()) {
-	hostPath, err := ioutil.TempDir("", "/test"+podID)
+	hostPath, err := ioutil.TempDir("", "test"+podID)
 	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
 
 	mntSource := filepath.Join(hostPath, "mnt")
