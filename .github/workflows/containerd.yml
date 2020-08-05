@@ -10,7 +10,24 @@ jobs:
       matrix:
         os: [ubuntu-18.04, windows-2019]
         version: [master, v1.4.0-beta.2]
-    name: ${{matrix.version}} / ${{ matrix.os }}
+        runtime: [io.containerd.runtime.v1.linux, io.containerd.runc.v1, io.containerd.runc.v2, containerd-shim-runhcs-v1]
+        runc: [runc, crun]
+        exclude:
+          - runtime: io.containerd.runc.v1
+            os: windows-2019
+          - runtime: io.containerd.runc.v2
+            os: windows-2019
+          - runtime: io.containerd.runtime.v1.linux
+            os: windows-2019
+          - runtime: containerd-shim-runhcs-v1
+            os: ubuntu-18.04
+          - runtime: io.containerd.runc.v1
+            runc: crun
+          - runtime: io.containerd.runtime.v1.linux
+            runc: crun
+          - runc: crun
+            os: windows-2019
+    name: ${{matrix.version}} / ${{ matrix.os }} / ${{matrix.runtime}} / ${{matrix.runc}}
     runs-on: ${{ matrix.os }}
     steps:
       - name: Install Go
@@ -57,6 +74,17 @@ jobs:
             libseccomp-dev \
             socat
 
+      - name: Setup gosu on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        shell: bash
+        run: |
+          GOSU=/usr/local/bin/gosu
+          arch="$(dpkg --print-architecture | awk -F- '{ print $NF }')"
+          sudo wget -O ${GOSU} "https://github.com/tianon/gosu/releases/download/1.12/gosu-$arch"
+          sudo chmod +x ${GOSU}
+          sudo chown root ${GOSU}
+          sudo chmod +s ${GOSU}
+
       - name: Install containerd on Linux
         if: startsWith(matrix.os, 'ubuntu')
         run: |
@@ -70,6 +98,14 @@ jobs:
           make
           make install
         working-directory: ${{ github.workspace }}/src/github.com/containerd/containerd
+
+      - name: Install ${{matrix.runc}} runtime engine on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        env:
+          RUNC_FLAVOR: ${{matrix.runc}}
+        run: |
+          gosu root script/setup/install-runc
+        working-directory: src/github.com/containerd/containerd
 
       - name: Build Windows container shims
         if: startsWith(matrix.os, 'windows')
@@ -233,8 +269,15 @@ jobs:
           BDIR="$(mktemp -d -p $PWD)"
           echo "containerd temp dir: ${BDIR}"
           mkdir -p ${BDIR}/{root,state}
+          
+          cat > ${BDIR}/config.toml <<EOF
+            [plugins.cri.containerd.default_runtime]
+              runtime_type = \"${{matrix.runtime}}\"
+          EOF
           sudo PATH=$PATH BDIR=$BDIR /usr/local/bin/containerd -a ${BDIR}/c.sock -root ${BDIR}/root -state ${BDIR}/state -log-level debug &> ${BDIR}/containerd-cri.log &
           sudo BDIR=$BDIR /usr/local/bin/ctr -a ${BDIR}/c.sock version
+          sudo BDIR=$BDIR /usr/local/sbin/runc --version
+
           sudo PATH=$PATH BDIR=$BDIR GOPATH=$GOPATH critest --runtime-endpoint=unix:///${BDIR}/c.sock --parallel=8
           TEST_RC=$?
           test $TEST_RC -ne 0 && cat ${BDIR}/containerd-cri.log
@@ -272,7 +315,7 @@ jobs:
       - name: Upload containerd ${{matrix.version}} logs
         uses: actions/upload-artifact@v1
         with:
-          name: containerd-${{matrix.version}}-${{ matrix.os }}-${{github.sha}}.log
+          name: containerd-${{matrix.version}}-${{ matrix.os }}-${{matrix.runtime}}-${{matrix.runc}}-${{github.sha}}.log
           path: ${{env.CONTD_CRI_DIR}}/containerd-cri.log
 
       - name: Cleanup temp directory on Linux
