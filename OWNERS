@@ -4,7 +4,6 @@
 approvers:
   - Random-Liu
   - dchen1107
-  - euank
   - feiskyer
   - heartlock
   - mrunalp
@@ -14,3 +13,5 @@ approvers:
   - yujuhong
   - runcom
 
+emeritus_approvers:
+  - euank
