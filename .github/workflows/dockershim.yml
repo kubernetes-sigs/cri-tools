@@ -15,7 +15,7 @@ jobs:
       - name: Install Go 1.13
         uses: actions/setup-go@v1
         with:
-          go-version: '1.13'
+          go-version: '1.15'
 
       - name: Set Go binary path
         shell: bash

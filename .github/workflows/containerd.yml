@@ -42,7 +42,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v1
         with:
-          go-version: '1.13'
+          go-version: '1.15'
 
       - name: Set env
         run: |
@@ -149,7 +149,7 @@ jobs:
         run: |
           go get -u github.com/onsi/ginkgo/ginkgo
           ginkgo version
-          cp $(command -v ginkgo) /usr/local/bin      
+          cp $(command -v ginkgo) /usr/local/bin
 
       - name: Install cni on Windows
         if: startsWith(matrix.os, 'windows')
@@ -267,7 +267,7 @@ jobs:
           BDIR="$(mktemp -d -p $PWD)"
           echo "containerd temp dir: ${BDIR}"
           mkdir -p ${BDIR}/{root,state}
-          
+
           cat > ${BDIR}/config.toml <<EOF
             [plugins.cri.containerd.default_runtime]
               runtime_type = \"${{matrix.runtime}}\"

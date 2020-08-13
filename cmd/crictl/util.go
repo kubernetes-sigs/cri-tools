@@ -26,7 +26,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ghodss/yaml"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
@@ -34,6 +33,7 @@ import (
 	"google.golang.org/grpc"
 	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	"sigs.k8s.io/yaml"
 )
 
 const (

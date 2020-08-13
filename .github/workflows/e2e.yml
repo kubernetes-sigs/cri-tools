@@ -14,7 +14,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v1
         with:
-          go-version: '1.13'
+          go-version: '1.15'
 
       - name: Set env
         shell: bash
@@ -31,7 +31,7 @@ jobs:
         run: |
           sudo apt-get update &&\
           sudo apt-get install -y libseccomp-dev
-        
+
           VERSION=v0.8.6 &&\
           sudo mkdir -p /opt/cni/bin &&\
           sudo wget -qO- https://github.com/containernetworking/plugins/releases/download/$VERSION/cni-plugins-linux-amd64-$VERSION.tgz \
@@ -44,6 +44,6 @@ jobs:
             https://github.com/opencontainers/runc/releases/download/$VERSION/runc.amd64 &&\
           sudo chmod +x /usr/bin/runc &&\
           runc --version
-          
+
           sudo -E env "PATH=$PATH" make all install test-e2e TESTFLAGS=-v
         working-directory: src/github.com/kubernetes-sigs/cri-tools

@@ -33,7 +33,6 @@ CRI_CTL_PLATFORMS=(
     windows/amd64
     windows/386
     darwin/amd64
-    darwin/386
 )
 CRI_TEST_PLATFORMS=(
     linux/amd64
@@ -43,7 +42,6 @@ CRI_TEST_PLATFORMS=(
     windows/amd64
     windows/386
     darwin/amd64
-    darwin/386
 )
 
 # Create releases output directory.
