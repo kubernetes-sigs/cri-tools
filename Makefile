@@ -29,7 +29,7 @@ ifeq ($(GOOS),windows)
 endif
 
 PROJECT := github.com/kubernetes-sigs/cri-tools
-BINDIR := /usr/local/bin
+BINDIR ?= /usr/local/bin
 
 VERSION := $(shell git describe --tags --dirty --always)
 VERSION := $(VERSION:v%=%)
