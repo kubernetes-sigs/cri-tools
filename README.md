@@ -21,18 +21,18 @@ cri-tools aims to provide a series of debugging and validation tools for Kubelet
 
 Version matrix:
 
-| Kubernetes Version   | cri-tools Version   | cri-tools branch |
-| -------------------- | ------------------- | ---------------- |
-| 1.16.x/1.17.x/1.18.x | 1.16.x/1.17.x/1.18.x| master           |
-| 1.15.X               | v1.15.0             | release-1.15     |
-| 1.14.X               | v1.14.0             | release-1.14     |
-| 1.13.X               | v1.13.0             | release-1.13     |
-| 1.12.X               | v1.12.0             | release-1.12     |
-| 1.11.X               | v1.11.1             | release-1.11     |
-| 1.10.X               | v1.0.0-beta.2       | release-1.10     |
-| 1.9.X                | v1.0.0-alpha.1      | release-1.9      |
-| 1.8.X                | v0.2                | release-1.8      |
-| 1.7.X                | v0.1                | release-1.7      |
+| Kubernetes Version | cri-tools Version | cri-tools branch |
+| ------------------ | ----------------- | ---------------- |
+| ≥ 1.16.x           | ≥ 1.16.x          | master           |
+| 1.15.X             | v1.15.0           | release-1.15     |
+| 1.14.X             | v1.14.0           | release-1.14     |
+| 1.13.X             | v1.13.0           | release-1.13     |
+| 1.12.X             | v1.12.0           | release-1.12     |
+| 1.11.X             | v1.11.1           | release-1.11     |
+| 1.10.X             | v1.0.0-beta.2     | release-1.10     |
+| 1.9.X              | v1.0.0-alpha.1    | release-1.9      |
+| 1.8.X              | v0.2              | release-1.8      |
+| 1.7.X              | v0.1              | release-1.7      |
 
 See the [roadmap](docs/roadmap.md) for information about current and future milestones.
 
@@ -41,7 +41,7 @@ See the [roadmap](docs/roadmap.md) for information about current and future mile
 ### Install crictl
 
 ```sh
-VERSION="v1.18.0"
+VERSION="v1.19.0"
 wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux-amd64.tar.gz
 sudo tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f crictl-$VERSION-linux-amd64.tar.gz
@@ -50,7 +50,7 @@ rm -f crictl-$VERSION-linux-amd64.tar.gz
 ### Install critest
 
 ```sh
-VERSION="v1.18.0"
+VERSION="v1.19.0"
 wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/critest-$VERSION-linux-amd64.tar.gz
 sudo tar zxvf critest-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f critest-$VERSION-linux-amd64.tar.gz
