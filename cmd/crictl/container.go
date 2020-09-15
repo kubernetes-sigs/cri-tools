@@ -600,6 +600,163 @@ var runContainerCommand = &cli.Command{
 	},
 }
 
+var checkpointContainerCommand = &cli.Command{
+	Name:                   "checkpoint",
+	Usage:                  "Checkpoint one or more running containers",
+	ArgsUsage:              "CONTAINER-ID [CONTAINER-ID...]",
+	UseShortOptionHandling: true,
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:    "export",
+			Aliases: []string{"e"},
+			Usage:   "Specify the name of the tar archive used to export the checkpoint image.",
+		},
+		&cli.BoolFlag{
+			Name:    "keep",
+			Aliases: []string{"k"},
+			Usage:   "Keep all temporary checkpoint files.",
+		},
+		&cli.BoolFlag{
+			Name:    "leave-running",
+			Aliases: []string{"R"},
+			Usage:   "Leave the container running after writing checkpoint to disk.",
+		},
+		&cli.BoolFlag{
+			Name:  "tcp-established",
+			Usage: "Checkpoint a container with established TCP connections.",
+		},
+		&cli.StringFlag{
+			Name:    "compress",
+			Aliases: []string{"c"},
+			Usage:   "Select compression algorithm (gzip, none, zstd) for checkpoint archive.",
+			Value:   "zstd",
+		},
+	},
+	Action: func(context *cli.Context) error {
+		if context.NArg() == 0 {
+			return cli.ShowSubcommandHelp(context)
+		}
+		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		if err != nil {
+			return err
+		}
+		defer closeConnection(context, runtimeConn)
+
+		compression := func() int64 {
+			switch strings.ToLower(context.String("compress")) {
+			case "none":
+				return 0
+			case "gzip":
+				return 2
+			case "zstd":
+				return 4
+			default:
+				return -1
+			}
+		}()
+
+		for i := 0; i < context.NArg(); i++ {
+			containerID := context.Args().Get(i)
+			err := CheckpointContainer(
+				runtimeClient,
+				containerID,
+				context.String("export"),
+				context.Bool("keep"),
+				context.Bool("leave-running"),
+				context.Bool("tcp-established"),
+				compression,
+			)
+			if err != nil {
+				return fmt.Errorf("Checkpointing the container %q failed: %v", containerID, err)
+			}
+		}
+		return nil
+	},
+}
+
+var restoreContainerCommand = &cli.Command{
+	Name:                   "restore",
+	Usage:                  "Restore one or more checkpointed containers",
+	ArgsUsage:              "CONTAINER-ID [CONTAINER-ID...]",
+	UseShortOptionHandling: true,
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:    "pod",
+			Aliases: []string{"p"},
+			Value:   "",
+			Usage:   "Specify POD into which the container will be restored. Defaults to previous POD.",
+		},
+		&cli.StringFlag{
+			Name:    "import",
+			Aliases: []string{"i"},
+			Usage:   "Specify the name of the checkpoint archive used to restore the container/POD",
+		},
+		&cli.BoolFlag{
+			Name:    "keep",
+			Aliases: []string{"k"},
+			Usage:   "Keep all temporary checkpoint and restore files.",
+		},
+		&cli.BoolFlag{
+			Name:  "tcp-established",
+			Usage: "Restore a container with established TCP connections.",
+		},
+		&cli.StringSliceFlag{
+			Name:  "change-mounts",
+			Usage: "Change the source of bind mount <old source:new source>.",
+		},
+	},
+	Action: func(context *cli.Context) error {
+		if context.NArg() == 0 && context.String("pod") == "" && context.String("import") == "" {
+			return cli.ShowSubcommandHelp(context)
+		}
+		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		if err != nil {
+			return err
+		}
+		defer closeConnection(context, runtimeConn)
+
+		ids := func() []string {
+			if context.NArg() == 0 {
+				return []string{""}
+			}
+			ids := make([]string, 0)
+			for i := 0; i < context.NArg(); i++ {
+				ids = append(ids, context.Args().Get(i))
+			}
+			return ids
+		}()
+
+		var rs []*pb.RestoreContainerResponse
+		for _, i := range ids {
+			r, err := RestoreContainer(
+				runtimeClient,
+				i,
+				func() string {
+					if context.IsSet("pod") {
+						return context.String("pod")
+					}
+					return ""
+				}(),
+				context.String("import"),
+				context.Bool("keep"),
+				context.Bool("tcp-established"),
+				context.StringSlice("change-mounts"),
+			)
+			if err != nil {
+				return fmt.Errorf("Restoring the container %q failed: %v", i, err)
+			}
+			rs = append(rs, r)
+		}
+		result, err := json.MarshalIndent(rs, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%s\n", result)
+
+		return nil
+	},
+}
+
 // RunContainer starts a container in the provided sandbox
 func RunContainer(
 	iClient pb.ImageServiceClient,
@@ -783,6 +940,70 @@ func StopContainer(client pb.RuntimeServiceClient, ID string, timeout int64) err
 	}
 	fmt.Println(ID)
 	return nil
+}
+
+// CheckpointContainer sends a CheckpointContainerRequest to the server
+func CheckpointContainer(client pb.RuntimeServiceClient, ID, export string, keep, leaveRunning, tcp_established bool, compression int64) error {
+	if ID == "" {
+		return fmt.Errorf("ID cannot be empty")
+	}
+	request := &pb.CheckpointContainerRequest{
+		Id: ID,
+		Options: &pb.CheckpointContainerOptions{
+			CommonOptions: &pb.CheckpointRestoreOptions{
+				Archive:        export,
+				Keep:           keep,
+				Compression:    compression,
+				TcpEstablished: tcp_established,
+			},
+			LeaveRunning: leaveRunning,
+		},
+	}
+	logrus.Debugf("CheckpointContainerRequest: %v", request)
+	r, err := client.CheckpointContainer(context.Background(), request)
+	logrus.Debugf("CheckpointContainerResponse: %v", r)
+	if err != nil {
+		return err
+	}
+	fmt.Println(ID)
+	return nil
+}
+
+// RestoreContainer sends a RestoreContainerRequest to the server
+func RestoreContainer(client pb.RuntimeServiceClient, ID, podID, archive string, keep, tcp_established bool, change_mounts []string) (*pb.RestoreContainerResponse, error) {
+	if ID == "" && archive == "" {
+		return nil, fmt.Errorf("ID cannot be empty")
+	}
+	cms := make(map[string]string)
+	for _, cm := range change_mounts {
+		if !strings.Contains(cm, ":") {
+			return nil, fmt.Errorf("--change-mounts options needs to be in the form of <old mount:new mount>")
+		}
+		c := strings.Split(cm, ":")
+		if len(c) != 2 {
+			return nil, fmt.Errorf("--change-mounts options needs to be in the form of <old mount:new mount>")
+		}
+		cms[c[0]] = c[1]
+	}
+	request := &pb.RestoreContainerRequest{
+		Id: ID,
+		Options: &pb.RestoreContainerOptions{
+			PodSandboxId: podID,
+			ChangeMounts: cms,
+			CommonOptions: &pb.CheckpointRestoreOptions{
+				Archive:        archive,
+				Keep:           keep,
+				TcpEstablished: tcp_established,
+			},
+		},
+	}
+	logrus.Debugf("RestoreContainerRequest: %v", request)
+	r, err := client.RestoreContainer(context.Background(), request)
+	logrus.Debugf("RestoreContainerResponse: %v", r)
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
 }
 
 // RemoveContainer sends a RemoveContainerRequest to the server, and parses

@@ -107,6 +107,11 @@ service RuntimeService {
 
     // Status returns the status of the runtime.
     rpc Status(StatusRequest) returns (StatusResponse) {}
+
+    // CheckpointContainer checkpoints a container
+    rpc CheckpointContainer(CheckpointContainerRequest) returns (CheckpointContainerResponse) {}
+    // RestoreContainer restores a container
+    rpc RestoreContainer(RestoreContainerRequest) returns (RestoreContainerResponse) {}
 }
 
 // ImageService defines the public APIs for managing images.
@@ -1375,4 +1380,71 @@ message ReopenContainerLogRequest {
 }
 
 message ReopenContainerLogResponse{
+}
+
+// Common options used for checkpointing and restoring.
+message CheckpointRestoreOptions {
+    // Keep temporary files. Like log files. Helpful for debugging.
+    bool keep = 1;
+    // Checkpoint/Restore the container with established TCP connections.
+    bool tcp_established = 2;
+    // Location of the checkpoint archive used for export/import
+    string archive = 3;
+    // Specify the checkpoint archive compression algorithm
+    // See github.com/containers/storage/pkg/archive/archive.go for
+    // possible values.
+    int64 compression = 4;
+}
+
+message CheckpointContainerOptions {
+    CheckpointRestoreOptions common_options = 1;
+    // Leave the container running after checkpointing
+    bool leave_running = 2;
+}
+
+message CheckpointContainerRequest {
+    // ID of the container or pod to be checkpointed.
+    string id = 1;
+    // Options for checkpointing.
+    CheckpointContainerOptions options = 2;
+}
+
+message CheckpointContainerResponse {
+}
+
+message RestoreContainerOptions {
+    CheckpointRestoreOptions common_options = 1;
+    // ID of the sandbox into which the container should be restored
+    // If this is not specified the container will be restored
+    // in the sandbox it was checkpointed from.
+    string pod_sandbox_id = 2;
+    // Restoring multiple copies of a checkpointed container may
+    // require a new name for the restored container.
+    string name = 3;
+    // The labels and annotations are in the same form as in ContainerConfig
+    // during CreateContainerRequest.
+    map<string, string> labels = 4;
+    map<string, string> annotations = 5;
+    // Restoring a container in another pod might require changing
+    // Kubernetes specific mounts if the mount source depends on
+    // the pod ID.
+    // This tells the container engine to replace existing mount
+    // sources with a new source.
+    map<string, string> change_mounts = 6;
+}
+message RestoreContainerRequest {
+    // ID of the container or pod to be restored.
+    string id = 1;
+    // Options for restoring.
+    RestoreContainerOptions options = 2;
+}
+
+message RestoreContainerResponse {
+    // ID of the restored container or pod
+    string id = 1;
+    // True if the restored container/pod is a pod
+    bool pod = 2;
+    // Only set if a pod has been restored. This contains
+    // a list of restored container IDs in the restored pod.
+    repeated string restored_containers = 3;
 }
