@@ -18,6 +18,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -25,6 +26,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
@@ -341,4 +343,15 @@ func matchesImage(imageClient pb.ImageServiceClient, image string, containerImag
 		return false, nil
 	}
 	return r1.Image.Id == r2.Image.Id, nil
+}
+
+func ctxWithTimeout(timeout time.Duration) context.Context {
+	ctx, cancel := context.WithCancel(context.Background())
+	if timeout > 0 {
+		go func() {
+			time.Sleep(timeout * time.Second)
+			cancel()
+		}()
+	}
+	return ctx
 }
