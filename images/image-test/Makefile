@@ -15,28 +15,52 @@
 include ../../hack/make-rules/Makefile.manifest
 include ../../hack/make-rules/BASEIMAGES
 
-.PHONY: all-push all-push-images push-manifest
+.PHONY: all-push all-push-docker all-push-oci all-push-docker-images push-docker-manifest all-push-oci-images push-oci-manifest
 
 REGISTRY ?= gcr.io/cri-tools
 TAG = latest
 ALL_ARCH = amd64 arm64 ppc64le s390x
-IMAGES_LIST = test-image-1 test-image-2 test-image-3 test-image-latest test-image-digest
+DOCKER_IMAGES_LIST = test-image-1 test-image-2 test-image-3 test-image-latest test-image-digest
+OCI_IMAGES_LIST = test-oci-image-1 test-oci-image-2 test-oci-image-3 test-oci-image-latest test-oci-image-digest
 IMAGE_TAGS_LIST = test all
 SAME_IMAGE_TAGS_LIST = 1 2 3
 
-all-push: all-push-images push-manifest
+all-push: all-push-docker all-push-oci
+all-push-docker: all-push-docker-images push-docker-manifest
 
-all-push-images: $(addprefix sub-push-,$(ALL_ARCH))
+# TODO: Add push-oci-manifest target when 
+# https://github.com/estesp/manifest-tool v2 is released
+# because it will provide OCI support
+all-push-oci: all-push-oci-images
 
-sub-push-%:
-	$(foreach name,$(IMAGES_LIST),touch $(name) && docker build . -t $(REGISTRY)/$(name)-$*:$(TAG) --build-arg TEST=$(name) --build-arg ARCH=$($*) && rm -f $(name);)
-	$(foreach name,$(IMAGES_LIST),docker push $(REGISTRY)/$(name)-$*:$(TAG);)
+all-push-docker-images: $(addprefix sub-push-docker-,$(ALL_ARCH))
+all-push-oci-images: $(addprefix sub-push-oci-,$(ALL_ARCH))
+
+sub-push-docker-%:
+	$(foreach name,$(DOCKER_IMAGES_LIST),touch $(name) && docker build . -t $(REGISTRY)/$(name)-$*:$(TAG) --build-arg TEST=$(name) --build-arg ARCH=$($*) && rm -f $(name);)
+	$(foreach name,$(DOCKER_IMAGES_LIST),docker push $(REGISTRY)/$(name)-$*:$(TAG);)
 	$(foreach tag,$(IMAGE_TAGS_LIST),touch $(tag) && docker build . -t $(REGISTRY)/test-image-tag-$*:$(tag) --build-arg TEST=$(tag) --build-arg ARCH=$($*) && rm -f $(tag);)
 	$(foreach tag,$(IMAGE_TAGS_LIST),docker push $(REGISTRY)/test-image-tag-$*:$(tag);)
 	$(foreach tag,$(SAME_IMAGE_TAGS_LIST),touch same-image && docker build . -t $(REGISTRY)/test-image-tags-$*:$(tag) --build-arg TEST=same-image --build-arg ARCH=$($*) && rm -f same-image;)
 	$(foreach tag,$(SAME_IMAGE_TAGS_LIST),docker push $(REGISTRY)/test-image-tags-$*:$(tag);)
 
-push-manifest: manifest-tool
-	$(foreach image,$(IMAGES_LIST),$(MANIFEST_TOOL) push from-args --platforms $(call join_platforms,$(ALL_ARCH)) --template $(REGISTRY)/$(image)-ARCH:$(TAG) --target $(REGISTRY)/$(image):$(TAG);)
+sub-push-oci-%:
+	../../hack/install-buildah.sh
+	$(foreach name,$(OCI_IMAGES_LIST),touch $(name) && buildah build-using-dockerfile -t $(REGISTRY)/$(name)-$*:$(TAG) --build-arg TEST=$(name) --build-arg ARCH=$($*) && rm -f $(name);)
+	$(foreach name,$(OCI_IMAGES_LIST),buildah push $(REGISTRY)/$(name)-$*:$(TAG);)
+	$(foreach tag,$(IMAGE_TAGS_LIST),touch $(tag) && buildah build-using-dockerfile -t $(REGISTRY)/test-image-tag-$*:$(tag) --build-arg TEST=$(tag) --build-arg ARCH=$($*) && rm -f $(tag);)
+	$(foreach tag,$(IMAGE_TAGS_LIST),buildah push $(REGISTRY)/test-image-tag-$*:$(tag);)
+	$(foreach tag,$(SAME_IMAGE_TAGS_LIST),touch same-image && buildah build-using-dockerfile -t $(REGISTRY)/test-image-tags-$*:$(tag) --build-arg TEST=same-image --build-arg ARCH=$($*) && rm -f same-image;)
+	$(foreach tag,$(SAME_IMAGE_TAGS_LIST),buildah push $(REGISTRY)/test-image-tags-$*:$(tag);)
+
+push-docker-manifest: manifest-tool
+	$(foreach image,$(DOCKER_IMAGES_LIST),$(MANIFEST_TOOL) push from-args --platforms $(call join_platforms,$(ALL_ARCH)) --template $(REGISTRY)/$(image)-ARCH:$(TAG) --target $(REGISTRY)/$(image):$(TAG);)
+	$(foreach tag,$(IMAGE_TAGS_LIST),$(MANIFEST_TOOL) push from-args --platforms $(call join_platforms,$(ALL_ARCH)) --template $(REGISTRY)/test-image-tag-ARCH:$(tag) --target $(REGISTRY)/test-image-tag:$(tag);)
+	$(foreach tag,$(SAME_IMAGE_TAGS_LIST),$(MANIFEST_TOOL) push from-args --platforms $(call join_platforms,$(ALL_ARCH)) --template $(REGISTRY)/test-image-tags-ARCH:$(tag) --target $(REGISTRY)/test-image-tags:$(tag);)
+
+# TODO: Dependant on OCI support which will be available
+# when https://github.com/estesp/manifest-tool v2 is released
+push-oci-manifest: manifest-tool
+	$(foreach image,$(OCI_IMAGES_LIST),$(MANIFEST_TOOL) push from-args --platforms $(call join_platforms,$(ALL_ARCH)) --template $(REGISTRY)/$(image)-ARCH:$(TAG) --target $(REGISTRY)/$(image):$(TAG);)
 	$(foreach tag,$(IMAGE_TAGS_LIST),$(MANIFEST_TOOL) push from-args --platforms $(call join_platforms,$(ALL_ARCH)) --template $(REGISTRY)/test-image-tag-ARCH:$(tag) --target $(REGISTRY)/test-image-tag:$(tag);)
 	$(foreach tag,$(SAME_IMAGE_TAGS_LIST),$(MANIFEST_TOOL) push from-args --platforms $(call join_platforms,$(ALL_ARCH)) --template $(REGISTRY)/test-image-tags-ARCH:$(tag) --target $(REGISTRY)/test-image-tags:$(tag);)
