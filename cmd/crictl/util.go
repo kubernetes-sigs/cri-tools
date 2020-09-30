@@ -349,7 +349,7 @@ func ctxWithTimeout(timeout time.Duration) context.Context {
 	ctx, cancel := context.WithCancel(context.Background())
 	if timeout > 0 {
 		go func() {
-			time.Sleep(timeout * time.Second)
+			time.Sleep(timeout)
 			cancel()
 		}()
 	}
