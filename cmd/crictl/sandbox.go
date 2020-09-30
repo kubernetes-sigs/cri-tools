@@ -53,10 +53,10 @@ var runPodCommand = &cli.Command{
 			Usage:   "Runtime handler to use. Available options are defined by the container runtime.",
 		},
 		&cli.DurationFlag{
-			Name:    "timeout",
-			Aliases: []string{"t"},
+			Name:    "cancel-timeout",
+			Aliases: []string{"T"},
 			Value:   0,
-			Usage:   "Seconds to wait for a run pod sandox request to complete before cancelling the request",
+			Usage:   "Seconds to wait for a run pod sandbox request to complete before cancelling the request",
 		},
 	},
 
@@ -78,7 +78,7 @@ var runPodCommand = &cli.Command{
 		}
 
 		// Test RuntimeServiceClient.RunPodSandbox
-		podID, err := RunPodSandbox(runtimeClient, podSandboxConfig, context.String("runtime"), context.Duration("timeout"))
+		podID, err := RunPodSandbox(runtimeClient, podSandboxConfig, context.String("runtime"), context.Duration("cancel-timeout"))
 		if err != nil {
 			return errors.Wrap(err, "run pod sandbox")
 		}
