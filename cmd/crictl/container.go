@@ -124,10 +124,10 @@ var createContainerCommand = &cli.Command{
 	Usage:     "Create a new container",
 	ArgsUsage: "POD container-config.[json|yaml] pod-config.[json|yaml]",
 	Flags:     append(createPullFlags, &cli.DurationFlag{
-		Name:    "timeout",
-		Aliases: []string{"t"},
+		Name:    "cancel-timeout",
+		Aliases: []string{"T"},
 		Value:   0,
-		Usage:   "Seconds to wait for a container create request before cancelling the request",
+		Usage:   "Seconds to wait for a container create request to complete before cancelling the request",
 	}),
 
 	Action: func(context *cli.Context) error {
@@ -167,7 +167,7 @@ var createContainerCommand = &cli.Command{
 					creds:    context.String("creds"),
 					auth:     context.String("auth"),
 				},
-				timeout: context.Duration("timeout"),
+				timeout: context.Duration("cancel-timeout"),
 			},
 		}
 
