@@ -346,12 +346,9 @@ func matchesImage(imageClient pb.ImageServiceClient, image string, containerImag
 }
 
 func ctxWithTimeout(timeout time.Duration) context.Context {
-	ctx, cancel := context.WithCancel(context.Background())
-	if timeout > 0 {
-		go func() {
-			time.Sleep(timeout)
-			cancel()
-		}()
+	if timeout == 0 {
+		return context.Background()
 	}
+	ctx, _ := context.WithTimeout(context.Background(), timeout)
 	return ctx
 }
