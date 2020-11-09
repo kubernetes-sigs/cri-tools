@@ -123,7 +123,7 @@ var createContainerCommand = &cli.Command{
 	Name:      "create",
 	Usage:     "Create a new container",
 	ArgsUsage: "POD container-config.[json|yaml] pod-config.[json|yaml]",
-	Flags:     append(createPullFlags, &cli.DurationFlag{
+	Flags: append(createPullFlags, &cli.DurationFlag{
 		Name:    "cancel-timeout",
 		Aliases: []string{"T"},
 		Value:   0,
@@ -672,7 +672,9 @@ func CreateContainer(
 		SandboxConfig: podConfig,
 	}
 	logrus.Debugf("CreateContainerRequest: %v", request)
-	r, err := rClient.CreateContainer(ctxWithTimeout(opts.timeout), request)
+	ctx, cancel := ctxWithTimeout(opts.timeout)
+	defer cancel()
+	r, err := rClient.CreateContainer(ctx, request)
 	logrus.Debugf("CreateContainerResponse: %v", r)
 	if err != nil {
 		return "", err

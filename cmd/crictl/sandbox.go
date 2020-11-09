@@ -326,7 +326,9 @@ func RunPodSandbox(client pb.RuntimeServiceClient, config *pb.PodSandboxConfig, 
 		RuntimeHandler: runtime,
 	}
 	logrus.Debugf("RunPodSandboxRequest: %v", request)
-	r, err := client.RunPodSandbox(ctxWithTimeout(timeout), request)
+	ctx, cancel := ctxWithTimeout(timeout)
+	defer cancel()
+	r, err := client.RunPodSandbox(ctx, request)
 	logrus.Debugf("RunPodSandboxResponse: %v", r)
 	if err != nil {
 		return "", err

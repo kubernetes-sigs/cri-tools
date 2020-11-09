@@ -345,10 +345,9 @@ func matchesImage(imageClient pb.ImageServiceClient, image string, containerImag
 	return r1.Image.Id == r2.Image.Id, nil
 }
 
-func ctxWithTimeout(timeout time.Duration) context.Context {
+func ctxWithTimeout(timeout time.Duration) (context.Context, context.CancelFunc) {
 	if timeout == 0 {
-		return context.Background()
+		return context.Background(), func() {}
 	}
-	ctx, _ := context.WithTimeout(context.Background(), timeout)
-	return ctx
+	return context.WithTimeout(context.Background(), timeout)
 }

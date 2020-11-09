@@ -17,26 +17,54 @@ linters:
     - structcheck
     - typecheck
     - varcheck
+    # - asciicheck
     # - bodyclose
+    # - dogsled
     # - dupl
     # - errcheck
+    # - errorlint
+    # - exhaustive
+    # - exhaustivestruct
+    # - exportloopref
+    # - funlen
+    # - gci
     # - gochecknoglobals
     # - gochecknoinits
+    # - gocognit
     # - goconst
     # - gocritic
     # - gocyclo
+    # - godot
+    # - godox
+    # - goerr113
+    # - gofumpt
+    # - goheader
     # - golint
-    # - gosec
-    # - gosimple
+    # - gomnd
+    # - gomodguard
+    # - goprintffuncname
+    # - gosec (gas)
+    # - gosimple (megacheck)
     # - interfacer
     # - lll
     # - maligned
+    # - nestif
+    # - nlreturn
+    # - noctx
+    # - nolintlint
+    # - rowserrcheck
     # - scopelint
+    # - sqlclosecheck
     # - staticcheck
     # - stylecheck
+    # - testpackage
+    # - tparallel
     # - unconvert
     # - unparam
     # - unused
+    # - whitespace
+    # - wrapcheck
+    # - wsl
 linters-settings:
   gocritic:
     enabled-checks:
