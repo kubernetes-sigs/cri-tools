@@ -12,7 +12,7 @@ github.com/davecgh/go-spew/spew
 ## explicit
 github.com/docker/distribution/digestset
 github.com/docker/distribution/reference
-# github.com/docker/docker v17.12.0-ce-rc1.0.20200821074627-7ae5222c72cc+incompatible
+# github.com/docker/docker v20.10.0-beta1.0.20201108103107-c7109494fe65+incompatible
 ## explicit
 github.com/docker/docker/api/types/time
 github.com/docker/docker/daemon/logger/jsonfilelog/jsonlog
@@ -35,7 +35,7 @@ github.com/gogo/protobuf/sortkeys
 # github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 ## explicit
 github.com/golang/glog
-# github.com/golang/protobuf v1.4.2
+# github.com/golang/protobuf v1.4.3
 ## explicit
 github.com/golang/protobuf/jsonpb
 github.com/golang/protobuf/proto
@@ -45,12 +45,10 @@ github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/google/gofuzz v1.1.0
 github.com/google/gofuzz
-# github.com/google/uuid v1.1.1
+# github.com/google/uuid v1.1.2
 github.com/google/uuid
 # github.com/json-iterator/go v1.1.10
 github.com/json-iterator/go
-# github.com/konsorten/go-windows-terminal-sequences v1.0.3
-github.com/konsorten/go-windows-terminal-sequences
 # github.com/mitchellh/go-wordwrap v1.0.0
 github.com/mitchellh/go-wordwrap
 # github.com/moby/term v0.0.0-20200312100748-672ec06f55cd
@@ -66,7 +64,7 @@ github.com/nxadm/tail/ratelimiter
 github.com/nxadm/tail/util
 github.com/nxadm/tail/watch
 github.com/nxadm/tail/winfile
-# github.com/onsi/ginkgo v1.14.0
+# github.com/onsi/ginkgo v1.14.2
 ## explicit
 github.com/onsi/ginkgo
 github.com/onsi/ginkgo/config
@@ -94,7 +92,7 @@ github.com/onsi/ginkgo/reporters/stenographer
 github.com/onsi/ginkgo/reporters/stenographer/support/go-colorable
 github.com/onsi/ginkgo/reporters/stenographer/support/go-isatty
 github.com/onsi/ginkgo/types
-# github.com/onsi/gomega v1.10.1
+# github.com/onsi/gomega v1.10.3
 ## explicit
 github.com/onsi/gomega
 github.com/onsi/gomega/format
@@ -127,19 +125,19 @@ github.com/pkg/errors
 github.com/russross/blackfriday/v2
 # github.com/shurcooL/sanitized_anchor_name v1.0.0
 github.com/shurcooL/sanitized_anchor_name
-# github.com/sirupsen/logrus v1.6.0
+# github.com/sirupsen/logrus v1.7.0
 ## explicit
 github.com/sirupsen/logrus
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
-# github.com/urfave/cli/v2 v2.2.0
+# github.com/urfave/cli/v2 v2.3.0
 ## explicit
 github.com/urfave/cli/v2
 # github.com/willf/bitset v1.1.11-0.20200630133818-d5bec3311243
 github.com/willf/bitset
 # golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/net v0.0.0-20200822124328-c89045814202
+# golang.org/x/net v0.0.0-20201031054903-ff519b6c9102
 ## explicit
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
@@ -155,7 +153,7 @@ golang.org/x/net/trace
 # golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20200826173525-f9321e4c35a6
+# golang.org/x/sys v0.0.0-20201107080550-4d91cf3a1aaf
 ## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
@@ -196,7 +194,7 @@ google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/urlfetch
 # google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.31.1
+# google.golang.org/grpc v1.33.2
 ## explicit
 google.golang.org/grpc
 google.golang.org/grpc/attributes
@@ -209,7 +207,6 @@ google.golang.org/grpc/binarylog/grpc_binarylog_v1
 google.golang.org/grpc/codes
 google.golang.org/grpc/connectivity
 google.golang.org/grpc/credentials
-google.golang.org/grpc/credentials/internal
 google.golang.org/grpc/encoding
 google.golang.org/grpc/encoding/proto
 google.golang.org/grpc/grpclog
@@ -239,13 +236,12 @@ google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
-# google.golang.org/protobuf v1.24.0
+# google.golang.org/protobuf v1.25.0
 google.golang.org/protobuf/encoding/protojson
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
 google.golang.org/protobuf/internal/descfmt
 google.golang.org/protobuf/internal/descopts
-google.golang.org/protobuf/internal/detectknown
 google.golang.org/protobuf/internal/detrand
 google.golang.org/protobuf/internal/encoding/defval
 google.golang.org/protobuf/internal/encoding/json
@@ -253,12 +249,11 @@ google.golang.org/protobuf/internal/encoding/messageset
 google.golang.org/protobuf/internal/encoding/tag
 google.golang.org/protobuf/internal/encoding/text
 google.golang.org/protobuf/internal/errors
-google.golang.org/protobuf/internal/fieldnum
 google.golang.org/protobuf/internal/fieldsort
 google.golang.org/protobuf/internal/filedesc
 google.golang.org/protobuf/internal/filetype
 google.golang.org/protobuf/internal/flags
-google.golang.org/protobuf/internal/genname
+google.golang.org/protobuf/internal/genid
 google.golang.org/protobuf/internal/impl
 google.golang.org/protobuf/internal/mapsort
 google.golang.org/protobuf/internal/pragma

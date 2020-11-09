@@ -125,7 +125,7 @@ test-e2e: $(GINKGO)
 		test
 
 vendor:
-	export GO111MODULE=on \
+	export GO111MODULE=on GOSUMDB= && \
 		$(GO) mod tidy && \
 		$(GO) mod vendor && \
 		$(GO) mod verify
