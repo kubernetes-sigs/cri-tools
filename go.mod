@@ -4,21 +4,21 @@ go 1.15
 
 require (
 	github.com/docker/distribution v2.7.1+incompatible
-	github.com/docker/docker v17.12.0-ce-rc1.0.20200821074627-7ae5222c72cc+incompatible
+	github.com/docker/docker v20.10.0-beta1.0.20201108103107-c7109494fe65+incompatible
 	github.com/docker/go-units v0.4.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-	github.com/golang/protobuf v1.4.2
-	github.com/onsi/ginkgo v1.14.0
-	github.com/onsi/gomega v1.10.1
+	github.com/golang/protobuf v1.4.3
+	github.com/onsi/ginkgo v1.14.2
+	github.com/onsi/gomega v1.10.3
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/selinux v1.6.0
 	github.com/pborman/uuid v1.2.1
 	github.com/pkg/errors v0.9.1
-	github.com/sirupsen/logrus v1.6.0
-	github.com/urfave/cli/v2 v2.2.0
-	golang.org/x/net v0.0.0-20200822124328-c89045814202
-	golang.org/x/sys v0.0.0-20200826173525-f9321e4c35a6
-	google.golang.org/grpc v1.31.1
+	github.com/sirupsen/logrus v1.7.0
+	github.com/urfave/cli/v2 v2.3.0
+	golang.org/x/net v0.0.0-20201031054903-ff519b6c9102
+	golang.org/x/sys v0.0.0-20201107080550-4d91cf3a1aaf
+	google.golang.org/grpc v1.33.2
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0
