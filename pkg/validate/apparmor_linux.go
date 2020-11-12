@@ -108,7 +108,7 @@ func createContainerWithAppArmor(rc internalapi.RuntimeService, ic internalapi.I
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
-		Command:  []string{"touch", "foo"},
+		Command:  []string{"touch", "/tmp/foo"},
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
 				ApparmorProfile: profile,
