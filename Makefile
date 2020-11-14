@@ -83,14 +83,6 @@ install-crictl: crictl
 
 install: install-critest install-crictl
 
-uninstall-critest:
-	rm -f $(BINDIR)/critest
-
-uninstall-crictl:
-	rm -f $(BINDIR)/crictl
-
-uninstall: uninstall-critest uninstall-crictl
-
 lint: $(GOLANGCI_LINT)
 	$(GOLANGCI_LINT) run
 	./hack/repo-infra/verify/verify-boilerplate.sh
