@@ -126,7 +126,6 @@ var createContainerCommand = &cli.Command{
 	Flags: append(createPullFlags, &cli.DurationFlag{
 		Name:    "cancel-timeout",
 		Aliases: []string{"T"},
-		Value:   0,
 		Usage:   "Seconds to wait for a container create request to complete before cancelling the request",
 	}),
 
@@ -274,7 +273,6 @@ var stopContainerCommand = &cli.Command{
 		&cli.Int64Flag{
 			Name:    "timeout",
 			Aliases: []string{"t"},
-			Value:   10,
 			Usage:   "Seconds to wait to kill the container after a graceful stop is requested",
 		},
 	},
@@ -542,7 +540,6 @@ var runContainerCommand = &cli.Command{
 	}, &cli.DurationFlag{
 		Name:    "timeout",
 		Aliases: []string{"t"},
-		Value:   10,
 		Usage:   "Seconds to wait for a container create request before cancelling the request",
 	}),
 
