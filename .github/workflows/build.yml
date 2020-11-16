@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Install Go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v2
         with:
           go-version: '1.15'
 
@@ -45,7 +45,7 @@ jobs:
                                          # Ref: https://github.com/uraimo/run-on-arch-action
     steps:
       - name: Install Go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v2
         with:
           go-version: '1.15'
 
