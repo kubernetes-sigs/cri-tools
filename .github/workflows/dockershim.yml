@@ -13,15 +13,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Install Go 1.13
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v2
         with:
           go-version: '1.15'
 
       - name: Set Go binary path
         shell: bash
         run: |
-          echo "::set-env name=GOPATH::${{ github.workspace }}"
-          echo "::add-path::${{ github.workspace }}/bin"
+          echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
+          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
 
       - name: Checkout cri-tools for this commit
         uses: actions/checkout@v2

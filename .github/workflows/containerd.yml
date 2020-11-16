@@ -40,14 +40,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Install Go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v2
         with:
           go-version: '1.15'
 
       - name: Set env
+        shell: bash
         run: |
-          echo "::set-env name=GOPATH::${{ github.workspace }}"
-          echo "::add-path::${{ github.workspace }}/bin"
+          echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
+          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
 
       - name: Checkout containerd/containerd ${{matrix.version}}
         uses: actions/checkout@v2
@@ -280,7 +281,7 @@ jobs:
           TEST_RC=$?
           test $TEST_RC -ne 0 && cat ${BDIR}/containerd-cri.log
           sudo pkill containerd
-          echo "::set-env name=CONTD_CRI_DIR::$BDIR"
+          echo "CONTD_CRI_DIR=$BDIR" >> $GITHUB_ENV
           test $TEST_RC -eq 0 || /bin/false
 
       - name: Run critest on Windows
@@ -307,7 +308,7 @@ jobs:
           test $TEST_RC -ne 0 && cat ${REPORT_DIR}/containerd.log
           set -o errexit
           kill -9 $pid
-          echo "::set-env name=CONTD_CRI_DIR::$REPORT_DIR"
+          echo "CONTD_CRI_DIR=$REPORT_DIR" >> $GITHUB_ENV
           exit ${TEST_RC}
 
       - name: Upload containerd ${{matrix.version}} logs
