@@ -57,6 +57,7 @@ help:
 	@echo " * 'clean' - Clean artifacts."
 
 critest:
+	go env
 	CGO_ENABLED=0 $(GO_TEST) -c -o $(CURDIR)/_output/critest$(BIN_EXT) \
 		-ldflags '$(GO_LDFLAGS)' \
 		-tags '$(BUILDTAGS)' \
