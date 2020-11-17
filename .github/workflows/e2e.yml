@@ -29,21 +29,9 @@ jobs:
 
       - name: Run e2e test
         run: |
-          sudo apt-get update &&\
-          sudo apt-get install -y libseccomp-dev
+          set -e
+          sudo -E go env
+          echo $PATH
+          sudo -E echo $PATH
 
-          VERSION=v0.8.6 &&\
-          sudo mkdir -p /opt/cni/bin &&\
-          sudo wget -qO- https://github.com/containernetworking/plugins/releases/download/$VERSION/cni-plugins-linux-amd64-$VERSION.tgz \
-              | sudo tar xfz - -C /opt/cni/bin &&\
-          ls -lah /opt/cni/bin
-
-          VERSION=v1.0.0-rc10 &&\
-          sudo wget -q -O \
-            /usr/bin/runc \
-            https://github.com/opencontainers/runc/releases/download/$VERSION/runc.amd64 &&\
-          sudo chmod +x /usr/bin/runc &&\
-          runc --version
-
-          sudo -E env "PATH=$PATH" make all install test-e2e TESTFLAGS=-v
         working-directory: src/github.com/kubernetes-sigs/cri-tools
