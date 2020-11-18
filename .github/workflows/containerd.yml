@@ -88,7 +88,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           make
-          sudo PATH=$PATH GOPATH=$GOPATH make install
+          sudo -E PATH=$PATH make install
         working-directory: ${{ github.workspace }}/src/github.com/containerd/containerd
 
       - name: Install containerd on Windows
@@ -103,7 +103,7 @@ jobs:
         env:
           RUNC_FLAVOR: ${{matrix.runc}}
         run: |
-          sudo GOPATH=$GOPATH script/setup/install-runc
+          sudo -E PATH=$PATH script/setup/install-runc
         working-directory: src/github.com/containerd/containerd
 
       - name: Build Windows container shims
@@ -126,7 +126,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           make
-          sudo PATH=$PATH GOPATH=$GOPATH make install
+          sudo -E PATH=$PATH make install
         working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
 
       - name: Build cri-tools on Windows
@@ -277,7 +277,7 @@ jobs:
           sudo /usr/local/bin/ctr -a ${BDIR}/c.sock version
           sudo /usr/local/sbin/runc --version
 
-          sudo PATH=$PATH GOPATH=$GOPATH critest --runtime-endpoint=unix:///${BDIR}/c.sock --parallel=8
+          sudo -E PATH=$PATH critest --runtime-endpoint=unix:///${BDIR}/c.sock --parallel=8
           TEST_RC=$?
           test $TEST_RC -ne 0 && cat ${BDIR}/containerd-cri.log
           sudo pkill containerd
