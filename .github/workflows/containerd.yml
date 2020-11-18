@@ -273,11 +273,11 @@ jobs:
             [plugins.cri.containerd.default_runtime]
               runtime_type = \"${{matrix.runtime}}\"
           EOF
-          sudo PATH=$PATH BDIR=$BDIR /usr/local/bin/containerd -a ${BDIR}/c.sock -root ${BDIR}/root -state ${BDIR}/state -log-level debug &> ${BDIR}/containerd-cri.log &
-          sudo BDIR=$BDIR /usr/local/bin/ctr -a ${BDIR}/c.sock version
-          sudo BDIR=$BDIR /usr/local/sbin/runc --version
+          sudo PATH=$PATH /usr/local/bin/containerd -a ${BDIR}/c.sock -root ${BDIR}/root -state ${BDIR}/state -log-level debug &> ${BDIR}/containerd-cri.log &
+          sudo /usr/local/bin/ctr -a ${BDIR}/c.sock version
+          sudo /usr/local/sbin/runc --version
 
-          sudo PATH=$PATH BDIR=$BDIR GOPATH=$GOPATH critest --runtime-endpoint=unix:///${BDIR}/c.sock --parallel=8
+          sudo PATH=$PATH GOPATH=$GOPATH critest --runtime-endpoint=unix:///${BDIR}/c.sock --parallel=8
           TEST_RC=$?
           test $TEST_RC -ne 0 && cat ${BDIR}/containerd-cri.log
           sudo pkill containerd
@@ -298,12 +298,12 @@ jobs:
           REPORT_DIR="${REPORT_DIR:-"c/_artifacts"}"
           mkdir -p "${REPORT_DIR}"
 
-          PATH=$PATH containerd -log-level debug &> "${REPORT_DIR}/containerd-cri.log" &
+          containerd -log-level debug &> "${REPORT_DIR}/containerd-cri.log" &
           pid=$!
-          PATH=$PATH ctr version
+          ctr version
 
           set +o errexit
-          PATH=$PATH GOPATH=$GOPATH critest --runtime-endpoint=npipe:////./pipe/containerd-containerd --ginkgo.focus="${FOCUS}" --ginkgo.skip="${SKIP}" --report-dir="${REPORT_DIR}" --report-prefix="windows"
+          critest --runtime-endpoint=npipe:////./pipe/containerd-containerd --ginkgo.focus="${FOCUS}" --ginkgo.skip="${SKIP}" --report-dir="${REPORT_DIR}" --report-prefix="windows"
           TEST_RC=$?
           test $TEST_RC -ne 0 && cat ${REPORT_DIR}/containerd.log
           set -o errexit
