@@ -75,21 +75,13 @@ clean:
 
 binaries: critest crictl
 
-install-critest:
-	install -D -m 755 $(CURDIR)/_output/critest$(BIN_EXT) $(BINDIR)/critest$(BIN_EXT)
+install-critest: critest
+	install -D -m 755 $(CURDIR)/_output/critest$(BIN_EXT) $(DESTDIR)$(BINDIR)/critest$(BIN_EXT)
 
-install-crictl:
-	install -D -m 755 $(CURDIR)/_output/crictl$(BIN_EXT) $(BINDIR)/crictl$(BIN_EXT)
+install-crictl: crictl
+	install -D -m 755 $(CURDIR)/_output/crictl$(BIN_EXT) $(DESTDIR)$(BINDIR)/crictl$(BIN_EXT)
 
 install: install-critest install-crictl
-
-uninstall-critest:
-	rm -f $(BINDIR)/critest
-
-uninstall-crictl:
-	rm -f $(BINDIR)/crictl
-
-uninstall: uninstall-critest uninstall-crictl
 
 lint: $(GOLANGCI_LINT)
 	$(GOLANGCI_LINT) run
