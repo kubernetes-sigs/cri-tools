@@ -41,7 +41,7 @@ jobs:
           sudo cp $(command -v ginkgo) /usr/local/bin
 
       - name: Setup GCloud
-        uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        uses: google-github-actions/setup-gcloud@master
 
       - name: Install CRI-O latest master
         if: ${{matrix.version == 'master'}}
@@ -57,7 +57,7 @@ jobs:
           FILENAME=${TARBALL##*/}
           DIR=${FILENAME%%.*}
           pushd "$DIR" || exit
-          sudo PATH=$PATH GOPATH=$GOPATH make install
+          sudo -E PATH=$PATH make install
 
       - name: Install CRI-O latest version
         if: ${{matrix.version == 'v1.19.0'}}
@@ -68,7 +68,7 @@ jobs:
           gsutil cp $RELEASE .
           tar xf $TARBALL
           pushd $DIR || exit
-          sudo PATH=$PATH GOPATH=$GOPATH make install
+          sudo -E PATH=$PATH make install
 
       - name: Configure and start CRI-O
         run: |
@@ -85,12 +85,12 @@ jobs:
       - name: Build cri-tools
         run: |
           make
-          sudo PATH=$PATH GOPATH=$GOPATH make install
+          sudo -E PATH=$PATH make install
         working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
 
       - name: Run critest
         run: |
-          sudo PATH=$PATH GOPATH=$GOPATH critest \
+          sudo -E PATH=$PATH critest \
             --runtime-endpoint=unix:///var/run/crio/crio.sock \
             --ginkgo.flakeAttempts=3 \
             --parallel=$(nproc)

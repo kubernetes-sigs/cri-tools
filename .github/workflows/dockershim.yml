@@ -12,7 +12,7 @@ jobs:
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Install Go 1.13
+      - name: Install Go
         uses: actions/setup-go@v2
         with:
           go-version: '1.15'
@@ -36,18 +36,18 @@ jobs:
       - name: Build cri-tools
         run: |
           make
-          sudo PATH=$PATH GOPATH=$GOPATH make install
+          sudo -E PATH=$PATH make install
         working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
 
       - name: Build cri-dockerd
         run: |
-          sudo env GOPATH=$GOPATH hack/install-cri-dockerd.sh
+          sudo -E PATH=$PATH hack/install-cri-dockerd.sh
         working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
 
       - name: Run critest
         run: |
-          sudo make install.ginkgo
-          sudo env GOPATH=$GOPATH hack/run-dockershim-critest.sh
+          sudo -E PATH=$PATH make install.ginkgo
+          sudo -E PATH=$PATH hack/run-dockershim-critest.sh
         working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
 
       - name: Dump docker logs

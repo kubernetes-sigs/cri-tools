@@ -45,5 +45,5 @@ jobs:
           sudo chmod +x /usr/bin/runc &&\
           runc --version
 
-          sudo -E env "PATH=$PATH" make all install test-e2e TESTFLAGS=-v
+          sudo -E PATH=$PATH make all install test-e2e TESTFLAGS=-v
         working-directory: src/github.com/kubernetes-sigs/cri-tools
