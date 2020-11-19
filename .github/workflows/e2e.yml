@@ -58,7 +58,7 @@ jobs:
               | sudo tar xfz - -C /opt/cni/bin &&\
           ls -lah /opt/cni/bin
 
-          VERSION=v1.0.0-rc10 &&\
+          VERSION=v1.0.0-rc92 &&\
           sudo wget -q -O \
             /usr/bin/runc \
             https://github.com/opencontainers/runc/releases/download/$VERSION/runc.amd64 &&\
