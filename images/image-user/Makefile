@@ -1,4 +1,4 @@
-# Copyright 2018 The Kubernetes Authors.
+# Copyright 2020 The Kubernetes Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,34 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include ../../hack/make-rules/Makefile.manifest
-include ../../hack/make-rules/BASEIMAGES
+.PHONY: all manifest-tool push-manifest
 
-.PHONY: all test-image-user-uid test-image-user-username test-image-user-uid-group test-image-user-username-group push-manifest
+MANIFEST_TOOL_DIR := $(shell mktemp -d)
+export PATH := $(MANIFEST_TOOL_DIR):$(PATH)
 
-REGISTRY = gcr.io/cri-tools
+MANIFEST_TOOL_VERSION := v0.7.0
+USERNAME ?= oauth2accesstoken
+PASSWORD ?= $(shell gcloud auth print-access-token)
+MANIFEST_TOOL = manifest-tool --username=$(USERNAME) --password=$(PASSWORD)
+
+space :=
+space +=
+comma := ,
+prefix_linux = $(addprefix linux/,$(strip $1))
+join_platforms = $(subst $(space),$(comma),$(call prefix_linux,$(strip $1)))
+
+REGISTRY = gcr.io/$(PROJ_ID)
 ALL_ARCH = amd64 arm arm64 ppc64le s390x
 TAG = latest
 IMAGES_LIST = test-image-user-uid test-image-user-username test-image-user-uid-group test-image-user-username-group
 
-all: test-image-user-uid test-image-user-username test-image-user-uid-group test-image-user-username-group push-manifest
+all: manifest-tool push-manifest
 
-test-image-user-uid:
-	$(foreach arch,$(ALL_ARCH),docker build . -t $(REGISTRY)/$@-$(arch) --build-arg ARCH=$($(arch)) --build-arg USER=1002;)
-	$(foreach arch,$(ALL_ARCH),docker push $(REGISTRY)/$@-$(arch);)
+manifest-tool:
+	curl -sSL https://github.com/estesp/manifest-tool/releases/download/$(MANIFEST_TOOL_VERSION)/manifest-tool-linux-amd64 > $(MANIFEST_TOOL_DIR)/manifest-tool
+	chmod +x $(MANIFEST_TOOL_DIR)/manifest-tool
 
-test-image-user-username:
-	$(foreach arch,$(ALL_ARCH),docker build . -t $(REGISTRY)/$@-$(arch) --build-arg ARCH=$($(arch)) --build-arg USER=www-data;)
-	$(foreach arch,$(ALL_ARCH),docker push $(REGISTRY)/$@-$(arch);)
-
-
-test-image-user-uid-group:
-	$(foreach arch,$(ALL_ARCH),docker build . -t $(REGISTRY)/$@-$(arch) --build-arg ARCH=$($(arch)) --build-arg USER=1003:users ;)
-	$(foreach arch,$(ALL_ARCH),docker push $(REGISTRY)/$@-$(arch);)
-
-test-image-user-username-group:
-	$(foreach arch,$(ALL_ARCH),docker build . -t $(REGISTRY)/$@-$(arch) --build-arg ARCH=$($(arch)) --build-arg USER=www-data:100 ;)
-	$(foreach arch,$(ALL_ARCH),docker push $(REGISTRY)/$@-$(arch);)
-
-push-manifest: manifest-tool
+push-manifest:
 	$(foreach image,$(IMAGES_LIST),$(MANIFEST_TOOL) push from-args --platforms $(call join_platforms,$(ALL_ARCH)) --template $(REGISTRY)/$(image)-ARCH:$(TAG) --target $(REGISTRY)/$(image):$(TAG);)

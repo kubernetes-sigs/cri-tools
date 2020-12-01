@@ -1,0 +1,57 @@
+# See https://cloud.google.com/cloud-build/docs/build-config
+
+timeout: 1200s
+options:
+  substitution_option: ALLOW_LOOSE
+steps:
+  - name: gcr.io/cloud-builders/docker
+    id : 'build-amd64'
+    args:
+      - build
+      - --tag=gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-amd64
+      - --build-arg=ARCH=amd64
+      - --build-arg=USER=1002;
+      - .
+  - name: gcr.io/cloud-builders/docker
+    id : 'build-arm'
+    args:
+      - build
+      - --tag=gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-arm
+      - --build-arg=ARCH=arm32v6
+      - --build-arg=USER=1002;
+      - .
+  - name: gcr.io/cloud-builders/docker
+    id : 'build-arm64'
+    args:
+      - build
+      - --tag=gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-arm64
+      - --build-arg=ARCH=arm64v8
+      - --build-arg=USER=1002;
+      - .
+  - name: gcr.io/cloud-builders/docker
+    id : 'build-ppc64le'
+    args:
+      - build
+      - --tag=gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-ppc64le
+      - --build-arg=ARCH=ppc64le
+      - --build-arg=USER=1002;
+      - .
+  - name: gcr.io/cloud-builders/docker
+    id : 'build-s390x'
+    args:
+      - build
+      - --tag=gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-s390x
+      - --build-arg=ARCH=s390x
+      - --build-arg=USER=1002;
+      - .
+substitutions:
+  # _IMAGE_TYPE needs to be set to the image that is to be built
+  # Can be one of the following: 'uid', 'username', 'uid-group'
+  # or 'username-group'
+  _IMAGE_TYPE: 'uid'
+images:
+  - 'gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-amd64'
+  - 'gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-arm'
+  - 'gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-arm64'
+  - 'gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-ppc64le'
+  - 'gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-s390x'
