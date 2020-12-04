@@ -63,11 +63,21 @@ COMMANDS:
 - `completion`:         Output bash shell completion code
 - `help, h`:            Shows a list of commands or help for one command
 
-crictl by default connects to Unix: `unix:///var/run/dockershim.sock` or Windows: `tcp://localhost:3735`.  For other runtimes, use:
+crictl by default connects on Unix to:
 
-* [containerd](https://containerd.io): `unix:///run/containerd/containerd.sock`
-* [cri-o](https://cri-o.io): `unix:///var/run/crio/crio.sock`
-* [frakti](https://github.com/kubernetes/frakti): `unix:///var/run/frakti.sock`
+- `unix:///var/run/dockershim.sock` or
+- `unix:///run/containerd/containerd.sock` or
+- `unix:///run/crio/crio.sock`
+
+or on Windows to:
+
+- `npipe:////./pipe/dockershim` or
+- `npipe:////./pipe/containerd` or
+- `npipe:////./pipe/crio`
+
+For other runtimes, use:
+
+- [frakti](https://github.com/kubernetes/frakti): `unix:///var/run/frakti.sock`
 
 The endpoint can be set in three ways:
 
@@ -77,16 +87,17 @@ The endpoint can be set in three ways:
 
 If the endpoint is not set then it works as follows:
 
-- If the runtime endpoint is not set `crictl` will, by default, try to connect using:
+- If the runtime endpoint is not set, `crictl` will by default try to connect using:
   - dockershim
   - containerd
   - cri-o
-- If the image endpoint is not set `crictl` will, by default, use the runtime endpoint setting
+- If the image endpoint is not set, `crictl` will by default use the runtime endpoint setting
 
 > Note: The default endpoints are now deprecated and the runtime endpoint should always be set instead.
 The performance maybe affected as each default connection attempt takes n-seconds to complete before timing out and going to the next in sequence.
 
 Unix:
+
 ```sh
 $ cat /etc/crictl.yaml
 runtime-endpoint: unix:///var/run/dockershim.sock
@@ -95,7 +106,9 @@ timeout: 2
 debug: true
 pull-image-on-create: false
 ```
+
 Windows:
+
 ```cmd
 C:\> type %USERPROFILE%\.crictl\crictl.yaml
 runtime-endpoint: tcp://localhost:3735
