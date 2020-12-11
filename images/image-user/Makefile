@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Build multi-arch test images for non-x86 architecture
+
 .PHONY: all manifest-tool push-manifest
 
 MANIFEST_TOOL_DIR := $(shell mktemp -d)
