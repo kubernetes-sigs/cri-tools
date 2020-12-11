@@ -2316,8 +2316,8 @@ func ResumeThread(thread Handle) (ret uint32, err error) {
 	return
 }
 
-func SetConsoleCursorPosition(console Handle, position Coord) (err error) {
-	r1, _, e1 := syscall.Syscall(procSetConsoleCursorPosition.Addr(), 2, uintptr(console), uintptr(*((*uint32)(unsafe.Pointer(&position)))), 0)
+func setConsoleCursorPosition(console Handle, position uint32) (err error) {
+	r1, _, e1 := syscall.Syscall(procSetConsoleCursorPosition.Addr(), 2, uintptr(console), uintptr(position), 0)
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
