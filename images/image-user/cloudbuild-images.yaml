@@ -1,4 +1,5 @@
 # See https://cloud.google.com/cloud-build/docs/build-config
+# Building test images for cri-tools
 
 timeout: 1200s
 options:
