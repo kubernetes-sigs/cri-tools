@@ -155,25 +155,26 @@ var removePodCommand = &cli.Command{
 
 		funcs := []func() error{}
 		for _, id := range ids {
+			podId := id
 			funcs = append(funcs, func() error {
 				resp, err := runtimeClient.PodSandboxStatus(context.Background(),
-					&pb.PodSandboxStatusRequest{PodSandboxId: id})
+					&pb.PodSandboxStatusRequest{PodSandboxId: podId})
 				if err != nil {
-					return errors.Wrapf(err, "getting sandbox status of pod %q", id)
+					return errors.Wrapf(err, "getting sandbox status of pod %q", podId)
 				}
 				if resp.Status.State == pb.PodSandboxState_SANDBOX_READY {
 					if ctx.Bool("force") {
-						if err := StopPodSandbox(runtimeClient, id); err != nil {
-							return errors.Wrapf(err, "stopping the pod sandbox %q failed", id)
+						if err := StopPodSandbox(runtimeClient, podId); err != nil {
+							return errors.Wrapf(err, "stopping the pod sandbox %q failed", podId)
 						}
 					} else {
-						return errors.Errorf("pod sandbox %q is running, please stop it first", id)
+						return errors.Errorf("pod sandbox %q is running, please stop it first", podId)
 					}
 				}
 
-				err = RemovePodSandbox(runtimeClient, id)
+				err = RemovePodSandbox(runtimeClient, podId)
 				if err != nil {
-					return errors.Wrapf(err, "removing the pod sandbox %q", id)
+					return errors.Wrapf(err, "removing the pod sandbox %q", podId)
 				}
 
 				return nil
