@@ -8,7 +8,7 @@ jobs:
   linux-build-and-critest-cri-o:
     strategy:
       matrix:
-        version: [master, v1.19.0]
+        version: [master, v1.20.0]
     name: ${{matrix.version}} / linux amd64
     runs-on: ubuntu-18.04
     steps:
@@ -70,7 +70,7 @@ jobs:
           sudo -E PATH=$PATH make install
 
       - name: Install CRI-O latest version
-        if: ${{matrix.version == 'v1.19.0'}}
+        if: ${{matrix.version == 'v1.20.0'}}
         run: |
           DIR=crio-${{matrix.version}}
           TARBALL=$DIR.tar.gz
