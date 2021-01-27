@@ -3,7 +3,7 @@
     "name": "busybox"
   },
   "image":{
-    "image": "busybox"
+    "image": "docker.io/busybox"
   },
   "command": [
     "top"
