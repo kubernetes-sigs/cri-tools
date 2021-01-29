@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Copyright 2018 The Kubernetes Authors.
 #
@@ -20,8 +20,6 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-UPLOAD_GCS=${UPLOAD_GCS:-false}
-GCS_PATH=${GCS_PATH:-"kubernetes-release/crictl"}
 VERSION=$(git describe --abbrev=0 --tag)
 CRI_CTL_PLATFORMS=(
     linux/amd64
@@ -47,7 +45,8 @@ CRI_TEST_PLATFORMS=(
 # Create releases output directory.
 PROJECT="github.com/kubernetes-sigs/cri-tools"
 CRI_TOOLS_ROOT="$GOPATH/src/$PROJECT"
-mkdir -p ${CRI_TOOLS_ROOT}/_output/releases
+OUTPUTDIR=$CRI_TOOLS_ROOT/_output/releases
+mkdir -p "$OUTPUTDIR"
 
 GO_LDFLAGS="-X ${PROJECT}/pkg/version.Version=${VERSION}"
 
@@ -66,11 +65,8 @@ for platform in "${CRI_CTL_PLATFORMS[@]}"; do
         -o ${output_bin} \
         -ldflags "${GO_LDFLAGS}" \
         ${PROJECT}/cmd/crictl
-    if $UPLOAD_GCS; then
-      gsutil cp ${output_bin} gs://${GCS_PATH}/crictl-$VERSION-$os-$arch
-      sha1sum ${output_bin} | awk '{print $1}' | gsutil cp - gs://${GCS_PATH}/crictl-$VERSION-$os-$arch.sha1sum
-    fi
-    tar zcvf ${CRI_TOOLS_ROOT}/_output/releases/crictl-$VERSION-$os-$arch.tar.gz \
+    file ${output_bin}
+    tar zcf "$OUTPUTDIR/crictl-$VERSION-$os-$arch.tar.gz" \
         -C ${CRI_TOOLS_ROOT}/_output/bin/$arch-$os \
         ${CRICTL_BIN}
 done
@@ -90,22 +86,23 @@ for platform in "${CRI_TEST_PLATFORMS[@]}"; do
         -o ${output_bin} \
         -ldflags "${GO_LDFLAGS}" \
         ${PROJECT}/cmd/critest
-    if $UPLOAD_GCS; then
-      gsutil cp ${output_bin} gs://${GCS_PATH}/critest-$VERSION-$os-$arch
-      sha1sum ${output_bin} | awk '{print $1}' | gsutil cp - gs://${GCS_PATH}/critest-$VERSION-$os-$arch.sha1sum
-    fi
-    tar zcvf ${CRI_TOOLS_ROOT}/_output/releases/critest-$VERSION-$os-$arch.tar.gz \
+    file ${output_bin}
+    tar zcf "$OUTPUTDIR/critest-$VERSION-$os-$arch.tar.gz" \
         -C ${CRI_TOOLS_ROOT}/_output/bin/$arch-$os \
         ${CRITEST_BIN}
 done
 
+printf "\n## Downloads\n\n"
+printf "| file | sha256 |\n"
+printf "| ---- | ------ |\n"
+
 # Show sha256 for release files
 if [[ "${OSTYPE}" == "darwin"* ]]; then
-  for file in $(ls ${CRI_TOOLS_ROOT}/_output/releases); do
-    echo "$file $(shasum -a 256 ${CRI_TOOLS_ROOT}/_output/releases/$file | awk '{print $1}')"
-  done
+    for file in $(ls "$OUTPUTDIR"); do
+        echo "| $file | $(shasum -a 256 "$OUTPUTDIR/$file" | sed -e "s,$OUTPUTDIR,," | tee "$OUTPUTDIR/$file.sha256" | awk '{print $1}') |"
+    done
 else
-  for file in $(ls ${CRI_TOOLS_ROOT}/_output/releases); do
-    echo "$file $(sha256sum -b ${CRI_TOOLS_ROOT}/_output/releases/$file | awk '{print $1}')"
-  done
+    for file in $(ls "$OUTPUTDIR"); do
+        echo "| $file | $(sha256sum -b "$OUTPUTDIR/$file" | sed -e "s,$OUTPUTDIR,," | tee "$OUTPUTDIR/$file.sha256" | awk '{print $1}') |"
+    done
 fi
