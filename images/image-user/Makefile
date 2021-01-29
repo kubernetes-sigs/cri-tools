@@ -31,7 +31,7 @@ prefix_linux = $(addprefix linux/,$(strip $1))
 join_platforms = $(subst $(space),$(comma),$(call prefix_linux,$(strip $1)))
 
 REGISTRY = gcr.io/$(PROJ_ID)
-ALL_ARCH = amd64 arm arm64 ppc64le s390x
+ALL_ARCH = amd64 arm arm64 ppc64le s390x mips64le
 TAG = latest
 IMAGES_LIST = test-image-user-uid test-image-user-username test-image-user-uid-group test-image-user-username-group
 

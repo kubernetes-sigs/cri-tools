@@ -45,6 +45,14 @@ steps:
       - --build-arg=ARCH=s390x
       - --build-arg=USER=1002;
       - .
+  - name: gcr.io/cloud-builders/docker
+    id : 'build-mips64le'
+    args:
+      - build
+      - --tag=gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-mips64le
+      - --build-arg=ARCH=mips64le
+      - --build-arg=USER=1002;
+      - .
 substitutions:
   # _IMAGE_TYPE needs to be set to the image that is to be built
   # Can be one of the following: 'uid', 'username', 'uid-group'
@@ -56,3 +64,4 @@ images:
   - 'gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-arm64'
   - 'gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-ppc64le'
   - 'gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-s390x'
+  - 'gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-mips64le'
