@@ -3,3 +3,4 @@ arm=arm32v6
 arm64=arm64v8
 ppc64le=ppc64le
 s390x=s390x
+mips64le=mips64le
