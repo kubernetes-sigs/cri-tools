@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+MAKEFLAGS += --no-print-directory
 GO ?= go
 
 # test for go module support
@@ -47,6 +48,9 @@ endef
 GINKGO := $(BUILD_BIN_PATH)/ginkgo
 GOLANGCI_LINT := $(BUILD_BIN_PATH)/golangci-lint
 
+CRITEST := $(BUILD_BIN_PATH)/critest$(BIN_EXT)
+CRICTL := $(BUILD_BIN_PATH)/crictl$(BIN_EXT)
+
 all: binaries
 
 help:
@@ -57,13 +61,19 @@ help:
 	@echo " * 'clean' - Clean artifacts."
 
 critest:
-	CGO_ENABLED=0 $(GO_TEST) -c -o $(CURDIR)/_output/critest$(BIN_EXT) \
+	@$(MAKE) -B $(CRITEST)
+
+$(CRITEST):
+	CGO_ENABLED=0 $(GO_TEST) -c -o $@ \
 		-ldflags '$(GO_LDFLAGS)' \
 		-tags '$(BUILDTAGS)' \
 	     $(PROJECT)/cmd/critest
 
 crictl:
-	CGO_ENABLED=0 $(GO_BUILD) -o $(CURDIR)/_output/crictl$(BIN_EXT) \
+	@$(MAKE) -B $(CRICTL)
+
+$(CRICTL):
+	CGO_ENABLED=0 $(GO_BUILD) -o $@ \
 		-ldflags '$(GO_LDFLAGS)' \
 		-tags '$(BUILDTAGS)' \
 		$(PROJECT)/cmd/crictl
@@ -71,23 +81,19 @@ crictl:
 clean:
 	find . -name \*~ -delete
 	find . -name \#\* -delete
-	rm -rf _output/*
+	rm -rf $(BUILD_PATH)
 
 binaries: critest crictl
 
-install-critest: critest
-	install -D -m 755 $(CURDIR)/_output/critest$(BIN_EXT) $(DESTDIR)$(BINDIR)/critest$(BIN_EXT)
-
-install-crictl: crictl
-	install -D -m 755 $(CURDIR)/_output/crictl$(BIN_EXT) $(DESTDIR)$(BINDIR)/crictl$(BIN_EXT)
-
-install: install-critest install-crictl
+install: $(CRITEST) $(CRICTL)
+	install -d $(DESTDIR)$(BINDIR)
+	install -m 755 $^ $(DESTDIR)$(BINDIR)/
 
 lint: $(GOLANGCI_LINT)
 	$(GOLANGCI_LINT) run
 	./hack/repo-infra/verify/verify-boilerplate.sh
 
-install.tools: install.lint install.ginkgo
+install.tools: $(GINKGO) $(GOLANGCI_LINT)
 
 install.ginkgo: $(GINKGO)
 install.lint: $(GOLANGCI_LINT)
@@ -129,13 +135,10 @@ vendor:
 	clean \
 	binaries \
 	install \
-	install-critest \
-	install-crictl \
-	uninstall \
-	uninstall-critest \
-	uninstall-crictl \
 	lint \
 	install.tools \
+	install.ginkgo \
+	install.lint \
 	release \
 	test-e2e \
 	vendor
