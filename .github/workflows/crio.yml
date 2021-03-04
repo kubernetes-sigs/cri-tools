@@ -58,15 +58,13 @@ jobs:
         run: |
           LATEST=$(gsutil ls -l gs://k8s-conform-cri-o/artifacts |
                    sort -r -k 2 |
-                   head -2 |
-                   tail -1 |
+                   head -3 |
+                   grep amd64 |
                    awk '{ print $3 }')
           gsutil cp "$LATEST" .
           TARBALL=$(basename "$LATEST")
           tar xf "$TARBALL"
-          FILENAME=${TARBALL##*/}
-          DIR=${FILENAME%%.*}
-          pushd "$DIR" || exit
+          pushd cri-o
           sudo -E PATH=$PATH make install
 
       - name: Install CRI-O latest version
