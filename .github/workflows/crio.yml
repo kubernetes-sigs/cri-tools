@@ -56,16 +56,7 @@ jobs:
       - name: Install CRI-O latest master
         if: ${{matrix.version == 'master'}}
         run: |
-          LATEST=$(gsutil ls -l gs://k8s-conform-cri-o/artifacts |
-                   sort -r -k 2 |
-                   head -3 |
-                   grep amd64 |
-                   awk '{ print $3 }')
-          gsutil cp "$LATEST" .
-          TARBALL=$(basename "$LATEST")
-          tar xf "$TARBALL"
-          pushd cri-o
-          sudo -E PATH=$PATH make install
+          curl https://raw.githubusercontent.com/cri-o/cri-o/master/scripts/get | sudo bash
 
       - name: Install CRI-O latest version
         if: ${{matrix.version == 'v1.20.0'}}
