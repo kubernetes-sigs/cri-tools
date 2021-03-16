@@ -1,7 +1,7 @@
 metadata:
   name: busybox
 image:
-  image: busybox:latest
+  image: docker.io/busybox:latest
 command:
 - top
 log_path: busybox.0.log
