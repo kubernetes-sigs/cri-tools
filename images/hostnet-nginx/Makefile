@@ -17,7 +17,7 @@ include ../../hack/make-rules/BASEIMAGES
 
 .PHONY: all push-manifest
 
-REGISTRY = gcr.io/cri-tools
+REGISTRY = gcr.io/k8s-staging-cri-tools
 ALL_ARCH = amd64 arm64 ppc64le s390x mips64le
 TAG = latest
 IMAGES_LIST = hostnet-nginx

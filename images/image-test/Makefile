@@ -17,7 +17,7 @@ include ../../hack/make-rules/BASEIMAGES
 
 .PHONY: all-push all-push-images push-manifest
 
-REGISTRY ?= gcr.io/cri-tools
+REGISTRY ?= gcr.io/k8s-staging-cri-tools
 TAG = latest
 ALL_ARCH = amd64 arm64 ppc64le s390x mips64le
 IMAGES_LIST = test-image-1 test-image-2 test-image-3 test-image-latest test-image-digest

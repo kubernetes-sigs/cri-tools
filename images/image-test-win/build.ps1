@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-$Registry = "gcr.io/cri-tools"
+$Registry = "gcr.io/k8s-staging-cri-tools"
 $Tag = "latest"
 $ImagesList = @(
 	"win-test-image-1:$Tag", "win-test-image-2:$Tag", "win-test-image-3:$Tag",

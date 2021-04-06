@@ -35,24 +35,27 @@ var _ = t.Describe("pull", func() {
 		t.StopCrio(testDir, crio)
 	})
 
-	const imageSuccessText = "Image is up to date"
+	const (
+		imageSuccessText = "Image is up to date"
+		registry         = "gcr.io/k8s-staging-cri-tools/"
+	)
 
 	It("should succeed without tag or digest", func() {
 		t.CrictlExpectSuccessWithEndpoint(endpoint,
-			"pull gcr.io/cri-tools/test-image-1",
+			"pull "+registry+"test-image-1",
 			imageSuccessText)
 	})
 
 	It("should succeed with tag", func() {
 		t.CrictlExpectSuccessWithEndpoint(endpoint,
-			"pull gcr.io/cri-tools/test-image-1:latest",
+			"pull "+registry+"test-image-1:latest",
 			imageSuccessText)
 	})
 
 	It("should succeed with digest", func() {
 		t.CrictlExpectSuccessWithEndpoint(endpoint,
-			"pull gcr.io/cri-tools/test-image-digest"+
-				"@sha256:9179135b4b4cc5a8721e09379244807553c318d92fa3111a65133241551ca343",
+			"pull "+registry+"test-image-digest"+
+				"@sha256:9700f9a2f5bf2c45f2f605a0bd3bce7cf37420ec9d3ed50ac2758413308766bf",
 			imageSuccessText)
 	})
 
