@@ -86,26 +86,28 @@ var _ = framework.AddBeforeSuiteCallback(func() {
 // Image test constants
 
 const (
-	testImageUserUID           = "gcr.io/cri-tools/test-image-user-uid"
+	registry = "gcr.io/k8s-staging-cri-tools/"
+
+	testImageUserUID           = registry + "test-image-user-uid"
 	imageUserUID               = int64(1002)
-	testImageUserUsername      = "gcr.io/cri-tools/test-image-user-username"
+	testImageUserUsername      = registry + "test-image-user-username"
 	imageUserUsername          = "www-data"
-	testImageUserUIDGroup      = "gcr.io/cri-tools/test-image-user-uid-group"
+	testImageUserUIDGroup      = registry + "test-image-user-uid-group"
 	imageUserUIDGroup          = int64(1003)
-	testImageUserUsernameGroup = "gcr.io/cri-tools/test-image-user-username-group"
+	testImageUserUsernameGroup = registry + "test-image-user-username-group"
 	imageUserUsernameGroup     = "www-data"
 
 	// Linux defaults
-	testLinuxImageWithoutTag        = "gcr.io/cri-tools/test-image-latest"
-	testLinuxImageWithTag           = "gcr.io/cri-tools/test-image-tag:test"
-	testLinuxImageWithDigest        = "gcr.io/cri-tools/test-image-digest@sha256:9179135b4b4cc5a8721e09379244807553c318d92fa3111a65133241551ca343"
-	testLinuxImageWithAllReferences = "gcr.io/cri-tools/test-image-tag:all"
+	testLinuxImageWithoutTag        = registry + "test-image-latest"
+	testLinuxImageWithTag           = registry + "test-image-tag:test"
+	testLinuxImageWithDigest        = registry + "test-image-digest@sha256:9700f9a2f5bf2c45f2f605a0bd3bce7cf37420ec9d3ed50ac2758413308766bf"
+	testLinuxImageWithAllReferences = registry + "test-image-tag:all"
 
 	// Windows defaults
-	testWindowsImageWithoutTag        = "gcr.io/cri-tools/win-test-image-latest"
-	testWindowsImageWithTag           = "gcr.io/cri-tools/win-test-image-tag:test"
-	testWindowsImageWithDigest        = "gcr.io/cri-tools/win-test-image-digest@sha256:ed127b3a098d6ada53fff1b33ab3ea421dc7ebb06e0c2abded9d3e84bb6842b0"
-	testWindowsImageWithAllReferences = "gcr.io/cri-tools/win-test-image-tag:all"
+	testWindowsImageWithoutTag        = registry + "win-test-image-latest"
+	testWindowsImageWithTag           = registry + "win-test-image-tag:test"
+	testWindowsImageWithDigest        = registry + "win-test-image-digest@sha256:0e8cc62aee4ed03eb85150eb86e5d1fd7bda705511b8951fe6507835cbd34be3"
+	testWindowsImageWithAllReferences = registry + "win-test-image-tag:all"
 )
 
 var (
@@ -132,26 +134,26 @@ var (
 
 	// Linux defaults
 	testLinuxDifferentTagDifferentImageList = []string{
-		"gcr.io/cri-tools/test-image-1:latest",
-		"gcr.io/cri-tools/test-image-2:latest",
-		"gcr.io/cri-tools/test-image-3:latest",
+		registry + "test-image-1:latest",
+		registry + "test-image-2:latest",
+		registry + "test-image-3:latest",
 	}
 	testLinuxDifferentTagSameImageList = []string{
-		"gcr.io/cri-tools/test-image-tags:1",
-		"gcr.io/cri-tools/test-image-tags:2",
-		"gcr.io/cri-tools/test-image-tags:3",
+		registry + "test-image-tags:1",
+		registry + "test-image-tags:2",
+		registry + "test-image-tags:3",
 	}
 
 	// Windows defaults
 	testWindowsDifferentTagDifferentImageList = []string{
-		"gcr.io/cri-tools/win-test-image-1:latest",
-		"gcr.io/cri-tools/win-test-image-2:latest",
-		"gcr.io/cri-tools/win-test-image-3:latest",
+		registry + "win-test-image-1:latest",
+		registry + "win-test-image-2:latest",
+		registry + "win-test-image-3:latest",
 	}
 	testWindowsDifferentTagSameImageList = []string{
-		"gcr.io/cri-tools/win-test-image-tags:1",
-		"gcr.io/cri-tools/win-test-image-tags:2",
-		"gcr.io/cri-tools/win-test-image-tags:3",
+		registry + "win-test-image-tags:1",
+		registry + "win-test-image-tags:2",
+		registry + "win-test-image-tags:3",
 	}
 )
 
@@ -193,7 +195,7 @@ const (
 
 	// Linux defaults
 	webServerLinuxImage        = "nginx"
-	hostNetWebServerLinuxImage = "gcr.io/cri-tools/hostnet-nginx-" + runtime.GOARCH
+	hostNetWebServerLinuxImage = registry + "hostnet-nginx-" + runtime.GOARCH
 
 	// Windows defaults
 	webServerWindowsImage        = "mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019"

@@ -22,8 +22,8 @@ USERNAME ?= oauth2accesstoken
 PASSWORD ?= $(shell gcloud auth print-access-token)
 MANIFEST_TOOL = manifest-tool --username=$(USERNAME) --password=$(PASSWORD)
 
-space :=
-space +=
+empty :=
+space := $(empty) $(empty)
 comma := ,
 prefix_linux = $(addprefix linux/,$(strip $1))
 join_platforms = $(subst $(space),$(comma),$(call prefix_linux,$(strip $1)))

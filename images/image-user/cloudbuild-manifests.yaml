@@ -7,5 +7,3 @@ options:
 steps:
   - name: 'gcr.io/k8s-testimages/gcb-docker-gcloud:v20210331-c732583'
     entrypoint: make
-    env:
-    - PROJ_ID=$PROJECT_ID
