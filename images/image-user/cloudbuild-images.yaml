@@ -11,7 +11,7 @@ steps:
       - build
       - --tag=gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-amd64
       - --build-arg=ARCH=amd64
-      - --build-arg=USER=1002;
+      - --build-arg=USER=$_IMAGE_USER
       - .
   - name: gcr.io/cloud-builders/docker
     id : 'build-arm'
@@ -19,7 +19,7 @@ steps:
       - build
       - --tag=gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-arm
       - --build-arg=ARCH=arm32v6
-      - --build-arg=USER=1002;
+      - --build-arg=USER=$_IMAGE_USER
       - .
   - name: gcr.io/cloud-builders/docker
     id : 'build-arm64'
@@ -27,7 +27,7 @@ steps:
       - build
       - --tag=gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-arm64
       - --build-arg=ARCH=arm64v8
-      - --build-arg=USER=1002;
+      - --build-arg=USER=$_IMAGE_USER
       - .
   - name: gcr.io/cloud-builders/docker
     id : 'build-ppc64le'
@@ -35,7 +35,7 @@ steps:
       - build
       - --tag=gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-ppc64le
       - --build-arg=ARCH=ppc64le
-      - --build-arg=USER=1002;
+      - --build-arg=USER=$_IMAGE_USER
       - .
   - name: gcr.io/cloud-builders/docker
     id : 'build-s390x'
@@ -43,7 +43,7 @@ steps:
       - build
       - --tag=gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-s390x
       - --build-arg=ARCH=s390x
-      - --build-arg=USER=1002;
+      - --build-arg=USER=$_IMAGE_USER
       - .
   - name: gcr.io/cloud-builders/docker
     id : 'build-mips64le'
@@ -51,13 +51,14 @@ steps:
       - build
       - --tag=gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-mips64le
       - --build-arg=ARCH=mips64le
-      - --build-arg=USER=1002;
+      - --build-arg=USER=$_IMAGE_USER
       - .
 substitutions:
   # _IMAGE_TYPE needs to be set to the image that is to be built
   # Can be one of the following: 'uid', 'username', 'uid-group'
   # or 'username-group'
   _IMAGE_TYPE: 'uid'
+  _IMAGE_USER: '1002'
 images:
   - 'gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-amd64'
   - 'gcr.io/$PROJECT_ID/test-image-user-$_IMAGE_TYPE-arm'
