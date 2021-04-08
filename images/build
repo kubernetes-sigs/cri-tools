@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -euox pipefail
+
+ARCHITECTURES=(
+    amd64
+    arm
+    arm64
+    ppc64le
+    s390x
+    mips64le
+)
+
+# Prepare the system
+REGISTRY=${REGISTRY:-gcr.io/k8s-staging-cri-tools}
+QEMUVERSION=5.2.0-2
+
+export DOCKER_CLI_EXPERIMENTAL=enabled
+gcloud auth configure-docker
+docker run --rm --privileged multiarch/qemu-user-static:$QEMUVERSION --reset -p yes >/dev/null
+BUILDER=$(docker buildx create --use)
+
+cleanup() {
+    docker buildx rm "$BUILDER"
+}
+
+trap cleanup EXIT
+
+# Build the user images
+declare -A IMAGE_USERS
+IMAGE_USERS=(
+    ["test-image-user-uid"]="1002"
+    ["test-image-user-username"]="www-data"
+    ["test-image-user-uid-group"]="1003:1004"
+    ["test-image-user-username-group"]="www-data:1004"
+)
+
+for IMAGE in "${!IMAGE_USERS[@]}"; do
+    IMAGE_NAMES=()
+    USER=${IMAGE_USERS[$IMAGE]}
+
+    for ARCH in "${ARCHITECTURES[@]}"; do
+        IMAGE_NAME="$REGISTRY/$IMAGE-$ARCH:latest"
+        IMAGE_NAMES+=("$IMAGE_NAME")
+
+        docker buildx build \
+            --pull \
+            --load \
+            --platform "linux/$ARCH" \
+            -t "$IMAGE_NAME" \
+            --build-arg "USER=$USER" \
+            image-user
+        docker push "$IMAGE_NAME"
+    done
+
+    MANIFEST="$REGISTRY/$IMAGE:latest"
+    docker manifest create --amend "$MANIFEST" "${IMAGE_NAMES[@]}"
+    for ARCH in "${ARCHITECTURES[@]}"; do
+        IMAGE_NAME="$REGISTRY/$IMAGE-$ARCH:latest"
+        docker manifest annotate --arch "$ARCH" "$MANIFEST" "$IMAGE_NAME"
+    done
+    docker manifest push "$MANIFEST"
+done
