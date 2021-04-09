@@ -7,7 +7,7 @@ require (
 	github.com/docker/docker v20.10.0-beta1.0.20201108103107-c7109494fe65+incompatible
 	github.com/docker/go-units v0.4.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-	github.com/golang/protobuf v1.4.3
+	github.com/golang/protobuf v1.5.2
 	github.com/onsi/ginkgo v1.14.2
 	github.com/onsi/gomega v1.10.3
 	github.com/opencontainers/go-digest v1.0.0
