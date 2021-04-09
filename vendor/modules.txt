@@ -510,7 +510,7 @@ k8s.io/klog/v2
 ## explicit
 k8s.io/kubectl/pkg/util/interrupt
 k8s.io/kubectl/pkg/util/term
-# k8s.io/kubernetes v0.0.0 => k8s.io/kubernetes v1.21.0
+# k8s.io/kubernetes v0.21.4 => k8s.io/kubernetes v1.21.0
 ## explicit
 k8s.io/kubernetes/pkg/api/v1/pod
 k8s.io/kubernetes/pkg/apis/core
