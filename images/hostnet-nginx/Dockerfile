@@ -12,6 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG ARCH
-FROM $ARCH/nginx
+FROM nginx
 COPY default.conf /etc/nginx/conf.d/default.conf

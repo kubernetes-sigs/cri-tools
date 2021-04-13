@@ -25,6 +25,36 @@ cleanup() {
 
 trap cleanup EXIT
 
+build_image() {
+    DIR=$1
+    IMAGE=$2
+    ARGS=("${@:3}")
+
+    IMAGE_NAMES=()
+    for ARCH in "${ARCHITECTURES[@]}"; do
+        FULL_IMAGE_NAME="$REGISTRY/$IMAGE-$ARCH:latest"
+        IMAGE_NAMES+=("$FULL_IMAGE_NAME")
+
+        docker buildx build \
+            --pull \
+            --load \
+            --platform "linux/$ARCH" \
+            -t "$FULL_IMAGE_NAME" \
+            "${ARGS[@]}" \
+            "$DIR"
+        docker push "$FULL_IMAGE_NAME"
+    done
+
+    MANIFEST="$REGISTRY/$IMAGE:latest"
+    docker manifest create --amend "$MANIFEST" "${IMAGE_NAMES[@]}"
+    for ARCH in "${ARCHITECTURES[@]}"; do
+        FULL_IMAGE_NAME="$REGISTRY/$IMAGE-$ARCH:latest"
+        docker manifest annotate --arch "$ARCH" "$MANIFEST" "$FULL_IMAGE_NAME"
+    done
+    docker manifest push "$MANIFEST"
+
+}
+
 # Build the user images
 declare -A IMAGE_USERS
 IMAGE_USERS=(
@@ -35,28 +65,9 @@ IMAGE_USERS=(
 )
 
 for IMAGE in "${!IMAGE_USERS[@]}"; do
-    IMAGE_NAMES=()
     USER=${IMAGE_USERS[$IMAGE]}
-
-    for ARCH in "${ARCHITECTURES[@]}"; do
-        IMAGE_NAME="$REGISTRY/$IMAGE-$ARCH:latest"
-        IMAGE_NAMES+=("$IMAGE_NAME")
-
-        docker buildx build \
-            --pull \
-            --load \
-            --platform "linux/$ARCH" \
-            -t "$IMAGE_NAME" \
-            --build-arg "USER=$USER" \
-            image-user
-        docker push "$IMAGE_NAME"
-    done
-
-    MANIFEST="$REGISTRY/$IMAGE:latest"
-    docker manifest create --amend "$MANIFEST" "${IMAGE_NAMES[@]}"
-    for ARCH in "${ARCHITECTURES[@]}"; do
-        IMAGE_NAME="$REGISTRY/$IMAGE-$ARCH:latest"
-        docker manifest annotate --arch "$ARCH" "$MANIFEST" "$IMAGE_NAME"
-    done
-    docker manifest push "$MANIFEST"
+    build_image ./image-user "$IMAGE" --build-arg "USER=$USER"
 done
+
+# Build the hostnet image
+build_image ./hostnet-nginx hostnet-nginx
