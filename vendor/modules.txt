@@ -12,7 +12,7 @@ github.com/davecgh/go-spew/spew
 ## explicit
 github.com/docker/distribution/digestset
 github.com/docker/distribution/reference
-# github.com/docker/docker v20.10.5+incompatible
+# github.com/docker/docker v20.10.6+incompatible
 ## explicit
 github.com/docker/docker/api/types/time
 github.com/docker/docker/daemon/logger/jsonfilelog/jsonlog
