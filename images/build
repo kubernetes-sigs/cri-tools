@@ -71,3 +71,48 @@ done
 
 # Build the hostnet image
 build_image ./hostnet-nginx hostnet-nginx
+
+# Build the windows images
+declare -A IMAGE_WINDOWS
+IMAGE_WINDOWS=(
+    ["win-test-image-1"]="latest"
+    ["win-test-image-2"]="latest"
+    ["win-test-image-3"]="latest"
+    ["win-test-image-latest"]="latest"
+    ["win-test-image-digest"]="latest"
+)
+WIN_DIR=image-test-win
+for IMAGE in "${!IMAGE_WINDOWS[@]}"; do
+    TAG=${IMAGE_WINDOWS[$IMAGE]}
+    touch "$WIN_DIR/$IMAGE"
+    docker buildx build \
+        --pull --push \
+        --platform "windows/amd64" \
+        --build-arg "TEST=$IMAGE" \
+        -t "$REGISTRY/$IMAGE:$TAG" \
+        $WIN_DIR
+    rm -f "$WIN_DIR/$IMAGE"
+done
+
+IMAGE=win-test-image-tags
+touch "$WIN_DIR/$IMAGE"
+docker buildx build \
+    --pull --push \
+    --platform "windows/amd64" \
+    --build-arg "TEST=$IMAGE" \
+    -t "$REGISTRY/$IMAGE:1" \
+    -t "$REGISTRY/$IMAGE:2" \
+    -t "$REGISTRY/$IMAGE:3" \
+    $WIN_DIR
+rm -f "$WIN_DIR/$IMAGE"
+
+IMAGE=win-test-image-tag
+touch "$WIN_DIR/$IMAGE"
+docker buildx build \
+    --pull --push \
+    --platform "windows/amd64" \
+    --build-arg "TEST=$IMAGE" \
+    -t "$REGISTRY/$IMAGE:test" \
+    -t "$REGISTRY/$IMAGE:all" \
+    $WIN_DIR
+rm -f "$WIN_DIR/$IMAGE"
