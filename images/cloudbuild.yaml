@@ -1,7 +1,7 @@
 # See https://cloud.google.com/cloud-build/docs/build-config
 # Building multi-arch test images for non-x86 architecture
 
-timeout: 1200s
+timeout: 3000s
 options:
   substitution_option: ALLOW_LOOSE
   machineType: 'N1_HIGHCPU_8'
