@@ -52,7 +52,6 @@ build_image() {
         docker manifest annotate --arch "$ARCH" "$MANIFEST" "$FULL_IMAGE_NAME"
     done
     docker manifest push "$MANIFEST"
-
 }
 
 # Build the user images
@@ -116,3 +115,82 @@ docker buildx build \
     -t "$REGISTRY/$IMAGE:all" \
     $WIN_DIR
 rm -f "$WIN_DIR/$IMAGE"
+
+# Build the other test images
+IMAGE_TEST=(
+    test-image-1
+    test-image-2
+    test-image-3
+    test-image-latest
+    test-image-digest
+)
+DIR=image-test
+for IMAGE in "${IMAGE_TEST[@]}"; do
+    touch "$DIR/$IMAGE"
+    build_image "$DIR" "$IMAGE" --build-arg "TEST=$IMAGE"
+    rm -f "$DIR/$IMAGE"
+done
+
+# Build test-image-tags
+IMAGE_NAMES=()
+IMAGE=test-image-tags
+TAGS=(1 2 3)
+touch $DIR/same-image
+for ARCH in "${ARCHITECTURES[@]}"; do
+    for TAG in "${TAGS[@]}"; do
+        FULL_IMAGE_NAME="$REGISTRY/$IMAGE-$ARCH:$TAG"
+        IMAGE_NAMES+=("$FULL_IMAGE_NAME")
+
+        docker buildx build \
+            --pull \
+            --load \
+            --platform "linux/$ARCH" \
+            -t "$FULL_IMAGE_NAME" \
+            --build-arg TEST=same-image \
+            "$DIR"
+
+        docker push "$FULL_IMAGE_NAME"
+    done
+done
+rm -f $DIR/same-image
+
+for TAG in "${TAGS[@]}"; do
+    MANIFEST="$REGISTRY/$IMAGE:$TAG"
+    docker manifest create --amend "$MANIFEST" "${IMAGE_NAMES[@]}"
+    for ARCH in "${ARCHITECTURES[@]}"; do
+        FULL_IMAGE_NAME="$REGISTRY/$IMAGE-$ARCH:$TAG"
+        docker manifest annotate --arch "$ARCH" "$MANIFEST" "$FULL_IMAGE_NAME"
+    done
+    docker manifest push "$MANIFEST"
+done
+
+# Build test-image-tag
+IMAGE_NAMES=()
+IMAGE=test-image-tag
+TAGS=(test all)
+for TAG in "${TAGS[@]}"; do
+    touch "$DIR/$TAG"
+    for ARCH in "${ARCHITECTURES[@]}"; do
+        FULL_IMAGE_NAME="$REGISTRY/$IMAGE-$ARCH:$TAG"
+        IMAGE_NAMES+=("$FULL_IMAGE_NAME")
+
+        docker buildx build \
+            --pull \
+            --load \
+            --platform "linux/$ARCH" \
+            -t "$FULL_IMAGE_NAME" \
+            --build-arg "TEST=$TAG" \
+            "$DIR"
+
+        docker push "$FULL_IMAGE_NAME"
+    done
+    rm -f "$DIR/$TAG"
+
+    MANIFEST="$REGISTRY/$IMAGE:$TAG"
+    docker manifest create --amend "$MANIFEST" "${IMAGE_NAMES[@]}"
+    for ARCH in "${ARCHITECTURES[@]}"; do
+        FULL_IMAGE_NAME="$REGISTRY/$IMAGE-$ARCH:$TAG"
+        docker manifest annotate --arch "$ARCH" "$MANIFEST" "$FULL_IMAGE_NAME"
+    done
+    docker manifest push "$MANIFEST"
+done
