@@ -66,6 +66,7 @@ critest:
 $(CRITEST):
 	CGO_ENABLED=0 $(GO_TEST) -c -o $@ \
 		-ldflags '$(GO_LDFLAGS)' \
+		-trimpath \
 		-tags '$(BUILDTAGS)' \
 	     $(PROJECT)/cmd/critest
 
@@ -75,6 +76,7 @@ crictl:
 $(CRICTL):
 	CGO_ENABLED=0 $(GO_BUILD) -o $@ \
 		-ldflags '$(GO_LDFLAGS)' \
+		-trimpath \
 		-tags '$(BUILDTAGS)' \
 		$(PROJECT)/cmd/crictl
 
