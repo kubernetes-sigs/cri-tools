@@ -20,9 +20,8 @@ set -o pipefail
 
 # Build cri-dockerd
 
-# TODO: This should change when a permanent repo is available.
-git clone https://github.com/dims/cri-dockerd $GOPATH/src/github.com/dims/cri-dockerd
-cd $GOPATH/src/github.com/dims/cri-dockerd
+git clone https://github.com/Mirantis/cri-dockerd $GOPATH/src/github.com/Mirantis/cri-dockerd
+cd $GOPATH/src/github.com/Mirantis/cri-dockerd
 
 go install .
 sudo mv $GOPATH/bin/cri-dockerd /usr/local/bin
