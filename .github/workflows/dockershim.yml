@@ -70,9 +70,8 @@ jobs:
           set -o nounset
           set -o pipefail
 
-          # TODO: This should change when a permanent repo is available.
-          git clone https://github.com/dims/cri-dockerd $GOPATH/src/github.com/dims/cri-dockerd
-          cd $GOPATH/src/github.com/dims/cri-dockerd
+          git clone https://github.com/Mirantis/cri-dockerd $GOPATH/src/github.com/Mirantis/cri-dockerd
+          cd $GOPATH/src/github.com/Mirantis/cri-dockerd
 
           # Need the flag for errors building on Windows
           # Ref: https://github.com/golang/go/issues/30674 
