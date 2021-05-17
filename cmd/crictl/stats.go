@@ -154,7 +154,7 @@ func ContainerStats(client pb.RuntimeServiceClient, opts statsOptions) error {
 			return err
 		}
 	} else {
-		s := make(chan os.Signal)
+		s := make(chan os.Signal, 1)
 		signal.Notify(s, os.Interrupt)
 		go func() {
 			<-s

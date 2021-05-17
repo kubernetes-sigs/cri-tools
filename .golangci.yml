@@ -7,18 +7,28 @@ linters:
   enable:
     - deadcode
     - depguard
+    - durationcheck
+    - forcetypeassert
     - gofmt
     - goimports
     - govet
+    - importas
     - ineffassign
+    - makezero
     - misspell
     - nakedret
+    - nilerr
     - prealloc
+    - predeclared
+    - promlinter
     - structcheck
+    - tagliatelle
     - typecheck
     - varcheck
+    - wastedassign
     # - asciicheck
     # - bodyclose
+    # - cyclop
     # - dogsled
     # - dupl
     # - errcheck
@@ -26,6 +36,7 @@ linters:
     # - exhaustive
     # - exhaustivestruct
     # - exportloopref
+    # - forbidigo
     # - funlen
     # - gci
     # - gochecknoglobals
@@ -41,23 +52,26 @@ linters:
     # - goheader
     # - golint
     # - gomnd
+    # - gomoddirectives
     # - gomodguard
     # - goprintffuncname
-    # - gosec (gas)
-    # - gosimple (megacheck)
-    # - interfacer
+    # - gosec
+    # - gosimple
+    # - ifshort
     # - lll
-    # - maligned
     # - nestif
     # - nlreturn
     # - noctx
     # - nolintlint
+    # - paralleltest
+    # - revive
     # - rowserrcheck
     # - scopelint
     # - sqlclosecheck
     # - staticcheck
     # - stylecheck
     # - testpackage
+    # - thelper
     # - tparallel
     # - unconvert
     # - unparam
