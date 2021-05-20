@@ -18,8 +18,6 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"os/signal"
 	"sort"
 	"time"
 
@@ -150,29 +148,42 @@ func ContainerStats(client pb.RuntimeServiceClient, opts statsOptions) error {
 
 	display := newTableDisplay(20, 1, 3, ' ', 0)
 	if !opts.watch {
-		if err := displayStats(client, request, display, opts); err != nil {
+		if err := displayStats(context.TODO(), client, request, display, opts); err != nil {
 			return err
 		}
 	} else {
-		s := make(chan os.Signal, 1)
-		signal.Notify(s, os.Interrupt)
+		displayErrCh := make(chan error, 1)
+		ticker := time.NewTicker(500 * time.Millisecond)
+		defer ticker.Stop()
+		watchCtx, cancelFn := context.WithCancel(context.Background())
+		defer cancelFn()
+		// Put the displayStats in another goroutine.
+		// because it might be time consuming with lots of containers.
+		// and we want to cancel it ASAP when user hit CtrlC
 		go func() {
-			<-s
-			os.Exit(0)
-		}()
-		for range time.Tick(500 * time.Millisecond) {
-			if err := displayStats(client, request, display, opts); err != nil {
-				return err
+			for range ticker.C {
+				if err := displayStats(watchCtx, client, request, display, opts); err != nil {
+					displayErrCh <- err
+					break
+				}
 			}
+		}()
+		// listen for CtrlC or error
+		select {
+		case <-SetupInterruptSignalHandler():
+			cancelFn()
+			return nil
+		case err := <-displayErrCh:
+			return err
 		}
 	}
 
 	return nil
 }
 
-func getContainerStats(client pb.RuntimeServiceClient, request *pb.ListContainerStatsRequest) (*pb.ListContainerStatsResponse, error) {
+func getContainerStats(ctx context.Context, client pb.RuntimeServiceClient, request *pb.ListContainerStatsRequest) (*pb.ListContainerStatsResponse, error) {
 	logrus.Debugf("ListContainerStatsRequest: %v", request)
-	r, err := client.ListContainerStats(context.Background(), request)
+	r, err := client.ListContainerStats(ctx, request)
 	logrus.Debugf("ListContainerResponse: %v", r)
 	if err != nil {
 		return nil, err
@@ -181,8 +192,8 @@ func getContainerStats(client pb.RuntimeServiceClient, request *pb.ListContainer
 	return r, nil
 }
 
-func displayStats(client pb.RuntimeServiceClient, request *pb.ListContainerStatsRequest, display *display, opts statsOptions) error {
-	r, err := getContainerStats(client, request)
+func displayStats(ctx context.Context, client pb.RuntimeServiceClient, request *pb.ListContainerStatsRequest, display *display, opts statsOptions) error {
+	r, err := getContainerStats(ctx, client, request)
 	if err != nil {
 		return err
 	}
@@ -194,18 +205,24 @@ func displayStats(client pb.RuntimeServiceClient, request *pb.ListContainerStats
 	}
 	oldStats := make(map[string]*pb.ContainerStats)
 	for _, s := range r.GetStats() {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		oldStats[s.Attributes.Id] = s
 	}
 
 	time.Sleep(opts.sample)
 
-	r, err = getContainerStats(client, request)
+	r, err = getContainerStats(ctx, client, request)
 	if err != nil {
 		return err
 	}
 
 	display.AddRow([]string{columnContainer, columnCPU, columnMemory, columnDisk, columnInodes})
 	for _, s := range r.GetStats() {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		id := getTruncatedID(s.Attributes.Id, "")
 		cpu := s.GetCpu().GetUsageCoreNanoSeconds().GetValue()
 		mem := s.GetMemory().GetWorkingSetBytes().GetValue()

@@ -26,6 +26,8 @@ import (
 var defaultRuntimeEndpoints = []string{"npipe:////./pipe/dockershim", "npipe:////./pipe/containerd", "npipe:////./pipe/crio"}
 var defaultConfigPath string
 
+var shutdownSignals = []os.Signal{os.Interrupt}
+
 func init() {
 	defaultConfigPath = filepath.Join(os.Getenv("USERPROFILE"), ".crictl", "crictl.yaml")
 }

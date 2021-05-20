@@ -22,10 +22,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/signal"
 	"reflect"
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/golang/protobuf/jsonpb"
@@ -42,6 +44,32 @@ const (
 	// truncatedImageIDLen is the truncated length of imageID
 	truncatedIDLen = 13
 )
+
+var (
+	// The global stopCh for monitoring Interrupt signal.
+	// DO NOT use it directly. Use SetupInterruptSignalHandler() to get it.
+	signalIntStopCh chan struct{}
+	// only setup stopCh once
+	signalIntSetupOnce = &sync.Once{}
+)
+
+// SetupInterruptSignalHandler setup a global signal handler monitoring Interrupt signal. e.g: Ctrl+C.
+// The returned read-only channel will be closed on receiving Interrupt signals.
+// It will directly call os.Exit(1) on receiving Interrupt signal twice.
+func SetupInterruptSignalHandler() <-chan struct{} {
+	signalIntSetupOnce.Do(func() {
+		signalIntStopCh = make(chan struct{})
+		c := make(chan os.Signal, 2)
+		signal.Notify(c, shutdownSignals...)
+		go func() {
+			<-c
+			close(signalIntStopCh)
+			<-c
+			os.Exit(1) // Exit immediately on second signal
+		}()
+	})
+	return signalIntStopCh
+}
 
 type listOptions struct {
 	// id of container or sandbox

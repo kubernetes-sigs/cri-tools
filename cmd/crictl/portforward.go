@@ -21,14 +21,13 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/signal"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/net/context"
 	restclient "k8s.io/client-go/rest"
-	portforward "k8s.io/client-go/tools/portforward"
+	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
@@ -100,21 +99,10 @@ func PortForward(client pb.RuntimeServiceClient, opts portforwardOptions) error 
 	}
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", URL)
 
-	stopChan := make(chan struct{}, 1)
 	readyChan := make(chan struct{})
 
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt)
-	defer signal.Stop(signals)
-
-	go func() {
-		<-signals
-		if stopChan != nil {
-			close(stopChan)
-		}
-	}()
 	logrus.Debugf("Ports to forword: %v", opts.ports)
-	pf, err := portforward.New(dialer, opts.ports, stopChan, readyChan, os.Stdout, os.Stderr)
+	pf, err := portforward.New(dialer, opts.ports, SetupInterruptSignalHandler(), readyChan, os.Stdout, os.Stderr)
 	if err != nil {
 		return err
 	}
