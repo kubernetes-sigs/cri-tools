@@ -67,7 +67,7 @@ var logsCommand = &cli.Command{
 			Usage:   "Show timestamps",
 		},
 	},
-	Action: func(ctx *cli.Context) error {
+	Action: func(ctx *cli.Context) (retErr error) {
 		runtimeService, err := getRuntimeService(ctx)
 		if err != nil {
 			return err
@@ -108,7 +108,26 @@ var logsCommand = &cli.Command{
 			logPath = fmt.Sprintf("%s%s%s", logPath[:strings.LastIndex(logPath, "/")+1], fmt.Sprint(containerAttempt-1),
 				logPath[strings.LastIndex(logPath, "."):])
 		}
-		return logs.ReadLogs(context.Background(), logPath, status.GetId(), logOptions, runtimeService, os.Stdout, os.Stderr)
+		// build a WithCancel context based on cli.context
+		readLogCtx, cancelFn := context.WithCancel(ctx.Context)
+		go func() {
+			<-SetupInterruptSignalHandler()
+			// cancel readLogCtx when Interrupt signal received
+			cancelFn()
+		}()
+		defer func() {
+			// We can not use the typed error "context.Canceled" here
+			// because the upstream K8S dependency explicitly returns a fmt.Errorf("context cancelled").
+			// So we need to compare the error in string.
+			if retErr != nil && retErr.Error() == "context cancelled" {
+				// Silent the "context cancelled" error.
+				// In order to prevent the error msg when user hit Ctrl+C.
+				retErr = nil
+			}
+			// Ensure no context leak
+			cancelFn()
+		}()
+		return logs.ReadLogs(readLogCtx, logPath, status.GetId(), logOptions, runtimeService, os.Stdout, os.Stderr)
 	},
 }
 
