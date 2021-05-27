@@ -9,7 +9,7 @@ require (
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/protobuf v1.5.2
 	github.com/onsi/ginkgo v1.16.2
-	github.com/onsi/gomega v1.12.0
+	github.com/onsi/gomega v1.13.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/selinux v1.8.1
 	github.com/pborman/uuid v1.2.1
