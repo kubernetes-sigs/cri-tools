@@ -354,7 +354,6 @@ var removeContainerCommand = &cli.Command{
 						errored = true
 						continue
 					}
-					continue
 				} else {
 					logrus.Errorf("container %q is running, please stop it first", id)
 					errored = true
