@@ -49,8 +49,8 @@ var (
 
 	// Windows defaults
 	echoHelloWindowsCmd      = []string{"powershell", "-c", "echo hello"}
-	sleepWindowsCmd          = []string{"powershell", "-c", "sleep", "4321"}
-	checkSleepWindowsCmd     = []string{"powershell", "-c", "tasklist | findstr sleep; exit 0"}
+	sleepWindowsCmd          = []string{"powershell", "-c", "start-sleep 4321"}
+	checkSleepWindowsCmd     = []string{"powershell", "-c", "get-process | findstr sleep; exit 0"}
 	shellWindowsCmd          = []string{"cmd", "/Q"}
 	pauseWindowsCmd          = []string{"powershell", "-c", "ping -t localhost"}
 	logDefaultWindowsCmd     = []string{"powershell", "-c", "echo '" + defaultLog + "'"}
@@ -198,8 +198,8 @@ const (
 	hostNetWebServerLinuxImage = registry + "hostnet-nginx-" + runtime.GOARCH
 
 	// Windows defaults
-	webServerWindowsImage        = "mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019"
-	hostNetWebServerWindowsImage = "mcr.microsoft.com/windows/servercore/iis:windowsservercore-ltsc2019"
+	webServerWindowsImage        = "k8s.gcr.io/e2e-test-images/nginx:1.14-1"
+	hostNetWebServerWindowsImage = "k8s.gcr.io/e2e-test-images/nginx:1.14-1"
 )
 
 var (
