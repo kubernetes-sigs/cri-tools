@@ -18,7 +18,7 @@ jobs:
         # ║ hcshim           │           │ runhcs  ║
         # ╚══════════════════╧═══════════╧═════════╝
         os: [ubuntu-18.04, windows-2019]
-        version: [main, v1.4.3]
+        version: [main, v1.5.2]
         runtime: [io.containerd.runtime.v1.linux, io.containerd.runc.v1, io.containerd.runc.v2, containerd-shim-runhcs-v1]
         runc: [runc, crun]
         exclude:
@@ -42,7 +42,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.15'
+          go-version: '1.16'
 
       - name: Set env
         shell: bash
