@@ -14,7 +14,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.15'
+          go-version: '1.16'
 
       - name: Set Go binary path
         shell: bash
@@ -72,9 +72,10 @@ jobs:
 
           git clone https://github.com/Mirantis/cri-dockerd $GOPATH/src/github.com/Mirantis/cri-dockerd
           cd $GOPATH/src/github.com/Mirantis/cri-dockerd
+          go mod tidy
 
           # Need the flag for errors building on Windows
-          # Ref: https://github.com/golang/go/issues/30674 
+          # Ref: https://github.com/golang/go/issues/30674
           #      https://github.com/golang/go/issues/40795
           go install -buildmode=exe .
           mv $GOPATH/bin/cri-dockerd.exe /usr/local/bin

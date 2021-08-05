@@ -24,10 +24,10 @@ import (
 	"time"
 
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
+	"github.com/opencontainers/runc/libcontainer/apparmor"
 	"github.com/pkg/errors"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-	"k8s.io/kubernetes/pkg/security/apparmor"
 
 	"github.com/golang/glog"
 	. "github.com/onsi/ginkgo"
@@ -59,7 +59,7 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 	var rc internalapi.RuntimeService
 	var ic internalapi.ImageManagerService
 
-	if apparmor.IsAppArmorEnabled() {
+	if apparmor.IsEnabled() {
 		BeforeEach(func() {
 			rc = f.CRIClient.CRIRuntimeClient
 			ic = f.CRIClient.CRIImageClient
