@@ -24,7 +24,7 @@ require (
 	k8s.io/apimachinery v0.21.3
 	k8s.io/client-go v1.5.2
 	k8s.io/cri-api v0.21.3
-	k8s.io/kubectl v0.21.3
+	k8s.io/kubectl v0.22.0
 	k8s.io/kubernetes v0.21.4
 	sigs.k8s.io/yaml v1.2.0
 )
