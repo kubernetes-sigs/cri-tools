@@ -8,7 +8,7 @@ jobs:
   linux-build-and-critest-cri-o:
     strategy:
       matrix:
-        version: [master, v1.20.0]
+        version: [master]
     name: ${{matrix.version}} / linux amd64
     runs-on: ubuntu-18.04
     steps:
@@ -57,17 +57,6 @@ jobs:
         if: ${{matrix.version == 'master'}}
         run: |
           curl https://raw.githubusercontent.com/cri-o/cri-o/master/scripts/get | sudo bash
-
-      - name: Install CRI-O latest version
-        if: ${{matrix.version == 'v1.20.0'}}
-        run: |
-          DIR=crio-${{matrix.version}}
-          TARBALL=$DIR.tar.gz
-          RELEASE=gs://k8s-conform-cri-o/artifacts/$TARBALL
-          gsutil cp $RELEASE .
-          tar xf $TARBALL
-          pushd $DIR || exit
-          sudo -E PATH=$PATH make install
 
       - name: Configure and start CRI-O
         run: |
