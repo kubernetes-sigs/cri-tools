@@ -453,12 +453,12 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			checkNetworkManagement(rc, containerID, notPrivileged)
 		})
 
-		It("runtime should support setting Capability", func() {
+		It("runtime should support adding capability", func() {
 			By("create pod")
 			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
 
 			By("create container with security context Capability and test")
-			containerID := createCapabilityContainer(rc, ic, podID, podConfig, "container-with-Capability-test-")
+			containerID := createCapabilityContainer(rc, ic, podID, podConfig, "container-with-added-capability-test-", []string{"NET_ADMIN"}, nil)
 
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
@@ -476,6 +476,69 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			checkNetworkManagement(rc, containerID, false)
+		})
+
+		It("runtime should support dropping capability", func() {
+			By("create pod")
+			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
+
+			By("create container with security context Capability and test")
+			containerID := createCapabilityContainer(rc, ic, podID, podConfig, "container-with-dropped-capability-test-", nil, []string{"NET_RAW"})
+
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+			stdout, stderr, err := rc.ExecSync(
+				containerID, []string{"ping", "127.0.0.1"},
+				time.Duration(defaultExecSyncTimeout)*time.Second,
+			)
+			Expect(err).NotTo(BeNil())
+			Expect(string(stdout)).NotTo(BeEmpty())
+			Expect(string(stderr)).To(ContainSubstring("permission denied"))
+		})
+
+		It("runtime should support adding ALL capabilities", func() {
+			By("create pod")
+			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
+
+			By("create container with security context Capability and test")
+			containerID := createCapabilityContainer(rc, ic, podID, podConfig, "container-with-added-all-capability-test-", []string{"ALL"}, nil)
+
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+			stdout, stderr, err := rc.ExecSync(
+				containerID, []string{"cat", "/proc/self/status"},
+				time.Duration(defaultExecSyncTimeout)*time.Second,
+			)
+			Expect(err).To(BeNil())
+			Expect(string(stderr)).To(BeEmpty())
+			Expect(string(stdout)).NotTo(MatchRegexp(`CapBnd:\s0000000000000000`))
+		})
+
+		It("runtime should support dropping ALL capabilities", func() {
+			By("create pod")
+			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
+
+			By("create container with security context Capability and test")
+			containerID := createCapabilityContainer(rc, ic, podID, podConfig, "container-with-dropped-all-capability-test-", nil, []string{"ALL"})
+
+			startContainer(rc, containerID)
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+
+			stdout, stderr, err := rc.ExecSync(
+				containerID, []string{"cat", "/proc/self/status"},
+				time.Duration(defaultExecSyncTimeout)*time.Second,
+			)
+			Expect(err).To(BeNil())
+			Expect(string(stderr)).To(BeEmpty())
+			Expect(string(stdout)).To(MatchRegexp(`CapBnd:\s0000000000000000`))
 		})
 
 		It("runtime should support MaskedPaths", func() {
@@ -985,7 +1048,7 @@ func checkNetworkManagement(rc internalapi.RuntimeService, containerID string, m
 }
 
 // createCapabilityContainer creates container with specified Capability in ContainerConfig.
-func createCapabilityContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
+func createCapabilityContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, add []string, drop []string) string {
 	By("create Capability container")
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
@@ -995,7 +1058,8 @@ func createCapabilityContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
 				Capabilities: &runtimeapi.Capability{
-					AddCapabilities: []string{"NET_ADMIN"},
+					AddCapabilities:  add,
+					DropCapabilities: drop,
 				},
 			},
 		},
