@@ -38,7 +38,7 @@ import (
 const (
 	nginxContainerImage string = "nginx:1.18"
 	localhost           string = "localhost/"
-	noNewPrivsImage     string = "gcr.io/kubernetes-e2e-test-images/nonewprivs:1.1"
+	noNewPrivsImage     string = "k8s.gcr.io/e2e-test-images/nonewprivs:1.3"
 )
 
 var _ = framework.KubeDescribe("Security Context", func() {
