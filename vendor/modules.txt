@@ -4,8 +4,6 @@ github.com/Azure/go-ansiterm/winterm
 # github.com/Microsoft/go-winio v0.4.15
 github.com/Microsoft/go-winio
 github.com/Microsoft/go-winio/pkg/guid
-# github.com/bits-and-blooms/bitset v1.2.0
-github.com/bits-and-blooms/bitset
 # github.com/cpuguy83/go-md2man/v2 v2.0.0
 github.com/cpuguy83/go-md2man/v2/md2man
 # github.com/cyphar/filepath-securejoin v0.2.2
@@ -131,7 +129,7 @@ github.com/opencontainers/go-digest
 ## explicit
 github.com/opencontainers/runc/libcontainer/apparmor
 github.com/opencontainers/runc/libcontainer/utils
-# github.com/opencontainers/selinux v1.8.5
+# github.com/opencontainers/selinux v1.9.1
 ## explicit
 github.com/opencontainers/selinux/go-selinux
 github.com/opencontainers/selinux/pkg/pwalk
