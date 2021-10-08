@@ -114,6 +114,9 @@ $(GINKGO):
 release:
 	hack/release.sh
 
+release-notes:
+	hack/release-notes.sh
+
 # needs to run as root to work
 test-e2e: $(GINKGO)
 	$(GINKGO) $(TESTFLAGS) \
@@ -142,5 +145,6 @@ vendor:
 	install.ginkgo \
 	install.lint \
 	release \
+	release-notes \
 	test-e2e \
 	vendor

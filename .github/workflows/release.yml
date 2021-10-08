@@ -1,0 +1,49 @@
+name: release
+on:
+  push:
+    tags:
+      - "*"
+jobs:
+  publish:
+    name: release
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.17'
+      - name: Set env
+        shell: bash
+        run: |
+          echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
+          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: go-release-${{ hashFiles('**/go.sum') }}
+          restore-keys: go-release-
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          path: src/github.com/kubernetes-sigs/cri-tools
+      - run: |
+          make release-notes
+          make release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        working-directory: src/github.com/kubernetes-sigs/cri-tools
+      - uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          artifacts: src/github.com/kubernetes-sigs/cri-tools/_output/releases/*
+          bodyFile: src/github.com/kubernetes-sigs/cri-tools/release-notes.md
+          token: ${{ secrets.GH_TOKEN }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: release-notes
+          path: src/github.com/kubernetes-sigs/cri-tools/release-notes.md
+      - uses: actions/upload-artifact@v2
+        with:
+          name: build-artifacts
+          path: src/github.com/kubernetes-sigs/cri-tools/_output
