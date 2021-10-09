@@ -93,9 +93,9 @@ for platform in "${CRI_TEST_PLATFORMS[@]}"; do
         ${CRITEST_BIN}
 done
 
-printf "\n## Downloads\n\n"
-printf "| file | sha256 | sha512\n"
-printf "| ---- | ------ | ------\n"
+printf "\n## Downloads\n\n" | tee -a release-notes.md
+echo "| file | sha256 | sha512" | tee -a release-notes.md
+echo "| ---- | ------ | ------" | tee -a release-notes.md
 
 # Show sha256/512 for release files
 if [[ "${OSTYPE}" == "darwin"* ]]; then
@@ -103,13 +103,13 @@ if [[ "${OSTYPE}" == "darwin"* ]]; then
         SHA256=$(shasum -a 256 "$file" | sed -e "s,$file,," | awk '{print $1}' | tee "$file.sha256")
         SHA512=$(shasum -a 512 "$file" | sed -e "s,$file,," | awk '{print $1}' | tee "$file.sha512")
         BASE=$(basename "$file")
-        echo "| $BASE | $SHA256 | $SHA512 |"
+        echo "| $BASE | $SHA256 | $SHA512 |" | tee -a release-notes.md
     done
 else
     for file in "$OUTPUTDIR"/*.tar.gz; do
         SHA256=$(sha256sum -b "$file" | sed -e "s,$file,," | awk '{print $1}' | tee "$file.sha256")
         SHA512=$(sha512sum -b "$file" | sed -e "s,$file,," | awk '{print $1}' | tee "$file.sha512")
         BASE=$(basename "$file")
-        echo "| $BASE | $SHA256 | $SHA512 |"
+        echo "| $BASE | $SHA256 | $SHA512 |" | tee -a release-notes.md
     done
 fi
