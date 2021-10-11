@@ -1,5 +1,8 @@
+//go:build container
+// +build container
+
 /*
-Copyright 2017 The Kubernetes Authors.
+Copyright 2021 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,13 +20,21 @@ limitations under the License.
 package benchmark
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gmeasure"
 )
+
+type ContainerExperimentData struct {
+	CreateContainer, StatusContainer, StopContainer, RemoveContainer, StartContainer string
+}
 
 var _ = framework.KubeDescribe("Container", func() {
 	f := framework.NewDefaultCRIFramework()
@@ -37,84 +48,64 @@ var _ = framework.KubeDescribe("Container", func() {
 	})
 
 	Context("benchmark about operations on Container", func() {
-		var podID string
-		var podConfig *runtimeapi.PodSandboxConfig
+		It("benchmark about basic operations on Container", func() {
+			experiment := gmeasure.NewExperiment("ContainerOps")
+			experiment.Sample(func(idx int) {
+				var podID string
+				var podConfig *runtimeapi.PodSandboxConfig
+				var containerID string
+				var err error
 
-		BeforeEach(func() {
-			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
-		})
+				podID, podConfig = framework.CreatePodSandboxForContainer(rc)
 
-		AfterEach(func() {
-			By("stop PodSandbox")
-			rc.StopPodSandbox(podID)
-			By("delete PodSandbox")
-			rc.RemovePodSandbox(podID)
-		})
+				By("CreatingContainer")
+				stopwatch := experiment.NewStopwatch()
+				stopwatch.Reset()
+				containerID = framework.CreateDefaultContainer(rc, ic, podID, podConfig, "Benchmark-container-")
+				stopwatch.Record("CreateContainer")
 
-		Measure("benchmark about basic operations on Container", func(b Benchmarker) {
-			var containerID string
-			var err error
-
-			operation := b.Time("create Container", func() {
-				By("benchmark about creating Container")
-				containerID = framework.CreateDefaultContainer(rc, ic, podID, podConfig, "Container-for-creating-benchmark-")
-			})
-			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "create Container shouldn't take too long.")
-
-			operation = b.Time("start Container", func() {
-				By("benchmark about starting Container")
+				By("StartingContainer")
+				stopwatch.Reset()
 				err = rc.StartContainer(containerID)
-			})
+				stopwatch.Record("StartContainer")
+				framework.ExpectNoError(err, "failed to start Container: %v", err)
 
-			framework.ExpectNoError(err, "failed to start Container: %v", err)
-			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "start Container shouldn't take too long.")
+				By("ContainerStatus")
+				stopwatch.Reset()
+				_, err = rc.ContainerStatus(containerID)
+				stopwatch.Record("StatusContainer")
+				framework.ExpectNoError(err, "failed to get Container status: %v", err)
 
-			operation = b.Time("Container status", func() {
-				By("benchmark about getting Container status")
-				_, err = rc.ContainerStatus(containerID, false)
-			})
-
-			framework.ExpectNoError(err, "failed to get Container status: %v", err)
-			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "get container status shouldn't take too long.")
-
-			operation = b.Time("stop Container", func() {
-				By("benchmark about stoping Container")
+				By("ContainerStop")
+				stopwatch.Reset()
 				err = rc.StopContainer(containerID, framework.DefaultStopContainerTimeout)
-			})
+				stopwatch.Record("StopContainer")
+				framework.ExpectNoError(err, "failed to stop Container: %v", err)
 
-			framework.ExpectNoError(err, "failed to stop Container: %v", err)
-			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "stop Container shouldn't take too long.")
-
-			operation = b.Time("remove Container", func() {
-				By("benchmark about removing Container")
+				By("ContainerRemove")
+				stopwatch.Reset()
 				err = rc.RemoveContainer(containerID)
-			})
+				stopwatch.Record("RemoveContainer")
+				framework.ExpectNoError(err, "failed to remove Container: %v", err)
 
-			framework.ExpectNoError(err, "failed to remove Container: %v", err)
-			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "remove Container shouldn't take too long.")
+				By("stop PodSandbox")
+				rc.StopPodSandbox(podID)
+				By("delete PodSandbox")
+				rc.RemovePodSandbox(podID)
 
-		}, defaultOperationTimes)
+			}, gmeasure.SamplingConfig{N: 200, NumParallel: 1})
 
-		Measure("benchmark about listing Container", func(b Benchmarker) {
-			containerList := make([]string, 0, framework.TestContext.Number)
-			var err error
-
-			for i := 0; i < framework.TestContext.Number; i++ {
-				containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "Container-for-listing-benchmark-")
-				containerList = append(containerList, containerID)
+			data := ContainerExperimentData{
+				CreateContainer: fmt.Sprintf("%v", experiment.Get("CreateContainer").Durations),
+				StatusContainer: fmt.Sprintf("%v", experiment.Get("StatusContainer").Durations),
+				StopContainer:   fmt.Sprintf("%v", experiment.Get("StopContainer").Durations),
+				RemoveContainer: fmt.Sprintf("%v", experiment.Get("RemoveContainer").Durations),
+				StartContainer:  fmt.Sprintf("%v", experiment.Get("StartContainer").Durations),
 			}
 
-			operation := b.Time("list Container", func() {
-				_, err = rc.ListContainers(nil)
-			})
+			file, _ := json.MarshalIndent(data, "", " ")
+			_ = ioutil.WriteFile("c:/experiment_container.json", file, 0644)
+		})
 
-			framework.ExpectNoError(err, "failed to list Container: %v", err)
-			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "list Container shouldn't take too long.")
-
-			for _, containerID := range containerList {
-				rc.StopContainer(containerID, framework.DefaultStopContainerTimeout)
-				rc.RemoveContainer(containerID)
-			}
-		}, defaultOperationTimes)
 	})
 })
