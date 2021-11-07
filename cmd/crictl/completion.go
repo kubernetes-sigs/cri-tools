@@ -23,7 +23,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-var bashCompletionTemplate = `_cli_bash_autocomplete() {
+var bashCompletionTemplate = `_crictl() {
     local cur opts base
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
@@ -32,7 +32,7 @@ var bashCompletionTemplate = `_cli_bash_autocomplete() {
     return 0
 }
 
-complete -F _cli_bash_autocomplete crictl`
+complete -F _crictl crictl`
 
 func bashCompletion(c *cli.Context) error {
 	subcommands := []string{}
@@ -55,8 +55,8 @@ func bashCompletion(c *cli.Context) error {
 }
 
 var zshCompletionTemplate = `#compdef crictl
-_cli_zsh_autocomplete() {
 
+_crictl() {
   local -a cmds
   cmds=('%s')
   _describe 'commands' cmds
@@ -68,7 +68,7 @@ _cli_zsh_autocomplete() {
   return
 }
 
-compdef _cli_zsh_autocomplete crictl`
+compdef _crictl crictl`
 
 func zshCompletion(c *cli.Context) error {
 	subcommands := []string{}
