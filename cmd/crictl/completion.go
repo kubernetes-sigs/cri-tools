@@ -54,7 +54,8 @@ func bashCompletion(c *cli.Context) error {
 	return nil
 }
 
-var zshCompletionTemplate = `_cli_zsh_autocomplete() {
+var zshCompletionTemplate = `#compdef crictl
+_cli_zsh_autocomplete() {
 
   local -a cmds
   cmds=('%s')
