@@ -92,6 +92,15 @@ func zshCompletion(c *cli.Context) error {
 
 }
 
+func fishCompletion(c *cli.Context) error {
+	completion, err := c.App.ToFishCompletion()
+	if err != nil {
+		return err
+	}
+	fmt.Fprintln(c.App.Writer, completion)
+	return nil
+}
+
 var completionCommand = &cli.Command{
 	Name:      "completion",
 	Usage:     "Output shell completion code",
@@ -130,13 +139,4 @@ Examples:
 			return fmt.Errorf("only bash, zsh or fish are supported")
 		}
 	},
-}
-
-func fishCompletion(c *cli.Context) error {
-	completion, err := c.App.ToFishCompletion()
-	if err != nil {
-		return err
-	}
-	fmt.Fprintln(c.App.Writer, completion)
-	return nil
 }
