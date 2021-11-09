@@ -23,7 +23,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-var bashCompletionTemplate = `_cli_bash_autocomplete() {
+var bashCompletionTemplate = `_crictl() {
     local cur opts base
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
@@ -32,7 +32,7 @@ var bashCompletionTemplate = `_cli_bash_autocomplete() {
     return 0
 }
 
-complete -F _cli_bash_autocomplete crictl`
+complete -F _crictl crictl`
 
 func bashCompletion(c *cli.Context) error {
 	subcommands := []string{}
@@ -54,8 +54,9 @@ func bashCompletion(c *cli.Context) error {
 	return nil
 }
 
-var zshCompletionTemplate = `_cli_zsh_autocomplete() {
+var zshCompletionTemplate = `#compdef crictl
 
+_crictl() {
   local -a cmds
   cmds=('%s')
   _describe 'commands' cmds
@@ -67,7 +68,7 @@ var zshCompletionTemplate = `_cli_zsh_autocomplete() {
   return
 }
 
-compdef _cli_zsh_autocomplete crictl`
+compdef _crictl crictl`
 
 func zshCompletion(c *cli.Context) error {
 	subcommands := []string{}
@@ -89,6 +90,15 @@ func zshCompletion(c *cli.Context) error {
 	fmt.Fprintln(c.App.Writer, fmt.Sprintf(zshCompletionTemplate, strings.Join(subcommands, "' '"), strings.Join(opts, "' '")))
 	return nil
 
+}
+
+func fishCompletion(c *cli.Context) error {
+	completion, err := c.App.ToFishCompletion()
+	if err != nil {
+		return err
+	}
+	fmt.Fprintln(c.App.Writer, completion)
+	return nil
 }
 
 var completionCommand = &cli.Command{
@@ -129,13 +139,4 @@ Examples:
 			return fmt.Errorf("only bash, zsh or fish are supported")
 		}
 	},
-}
-
-func fishCompletion(c *cli.Context) error {
-	completion, err := c.App.ToFishCompletion()
-	if err != nil {
-		return err
-	}
-	fmt.Fprintln(c.App.Writer, completion)
-	return nil
 }
