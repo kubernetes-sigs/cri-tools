@@ -619,7 +619,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
      "defaultAction": "SCMP_ACT_ALLOW",
      "syscalls": [
          {
-             "names": ["chmod"],
+             "names": ["chmod", "fchmodat"],
              "action": "SCMP_ACT_ERRNO"
          }
      ]
