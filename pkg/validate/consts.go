@@ -198,8 +198,8 @@ const (
 	hostNetWebServerLinuxImage = registry + "hostnet-nginx-" + runtime.GOARCH
 
 	// Windows defaults
-	webServerWindowsImage        = "k8s.gcr.io/e2e-test-images/nginx:1.14-1"
-	hostNetWebServerWindowsImage = "k8s.gcr.io/e2e-test-images/nginx:1.14-1"
+	webServerWindowsImage        = "k8s.gcr.io/e2e-test-images/nginx:1.14-2"
+	hostNetWebServerWindowsImage = "k8s.gcr.io/e2e-test-images/nginx:1.14-2"
 )
 
 var (

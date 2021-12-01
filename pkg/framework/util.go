@@ -96,7 +96,7 @@ const (
 	DefaultLinuxContainerImage string = "busybox:1.28"
 
 	// DefaultWindowsContainerImage default container image for Windows
-	DefaultWindowsContainerImage string = "k8s.gcr.io/e2e-test-images/busybox:1.29-1"
+	DefaultWindowsContainerImage string = "k8s.gcr.io/e2e-test-images/busybox:1.29-2"
 )
 
 // Set the constants based on operating system and flags
