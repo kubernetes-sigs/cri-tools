@@ -243,6 +243,11 @@ var _ = framework.AddBeforeSuiteCallback(func() {
 		getDNSConfigContent = getDNSConfigWindowsContent
 		getHostnameCmd = getHostnameWindowsCmd
 	}
+
+	// Override the web server test image if an explicit one is provided:
+	if framework.TestContext.TestImageList.WebServerTestImage != "" {
+		webServerImage = framework.TestContext.TestImageList.WebServerTestImage
+	}
 })
 
 // Streaming test constants
