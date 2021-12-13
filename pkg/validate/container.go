@@ -203,7 +203,7 @@ var _ = framework.KubeDescribe("Container", func() {
 			}
 
 			By("test container stats")
-			stats := listContainersStats(rc, filter)
+			stats := listContainerStats(rc, filter)
 			Expect(statFound(stats, containerID)).To(BeTrue(), "Container should be created")
 		})
 
@@ -215,7 +215,7 @@ var _ = framework.KubeDescribe("Container", func() {
 			startContainer(rc, containerID)
 
 			By("test container stats")
-			stats := listContainersStats(rc, nil)
+			stats := listContainerStats(rc, nil)
 			Expect(statFound(stats, containerID)).To(BeTrue(), "Container should be created")
 		})
 
@@ -235,7 +235,7 @@ var _ = framework.KubeDescribe("Container", func() {
 			startContainer(rc, thirdContainerID)
 
 			By("test containers stats")
-			stats := listContainersStats(rc, nil)
+			stats := listContainerStats(rc, nil)
 			Expect(statFound(stats, firstContainerID)).To(BeTrue(), "Container should be created")
 			Expect(statFound(stats, secondContainerID)).To(BeTrue(), "Container should be created")
 			Expect(statFound(stats, thirdContainerID)).To(BeTrue(), "Container should be created")
@@ -661,8 +661,8 @@ func listContainerStatsForID(c internalapi.RuntimeService, containerID string) *
 	return stats
 }
 
-// listContainerStatsForID lists container for containerID.
-func listContainersStats(c internalapi.RuntimeService, filter *runtimeapi.ContainerStatsFilter) []*runtimeapi.ContainerStats {
+// listContainerStats lists stats for containers based on filter
+func listContainerStats(c internalapi.RuntimeService, filter *runtimeapi.ContainerStatsFilter) []*runtimeapi.ContainerStats {
 	By("List container stats for all containers:")
 	stats, err := c.ListContainerStats(filter)
 	framework.ExpectNoError(err, "failed to list container stats for containers status: %v", err)
