@@ -35,6 +35,9 @@ else
 	SKIP="${SKIP}|runtime should support SupplementalGroups"
 fi
 
+# regex of SKIP
+SKIP=$(echo $SKIP|sed "s/ /\\\s/g" -)
+
 # Start dockershim first
 logs_dir="$GOPATH/logs"
 mkdir -p $logs_dir
