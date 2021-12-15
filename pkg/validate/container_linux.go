@@ -189,7 +189,7 @@ func createHostPathForMountPropagation(podID string, propagationOpt runtimeapi.M
 		err := unix.Mount(mntSource, mntSource, "bind", unix.MS_BIND|unix.MS_REC, "")
 		framework.ExpectNoError(err, "failed to mount \"mntSource\": %v", err)
 		err = unix.Mount("", mntSource, "", unix.MS_SHARED|unix.MS_REC, "")
-		framework.ExpectNoError(err, "failed to set \"mntSource\" to \"rprivate\": %v", err)
+		framework.ExpectNoError(err, "failed to set \"mntSource\" to \"rshared\": %v", err)
 	default:
 		err := unix.Mount(mntSource, mntSource, "bind", unix.MS_BIND|unix.MS_REC, "")
 		framework.ExpectNoError(err, "failed to mount \"mntSource\": %v", err)
