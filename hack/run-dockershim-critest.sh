@@ -38,7 +38,8 @@ fi
 # Start dockershim first
 logs_dir="$GOPATH/logs"
 mkdir -p $logs_dir
-sudo /usr/local/bin/cri-dockerd --v=10 --network-plugin="" --logtostderr >$logs_dir/cri-dockerd.log 2>&1 &
+ep="unix:///var/run/dockershim.sock"
+sudo /usr/local/bin/cri-dockerd --network-plugin="" --container-runtime-endpoint=${ep} >$logs_dir/cri-dockerd.log 2>&1 &
 
 # Wait a while for dockershim starting.
 sleep 10
@@ -48,8 +49,7 @@ sleep 10
 # Skip runtime should support execSync with timeout because docker doesn't
 # support it.
 # Skip apparmor test as we don't enable apparmor yet in this CI job.
-sudo critest -ginkgo.skip=${SKIP} -parallel 1
-
+sudo critest -ginkgo.skip=${SKIP} -parallel 1 
 
 # Run benchmark test cases
 sudo critest -benchmark

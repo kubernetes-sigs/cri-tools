@@ -21,7 +21,7 @@ set -o pipefail
 # Build cri-dockerd
 
 git clone https://github.com/Mirantis/cri-dockerd $GOPATH/src/github.com/Mirantis/cri-dockerd
-cd $GOPATH/src/github.com/Mirantis/cri-dockerd
+cd $GOPATH/src/github.com/Mirantis/cri-dockerd/src
 
 go install .
 sudo mv $GOPATH/bin/cri-dockerd /usr/local/bin
