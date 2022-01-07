@@ -52,6 +52,7 @@ critest connects to Unix: `unix:///var/run/dockershim.sock` or Windows: `tcp://l
 
 - `-ginkgo.focus`: Only run the tests that match the regular expression.
 - `-image-endpoint`: Set the endpoint of image service. Same with runtime-endpoint if not specified.
+- `-test-images-file`: Optional path to a YAML file containing references to custom container images to be used in tests.
 - `-runtime-endpoint`: Set the endpoint of runtime service. Default to `unix:///var/run/dockershim.sock` or Windows: `tcp://localhost:3735`.
 - `-ginkgo.skip`: Skip the tests that match the regular expression.
 - `-parallel`: The number of parallel test nodes to run (default 1). [ginkgo](https://github.com/onsi/ginkgo) must be installed to run parallel tests.

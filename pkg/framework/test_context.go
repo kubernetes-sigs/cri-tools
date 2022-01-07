@@ -18,13 +18,21 @@ package framework
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
 	"time"
 
 	"github.com/onsi/ginkgo/config"
+	"gopkg.in/yaml.v3"
 )
+
+// TestImageList aggregates references to the images used in tests.
+type TestImageList struct {
+	DefaultTestContainerImage string `yaml:"defaultTestContainerImage"`
+	WebServerTestImage        string `yaml:"webServerTestImage"`
+}
 
 // TestContextType is the type of test context.
 type TestContextType struct {
@@ -39,6 +47,10 @@ type TestContextType struct {
 	RuntimeServiceAddr    string
 	RuntimeServiceTimeout time.Duration
 	RuntimeHandler        string
+
+	// Test images-related settings.
+	TestImagesFilePath string
+	TestImageList      TestImageList
 
 	// Benchmark setting.
 	Number int
@@ -69,6 +81,7 @@ func RegisterFlags() {
 	flag.StringVar(&TestContext.ReportPrefix, "report-prefix", "", "Optional prefix for JUnit XML reports. Default is empty, which doesn't prepend anything to the default name.")
 	flag.StringVar(&TestContext.ReportDir, "report-dir", "", "Path to the directory where the JUnit XML reports should be saved. Default is empty, which doesn't generate these reports.")
 	flag.StringVar(&TestContext.ImageServiceAddr, "image-endpoint", "", "Image service socket for client to connect.")
+	flag.StringVar(&TestContext.TestImagesFilePath, "test-images-file", "", "Optional path to a YAML file containing references to custom container images to be used in tests.")
 	flag.DurationVar(&TestContext.ImageServiceTimeout, "image-service-timeout", 300*time.Second, "Timeout when trying to connect to image service.")
 
 	svcaddr := "unix:///var/run/dockershim.sock"
@@ -89,4 +102,23 @@ func RegisterFlags() {
 		TestContext.IsLcow = false
 	}
 	flag.StringVar(&TestContext.RegistryPrefix, "registry-prefix", DefaultRegistryPrefix, "A possible registry prefix added to all images, like 'localhost:5000/'")
+}
+
+// Loads the custom images mapping file (if defined) into the TestContextType.
+func (tc TestContextType) LoadCustomImagesFileIntoTestingContext() error {
+	Logf("Testing context container image list file: %s", TestContext.TestImagesFilePath)
+	if TestContext.TestImagesFilePath != "" {
+		fileContent, err := os.ReadFile(TestContext.TestImagesFilePath)
+		if err != nil {
+			return fmt.Errorf("error reading '%v' file contents: %v", TestContext.TestImagesFilePath, err)
+		}
+
+		err = yaml.Unmarshal(fileContent, &TestContext.TestImageList)
+		if err != nil {
+			return fmt.Errorf("error unmarshalling '%v' YAML file: %v", TestContext.TestImagesFilePath, err)
+		}
+	}
+
+	Logf("Testing context container image list: %+v", TestContext.TestImageList)
+	return nil
 }

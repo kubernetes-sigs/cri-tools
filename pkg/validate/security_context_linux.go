@@ -103,7 +103,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			command = []string{"sh", "-c", "sleep 1000"}
 			prefix = "container-with-HostPID-test-"
 			containerName = prefix + framework.NewUUID()
-			containerID, _, _ = createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.DefaultContainerImage, namespaceOption, command, "")
+			containerID, _, _ = createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.TestContext.TestImageList.DefaultTestContainerImage, namespaceOption, command, "")
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -145,7 +145,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("create a default container with namespace")
 			prefix := "namespace-container-"
 			containerName := prefix + framework.NewUUID()
-			containerID, _, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.DefaultContainerImage, namespaceOption, pauseCmd, "")
+			containerID, _, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.TestContext.TestImageList.DefaultTestContainerImage, namespaceOption, pauseCmd, "")
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -177,7 +177,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("create a default container with namespace")
 			prefix := "namespace-container-"
 			containerName := prefix + framework.NewUUID()
-			containerID, _, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.DefaultContainerImage, namespaceOption, pauseCmd, "")
+			containerID, _, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.TestContext.TestImageList.DefaultTestContainerImage, namespaceOption, pauseCmd, "")
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -294,7 +294,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			containerName := "container-with-SupplementalGroups-test-" + framework.NewUUID()
 			containerConfig := &runtimeapi.ContainerConfig{
 				Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-				Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+				Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
 				Command:  pauseCmd,
 				Linux: &runtimeapi.LinuxContainerConfig{
 					SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
@@ -549,7 +549,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			containerName := "container-with-maskedpaths" + framework.NewUUID()
 			containerConfig := &runtimeapi.ContainerConfig{
 				Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-				Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+				Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
 				Command:  pauseCmd,
 				Linux: &runtimeapi.LinuxContainerConfig{
 					SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
@@ -578,7 +578,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			containerName := "container-with-readonlypaths" + framework.NewUUID()
 			containerConfig := &runtimeapi.ContainerConfig{
 				Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-				Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+				Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
 				Command:  pauseCmd,
 				Linux: &runtimeapi.LinuxContainerConfig{
 					SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
@@ -846,7 +846,7 @@ func createRunAsUserContainer(rc internalapi.RuntimeService, ic internalapi.Imag
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
 		Command:  pauseCmd,
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
@@ -868,7 +868,7 @@ func createRunAsUserNameContainer(rc internalapi.RuntimeService, ic internalapi.
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
 		Command:  pauseCmd,
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
@@ -890,7 +890,7 @@ func createRunAsGroupContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 	By("create a container with RunAsUser and RunAsGroup")
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
 		Command:  []string{"sh", "-c", "echo $(id -u):$(id -g)"},
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
@@ -913,7 +913,7 @@ func createInvalidRunAsGroupContainer(rc internalapi.RuntimeService, ic internal
 	By("create a container with RunAsGroup without RunAsUser")
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
 		Command:  []string{"sh", "-c", "echo $(id -u):$(id -g)"},
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
@@ -970,7 +970,7 @@ func createReadOnlyRootfsContainer(rc internalapi.RuntimeService, ic internalapi
 	path := fmt.Sprintf("%s.log", containerName)
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
 		Command:  []string{"sh", "-c", "touch test.go && [ -f test.go ] && echo 'Found'"},
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
@@ -1021,7 +1021,7 @@ func createPrivilegedContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
 		Command:  pauseCmd,
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
@@ -1053,7 +1053,7 @@ func createCapabilityContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
 		Command:  pauseCmd,
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
@@ -1086,7 +1086,7 @@ func createAndCheckHostNetwork(rc internalapi.RuntimeService, ic internalapi.Ima
 	command := []string{"sh", "-c", "netstat -ln"}
 	containerName := "container-with-HostNetwork-test-" + framework.NewUUID()
 	path := fmt.Sprintf("%s.log", containerName)
-	containerID, _, logPath := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.DefaultContainerImage, namespaceOptions, command, path)
+	containerID, _, logPath := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.TestContext.TestImageList.DefaultTestContainerImage, namespaceOptions, command, path)
 
 	By("start container")
 	startContainer(rc, containerID)
@@ -1154,7 +1154,7 @@ func seccompTestContainer(rc internalapi.RuntimeService, ic internalapi.ImageMan
 	containerName := containerNamePrefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
 		Command:  pauseCmd,
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
@@ -1200,7 +1200,7 @@ func createSeccompContainer(rc internalapi.RuntimeService,
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
 		Command:  []string{"sleep", "60"},
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
