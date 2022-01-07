@@ -67,13 +67,15 @@ crictl by default connects on Unix to:
 
 - `unix:///var/run/dockershim.sock` or
 - `unix:///run/containerd/containerd.sock` or
-- `unix:///run/crio/crio.sock`
+- `unix:///run/crio/crio.sock` or
+- `unix:///var/run/cri-dockerd.sock`
 
 or on Windows to:
 
 - `npipe:////./pipe/dockershim` or
 - `npipe:////./pipe/containerd` or
-- `npipe:////./pipe/crio`
+- `npipe:////./pipe/crio` or
+- `npipe:////./pipe/cri-dockerd`
 
 For other runtimes, use:
 
@@ -91,6 +93,7 @@ If the endpoint is not set then it works as follows:
   - dockershim
   - containerd
   - cri-o
+  - cri-dockerd
 - If the image endpoint is not set, `crictl` will by default use the runtime endpoint setting
 
 > Note: The default endpoints are now deprecated and the runtime endpoint should always be set instead.
