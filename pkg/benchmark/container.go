@@ -1,6 +1,3 @@
-//go:build container
-// +build container
-
 /*
 Copyright 2021 The Kubernetes Authors.
 
@@ -21,19 +18,20 @@ package benchmark
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
+	"path"
 
+	"github.com/golang/glog"
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	internalapi "k8s.io/cri-api/pkg/apis"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega/gmeasure"
 )
 
 type ContainerExperimentData struct {
-	CreateContainer, StatusContainer, StopContainer, RemoveContainer, StartContainer string
+	CreateContainer, StatusContainer, StopContainer, RemoveContainer, StartContainer []int64
 }
 
 var _ = framework.KubeDescribe("Container", func() {
@@ -93,18 +91,30 @@ var _ = framework.KubeDescribe("Container", func() {
 				By("delete PodSandbox")
 				rc.RemovePodSandbox(podID)
 
-			}, gmeasure.SamplingConfig{N: 200, NumParallel: 1})
+			}, gmeasure.SamplingConfig{N: framework.TestContext.BenchmarkingParams.ContainersNumber, NumParallel: framework.TestContext.BenchmarkingParams.ContainersNumberParallel})
 
 			data := ContainerExperimentData{
-				CreateContainer: fmt.Sprintf("%v", experiment.Get("CreateContainer").Durations),
-				StatusContainer: fmt.Sprintf("%v", experiment.Get("StatusContainer").Durations),
-				StopContainer:   fmt.Sprintf("%v", experiment.Get("StopContainer").Durations),
-				RemoveContainer: fmt.Sprintf("%v", experiment.Get("RemoveContainer").Durations),
-				StartContainer:  fmt.Sprintf("%v", experiment.Get("StartContainer").Durations),
+				CreateContainer: getNanosecondsForDurations(experiment.Get("CreateContainer").Durations),
+				StartContainer:  getNanosecondsForDurations(experiment.Get("StartContainer").Durations),
+				StatusContainer: getNanosecondsForDurations(experiment.Get("StatusContainer").Durations),
+				StopContainer:   getNanosecondsForDurations(experiment.Get("StopContainer").Durations),
+				RemoveContainer: getNanosecondsForDurations(experiment.Get("RemoveContainer").Durations),
 			}
 
-			file, _ := json.MarshalIndent(data, "", " ")
-			_ = ioutil.WriteFile("c:/experiment_container.json", file, 0644)
+			if framework.TestContext.BenchmarkingOutputDir != "" {
+				filepath := path.Join(framework.TestContext.BenchmarkingOutputDir, "container_benchmark_data.json")
+				data, err := json.MarshalIndent(data, "", " ")
+				if err == nil {
+					err = ioutil.WriteFile(filepath, data, 0644)
+					if err != nil {
+						glog.Errorf("Failed to write container benchmark data: %v", filepath)
+					}
+				} else {
+					glog.Errorf("Failed to serialize benchmark data: %v", err)
+				}
+			} else {
+				glog.Infof("No benchmarking output dir provided, skipping writing benchmarking resulsts.")
+			}
 		})
 
 	})

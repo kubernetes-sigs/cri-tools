@@ -1,6 +1,3 @@
-//go:build pod
-// +build pod
-
 /*
 Copyright 2021 The Kubernetes Authors.
 
@@ -21,16 +18,16 @@ package benchmark
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
+	"path"
 
+	"github.com/golang/glog"
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
-	"github.com/onsi/gomega/gmeasure"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gmeasure"
 )
 
 const (
@@ -38,7 +35,7 @@ const (
 )
 
 type ExperimentData struct {
-	CreatePod, StatusPod, StopPod, RemovePod string
+	CreatePod, StatusPod, StopPod, RemovePod []int64
 }
 
 var _ = framework.KubeDescribe("PodSandbox", func() {
@@ -93,17 +90,29 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				stopwatch.Record("RemovePod")
 				framework.ExpectNoError(err, "failed to remove PodSandbox: %v", err)
 
-			}, gmeasure.SamplingConfig{N: 1000, NumParallel: 1})
+			}, gmeasure.SamplingConfig{N: framework.TestContext.BenchmarkingParams.PodsNumber, NumParallel: framework.TestContext.BenchmarkingParams.PodsNumberParallel})
 
 			data := ExperimentData{
-				CreatePod: fmt.Sprintf("%v", experiment.Get("CreatePod").Durations),
-				StatusPod: fmt.Sprintf("%v", experiment.Get("StatusPod").Durations),
-				StopPod:   fmt.Sprintf("%v", experiment.Get("StopPod").Durations),
-				RemovePod: fmt.Sprintf("%v", experiment.Get("RemovePod").Durations),
+				CreatePod: getNanosecondsForDurations(experiment.Get("CreatePod").Durations),
+				StatusPod: getNanosecondsForDurations(experiment.Get("StatusPod").Durations),
+				StopPod:   getNanosecondsForDurations(experiment.Get("StopPod").Durations),
+				RemovePod: getNanosecondsForDurations(experiment.Get("RemovePod").Durations),
 			}
 
-			file, _ := json.MarshalIndent(data, "", " ")
-			_ = ioutil.WriteFile("c:/experiment_old_hcsshim.json", file, 0644)
+			if framework.TestContext.BenchmarkingOutputDir != "" {
+				filepath := path.Join(framework.TestContext.BenchmarkingOutputDir, "pod_benchmark_data.json")
+				data, err := json.MarshalIndent(data, "", " ")
+				if err == nil {
+					err = ioutil.WriteFile(filepath, data, 0644)
+					if err != nil {
+						glog.Errorf("Failed to write container benchmark data: %v", filepath)
+					}
+				} else {
+					glog.Errorf("Failed to serialize benchmark data: %v", err)
+				}
+			} else {
+				glog.Infof("No benchmarking out dir provided, skipping writing benchmarking resulsts.")
+			}
 		})
 	})
 

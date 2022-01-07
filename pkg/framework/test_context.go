@@ -25,13 +25,35 @@ import (
 	"time"
 
 	"github.com/onsi/ginkgo/v2"
-	"gopkg.in/yaml.v3"
+)
+
+var (
+	testImagesFilePath       string
+	benchamrkSettingFilePath string
 )
 
 // TestImageList aggregates references to the images used in tests.
 type TestImageList struct {
 	DefaultTestContainerImage string `yaml:"defaultTestContainerImage"`
 	WebServerTestImage        string `yaml:"webServerTestImage"`
+}
+
+// BenchmarkingParamsType is the type of benchmarking-related params.
+type BenchmarkingParamsType struct {
+	// ContainersNumber is the number of Containers to run as part of
+	// the container-related benchmarks.
+	ContainersNumber int `yaml:"containersNumber"`
+
+	// ContainersNumberParallel is the maximum number of container-related benchmarks
+	// to run in parallel.
+	ContainersNumberParallel int `yaml:"containersNumberParallel"`
+
+	// PodsNumber is the number of Pods to run as part of the pod-related benchmarks.
+	PodsNumber int `yaml:"podsNumber"`
+
+	// PodsNumberParallel is the maximum number of pod -related benchmarks
+	// to run in parallel.
+	PodsNumberParallel int `yaml:"podsNumberParallel"`
 }
 
 // TestContextType is the type of test context.
@@ -49,11 +71,11 @@ type TestContextType struct {
 	RuntimeHandler        string
 
 	// Test images-related settings.
-	TestImagesFilePath string
-	TestImageList      TestImageList
+	TestImageList TestImageList
 
-	// Benchmark setting.
-	Number int
+	// Benchmarking settings.
+	BenchmarkingOutputDir string
+	BenchmarkingParams    BenchmarkingParamsType
 
 	// Test configuration.
 	IsLcow bool
@@ -83,7 +105,7 @@ func RegisterFlags() {
 	flag.StringVar(&TestContext.ReportPrefix, "report-prefix", "", "Optional prefix for JUnit XML reports. Default is empty, which doesn't prepend anything to the default name.")
 	flag.StringVar(&TestContext.ReportDir, "report-dir", "", "Path to the directory where the JUnit XML reports should be saved. Default is empty, which doesn't generate these reports.")
 	flag.StringVar(&TestContext.ImageServiceAddr, "image-endpoint", "", "Image service socket for client to connect.")
-	flag.StringVar(&TestContext.TestImagesFilePath, "test-images-file", "", "Optional path to a YAML file containing references to custom container images to be used in tests.")
+	flag.StringVar(&testImagesFilePath, "test-images-file", "", "Optional path to a YAML file containing references to custom container images to be used in tests.")
 	flag.DurationVar(&TestContext.ImageServiceTimeout, "image-service-timeout", 300*time.Second, "Timeout when trying to connect to image service.")
 
 	svcaddr := "unix:///var/run/dockershim.sock"
@@ -96,7 +118,9 @@ func RegisterFlags() {
 	flag.StringVar(&TestContext.RuntimeServiceAddr, "runtime-endpoint", svcaddr, "Runtime service socket for client to connect.")
 	flag.DurationVar(&TestContext.RuntimeServiceTimeout, "runtime-service-timeout", 300*time.Second, "Timeout when trying to connect to a runtime service.")
 	flag.StringVar(&TestContext.RuntimeHandler, "runtime-handler", "", "Runtime handler to use in the test.")
-	flag.IntVar(&TestContext.Number, "number", 5, "Number of PodSandbox/container in listing benchmark test.")
+
+	flag.StringVar(&benchamrkSettingFilePath, "benchmarking-params-file", "", "Optional path to a YAML file specifying benchmarking configuration options.")
+	flag.StringVar(&TestContext.BenchmarkingOutputDir, "benchmarking-output-dir", "", "Optional path to a directory in which benchmarking data should be placed.")
 
 	if runtime.GOOS == "windows" {
 		flag.BoolVar(&TestContext.IsLcow, "lcow", false, "Run Linux container on Windows tests instead of Windows container tests")
@@ -106,21 +130,25 @@ func RegisterFlags() {
 	flag.StringVar(&TestContext.RegistryPrefix, "registry-prefix", DefaultRegistryPrefix, "A possible registry prefix added to all images, like 'localhost:5000/'")
 }
 
-// Loads the custom images mapping file (if defined) into the TestContextType.
-func (tc TestContextType) LoadCustomImagesFileIntoTestingContext() error {
-	Logf("Testing context container image list file: %s", TestContext.TestImagesFilePath)
-	if TestContext.TestImagesFilePath != "" {
-		fileContent, err := os.ReadFile(TestContext.TestImagesFilePath)
+// Loads any external file-based parameters into the TestContextType.
+func (tc TestContextType) LoadYamlConfigFiles() error {
+	// Attempt to load cusom images file:
+	if testImagesFilePath != "" {
+		err := LoadYamlFile(testImagesFilePath, &TestContext.TestImageList)
 		if err != nil {
-			return fmt.Errorf("error reading '%v' file contents: %v", TestContext.TestImagesFilePath, err)
-		}
-
-		err = yaml.Unmarshal(fileContent, &TestContext.TestImageList)
-		if err != nil {
-			return fmt.Errorf("error unmarshalling '%v' YAML file: %v", TestContext.TestImagesFilePath, err)
+			return fmt.Errorf("Error loading custom test images file: %v", err)
 		}
 	}
-
 	Logf("Testing context container image list: %+v", TestContext.TestImageList)
+
+	// Attempt to load benchmark settings file:
+	if benchamrkSettingFilePath != "" {
+		err := LoadYamlFile(benchamrkSettingFilePath, &TestContext.BenchmarkingParams)
+		if err != nil {
+			return err
+		}
+	}
+	Logf("Testing context benchmarking params: %+v", TestContext.BenchmarkingParams)
+
 	return nil
 }
