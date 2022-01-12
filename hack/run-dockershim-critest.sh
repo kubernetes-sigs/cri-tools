@@ -16,6 +16,9 @@
 
 # Run critest with default dockershim.
 
+# Works only with https://github.com/Mirantis/cri-dockerd - other CRI
+# implementations aren't supported.
+
 set -o errexit
 set -o nounset
 set -o pipefail

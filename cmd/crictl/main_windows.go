@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 /*
@@ -23,7 +24,7 @@ import (
 	"path/filepath"
 )
 
-var defaultRuntimeEndpoints = []string{"npipe:////./pipe/dockershim", "npipe:////./pipe/containerd-containerd", "npipe:////./pipe/cri-dockerd"}
+var defaultRuntimeEndpoints = []string{"npipe:////./pipe/containerd", "npipe:////./pipe/crio", "npipe:////./pipe/cri-dockerd"}
 var defaultConfigPath string
 
 var shutdownSignals = []os.Signal{os.Interrupt}
