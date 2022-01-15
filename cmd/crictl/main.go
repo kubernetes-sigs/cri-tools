@@ -38,6 +38,8 @@ import (
 
 const (
 	defaultTimeout = 2 * time.Second
+	// use same message size as cri remote client in kubelet.
+	maxMsgSize = 1024 * 1024 * 16
 )
 
 var (
@@ -115,7 +117,7 @@ func getConnection(endPoints []string) (*grpc.ClientConn, error) {
 			logrus.Error(err)
 			continue
 		}
-		conn, err = grpc.Dial(addr, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(Timeout), grpc.WithContextDialer(dialer))
+		conn, err = grpc.Dial(addr, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(Timeout), grpc.WithContextDialer(dialer), grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxMsgSize)))
 		if err != nil {
 			errMsg := errors.Wrapf(err, "connect endpoint '%s', make sure you are running as root and the endpoint has been started", endPoint)
 			if indx == endPointsLen-1 {
