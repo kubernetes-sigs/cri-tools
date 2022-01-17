@@ -129,7 +129,7 @@ github.com/opencontainers/go-digest
 ## explicit
 github.com/opencontainers/runc/libcontainer/apparmor
 github.com/opencontainers/runc/libcontainer/utils
-# github.com/opencontainers/selinux v1.9.1
+# github.com/opencontainers/selinux v1.10.0
 ## explicit
 github.com/opencontainers/selinux/go-selinux
 github.com/opencontainers/selinux/pkg/pwalk
