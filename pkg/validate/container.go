@@ -396,7 +396,7 @@ func createShellContainer(rc internalapi.RuntimeService, ic internalapi.ImageMan
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata:  framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:     &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+		Image:     &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
 		Command:   shellCmd,
 		Linux:     &runtimeapi.LinuxContainerConfig{},
 		Stdin:     true,
@@ -514,7 +514,7 @@ func createVolumeContainer(rc internalapi.RuntimeService, ic internalapi.ImageMa
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
 		Command:  pauseCmd,
 		// mount host path to the same directory in container, and will check if hostPath isn't empty
 		Mounts: []*runtimeapi.Mount{
@@ -536,7 +536,7 @@ func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManag
 	path := fmt.Sprintf("%s.log", containerName)
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
 		Command:  logDefaultCmd,
 		LogPath:  path,
 	}
@@ -550,7 +550,7 @@ func createKeepLoggingContainer(rc internalapi.RuntimeService, ic internalapi.Im
 	path := fmt.Sprintf("%s.log", containerName)
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
 		Command:  loopLogDefaultCmd,
 		LogPath:  path,
 	}

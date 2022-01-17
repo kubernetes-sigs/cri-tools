@@ -46,9 +46,6 @@ var (
 	// DefaultPodLabels are labels used by default in pods
 	DefaultPodLabels map[string]string
 
-	// DefaultContainerImage is the default image used for containers
-	DefaultContainerImage string
-
 	// DefaultContainerCommand is the default command used for containers
 	DefaultContainerCommand []string
 
@@ -96,25 +93,31 @@ const (
 	DefaultLinuxContainerImage string = "busybox:1.28"
 
 	// DefaultWindowsContainerImage default container image for Windows
-	DefaultWindowsContainerImage string = "k8s.gcr.io/e2e-test-images/busybox:1.29-1"
+	DefaultWindowsContainerImage string = "k8s.gcr.io/e2e-test-images/busybox:1.29-2"
 )
 
 // Set the constants based on operating system and flags
 var _ = BeforeSuite(func() {
 	if runtime.GOOS != "windows" || TestContext.IsLcow {
 		DefaultPodLabels = DefaultLinuxPodLabels
-		DefaultContainerImage = DefaultLinuxContainerImage
 		DefaultContainerCommand = DefaultLinuxContainerCommand
 		DefaultPauseCommand = DefaultLinuxPauseCommand
+		TestContext.TestImageList.DefaultTestContainerImage = DefaultLinuxContainerImage
 
 		if TestContext.IsLcow {
 			DefaultPodLabels = DefaultLcowPodLabels
 		}
 	} else {
 		DefaultPodLabels = DefaultWindowsPodLabels
-		DefaultContainerImage = DefaultWindowsContainerImage
 		DefaultContainerCommand = DefaultWindowsContainerCommand
 		DefaultPauseCommand = DefaultWindowsPauseCommand
+		TestContext.TestImageList.DefaultTestContainerImage = DefaultWindowsContainerImage
+	}
+
+	// Load any custom image definitions:
+	err := TestContext.LoadCustomImagesFileIntoTestingContext()
+	if err != nil {
+		panic(err)
 	}
 
 	for _, callback := range beforeSuiteCallbacks {
@@ -254,7 +257,7 @@ func CreateDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageM
 	containerName := prefix + NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: BuildContainerMetadata(containerName, DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: DefaultContainerImage},
+		Image:    &runtimeapi.ImageSpec{Image: TestContext.TestImageList.DefaultTestContainerImage},
 		Command:  DefaultContainerCommand,
 		Linux:    &runtimeapi.LinuxContainerConfig{},
 	}
@@ -267,7 +270,7 @@ func CreatePauseContainer(rc internalapi.RuntimeService, ic internalapi.ImageMan
 	containerName := prefix + NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: BuildContainerMetadata(containerName, DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: DefaultContainerImage},
+		Image:    &runtimeapi.ImageSpec{Image: TestContext.TestImageList.DefaultTestContainerImage},
 		Command:  DefaultPauseCommand,
 		Linux:    &runtimeapi.LinuxContainerConfig{},
 	}

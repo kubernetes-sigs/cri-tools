@@ -198,8 +198,8 @@ const (
 	hostNetWebServerLinuxImage = registry + "hostnet-nginx-" + runtime.GOARCH
 
 	// Windows defaults
-	webServerWindowsImage        = "k8s.gcr.io/e2e-test-images/nginx:1.14-1"
-	hostNetWebServerWindowsImage = "k8s.gcr.io/e2e-test-images/nginx:1.14-1"
+	webServerWindowsImage        = "k8s.gcr.io/e2e-test-images/nginx:1.14-2"
+	hostNetWebServerWindowsImage = "k8s.gcr.io/e2e-test-images/nginx:1.14-2"
 )
 
 var (
@@ -242,6 +242,11 @@ var _ = framework.AddBeforeSuiteCallback(func() {
 		getDNSConfigCmd = getDNSConfigWindowsCmd
 		getDNSConfigContent = getDNSConfigWindowsContent
 		getHostnameCmd = getHostnameWindowsCmd
+	}
+
+	// Override the web server test image if an explicit one is provided:
+	if framework.TestContext.TestImageList.WebServerTestImage != "" {
+		webServerImage = framework.TestContext.TestImageList.WebServerTestImage
 	}
 })
 

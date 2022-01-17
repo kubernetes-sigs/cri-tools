@@ -145,7 +145,7 @@ func createMultiContainerTestBusyboxContainer(rc internalapi.RuntimeService, ic 
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.DefaultContainerImage},
+		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
 		Command:  []string{"sh", "-c", "echo " + defaultLog + "; sleep 1000"},
 		LogPath:  fmt.Sprintf("%s.log", containerName),
 	}
