@@ -131,9 +131,9 @@ func (t *TestFramework) CrictlExpectFailureWithEndpoint(
 func SetupCrio() string {
 	const (
 		crioURL       = "https://github.com/cri-o/cri-o"
-		crioVersion   = "v1.16.1"
+		crioVersion   = "v1.23.0"
 		conmonURL     = "https://github.com/containers/conmon"
-		conmonVersion = "v2.0.4"
+		conmonVersion = "v2.0.32"
 	)
 	tmpDir := filepath.Join(os.TempDir(), "crio-tmp")
 
@@ -197,7 +197,7 @@ func (t *TestFramework) StartCrio() (string, string, *Session) {
 		" --cni-config-dir=%s"+
 		" --root=%s"+
 		" --runroot=%s"+
-		" --storage-driver=vfs",
+		" --pinns-path=%s",
 		filepath.Join(tmpDir, "bin", "crio"),
 		filepath.Join(t.crioDir, "crio.conf"),
 		endpoint,
@@ -209,6 +209,7 @@ func (t *TestFramework) StartCrio() (string, string, *Session) {
 		filepath.Join(tmpDir, "cni-config"),
 		filepath.Join(tmpDir, "root"),
 		filepath.Join(tmpDir, "runroot"),
+		filepath.Join(tmpDir, "bin", "pinns"),
 	)
 
 	endpoint = "unix://" + endpoint
@@ -227,5 +228,4 @@ func (t *TestFramework) StartCrio() (string, string, *Session) {
 // Stop the container runtime process
 func (t *TestFramework) StopCrio(testDir string, session *Session) {
 	Expect(session.Interrupt().Wait()).To(Exit(0))
-	Expect(os.RemoveAll(testDir)).To(BeNil())
 }

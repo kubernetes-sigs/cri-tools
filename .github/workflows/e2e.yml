@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-18.04]
+        os: [ubuntu-latest]
 
     steps:
       - name: Install Go
@@ -50,15 +50,18 @@ jobs:
       - name: Run e2e test
         run: |
           sudo apt-get update &&\
-          sudo apt-get install -y libseccomp-dev
+          sudo apt-get install -y \
+            conntrack \
+            libseccomp-dev \
+            libgpgme-dev
 
-          VERSION=v0.8.6 &&\
+          VERSION=v1.0.1 &&\
           sudo mkdir -p /opt/cni/bin &&\
           sudo wget -qO- https://github.com/containernetworking/plugins/releases/download/$VERSION/cni-plugins-linux-amd64-$VERSION.tgz \
               | sudo tar xfz - -C /opt/cni/bin &&\
           ls -lah /opt/cni/bin
 
-          VERSION=v1.0.0-rc92 &&\
+          VERSION=v1.1.0 &&\
           sudo wget -q -O \
             /usr/bin/runc \
             https://github.com/opencontainers/runc/releases/download/$VERSION/runc.amd64 &&\
