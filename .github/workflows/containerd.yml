@@ -18,7 +18,7 @@ jobs:
         # ║ hcshim           │           │ runhcs  ║
         # ╚══════════════════╧═══════════╧═════════╝
         os: [ubuntu-18.04, windows-2019]
-        version: [main, v1.5.9]
+        version: [main, 984d3bc057178cac0b043a7f61916f3388fe081c]
         runtime: [io.containerd.runtime.v1.linux, io.containerd.runc.v1, io.containerd.runc.v2, containerd-shim-runhcs-v1]
         runc: [runc, crun]
         exclude:
