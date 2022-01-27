@@ -22,23 +22,20 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"golang.org/x/net/context"
+	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
-const (
-	criClientVersion = "v1"
-)
+const criClientVersion = "v1"
 
 var runtimeVersionCommand = &cli.Command{
 	Name:  "version",
 	Usage: "Display runtime version information",
 	Action: func(context *cli.Context) error {
-		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		runtimeClient, err := getRuntimeService(context)
 		if err != nil {
 			return err
 		}
-		defer closeConnection(context, runtimeConn)
 		err = Version(runtimeClient, criClientVersion)
 		if err != nil {
 			return errors.Wrap(err, "getting the runtime version")
@@ -48,10 +45,10 @@ var runtimeVersionCommand = &cli.Command{
 }
 
 // Version sends a VersionRequest to the server, and parses the returned VersionResponse.
-func Version(client pb.RuntimeServiceClient, version string) error {
+func Version(client internalapi.RuntimeService, version string) error {
 	request := &pb.VersionRequest{Version: version}
 	logrus.Debugf("VersionRequest: %v", request)
-	r, err := client.Version(context.Background(), request)
+	r, err := client.Version(version)
 	logrus.Debugf("VersionResponse: %v", r)
 	if err != nil {
 		return err
