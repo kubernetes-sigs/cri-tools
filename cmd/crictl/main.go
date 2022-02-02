@@ -176,6 +176,7 @@ func main() {
 		updateContainerCommand,
 		configCommand,
 		statsCommand,
+		podStatsCommand,
 		completionCommand,
 	}
 
