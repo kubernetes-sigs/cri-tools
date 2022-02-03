@@ -26,6 +26,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/net/context"
+	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -90,11 +91,10 @@ var statsCommand = &cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
-		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		runtimeClient, err := getRuntimeService(context)
 		if err != nil {
 			return err
 		}
-		defer closeConnection(context, runtimeConn)
 
 		id := context.String("id")
 		if id == "" && context.NArg() > 0 {
@@ -131,7 +131,7 @@ func (c containerStatsByID) Less(i, j int) bool {
 
 // ContainerStats sends a ListContainerStatsRequest to the server, and
 // parses the returned ListContainerStatsResponse.
-func ContainerStats(client pb.RuntimeServiceClient, opts statsOptions) error {
+func ContainerStats(client internalapi.RuntimeService, opts statsOptions) error {
 	filter := &pb.ContainerStatsFilter{}
 	if opts.id != "" {
 		filter.Id = opts.id
@@ -181,18 +181,18 @@ func ContainerStats(client pb.RuntimeServiceClient, opts statsOptions) error {
 	return nil
 }
 
-func getContainerStats(ctx context.Context, client pb.RuntimeServiceClient, request *pb.ListContainerStatsRequest) (*pb.ListContainerStatsResponse, error) {
+func getContainerStats(ctx context.Context, client internalapi.RuntimeService, request *pb.ListContainerStatsRequest) (*pb.ListContainerStatsResponse, error) {
 	logrus.Debugf("ListContainerStatsRequest: %v", request)
-	r, err := client.ListContainerStats(ctx, request)
+	r, err := client.ListContainerStats(request.Filter)
 	logrus.Debugf("ListContainerResponse: %v", r)
 	if err != nil {
 		return nil, err
 	}
-	sort.Sort(containerStatsByID(r.Stats))
-	return r, nil
+	sort.Sort(containerStatsByID(r))
+	return &pb.ListContainerStatsResponse{Stats: r}, nil
 }
 
-func displayStats(ctx context.Context, client pb.RuntimeServiceClient, request *pb.ListContainerStatsRequest, display *display, opts statsOptions) error {
+func displayStats(ctx context.Context, client internalapi.RuntimeService, request *pb.ListContainerStatsRequest, display *display, opts statsOptions) error {
 	r, err := getContainerStats(ctx, client, request)
 	if err != nil {
 		return err
