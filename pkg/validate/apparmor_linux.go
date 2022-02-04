@@ -136,13 +136,13 @@ func createContainerWithAppArmor(rc internalapi.RuntimeService, ic internalapi.I
 
 func checkContainerApparmor(rc internalapi.RuntimeService, containerID string, shoudRun bool) {
 	By("get container status")
-	status, err := rc.ContainerStatus(containerID)
+	resp, err := rc.ContainerStatus(containerID, false)
 	Expect(err).NotTo(HaveOccurred())
 
 	if shoudRun {
-		Expect(status.GetExitCode()).To(Equal(int32(0)))
+		Expect(resp.GetStatus().GetExitCode()).To(Equal(int32(0)))
 	} else {
-		Expect(status.GetExitCode()).NotTo(Equal(int32(0)))
+		Expect(resp.GetStatus().GetExitCode()).NotTo(Equal(int32(0)))
 	}
 }
 

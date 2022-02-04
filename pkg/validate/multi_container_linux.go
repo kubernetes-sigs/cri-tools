@@ -89,14 +89,14 @@ var _ = framework.KubeDescribe("Multiple Containers [Conformance]", func() {
 					return strings.Contains(string(content), expected), nil
 				}
 			}
-			httpdStatus, err := rc.ContainerStatus(httpdContainerID)
+			httpdStatus, err := rc.ContainerStatus(httpdContainerID, false)
 			Expect(err).NotTo(HaveOccurred(), "get httpd container status")
-			Eventually(verifyContainerLog(httpdStatus.GetLogPath(),
+			Eventually(verifyContainerLog(httpdStatus.GetStatus().GetLogPath(),
 				"httpd -D FOREGROUND"), time.Minute, 100*time.Millisecond).Should(BeTrue())
 
-			busyboxStatus, err := rc.ContainerStatus(busyboxContainerID)
+			busyboxStatus, err := rc.ContainerStatus(busyboxContainerID, false)
 			Expect(err).NotTo(HaveOccurred(), "get busybox container status")
-			Eventually(verifyContainerLog(busyboxStatus.GetLogPath(),
+			Eventually(verifyContainerLog(busyboxStatus.GetStatus().GetLogPath(),
 				defaultLog), time.Minute, 100*time.Millisecond).Should(BeTrue())
 		})
 

@@ -311,9 +311,9 @@ func ImageStatus(c internalapi.ImageManagerService, imageName string) *runtimeap
 	imageSpec := &runtimeapi.ImageSpec{
 		Image: imageName,
 	}
-	status, err := c.ImageStatus(imageSpec)
+	status, err := c.ImageStatus(imageSpec, false)
 	ExpectNoError(err, "failed to get image status: %v", err)
-	return status
+	return status.GetImage()
 }
 
 // ListImage list the image filtered by the image filter.

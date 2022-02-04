@@ -68,7 +68,7 @@ var logsCommand = &cli.Command{
 		},
 	},
 	Action: func(ctx *cli.Context) (retErr error) {
-		runtimeService, err := getRuntimeService(ctx)
+		runtimeService, err := getRuntimeService(ctx, 0)
 		if err != nil {
 			return err
 		}
@@ -92,18 +92,18 @@ var logsCommand = &cli.Command{
 			SinceTime:  since,
 			Timestamps: timestamp,
 		}, time.Now())
-		status, err := runtimeService.ContainerStatus(containerID)
+		status, err := runtimeService.ContainerStatus(containerID, false)
 		if err != nil {
 			return err
 		}
-		logPath := status.GetLogPath()
+		logPath := status.GetStatus().GetLogPath()
 		if logPath == "" {
 			return fmt.Errorf("The container has not set log path")
 		}
 		if previous {
-			containerAttempt := status.GetMetadata().Attempt
+			containerAttempt := status.GetStatus().GetMetadata().Attempt
 			if containerAttempt == uint32(0) {
-				return fmt.Errorf("Previous terminated container %s not found", status.GetMetadata().Name)
+				return fmt.Errorf("Previous terminated container %s not found", status.GetStatus().GetMetadata().Name)
 			}
 			logPath = fmt.Sprintf("%s%s%s", logPath[:strings.LastIndex(logPath, "/")+1], fmt.Sprint(containerAttempt-1),
 				logPath[strings.LastIndex(logPath, "."):])
@@ -127,7 +127,7 @@ var logsCommand = &cli.Command{
 			// Ensure no context leak
 			cancelFn()
 		}()
-		return logs.ReadLogs(readLogCtx, logPath, status.GetId(), logOptions, runtimeService, os.Stdout, os.Stderr)
+		return logs.ReadLogs(readLogCtx, logPath, status.GetStatus().GetId(), logOptions, runtimeService, os.Stdout, os.Stderr)
 	},
 }
 

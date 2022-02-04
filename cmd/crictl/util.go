@@ -18,7 +18,6 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -28,14 +27,11 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
-	"github.com/pkg/errors"
-	"github.com/urfave/cli/v2"
-	"google.golang.org/grpc"
 	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
+	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"sigs.k8s.io/yaml"
 )
@@ -179,33 +175,6 @@ func openFile(path string) (*os.File, error) {
 		return nil, err
 	}
 	return f, nil
-}
-
-func getRuntimeClient(context *cli.Context) (pb.RuntimeServiceClient, *grpc.ClientConn, error) {
-	// Set up a connection to the server.
-	conn, err := getRuntimeClientConnection(context)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "connect")
-	}
-	runtimeClient := pb.NewRuntimeServiceClient(conn)
-	return runtimeClient, conn, nil
-}
-
-func getImageClient(context *cli.Context) (pb.ImageServiceClient, *grpc.ClientConn, error) {
-	// Set up a connection to the server.
-	conn, err := getImageClientConnection(context)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "connect")
-	}
-	imageClient := pb.NewImageServiceClient(conn)
-	return imageClient, conn, nil
-}
-
-func closeConnection(context *cli.Context, conn *grpc.ClientConn) error {
-	if conn == nil {
-		return nil
-	}
-	return conn.Close()
 }
 
 func protobufObjectToJSON(obj proto.Message) (string, error) {
@@ -356,7 +325,7 @@ func matchesRegex(pattern, target string) bool {
 	return matched
 }
 
-func matchesImage(imageClient pb.ImageServiceClient, image string, containerImage string) (bool, error) {
+func matchesImage(imageClient internalapi.ImageManagerService, image string, containerImage string) (bool, error) {
 	if image == "" {
 		return true, nil
 	}
@@ -375,14 +344,7 @@ func matchesImage(imageClient pb.ImageServiceClient, image string, containerImag
 	return r1.Image.Id == r2.Image.Id, nil
 }
 
-func ctxWithTimeout(timeout time.Duration) (context.Context, context.CancelFunc) {
-	if timeout == 0 {
-		return context.Background(), func() {}
-	}
-	return context.WithTimeout(context.Background(), timeout)
-}
-
-func getRepoImage(imageClient pb.ImageServiceClient, image string) (string, error) {
+func getRepoImage(imageClient internalapi.ImageManagerService, image string) (string, error) {
 	r, err := ImageStatus(imageClient, image, false)
 	if err != nil {
 		return "", err

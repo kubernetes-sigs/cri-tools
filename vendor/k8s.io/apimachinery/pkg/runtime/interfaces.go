@@ -153,7 +153,7 @@ type NegotiatedSerializer interface {
 	// EncoderForVersion returns an encoder that ensures objects being written to the provided
 	// serializer are in the provided group version.
 	EncoderForVersion(serializer Encoder, gv GroupVersioner) Encoder
-	// DecoderForVersion returns a decoder that ensures objects being read by the provided
+	// DecoderToVersion returns a decoder that ensures objects being read by the provided
 	// serializer are in the provided group version by default.
 	DecoderToVersion(serializer Decoder, gv GroupVersioner) Decoder
 }
@@ -284,14 +284,11 @@ type ResourceVersioner interface {
 	ResourceVersion(obj Object) (string, error)
 }
 
-// SelfLinker provides methods for setting and retrieving the SelfLink field of an API object.
-type SelfLinker interface {
-	SetSelfLink(obj Object, selfLink string) error
-	SelfLink(obj Object) (string, error)
-
-	// Knowing Name is sometimes necessary to use a SelfLinker.
+// Namer provides methods for retrieving name and namespace of an API object.
+type Namer interface {
+	// Name returns the name of a given object.
 	Name(obj Object) (string, error)
-	// Knowing Namespace is sometimes necessary to use a SelfLinker
+	// Namespace returns the name of a given object.
 	Namespace(obj Object) (string, error)
 }
 

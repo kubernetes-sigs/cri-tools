@@ -196,13 +196,13 @@ func createContainerWithSelinux(rc internalapi.RuntimeService, ic internalapi.Im
 
 func checkContainerSelinux(rc internalapi.RuntimeService, containerID string, shoudRun bool) {
 	By("get container status")
-	status, err := rc.ContainerStatus(containerID)
+	status, err := rc.ContainerStatus(containerID, false)
 	Expect(err).NotTo(HaveOccurred())
 
 	if shoudRun {
-		Expect(status.GetExitCode()).To(Equal(int32(0)))
+		Expect(status.GetStatus().GetExitCode()).To(Equal(int32(0)))
 	} else {
-		Expect(status.GetExitCode()).NotTo(Equal(int32(0)))
+		Expect(status.GetStatus().GetExitCode()).NotTo(Equal(int32(0)))
 		return
 	}
 

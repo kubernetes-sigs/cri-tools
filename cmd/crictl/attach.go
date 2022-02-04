@@ -23,7 +23,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"golang.org/x/net/context"
+	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -50,11 +50,10 @@ var runtimeAttachCommand = &cli.Command{
 			return cli.ShowSubcommandHelp(context)
 		}
 
-		runtimeClient, conn, err := getRuntimeClient(context)
+		runtimeClient, err := getRuntimeService(context, 0)
 		if err != nil {
 			return err
 		}
-		defer closeConnection(context, conn)
 
 		var opts = attachOptions{
 			id:    id,
@@ -71,7 +70,7 @@ var runtimeAttachCommand = &cli.Command{
 }
 
 // Attach sends an AttachRequest to server, and parses the returned AttachResponse
-func Attach(client pb.RuntimeServiceClient, opts attachOptions) error {
+func Attach(client internalapi.RuntimeService, opts attachOptions) error {
 	if opts.id == "" {
 		return fmt.Errorf("ID cannot be empty")
 
@@ -84,7 +83,7 @@ func Attach(client pb.RuntimeServiceClient, opts attachOptions) error {
 		Stderr:      !opts.tty,
 	}
 	logrus.Debugf("AttachRequest: %v", request)
-	r, err := client.Attach(context.Background(), request)
+	r, err := client.Attach(request)
 	logrus.Debugf("AttachResponse: %v", r)
 	if err != nil {
 		return err

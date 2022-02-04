@@ -62,10 +62,10 @@ func TestGetVersion(c internalapi.RuntimeService) {
 // TestGetRuntimeStatus test if we can get runtime status.
 func TestGetRuntimeStatus(c internalapi.RuntimeService) {
 	var count int
-	status, err := c.Status()
+	status, err := c.Status(false)
 	framework.ExpectNoError(err, "failed to get runtime conditions: %v", err)
 
-	for _, condition := range status.Conditions {
+	for _, condition := range status.Status.Conditions {
 		if condition.Type == "RuntimeReady" && condition.Status == true {
 			count = count + 1
 		}

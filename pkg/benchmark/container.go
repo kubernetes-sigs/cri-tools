@@ -71,7 +71,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 			operation = b.Time("Container status", func() {
 				By("benchmark about getting Container status")
-				_, err = rc.ContainerStatus(containerID)
+				_, err = rc.ContainerStatus(containerID, false)
 			})
 
 			framework.ExpectNoError(err, "failed to get Container status: %v", err)

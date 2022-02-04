@@ -131,7 +131,7 @@ func (t *TestFramework) CrictlExpectFailureWithEndpoint(
 func SetupCrio() string {
 	const (
 		crioURL       = "https://github.com/cri-o/cri-o"
-		crioVersion   = "v1.23.0"
+		crioVersion   = "v1.23.1"
 		conmonURL     = "https://github.com/containers/conmon"
 		conmonVersion = "v2.0.32"
 	)
@@ -220,7 +220,8 @@ func (t *TestFramework) StartCrio() (string, string, *Session) {
 		if res.ExitCode() == 0 {
 			break
 		}
-		logrus.Info("waiting for CRI-O to become ready")
+		logrus.Info("Waiting for CRI-O to become ready")
+		time.Sleep(3 * time.Second)
 	}
 	return endpoint, tmpDir, session
 }

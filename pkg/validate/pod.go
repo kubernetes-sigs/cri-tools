@@ -104,9 +104,9 @@ func testRunDefaultPodSandbox(c internalapi.RuntimeService) string {
 // getPodSandboxStatus gets PodSandboxStatus for podID.
 func getPodSandboxStatus(c internalapi.RuntimeService, podID string) *runtimeapi.PodSandboxStatus {
 	By("Get PodSandbox status for podID: " + podID)
-	status, err := c.PodSandboxStatus(podID)
+	status, err := c.PodSandboxStatus(podID, false)
 	framework.ExpectNoError(err, "failed to get PodSandbox %q status: %v", podID, err)
-	return status
+	return status.GetStatus()
 }
 
 // stopPodSandbox stops the PodSandbox for podID.
