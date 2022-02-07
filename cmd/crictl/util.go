@@ -100,6 +100,8 @@ type listOptions struct {
 	noTrunc bool
 	// image used by the container
 	image string
+	// resolve image path
+	resolveImagePath bool
 }
 
 type execOptions struct {
@@ -378,4 +380,15 @@ func ctxWithTimeout(timeout time.Duration) (context.Context, context.CancelFunc)
 		return context.Background(), func() {}
 	}
 	return context.WithTimeout(context.Background(), timeout)
+}
+
+func getRepoImage(imageClient pb.ImageServiceClient, image string) (string, error) {
+	r, err := ImageStatus(imageClient, image, false)
+	if err != nil {
+		return "", err
+	}
+	if len(r.Image.RepoTags) > 0 {
+		return r.Image.RepoTags[0], nil
+	}
+	return image, nil
 }
