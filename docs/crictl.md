@@ -63,51 +63,65 @@ COMMANDS:
 - `completion`:         Output bash shell completion code
 - `help, h`:            Shows a list of commands or help for one command
 
-crictl by default connects on Unix to:
+## Connecting to endpoints
 
-- `unix:///run/containerd/containerd.sock` or
-- `unix:///run/crio/crio.sock` or
+You should specify an endpoint for `crictl` to use. The endpoint is based on your
+container runtime. You can set the endpoint in one of the following ways: 
+
+- Set global option flags `--runtime-endpoint` (`-r`) and `--image-endpoint`
+  (`-i`)
+- Set environment variables `CONTAINER_RUNTIME_ENDPOINT` and
+  `IMAGE_SERVICE_ENDPOINT`
+- Set the endpoint in the config file located at `/etc/crictl.yaml`
+
+If you don't set the endpoint, the following applies:
+
+- If the runtime endpoint is not set, `crictl` tries to connect using:
+  - containerd
+  - cri-o
+  - cri-dockerd
+  - dockershim (unsupported in Kubernetes 1.24)
+- If the image endpoint is not set, `crictl` uses the runtime endpoint setting
+
+`crictl` tries to connect to the following endpoints in order if you don't set one:
+
+**Unix**
+
+- `unix:///run/containerd/containerd.sock`
+- `unix:///run/crio/crio.sock`
 - `unix:///var/run/cri-dockerd.sock`
+- `unix:///var/run/dockershim.sock` (unsupported in Kubernetes 1.24)
 
-or on Windows to:
+**Windows**
 
-- `npipe:////./pipe/containerd` or
-- `npipe:////./pipe/crio` or
+- `npipe:////./pipe/containerd`
+- `npipe:////./pipe/crio`
 - `npipe:////./pipe/cri-dockerd`
+- `npipe:////./pipe/dockershim` (unsupported in Kubernetes 1.24)
 
 For other runtimes, use:
 
 - [frakti](https://github.com/kubernetes/frakti): `unix:///var/run/frakti.sock`
 
-The endpoint can be set in three ways:
+> Note: These backup endpoints are deprecated. You should **always** set a
+> runtime endpoint. If you don't, performance may be affected as each
+> backup connection attempt takes some time to complete before timing out
+> and going to the next in sequence.
 
-- By setting global option flags `--runtime-endpoint` (`-r`) and `--image-endpoint` (`-i`)
-- By setting environment variables `CONTAINER_RUNTIME_ENDPOINT` and `IMAGE_SERVICE_ENDPOINT`
-- By setting the endpoint in the config file `--config=/etc/crictl.yaml`
+You can view the current endpoint configuration in the `crictl` config file.
 
-If the endpoint is not set then it works as follows:
-
-- If the runtime endpoint is not set, `crictl` will by default try to connect using:
-  - containerd
-  - cri-o
-  - cri-dockerd
-- If the image endpoint is not set, `crictl` will by default use the runtime endpoint setting
-
-> Note: The default endpoints are now deprecated and the runtime endpoint should always be set instead.
-The performance maybe affected as each default connection attempt takes n-seconds to complete before timing out and going to the next in sequence.
-
-Unix:
+**Unix**
 
 ```sh
 $ cat /etc/crictl.yaml
-runtime-endpoint: unix:///var/run/containerd.sock
-image-endpoint: unix:///var/run/containerd.sock
+runtime-endpoint: unix:///run/containerd/containerd.sock
+image-endpoint: unix:///run/containerd/containerd.sock
 timeout: 2
 debug: true
 pull-image-on-create: false
 ```
 
-Windows:
+**Windows**
 
 ```cmd
 C:\> type %USERPROFILE%\.crictl\crictl.yaml

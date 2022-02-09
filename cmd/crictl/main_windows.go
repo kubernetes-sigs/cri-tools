@@ -1,5 +1,4 @@
 //go:build windows
-// +build windows
 
 /*
 Copyright 2017 The Kubernetes Authors.
@@ -24,7 +23,7 @@ import (
 	"path/filepath"
 )
 
-var defaultRuntimeEndpoints = []string{"npipe:////./pipe/containerd", "npipe:////./pipe/crio", "npipe:////./pipe/cri-dockerd"}
+var defaultRuntimeEndpoints = []string{"npipe:////./pipe/containerd", "npipe:////./pipe/crio", "npipe:////./pipe/cri-dockerd", "npipe:////./pipe/dockershim"}
 var defaultConfigPath string
 
 var shutdownSignals = []os.Signal{os.Interrupt}

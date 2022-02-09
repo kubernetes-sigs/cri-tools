@@ -60,13 +60,14 @@ This will
 - Run the benchmark tests using `ginkgo`
 - Output the test results to STDOUT
 
-critest connects to Unix: `unix:///var/run/containerd.sock` or Windows: `tcp://localhost:3735` by default. For other runtimes, the endpoint can be set by flags `--runtime-endpoint` and `--image-endpoint`.
+critest connects to Unix: `unix:///run/containerd/containerd.sock` or Windows: `tcp://localhost:3735` by default. For other runtimes, the endpoint can be set by flags `--runtime-endpoint` and `--image-endpoint`.
 
 ## Additional options
 
 - `-ginkgo.focus`: Only run the tests that match the regular expression.
 - `-image-endpoint`: Set the endpoint of image service. Same with runtime-endpoint if not specified.
-- `-runtime-endpoint`: Set the endpoint of runtime service. Default to Unix: `unix:///var/run/containerd.sock` or Windows: `tcp://localhost:3735`.
+- `-runtime-endpoint`: Set the endpoint of runtime service. If not set, attempt
+  to search a list of known endpoints.
 
    **Note:** The default endpoints are deprecated. Always set the
    `--runtime-endpoint`. Performance might be affected as each default
