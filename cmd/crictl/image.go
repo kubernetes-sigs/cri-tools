@@ -64,6 +64,11 @@ var pullImageCommand = &cli.Command{
 			Usage:     "Use `pod-config.[json|yaml]` to override the the pull context",
 			TakesFile: true,
 		},
+		&cli.StringSliceFlag{
+			Name:    "annotation",
+			Aliases: []string{"a"},
+			Usage:   "Annotation to be set on the pulled image",
+		},
 	},
 	ArgsUsage: "NAME[:TAG|@DIGEST]",
 	Action: func(context *cli.Context) error {
@@ -89,8 +94,15 @@ var pullImageCommand = &cli.Command{
 				return errors.Wrap(err, "load podSandboxConfig")
 			}
 		}
-
-		r, err := PullImageWithSandbox(imageClient, imageName, auth, sandbox)
+		var ann map[string]string
+		if context.IsSet("annotation") {
+			annotationFlags := context.StringSlice("annotation")
+			ann, err = parseLabelStringSlice(annotationFlags)
+			if err != nil {
+				return err
+			}
+		}
+		r, err := PullImageWithSandbox(imageClient, imageName, auth, sandbox, ann)
 		if err != nil {
 			return errors.Wrap(err, "pulling image")
 		}
@@ -546,10 +558,11 @@ func normalizeRepoDigest(repoDigests []string) (string, string) {
 
 // PullImageWithSandbox sends a PullImageRequest to the server, and parses
 // the returned PullImageResponse.
-func PullImageWithSandbox(client pb.ImageServiceClient, image string, auth *pb.AuthConfig, sandbox *pb.PodSandboxConfig) (resp *pb.PullImageResponse, err error) {
+func PullImageWithSandbox(client pb.ImageServiceClient, image string, auth *pb.AuthConfig, sandbox *pb.PodSandboxConfig, ann map[string]string) (resp *pb.PullImageResponse, err error) {
 	request := &pb.PullImageRequest{
 		Image: &pb.ImageSpec{
-			Image: image,
+			Image:       image,
+			Annotations: ann,
 		},
 	}
 	if auth != nil {
