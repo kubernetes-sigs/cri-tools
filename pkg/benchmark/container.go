@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The Kubernetes Authors.
+Copyright 2022 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@ limitations under the License.
 package benchmark
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"path"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
@@ -29,10 +28,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega/gmeasure"
 )
-
-type ContainerExperimentData struct {
-	CreateContainer, StatusContainer, StopContainer, RemoveContainer, StartContainer []int64
-}
 
 var _ = framework.KubeDescribe("Container", func() {
 	f := framework.NewDefaultCRIFramework()
@@ -47,75 +42,109 @@ var _ = framework.KubeDescribe("Container", func() {
 
 	Context("benchmark about operations on Container", func() {
 		It("benchmark about basic operations on Container", func() {
+			// Setup sampling config from TestContext:
+			samplingConfig := gmeasure.SamplingConfig{
+				N:           framework.TestContext.BenchmarkingParams.ContainersNumber,
+				NumParallel: framework.TestContext.BenchmarkingParams.ContainersNumberParallel,
+			}
+			if samplingConfig.N < 1 {
+				samplingConfig.N = 1
+			}
+			if samplingConfig.NumParallel < 1 {
+				samplingConfig.NumParallel = 1
+			}
+
+			// Setup results reporting channel:
+			resultsSet := LifecycleBenchmarksResultsSet{
+				OperationsNames: []string{"CreateContainer", "StartContainer", "StatusContainer", "StopContainer", "RemoveContainer"},
+				NumParallel:     samplingConfig.NumParallel,
+				Datapoints:      make([]LifecycleBenchmarkDatapoint, 0),
+			}
+			resultsManager := NewLifecycleBenchmarksResultsManager(
+				resultsSet,
+				60,
+			)
+			resultsChannel := resultsManager.StartResultsConsumer()
+
 			experiment := gmeasure.NewExperiment("ContainerOps")
 			experiment.Sample(func(idx int) {
 				var podID string
 				var podConfig *runtimeapi.PodSandboxConfig
 				var containerID string
+				var lastStartTime, lastEndTime int64
 				var err error
+				durations := make([]int64, len(resultsSet.OperationsNames))
 
 				podID, podConfig = framework.CreatePodSandboxForContainer(rc)
 
 				By("CreatingContainer")
-				stopwatch := experiment.NewStopwatch()
-				stopwatch.Reset()
+				startTime := time.Now().UnixNano()
+				lastStartTime = startTime
 				containerID = framework.CreateDefaultContainer(rc, ic, podID, podConfig, "Benchmark-container-")
-				stopwatch.Record("CreateContainer")
+				lastEndTime = time.Now().UnixNano()
+				durations[0] = lastEndTime - lastStartTime
 
 				By("StartingContainer")
-				stopwatch.Reset()
+				lastStartTime = time.Now().UnixNano()
 				err = rc.StartContainer(containerID)
-				stopwatch.Record("StartContainer")
+				lastEndTime = time.Now().UnixNano()
+				durations[1] = lastEndTime - lastStartTime
 				framework.ExpectNoError(err, "failed to start Container: %v", err)
 
 				By("ContainerStatus")
-				stopwatch.Reset()
+				lastStartTime = time.Now().UnixNano()
 				_, err = rc.ContainerStatus(containerID)
-				stopwatch.Record("StatusContainer")
+				lastEndTime = time.Now().UnixNano()
+				durations[2] = lastEndTime - lastStartTime
 				framework.ExpectNoError(err, "failed to get Container status: %v", err)
 
 				By("ContainerStop")
-				stopwatch.Reset()
+				lastStartTime = time.Now().UnixNano()
 				err = rc.StopContainer(containerID, framework.DefaultStopContainerTimeout)
-				stopwatch.Record("StopContainer")
+				lastEndTime = time.Now().UnixNano()
+				durations[3] = lastEndTime - lastStartTime
 				framework.ExpectNoError(err, "failed to stop Container: %v", err)
 
 				By("ContainerRemove")
-				stopwatch.Reset()
+				lastStartTime = time.Now().UnixNano()
 				err = rc.RemoveContainer(containerID)
-				stopwatch.Record("RemoveContainer")
+				lastEndTime = time.Now().UnixNano()
+				durations[4] = lastEndTime - lastStartTime
 				framework.ExpectNoError(err, "failed to remove Container: %v", err)
+
+				res := LifecycleBenchmarkDatapoint{
+					SampleIndex:           idx,
+					StartTime:             startTime,
+					EndTime:               lastEndTime,
+					OperationsDurationsNs: durations,
+					MetaInfo:              map[string]string{"podId": podID, "containerId": containerID},
+				}
+				resultsChannel <- &res
 
 				By("stop PodSandbox")
 				rc.StopPodSandbox(podID)
 				By("delete PodSandbox")
 				rc.RemovePodSandbox(podID)
 
-			}, gmeasure.SamplingConfig{N: framework.TestContext.BenchmarkingParams.ContainersNumber, NumParallel: framework.TestContext.BenchmarkingParams.ContainersNumberParallel})
+			}, samplingConfig)
 
-			data := ContainerExperimentData{
-				CreateContainer: getNanosecondsForDurations(experiment.Get("CreateContainer").Durations),
-				StartContainer:  getNanosecondsForDurations(experiment.Get("StartContainer").Durations),
-				StatusContainer: getNanosecondsForDurations(experiment.Get("StatusContainer").Durations),
-				StopContainer:   getNanosecondsForDurations(experiment.Get("StopContainer").Durations),
-				RemoveContainer: getNanosecondsForDurations(experiment.Get("RemoveContainer").Durations),
+			// Send nil and give the manager a minute to process any already-queued results:
+			resultsChannel <- nil
+			err := resultsManager.AwaitAllResults(60)
+			if err != nil {
+				glog.Errorf("Results manager failed to await all results: %s", err)
 			}
 
 			if framework.TestContext.BenchmarkingOutputDir != "" {
 				filepath := path.Join(framework.TestContext.BenchmarkingOutputDir, "container_benchmark_data.json")
-				data, err := json.MarshalIndent(data, "", " ")
-				if err == nil {
-					err = ioutil.WriteFile(filepath, data, 0644)
-					if err != nil {
-						glog.Errorf("Failed to write container benchmark data: %v", filepath)
-					}
-				} else {
-					glog.Errorf("Failed to serialize benchmark data: %v", err)
+				err = resultsManager.WriteResultsFile(filepath)
+				if err != nil {
+					glog.Errorf("Error occurred while writing benchmark results to file %s: %s", filepath, err)
 				}
 			} else {
-				glog.Infof("No benchmarking output dir provided, skipping writing benchmarking resulsts.")
+				glog.Infof("No benchmarking output dir provided, skipping writing benchmarking results file.")
+				glog.Infof("Benchmark results were: %+v", resultsManager.resultsSet)
 			}
 		})
-
 	})
 })

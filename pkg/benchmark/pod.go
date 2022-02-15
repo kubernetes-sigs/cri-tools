@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The Kubernetes Authors.
+Copyright 2022 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@ limitations under the License.
 package benchmark
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"path"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
@@ -29,14 +28,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega/gmeasure"
 )
-
-const (
-	defaultOperationTimes int = 20
-)
-
-type ExperimentData struct {
-	CreatePod, StatusPod, StopPod, RemovePod []int64
-}
 
 var _ = framework.KubeDescribe("PodSandbox", func() {
 	f := framework.NewDefaultCRIFramework()
@@ -49,11 +40,36 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 	Context("benchmark about operations on PodSandbox", func() {
 		It("benchmark about lifecycle of PodSandbox", func() {
+			// Setup sampling config from TestContext:
+			samplingConfig := gmeasure.SamplingConfig{
+				N:           framework.TestContext.BenchmarkingParams.PodsNumber,
+				NumParallel: framework.TestContext.BenchmarkingParams.PodsNumberParallel,
+			}
+			if samplingConfig.N < 1 {
+				samplingConfig.N = 1
+			}
+			if samplingConfig.NumParallel < 1 {
+				samplingConfig.NumParallel = 1
+			}
+
+			// Setup results reporting channel:
+			resultsSet := LifecycleBenchmarksResultsSet{
+				OperationsNames: []string{"CreatePod", "StatusPod", "StopPod", "RemovePod"},
+				NumParallel:     samplingConfig.NumParallel,
+				Datapoints:      make([]LifecycleBenchmarkDatapoint, 0),
+			}
+			resultsManager := NewLifecycleBenchmarksResultsManager(
+				resultsSet,
+				60,
+			)
+			resultsChannel := resultsManager.StartResultsConsumer()
 
 			experiment := gmeasure.NewExperiment("PodLifecycle")
 			experiment.Sample(func(idx int) {
+				var lastStartTime, lastEndTime int64
 				var podID string
 				var err error
+				durations := make([]int64, len(resultsSet.OperationsNames))
 
 				podSandboxName := "PodSandbox-for-creating-performance-test-" + framework.NewUUID()
 				uid := framework.DefaultUIDPrefix + framework.NewUUID()
@@ -66,54 +82,62 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				}
 
 				By("Creating a pod")
-				stopwatch := experiment.NewStopwatch()
-
+				startTime := time.Now().UnixNano()
+				lastStartTime = startTime
 				podID, err = c.RunPodSandbox(config, framework.TestContext.RuntimeHandler)
-				stopwatch.Record("CreatePod")
+				lastEndTime = time.Now().UnixNano()
+				durations[0] = lastEndTime - lastStartTime
 				framework.ExpectNoError(err, "failed to create PodSandbox: %v", err)
 
 				By("Get Pod status")
-				stopwatch.Reset()
+				lastStartTime = time.Now().UnixNano()
 				_, err = c.PodSandboxStatus(podID)
-				stopwatch.Record("StatusPod")
+				lastEndTime = time.Now().UnixNano()
+				durations[1] = lastEndTime - lastStartTime
 				framework.ExpectNoError(err, "failed to get PodStatus: %v", err)
 
 				By("Stop PodSandbox")
-				stopwatch.Reset()
+				lastStartTime = time.Now().UnixNano()
 				err = c.StopPodSandbox(podID)
-				stopwatch.Record("StopPod")
+				lastEndTime = time.Now().UnixNano()
+				durations[2] = lastEndTime - lastStartTime
 				framework.ExpectNoError(err, "failed to stop PodSandbox: %v", err)
 
 				By("Remove PodSandbox")
-				stopwatch.Reset()
+				lastStartTime = time.Now().UnixNano()
 				err = c.RemovePodSandbox(podID)
-				stopwatch.Record("RemovePod")
+				lastEndTime = time.Now().UnixNano()
+				durations[3] = lastEndTime - lastStartTime
 				framework.ExpectNoError(err, "failed to remove PodSandbox: %v", err)
 
-			}, gmeasure.SamplingConfig{N: framework.TestContext.BenchmarkingParams.PodsNumber, NumParallel: framework.TestContext.BenchmarkingParams.PodsNumberParallel})
+				res := LifecycleBenchmarkDatapoint{
+					SampleIndex:           idx,
+					StartTime:             startTime,
+					EndTime:               lastEndTime,
+					OperationsDurationsNs: durations,
+					MetaInfo:              map[string]string{"podId": podID, "podSandboxName": podSandboxName},
+				}
+				resultsChannel <- &res
 
-			data := ExperimentData{
-				CreatePod: getNanosecondsForDurations(experiment.Get("CreatePod").Durations),
-				StatusPod: getNanosecondsForDurations(experiment.Get("StatusPod").Durations),
-				StopPod:   getNanosecondsForDurations(experiment.Get("StopPod").Durations),
-				RemovePod: getNanosecondsForDurations(experiment.Get("RemovePod").Durations),
+			}, samplingConfig)
+
+			// Send nil and give the manager a minute to process any already-queued results:
+			resultsChannel <- nil
+			err := resultsManager.AwaitAllResults(60)
+			if err != nil {
+				glog.Errorf("Results manager failed to await all results: %s", err)
 			}
 
 			if framework.TestContext.BenchmarkingOutputDir != "" {
 				filepath := path.Join(framework.TestContext.BenchmarkingOutputDir, "pod_benchmark_data.json")
-				data, err := json.MarshalIndent(data, "", " ")
-				if err == nil {
-					err = ioutil.WriteFile(filepath, data, 0644)
-					if err != nil {
-						glog.Errorf("Failed to write container benchmark data: %v", filepath)
-					}
-				} else {
-					glog.Errorf("Failed to serialize benchmark data: %v", err)
+				err = resultsManager.WriteResultsFile(filepath)
+				if err != nil {
+					glog.Errorf("Error occurred while writing benchmark results to file %s: %s", filepath, err)
 				}
 			} else {
-				glog.Infof("No benchmarking out dir provided, skipping writing benchmarking resulsts.")
+				glog.Infof("No benchmarking out dir provided, skipping writing benchmarking results.")
+				glog.Infof("Benchmark results were: %+v", resultsManager.resultsSet)
 			}
 		})
 	})
-
 })

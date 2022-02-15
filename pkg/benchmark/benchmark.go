@@ -33,14 +33,9 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-// Transforms a slice of `time.Duration`s into their `int64` nanosecond representations.
-func getNanosecondsForDurations(durations []time.Duration) []int64 {
-	var ns []int64
-	for _, duration := range durations {
-		ns = append(ns, duration.Nanoseconds())
-	}
-	return ns
-}
+const (
+	defaultOperationTimes int = 20
+)
 
 // TestPerformance checks configuration parameters (specified through flags) and then runs
 // benchmark tests using the Ginkgo runner.

@@ -174,6 +174,7 @@ func TestCRISuite(t *testing.T) {
 		flag.Set("ginkgo.focus", "benchmark")
 		flag.Set("ginkgo.succinct", "true")
 	} else {
+		// Skip benchmark measurements for validation tests.
 		flag.Set("ginkgo.skipMeasurements", "true")
 	}
 	if *parallel > 1 {
