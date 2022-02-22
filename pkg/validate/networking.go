@@ -190,7 +190,7 @@ func checkHostname(c internalapi.RuntimeService, containerID string, hostname st
 	stdout, stderr, err := c.ExecSync(containerID, getHostnameCmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	framework.ExpectNoError(err, "failed to execSync in container %q", containerID)
 	Expect(strings.EqualFold(strings.TrimSpace(string(stdout)), hostname)).To(BeTrue())
-	Expect(stderr).To(BeNil(), "The stderr should be nil.")
+	Expect(string(stderr)).To(BeEmpty(), "The stderr should be empty.")
 	framework.Logf("check hostname succeed")
 }
 
@@ -202,7 +202,7 @@ func checkDNSConfig(c internalapi.RuntimeService, containerID string, expectedCo
 	for _, content := range expectedContent {
 		Expect(string(stdout)).To(ContainSubstring(content), "The stdout output of execSync should contain %q", content)
 	}
-	Expect(stderr).To(BeNil(), "The stderr should be nil.")
+	Expect(string(stderr)).To(BeEmpty(), "The stderr should be empty.")
 	framework.Logf("check DNS config succeed")
 }
 

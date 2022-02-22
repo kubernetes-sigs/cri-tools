@@ -173,7 +173,7 @@ var _ = framework.KubeDescribe("Container", func() {
 			stdout, stderr, err := rc.ExecSync(containerID, checkSleepCmd,
 				time.Duration(defaultExecSyncTimeout)*time.Second)
 			framework.ExpectNoError(err)
-			Expect(stderr).To(BeEmpty())
+			Expect(string(stderr)).To(BeEmpty())
 			Expect(strings.TrimSpace(string(stdout))).To(BeEmpty())
 		})
 
@@ -416,7 +416,7 @@ func execSyncContainer(c internalapi.RuntimeService, containerID string, command
 	By("execSync for containerID: " + containerID)
 	stdout, stderr, err := c.ExecSync(containerID, command, time.Duration(defaultExecSyncTimeout)*time.Second)
 	framework.ExpectNoError(err, "failed to execSync in container %q", containerID)
-	Expect(stderr).To(BeNil(), "The stderr should be nil.")
+	Expect(string(stderr)).To(BeEmpty(), "The stderr should be empty.")
 	framework.Logf("Execsync succeed")
 
 	return string(stdout)
