@@ -94,7 +94,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("get nginx container pid")
-			command := []string{"sh", "-c", "while [ ! -f /var/run/nginx.pid ]; do sleep 1; done", "&&", "cat", "/var/run/nginx.pid"}
+			command := []string{"sh", "-c", "while [ ! -f /var/run/nginx.pid ]; do sleep 1; done && cat /var/run/nginx.pid"}
 			output := execSyncContainer(rc, containerID, command)
 			nginxPid := strings.TrimSpace(string(output))
 			framework.Logf("Nginx's pid is %q", nginxPid)
