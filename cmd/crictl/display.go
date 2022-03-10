@@ -31,6 +31,7 @@ const (
 	columnState      = "STATE"
 	columnName       = "NAME"
 	columnAttempt    = "ATTEMPT"
+	columnPodName    = "POD"
 	columnPodID      = "POD ID"
 	columnPodRuntime = "RUNTIME"
 	columnNamespace  = "NAMESPACE"
