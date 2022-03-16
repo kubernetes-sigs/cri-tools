@@ -49,14 +49,16 @@ var pullImageCommand = &cli.Command{
 	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		&cli.StringFlag{
-			Name:  "creds",
-			Value: "",
-			Usage: "Use `USERNAME[:PASSWORD]` for accessing the registry",
+			Name:    "creds",
+			Value:   "",
+			Usage:   "Use `USERNAME[:PASSWORD]` for accessing the registry",
+			EnvVars: []string{"CRICTL_CREDS"},
 		},
 		&cli.StringFlag{
-			Name:  "auth",
-			Value: "",
-			Usage: "Use `AUTH_STRING` for accessing the registry. AUTH_STRING is a base64 encoded 'USERNAME[:PASSWORD]'",
+			Name:    "auth",
+			Value:   "",
+			Usage:   "Use `AUTH_STRING` for accessing the registry. AUTH_STRING is a base64 encoded 'USERNAME[:PASSWORD]'",
+			EnvVars: []string{"CRICTL_AUTH"},
 		},
 		&cli.StringFlag{
 			Name:      "pod-config",
