@@ -91,7 +91,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 				By("Get Pod status")
 				lastStartTime = time.Now().UnixNano()
-				_, err = c.PodSandboxStatus(podID)
+				_, err = c.PodSandboxStatus(podID, true)
 				lastEndTime = time.Now().UnixNano()
 				durations[1] = lastEndTime - lastStartTime
 				framework.ExpectNoError(err, "failed to get PodStatus: %v", err)

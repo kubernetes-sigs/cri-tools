@@ -93,7 +93,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 				By("ContainerStatus")
 				lastStartTime = time.Now().UnixNano()
-				_, err = rc.ContainerStatus(containerID)
+				_, err = rc.ContainerStatus(containerID, true)
 				lastEndTime = time.Now().UnixNano()
 				durations[2] = lastEndTime - lastStartTime
 				framework.ExpectNoError(err, "failed to get Container status: %v", err)
