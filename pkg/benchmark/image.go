@@ -27,6 +27,13 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+const (
+	defaultImagePullTimeoutSeconds   = 1
+	defaultImageStatusTimeoutSeconds = 2
+	defaultImageRemoveTimeoutSeconds = 2
+	defaultImageListTimeoutSeconds   = 2
+)
+
 var _ = framework.KubeDescribe("Container", func() {
 	f := framework.NewDefaultCRIFramework()
 
@@ -65,6 +72,17 @@ var _ = framework.KubeDescribe("Container", func() {
 			}
 		})
 
+		imagePullTimeoutSeconds := defaultImagePullTimeoutSeconds
+		imageStatusTimeoutSeconds := defaultImageStatusTimeoutSeconds
+		imageRemoveTimeoutSeconds := defaultImageRemoveTimeoutSeconds
+		imageListTimeoutSeconds := defaultImageListTimeoutSeconds
+		if framework.TestContext.BenchmarkingParams.ImageBenchmarkTimeoutSeconds > 0 {
+			imagePullTimeoutSeconds = framework.TestContext.BenchmarkingParams.ImageBenchmarkTimeoutSeconds
+			imageStatusTimeoutSeconds = framework.TestContext.BenchmarkingParams.ImageBenchmarkTimeoutSeconds
+			imageRemoveTimeoutSeconds = framework.TestContext.BenchmarkingParams.ImageBenchmarkTimeoutSeconds
+			imageListTimeoutSeconds = framework.TestContext.BenchmarkingParams.ImageBenchmarkTimeoutSeconds
+		}
+
 		Measure("benchmark about basic operations on Image", func(b Benchmarker) {
 			imageSpec := &runtimeapi.ImageSpec{
 				Image: testImageList[0],
@@ -73,21 +91,21 @@ var _ = framework.KubeDescribe("Container", func() {
 			operation := b.Time("pull Image", func() {
 				framework.PullPublicImage(ic, testImageList[0], nil)
 			})
-			Expect(operation.Minutes()).Should(BeNumerically("<", 1), "pull Image shouldn't take too long.")
+			Expect(operation.Minutes()).Should(BeNumerically("<", imagePullTimeoutSeconds), "pull Image shouldn't take too long.")
 
 			operation = b.Time("Image status", func() {
 				_, err = ic.ImageStatus(imageSpec, false)
 			})
 
 			framework.ExpectNoError(err, "failed to get image status: %v", err)
-			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "get image status shouldn't take too long.")
+			Expect(operation.Seconds()).Should(BeNumerically("<", imageStatusTimeoutSeconds), "get image status shouldn't take too long.")
 
 			operation = b.Time("remove Image", func() {
 				err = ic.RemoveImage(imageSpec)
 			})
 
 			framework.ExpectNoError(err, "failed to remove image: %v", err)
-			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "remove Image shouldn't take too long.")
+			Expect(operation.Seconds()).Should(BeNumerically("<", imageRemoveTimeoutSeconds), "remove Image shouldn't take too long.")
 
 		}, defaultOperationTimes)
 
@@ -101,7 +119,7 @@ var _ = framework.KubeDescribe("Container", func() {
 			})
 
 			framework.ExpectNoError(err, "failed to list Image: %v", err)
-			Expect(operation.Seconds()).Should(BeNumerically("<", 2), "list Image shouldn't take too long.")
+			Expect(operation.Seconds()).Should(BeNumerically("<", imageListTimeoutSeconds), "list Image shouldn't take too long.")
 		}, defaultOperationTimes)
 	})
 })

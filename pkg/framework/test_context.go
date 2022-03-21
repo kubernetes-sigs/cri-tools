@@ -48,12 +48,28 @@ type BenchmarkingParamsType struct {
 	// to run in parallel.
 	ContainersNumberParallel int `yaml:"containersNumberParallel"`
 
+	// ContainerBenchmarkTimeoutSeconds is the maximum number of seconds acceptable
+	// for a Container lifecycle benchmark to take.
+	ContainerBenchmarkTimeoutSeconds int `yaml:"containerBenchmarkTimeoutSeconds"`
+
 	// PodsNumber is the number of Pods to run as part of the pod-related benchmarks.
 	PodsNumber int `yaml:"podsNumber"`
 
 	// PodsNumberParallel is the maximum number of pod -related benchmarks
 	// to run in parallel.
 	PodsNumberParallel int `yaml:"podsNumberParallel"`
+
+	// PodBenchmarkTimeoutSeconds is the maximum number of seconds acceptable
+	// for a Pod lifecycle benchmark to take.
+	PodBenchmarkTimeoutSeconds int `yaml:"podBenchmarkTimeoutSeconds"`
+
+	// ImageBenchmarkTimeoutSeconds is the maximum of seconds acceptable for
+	// image-related benchmarks.
+	ImageBenchmarkTimeoutSeconds int `yaml:"imageBenchmarkTimeoutSeconds"`
+
+	// ImageBenchmarkTimeoutSeconds is the maximum of seconds acceptable for
+	// benchmarks focused on Pod+Container start performance.
+	PodContainerStartBenchmarkTimeoutSeconds int `yaml:"podContainerStartBenchmarkTimeoutSeconds"`
 }
 
 // TestContextType is the type of test context.

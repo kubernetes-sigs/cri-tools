@@ -25,6 +25,18 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+const (
+	defaultPodContainerBenchmarkTimeoutSeconds = 5
+)
+
+func getPodContainerBenchmarkTimeoutSeconds() int {
+	timeout := defaultPodContainerBenchmarkTimeoutSeconds
+	if framework.TestContext.BenchmarkingParams.PodContainerStartBenchmarkTimeoutSeconds > 0 {
+		timeout = framework.TestContext.BenchmarkingParams.PodContainerStartBenchmarkTimeoutSeconds
+	}
+	return timeout
+}
+
 var _ = framework.KubeDescribe("PodSandbox", func() {
 	f := framework.NewDefaultCRIFramework()
 
@@ -68,7 +80,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 			})
 
 			framework.ExpectNoError(err, "failed to start Container: %v", err)
-			Expect(operation.Seconds()).Should(BeNumerically("<", 5), "create PodSandbox shouldn't take too long.")
+			Expect(operation.Seconds()).Should(BeNumerically("<", getPodContainerBenchmarkTimeoutSeconds()), "create PodSandbox shouldn't take too long.")
 		}, defaultOperationTimes)
 	})
 })

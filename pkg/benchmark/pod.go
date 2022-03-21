@@ -29,6 +29,10 @@ import (
 	"github.com/onsi/gomega/gmeasure"
 )
 
+const (
+	defaultPodBenchmarkTimeoutSeconds = 60
+)
+
 var _ = framework.KubeDescribe("PodSandbox", func() {
 	f := framework.NewDefaultCRIFramework()
 
@@ -40,6 +44,11 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 	Context("benchmark about operations on PodSandbox", func() {
 		It("benchmark about lifecycle of PodSandbox", func() {
+			timeout := defaultPodBenchmarkTimeoutSeconds
+			if framework.TestContext.BenchmarkingParams.ContainerBenchmarkTimeoutSeconds > 0 {
+				timeout = framework.TestContext.BenchmarkingParams.ContainerBenchmarkTimeoutSeconds
+			}
+
 			// Setup sampling config from TestContext:
 			samplingConfig := gmeasure.SamplingConfig{
 				N:           framework.TestContext.BenchmarkingParams.PodsNumber,
@@ -60,7 +69,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 			}
 			resultsManager := NewLifecycleBenchmarksResultsManager(
 				resultsSet,
-				60,
+				timeout,
 			)
 			resultsChannel := resultsManager.StartResultsConsumer()
 
