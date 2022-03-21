@@ -19,14 +19,15 @@ package main
 import (
 	"fmt"
 	"net/url"
+	"time"
 
 	dockerterm "github.com/docker/docker/pkg/term"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"golang.org/x/net/context"
 	restclient "k8s.io/client-go/rest"
 	remoteclient "k8s.io/client-go/tools/remotecommand"
+	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/kubectl/pkg/util/term"
 )
@@ -69,11 +70,10 @@ var runtimeExecCommand = &cli.Command{
 			return cli.ShowSubcommandHelp(context)
 		}
 
-		runtimeClient, conn, err := getRuntimeClient(context)
+		runtimeClient, err := getRuntimeService(context, 0)
 		if err != nil {
 			return err
 		}
-		defer closeConnection(context, conn)
 
 		var opts = execOptions{
 			id:      context.Args().First(),
@@ -103,25 +103,24 @@ var runtimeExecCommand = &cli.Command{
 // ExecSync sends an ExecSyncRequest to the server, and parses
 // the returned ExecSyncResponse. The function returns the corresponding exit
 // code beside an general error.
-func ExecSync(client pb.RuntimeServiceClient, opts execOptions) (int, error) {
+func ExecSync(client internalapi.RuntimeService, opts execOptions) (int, error) {
 	request := &pb.ExecSyncRequest{
 		ContainerId: opts.id,
 		Cmd:         opts.cmd,
 		Timeout:     opts.timeout,
 	}
 	logrus.Debugf("ExecSyncRequest: %v", request)
-	r, err := client.ExecSync(context.Background(), request)
-	logrus.Debugf("ExecSyncResponse: %v", r)
+	stdout, stderr, err := client.ExecSync(opts.id, opts.cmd, time.Duration(opts.timeout))
 	if err != nil {
 		return 1, err
 	}
-	fmt.Println(string(r.Stdout))
-	fmt.Println(string(r.Stderr))
-	return int(r.ExitCode), nil
+	fmt.Println(string(stdout))
+	fmt.Println(string(stderr))
+	return 0, nil
 }
 
 // Exec sends an ExecRequest to server, and parses the returned ExecResponse
-func Exec(client pb.RuntimeServiceClient, opts execOptions) error {
+func Exec(client internalapi.RuntimeService, opts execOptions) error {
 	request := &pb.ExecRequest{
 		ContainerId: opts.id,
 		Cmd:         opts.cmd,
@@ -132,7 +131,7 @@ func Exec(client pb.RuntimeServiceClient, opts execOptions) error {
 	}
 
 	logrus.Debugf("ExecRequest: %v", request)
-	r, err := client.Exec(context.Background(), request)
+	r, err := client.Exec(request)
 	logrus.Debugf("ExecResponse: %v", r)
 	if err != nil {
 		return err

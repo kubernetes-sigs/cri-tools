@@ -20,7 +20,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"golang.org/x/net/context"
+	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -47,11 +47,10 @@ var runtimeStatusCommand = &cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
-		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		runtimeClient, err := getRuntimeService(context, 0)
 		if err != nil {
 			return err
 		}
-		defer closeConnection(context, runtimeConn)
 
 		err = Info(context, runtimeClient)
 		if err != nil {
@@ -62,10 +61,10 @@ var runtimeStatusCommand = &cli.Command{
 }
 
 // Info sends a StatusRequest to the server, and parses the returned StatusResponse.
-func Info(cliContext *cli.Context, client pb.RuntimeServiceClient) error {
+func Info(cliContext *cli.Context, client internalapi.RuntimeService) error {
 	request := &pb.StatusRequest{Verbose: !cliContext.Bool("quiet")}
 	logrus.Debugf("StatusRequest: %v", request)
-	r, err := client.Status(context.Background(), request)
+	r, err := client.Status(request.Verbose)
 	logrus.Debugf("StatusResponse: %v", r)
 	if err != nil {
 		return err

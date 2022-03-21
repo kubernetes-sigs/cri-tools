@@ -327,9 +327,9 @@ func containerFound(containers []*runtimeapi.Container, containerID string) bool
 // getContainerStatus gets ContainerState for containerID and fails if it gets error.
 func getContainerStatus(c internalapi.RuntimeService, containerID string) *runtimeapi.ContainerStatus {
 	By("Get container status for containerID: " + containerID)
-	status, err := c.ContainerStatus(containerID)
+	status, err := c.ContainerStatus(containerID, false)
 	framework.ExpectNoError(err, "failed to get container %q status: %v", containerID, err)
-	return status
+	return status.GetStatus()
 }
 
 // createShellContainer creates a container to run /bin/sh.

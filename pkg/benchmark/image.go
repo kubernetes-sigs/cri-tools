@@ -76,7 +76,7 @@ var _ = framework.KubeDescribe("Container", func() {
 			Expect(operation.Minutes()).Should(BeNumerically("<", 1), "pull Image shouldn't take too long.")
 
 			operation = b.Time("Image status", func() {
-				_, err = ic.ImageStatus(imageSpec)
+				_, err = ic.ImageStatus(imageSpec, false)
 			})
 
 			framework.ExpectNoError(err, "failed to get image status: %v", err)

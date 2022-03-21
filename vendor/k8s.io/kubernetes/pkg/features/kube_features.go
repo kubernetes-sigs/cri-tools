@@ -179,6 +179,7 @@ const (
 	// owner: @chendave
 	// alpha: v1.21
 	// beta: v1.22
+	// GA: v1.24
 	//
 	// PreferNominatedNode tells scheduler whether the nominated node will be checked first before looping
 	// all the rest of nodes in the cluster.
@@ -186,14 +187,6 @@ const (
 	// some corner case, e.g. another node releases enough resources after the nominated node has been set
 	// and hence is the best candidate instead.
 	PreferNominatedNode featuregate.Feature = "PreferNominatedNode"
-
-	// owner: @tallclair
-	// alpha: v1.12
-	// beta:  v1.14
-	// GA: v1.20
-	//
-	// Enables RuntimeClass, for selecting between multiple runtimes to run a pod.
-	RuntimeClass featuregate.Feature = "RuntimeClass"
 
 	// owner: @rikatz
 	// kep: http://kep.k8s.io/2079
@@ -346,7 +339,7 @@ const (
 	// alpha: v1.23
 	//
 	// Enables the RBD in-tree driver to RBD CSI Driver  migration feature.
-	CSIMigrationRBD featuregate.Feature = "csiMigrationRBD"
+	CSIMigrationRBD featuregate.Feature = "CSIMigrationRBD"
 
 	// owner: @humblec
 	// alpha: v1.23
@@ -388,6 +381,7 @@ const (
 	// owner: @denkensk
 	// alpha: v1.15
 	// beta: v1.19
+	// ga: v1.24
 	//
 	// Enables NonPreempting option for priorityClass and pod.
 	NonPreemptingPriority featuregate.Feature = "NonPreemptingPriority"
@@ -403,6 +397,7 @@ const (
 	// kep: http://kep.k8s.io/563
 	// alpha: v1.15
 	// beta: v1.21
+	// ga: v1.23
 	//
 	// Enables ipv6 dual stack
 	IPv6DualStack featuregate.Feature = "IPv6DualStack"
@@ -447,24 +442,6 @@ const (
 	// DaemonSets allow workloads to maintain availability during update per node
 	DaemonSetUpdateSurge featuregate.Feature = "DaemonSetUpdateSurge"
 
-	// owner: @wojtek-t
-	// alpha: v1.18
-	// beta:  v1.19
-	// ga:    v1.21
-	//
-	// Enables a feature to make secrets and configmaps data immutable.
-	ImmutableEphemeralVolumes featuregate.Feature = "ImmutableEphemeralVolumes"
-
-	// owner: @bart0sh
-	// alpha: v1.18
-	// beta: v1.19
-	// GA: 1.22
-	//
-	// Enables usage of HugePages-<size> in a volume medium,
-	// e.g. emptyDir:
-	//        medium: HugePages-1Gi
-	HugePageStorageMediumSize featuregate.Feature = "HugePageStorageMediumSize"
-
 	// owner: @derekwaynecarr
 	// alpha: v1.20
 	// beta: v1.21 (off by default until 1.22)
@@ -477,16 +454,6 @@ const (
 	//
 	// Enables usage of any object for volume data source in PVCs
 	AnyVolumeDataSource featuregate.Feature = "AnyVolumeDataSource"
-
-	// owner: @javidiaz
-	// kep: http://kep.k8s.io/1797
-	// alpha: v1.19
-	// beta: v1.20
-	// GA: v1.22
-	//
-	// Allow setting the Fully Qualified Domain Name (FQDN) in the hostname of a Pod. If a Pod does not
-	// have FQDN, this feature has no effect.
-	SetHostnameAsFQDN featuregate.Feature = "SetHostnameAsFQDN"
 
 	// owner: @ksubrmnn
 	// alpha: v1.14
@@ -595,6 +562,7 @@ const (
 	// kep: http://kep.k8s.io/1864
 	// alpha: v1.20
 	// beta: v1.22
+	// ga: v1.24
 	//
 	// Allows control if NodePorts shall be created for services with "type: LoadBalancer" by defining the spec.AllocateLoadBalancerNodePorts field (bool)
 	ServiceLBNodePortControl featuregate.Feature = "ServiceLBNodePortControl"
@@ -694,14 +662,6 @@ const (
 	// beta: v1.23
 	// Enable POD resources API to return allocatable resources
 	KubeletPodResourcesGetAllocatable featuregate.Feature = "KubeletPodResourcesGetAllocatable"
-
-	// owner: @jayunit100 @abhiraut @rikatz
-	// kep: http://kep.k8s.io/2161
-	// beta: v1.21
-	// ga: v1.22
-	//
-	// Labels all namespaces with a default label "kubernetes.io/metadata.name: <namespaceName>"
-	NamespaceDefaultLabelName featuregate.Feature = "NamespaceDefaultLabelName"
 
 	// owner: @fengzixu
 	// alpha: v1.21
@@ -866,7 +826,7 @@ func init() {
 // available throughout Kubernetes binaries.
 var defaultKubernetesFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	AppArmor:             {Default: true, PreRelease: featuregate.Beta},
-	DynamicKubeletConfig: {Default: false, PreRelease: featuregate.Deprecated}, // feature gate is deprecated in 1.22, remove no early than 1.23
+	DynamicKubeletConfig: {Default: false, PreRelease: featuregate.Deprecated}, // feature gate is deprecated in 1.22, kubelet logic is removed in 1.24, api server logic can be removed in 1.26
 	ExperimentalHostUserNamespaceDefaultingGate: {Default: false, PreRelease: featuregate.Beta},
 	DevicePlugins:                                  {Default: true, PreRelease: featuregate.Beta},
 	RotateKubeletServerCertificate:                 {Default: true, PreRelease: featuregate.Beta},
@@ -892,7 +852,7 @@ var defaultKubernetesFeatureGates = map[featuregate.Feature]featuregate.FeatureS
 	InTreePluginAzureFileUnregister:                {Default: false, PreRelease: featuregate.Alpha},
 	CSIMigrationvSphere:                            {Default: false, PreRelease: featuregate.Beta}, // Off by default (requires vSphere CSI driver)
 	InTreePluginvSphereUnregister:                  {Default: false, PreRelease: featuregate.Alpha},
-	CSIMigrationOpenStack:                          {Default: true, PreRelease: featuregate.Beta},
+	CSIMigrationOpenStack:                          {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.26
 	InTreePluginOpenStackUnregister:                {Default: false, PreRelease: featuregate.Alpha},
 	CSIMigrationRBD:                                {Default: false, PreRelease: featuregate.Alpha}, // Off by default (requires RBD CSI driver)
 	InTreePluginRBDUnregister:                      {Default: false, PreRelease: featuregate.Alpha},
@@ -905,7 +865,6 @@ var defaultKubernetesFeatureGates = map[featuregate.Feature]featuregate.FeatureS
 	GenericEphemeralVolume:                         {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.25
 	CSIVolumeFSGroupPolicy:                         {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.25
 	VolumeSubpath:                                  {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.25
-	RuntimeClass:                                   {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.23
 	NetworkPolicyEndPort:                           {Default: true, PreRelease: featuregate.Beta},
 	ProcMountType:                                  {Default: false, PreRelease: featuregate.Alpha},
 	TTLAfterFinished:                               {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.25
@@ -914,7 +873,7 @@ var defaultKubernetesFeatureGates = map[featuregate.Feature]featuregate.FeatureS
 	JobReadyPods:                                   {Default: false, PreRelease: featuregate.Alpha},
 	KubeletPodResources:                            {Default: true, PreRelease: featuregate.Beta},
 	LocalStorageCapacityIsolationFSQuotaMonitoring: {Default: false, PreRelease: featuregate.Alpha},
-	NonPreemptingPriority:                          {Default: true, PreRelease: featuregate.Beta},
+	NonPreemptingPriority:                          {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.25
 	PodOverhead:                                    {Default: true, PreRelease: featuregate.Beta},
 	IPv6DualStack:                                  {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.25
 	EndpointSlice:                                  {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.25
@@ -925,12 +884,9 @@ var defaultKubernetesFeatureGates = map[featuregate.Feature]featuregate.FeatureS
 	WindowsEndpointSliceProxying:                   {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.25
 	PodDisruptionBudget:                            {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.25
 	DaemonSetUpdateSurge:                           {Default: true, PreRelease: featuregate.Beta},                    // on by default in 1.22
-	ImmutableEphemeralVolumes:                      {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.24
-	HugePageStorageMediumSize:                      {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.24
 	DownwardAPIHugePages:                           {Default: true, PreRelease: featuregate.Beta},                    // on by default in 1.22
 	AnyVolumeDataSource:                            {Default: false, PreRelease: featuregate.Alpha},
 	DefaultPodTopologySpread:                       {Default: true, PreRelease: featuregate.Beta},
-	SetHostnameAsFQDN:                              {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.24
 	WinOverlay:                                     {Default: true, PreRelease: featuregate.Beta},
 	WinDSR:                                         {Default: false, PreRelease: featuregate.Alpha},
 	DisableAcceleratorUsageMetrics:                 {Default: true, PreRelease: featuregate.Beta},
@@ -940,11 +896,11 @@ var defaultKubernetesFeatureGates = map[featuregate.Feature]featuregate.FeatureS
 	KubeletCredentialProviders:                     {Default: false, PreRelease: featuregate.Alpha},
 	GracefulNodeShutdown:                           {Default: true, PreRelease: featuregate.Beta},
 	GracefulNodeShutdownBasedOnPodPriority:         {Default: false, PreRelease: featuregate.Alpha},
-	ServiceLBNodePortControl:                       {Default: true, PreRelease: featuregate.Beta},
+	ServiceLBNodePortControl:                       {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.26
 	MixedProtocolLBService:                         {Default: false, PreRelease: featuregate.Alpha},
 	VolumeCapacityPriority:                         {Default: false, PreRelease: featuregate.Alpha},
-	PreferNominatedNode:                            {Default: true, PreRelease: featuregate.Beta},
-	ProbeTerminationGracePeriod:                    {Default: false, PreRelease: featuregate.Beta}, // Default to false in beta 1.22, set to true in 1.24
+	PreferNominatedNode:                            {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.25
+	ProbeTerminationGracePeriod:                    {Default: false, PreRelease: featuregate.Beta},                   // Default to false in beta 1.22, set to true in 1.24
 	NodeSwap:                                       {Default: false, PreRelease: featuregate.Alpha},
 	PodDeletionCost:                                {Default: true, PreRelease: featuregate.Beta},
 	StatefulSetAutoDeletePVC:                       {Default: false, PreRelease: featuregate.Alpha},
@@ -956,7 +912,6 @@ var defaultKubernetesFeatureGates = map[featuregate.Feature]featuregate.FeatureS
 	LogarithmicScaleDown:                           {Default: true, PreRelease: featuregate.Beta},
 	SuspendJob:                                     {Default: true, PreRelease: featuregate.Beta},
 	KubeletPodResourcesGetAllocatable:              {Default: true, PreRelease: featuregate.Beta},
-	NamespaceDefaultLabelName:                      {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.24
 	CSIVolumeHealth:                                {Default: false, PreRelease: featuregate.Alpha},
 	WindowsHostProcessContainers:                   {Default: true, PreRelease: featuregate.Beta},
 	DisableCloudProviders:                          {Default: false, PreRelease: featuregate.Alpha},

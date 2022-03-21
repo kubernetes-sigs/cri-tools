@@ -62,7 +62,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 			Expect(operation.Seconds()).Should(BeNumerically("<", 5), "create PodSandbox shouldn't take too long.")
 
 			operation = b.Time("PodSandbox status", func() {
-				_, err = c.PodSandboxStatus(podID)
+				_, err = c.PodSandboxStatus(podID, false)
 			})
 
 			framework.ExpectNoError(err, "failed to get PodSandbox status: %v", err)

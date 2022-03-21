@@ -24,19 +24,18 @@ import (
 	"github.com/urfave/cli/v2"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
+	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 )
-
-const criClientVersion = "v1"
 
 var runtimeVersionCommand = &cli.Command{
 	Name:  "version",
 	Usage: "Display runtime version information",
 	Action: func(context *cli.Context) error {
-		runtimeClient, err := getRuntimeService(context)
+		runtimeClient, err := getRuntimeService(context, 0)
 		if err != nil {
 			return err
 		}
-		err = Version(runtimeClient, criClientVersion)
+		err = Version(runtimeClient, string(remote.CRIVersionV1))
 		if err != nil {
 			return errors.Wrap(err, "getting the runtime version")
 		}

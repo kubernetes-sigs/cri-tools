@@ -80,7 +80,7 @@ var podStatsCommand = &cli.Command{
 		},
 	},
 	Action: func(ctx *cli.Context) error {
-		client, err := getRuntimeService(ctx)
+		client, err := getRuntimeService(ctx, 0)
 		if err != nil {
 			return errors.Wrap(err, "get runtime service")
 		}

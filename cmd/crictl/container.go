@@ -32,8 +32,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -132,7 +131,7 @@ var createContainerCommand = &cli.Command{
 		Usage:   "Seconds to wait for a container create request to complete before cancelling the request",
 	}),
 
-	Action: func(context *cli.Context) error {
+	Action: func(context *cli.Context) (err error) {
 		if context.Args().Len() != 3 {
 			return cli.ShowSubcommandHelp(context)
 		}
@@ -140,23 +139,14 @@ var createContainerCommand = &cli.Command{
 			return errors.New("confict: no-pull and with-pull are both set")
 		}
 
-		runtimeClient, runtimeConn, err := getRuntimeClient(context)
-		if err != nil {
-			return err
-		}
-		defer closeConnection(context, runtimeConn)
-
 		withPull := (!context.Bool("no-pull") && PullImageOnCreate) || context.Bool("with-pull")
 
-		var imageClient pb.ImageServiceClient
-		var imageConn *grpc.ClientConn
-
+		var imageClient internalapi.ImageManagerService
 		if withPull {
-			imageClient, imageConn, err = getImageClient(context)
+			imageClient, err = getImageService(context)
 			if err != nil {
 				return err
 			}
-			defer closeConnection(context, imageConn)
 		}
 
 		opts := createOptions{
@@ -171,6 +161,11 @@ var createContainerCommand = &cli.Command{
 				},
 				timeout: context.Duration("cancel-timeout"),
 			},
+		}
+
+		runtimeClient, err := getRuntimeService(context, opts.timeout)
+		if err != nil {
+			return err
 		}
 
 		ctrID, err := CreateContainer(imageClient, runtimeClient, opts)
@@ -190,11 +185,10 @@ var startContainerCommand = &cli.Command{
 		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		runtimeClient, err := getRuntimeService(context, 0)
 		if err != nil {
 			return err
 		}
-		defer closeConnection(context, runtimeConn)
 
 		for i := 0; i < context.NArg(); i++ {
 			containerID := context.Args().Get(i)
@@ -249,11 +243,10 @@ var updateContainerCommand = &cli.Command{
 		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		runtimeClient, err := getRuntimeService(context, 0)
 		if err != nil {
 			return err
 		}
-		defer closeConnection(context, runtimeConn)
 
 		options := updateOptions{
 			CPUMaximum:         context.Int64("cpu-maximum"),
@@ -292,11 +285,10 @@ var stopContainerCommand = &cli.Command{
 		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		runtimeClient, err := getRuntimeService(context, 0)
 		if err != nil {
 			return err
 		}
-		defer closeConnection(context, runtimeConn)
 
 		for i := 0; i < context.NArg(); i++ {
 			containerID := context.Args().Get(i)
@@ -327,21 +319,19 @@ var removeContainerCommand = &cli.Command{
 		},
 	},
 	Action: func(ctx *cli.Context) error {
-		runtimeClient, runtimeConn, err := getRuntimeClient(ctx)
+		runtimeClient, err := getRuntimeService(ctx, 0)
 		if err != nil {
 			return err
 		}
-		defer closeConnection(ctx, runtimeConn)
 
 		ids := ctx.Args().Slice()
 		if ctx.Bool("all") {
-			r, err := runtimeClient.ListContainers(context.Background(),
-				&pb.ListContainersRequest{})
+			r, err := runtimeClient.ListContainers(nil)
 			if err != nil {
 				return err
 			}
 			ids = nil
-			for _, ctr := range r.GetContainers() {
+			for _, ctr := range r {
 				ids = append(ids, ctr.GetId())
 			}
 		}
@@ -352,8 +342,7 @@ var removeContainerCommand = &cli.Command{
 
 		errored := false
 		for _, id := range ids {
-			resp, err := runtimeClient.ContainerStatus(context.Background(),
-				&pb.ContainerStatusRequest{ContainerId: id})
+			resp, err := runtimeClient.ContainerStatus(id, false)
 			if err != nil {
 				logrus.Error(err)
 				errored = true
@@ -412,11 +401,10 @@ var containerStatusCommand = &cli.Command{
 		if context.NArg() == 0 {
 			return cli.ShowSubcommandHelp(context)
 		}
-		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		runtimeClient, err := getRuntimeService(context, 0)
 		if err != nil {
 			return err
 		}
-		defer closeConnection(context, runtimeConn)
 
 		for i := 0; i < context.NArg(); i++ {
 			containerID := context.Args().Get(i)
@@ -507,17 +495,15 @@ var listContainersCommand = &cli.Command{
 		},
 	},
 	Action: func(context *cli.Context) error {
-		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		runtimeClient, err := getRuntimeService(context, 0)
 		if err != nil {
 			return err
 		}
-		defer closeConnection(context, runtimeConn)
 
-		imageClient, imageConn, err := getImageClient(context)
+		imageClient, err := getImageService(context)
 		if err != nil {
 			return err
 		}
-		defer closeConnection(context, imageConn)
 
 		opts := listOptions{
 			id:               context.String("id"),
@@ -560,7 +546,7 @@ var runContainerCommand = &cli.Command{
 		Usage:   "Seconds to wait for a container create request before cancelling the request",
 	}),
 
-	Action: func(context *cli.Context) error {
+	Action: func(context *cli.Context) (err error) {
 		if context.Args().Len() != 2 {
 			return cli.ShowSubcommandHelp(context)
 		}
@@ -568,25 +554,14 @@ var runContainerCommand = &cli.Command{
 			return errors.New("confict: no-pull and with-pull are both set")
 		}
 
-		runtimeClient, runtimeConn, err := getRuntimeClient(context)
-		if err != nil {
-			return err
-		}
-		defer closeConnection(context, runtimeConn)
-
 		withPull := (!DisablePullOnRun && !context.Bool("no-pull")) || context.Bool("with-pull")
 
-		var (
-			imageClient pb.ImageServiceClient
-			imageConn   *grpc.ClientConn
-		)
-
+		var imageClient internalapi.ImageManagerService
 		if withPull {
-			imageClient, imageConn, err = getImageClient(context)
+			imageClient, err = getImageService(context)
 			if err != nil {
 				return err
 			}
-			defer closeConnection(context, imageConn)
 		}
 
 		opts := runOptions{
@@ -600,6 +575,11 @@ var runContainerCommand = &cli.Command{
 			timeout: context.Duration("timeout"),
 		}
 
+		runtimeClient, err := getRuntimeService(context, opts.timeout)
+		if err != nil {
+			return err
+		}
+
 		err = RunContainer(imageClient, runtimeClient, opts, context.String("runtime"))
 		if err != nil {
 			return errors.Wrap(err, "running container")
@@ -610,8 +590,8 @@ var runContainerCommand = &cli.Command{
 
 // RunContainer starts a container in the provided sandbox
 func RunContainer(
-	iClient pb.ImageServiceClient,
-	rClient pb.RuntimeServiceClient,
+	iClient internalapi.ImageManagerService,
+	rClient internalapi.RuntimeService,
 	opts runOptions,
 	runtime string,
 ) error {
@@ -622,7 +602,7 @@ func RunContainer(
 	}
 	// set the timeout for the RunPodSandbox request to 0, because the
 	// timeout option is documented as being for container creation.
-	podID, err := RunPodSandbox(rClient, podSandboxConfig, runtime, 0)
+	podID, err := RunPodSandbox(rClient, podSandboxConfig, runtime)
 	if err != nil {
 		return errors.Wrap(err, "run pod sandbox")
 	}
@@ -645,8 +625,8 @@ func RunContainer(
 // CreateContainer sends a CreateContainerRequest to the server, and parses
 // the returned CreateContainerResponse.
 func CreateContainer(
-	iClient pb.ImageServiceClient,
-	rClient pb.RuntimeServiceClient,
+	iClient internalapi.ImageManagerService,
+	rClient internalapi.RuntimeService,
 	opts createOptions,
 ) (string, error) {
 
@@ -687,32 +667,24 @@ func CreateContainer(
 		SandboxConfig: podConfig,
 	}
 	logrus.Debugf("CreateContainerRequest: %v", request)
-	ctx, cancel := ctxWithTimeout(opts.timeout)
-	defer cancel()
-	r, err := rClient.CreateContainer(ctx, request)
+	r, err := rClient.CreateContainer(opts.podID, config, podConfig)
 	logrus.Debugf("CreateContainerResponse: %v", r)
 	if err != nil {
 		return "", err
 	}
-	return r.ContainerId, nil
+	return r, nil
 }
 
 // StartContainer sends a StartContainerRequest to the server, and parses
 // the returned StartContainerResponse.
-func StartContainer(client pb.RuntimeServiceClient, ID string) error {
-	if ID == "" {
+func StartContainer(client internalapi.RuntimeService, id string) error {
+	if id == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
-	request := &pb.StartContainerRequest{
-		ContainerId: ID,
-	}
-	logrus.Debugf("StartContainerRequest: %v", request)
-	r, err := client.StartContainer(context.Background(), request)
-	logrus.Debugf("StartContainerResponse: %v", r)
-	if err != nil {
+	if err := client.StartContainer(id); err != nil {
 		return err
 	}
-	fmt.Println(ID)
+	fmt.Println(id)
 	return nil
 }
 
@@ -739,12 +711,12 @@ type updateOptions struct {
 
 // UpdateContainerResources sends an UpdateContainerResourcesRequest to the server, and parses
 // the returned UpdateContainerResourcesResponse.
-func UpdateContainerResources(client pb.RuntimeServiceClient, ID string, opts updateOptions) error {
-	if ID == "" {
+func UpdateContainerResources(client internalapi.RuntimeService, id string, opts updateOptions) error {
+	if id == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
 	request := &pb.UpdateContainerResourcesRequest{
-		ContainerId: ID,
+		ContainerId: id,
 	}
 	if goruntime.GOOS != "windows" {
 		request.Linux = &pb.LinuxContainerResources{
@@ -765,51 +737,36 @@ func UpdateContainerResources(client pb.RuntimeServiceClient, ID string, opts up
 		}
 	}
 	logrus.Debugf("UpdateContainerResourcesRequest: %v", request)
-	r, err := client.UpdateContainerResources(context.Background(), request)
-	logrus.Debugf("UpdateContainerResourcesResponse: %v", r)
-	if err != nil {
+	if err := client.UpdateContainerResources(id, request.Linux); err != nil {
 		return err
 	}
-	fmt.Println(ID)
+	fmt.Println(id)
 	return nil
 }
 
 // StopContainer sends a StopContainerRequest to the server, and parses
 // the returned StopContainerResponse.
-func StopContainer(client pb.RuntimeServiceClient, ID string, timeout int64) error {
-	if ID == "" {
+func StopContainer(client internalapi.RuntimeService, id string, timeout int64) error {
+	if id == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
-	request := &pb.StopContainerRequest{
-		ContainerId: ID,
-		Timeout:     timeout,
-	}
-	logrus.Debugf("StopContainerRequest: %v", request)
-	r, err := client.StopContainer(context.Background(), request)
-	logrus.Debugf("StopContainerResponse: %v", r)
-	if err != nil {
+	if err := client.StopContainer(id, timeout); err != nil {
 		return err
 	}
-	fmt.Println(ID)
+	fmt.Println(id)
 	return nil
 }
 
 // RemoveContainer sends a RemoveContainerRequest to the server, and parses
 // the returned RemoveContainerResponse.
-func RemoveContainer(client pb.RuntimeServiceClient, ID string) error {
-	if ID == "" {
+func RemoveContainer(client internalapi.RuntimeService, id string) error {
+	if id == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
-	request := &pb.RemoveContainerRequest{
-		ContainerId: ID,
-	}
-	logrus.Debugf("RemoveContainerRequest: %v", request)
-	r, err := client.RemoveContainer(context.Background(), request)
-	logrus.Debugf("RemoveContainerResponse: %v", r)
-	if err != nil {
+	if err := client.RemoveContainer(id); err != nil {
 		return err
 	}
-	fmt.Println(ID)
+	fmt.Println(id)
 	return nil
 }
 
@@ -846,20 +803,20 @@ func marshalContainerStatus(cs *pb.ContainerStatus) (string, error) {
 
 // ContainerStatus sends a ContainerStatusRequest to the server, and parses
 // the returned ContainerStatusResponse.
-func ContainerStatus(client pb.RuntimeServiceClient, ID, output string, tmplStr string, quiet bool) error {
+func ContainerStatus(client internalapi.RuntimeService, id, output string, tmplStr string, quiet bool) error {
 	verbose := !(quiet)
 	if output == "" { // default to json output
 		output = "json"
 	}
-	if ID == "" {
+	if id == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
 	request := &pb.ContainerStatusRequest{
-		ContainerId: ID,
+		ContainerId: id,
 		Verbose:     verbose,
 	}
 	logrus.Debugf("ContainerStatusRequest: %v", request)
-	r, err := client.ContainerStatus(context.Background(), request)
+	r, err := client.ContainerStatus(id, verbose)
 	logrus.Debugf("ContainerStatusResponse: %v", r)
 	if err != nil {
 		return err
@@ -923,7 +880,7 @@ func ContainerStatus(client pb.RuntimeServiceClient, ID, output string, tmplStr 
 
 // ListContainers sends a ListContainerRequest to the server, and parses
 // the returned ListContainerResponse.
-func ListContainers(runtimeClient pb.RuntimeServiceClient, imageClient pb.ImageServiceClient, opts listOptions) error {
+func ListContainers(runtimeClient internalapi.RuntimeService, imageClient internalapi.ImageManagerService, opts listOptions) error {
 	filter := &pb.ContainerFilter{}
 	if opts.id != "" {
 		filter.Id = opts.id
@@ -962,22 +919,18 @@ func ListContainers(runtimeClient pb.RuntimeServiceClient, imageClient pb.ImageS
 	if opts.labels != nil {
 		filter.LabelSelector = opts.labels
 	}
-	request := &pb.ListContainersRequest{
-		Filter: filter,
-	}
-	logrus.Debugf("ListContainerRequest: %v", request)
-	r, err := runtimeClient.ListContainers(context.Background(), request)
+	r, err := runtimeClient.ListContainers(filter)
 	logrus.Debugf("ListContainerResponse: %v", r)
 	if err != nil {
 		return err
 	}
-	r.Containers = getContainersList(r.GetContainers(), opts)
+	r = getContainersList(r, opts)
 
 	switch opts.output {
 	case "json":
-		return outputProtobufObjAsJSON(r)
+		return outputProtobufObjAsJSON(&pb.ListContainersResponse{Containers: r})
 	case "yaml":
-		return outputProtobufObjAsYAML(r)
+		return outputProtobufObjAsYAML(&pb.ListContainersResponse{Containers: r})
 	case "table":
 	// continue; output will be generated after the switch block ends.
 	default:
@@ -988,7 +941,7 @@ func ListContainers(runtimeClient pb.RuntimeServiceClient, imageClient pb.ImageS
 	if !opts.verbose && !opts.quiet {
 		display.AddRow([]string{columnContainer, columnImage, columnCreated, columnState, columnName, columnAttempt, columnPodID, columnPodname})
 	}
-	for _, c := range r.Containers {
+	for _, c := range r {
 		if match, err := matchesImage(imageClient, opts.image, c.GetImage().GetImage()); err != nil {
 			return errors.Wrap(err, "check image match")
 		} else if !match {

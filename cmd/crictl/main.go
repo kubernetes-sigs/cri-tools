@@ -22,25 +22,17 @@ import (
 	"sort"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 
-	"google.golang.org/grpc"
-
 	internalapi "k8s.io/cri-api/pkg/apis"
 	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
-	"k8s.io/kubernetes/pkg/kubelet/util"
 
 	"github.com/kubernetes-sigs/cri-tools/pkg/common"
 	"github.com/kubernetes-sigs/cri-tools/pkg/version"
 )
 
-const (
-	defaultTimeout = 2 * time.Second
-	// use same message size as cri remote client in kubelet.
-	maxMsgSize = 1024 * 1024 * 16
-)
+const defaultTimeout = 2 * time.Second
 
 var (
 	// RuntimeEndpoint is CRI server runtime endpoint
@@ -61,11 +53,18 @@ var (
 	DisablePullOnRun bool
 )
 
-func getRuntimeClientConnection(context *cli.Context) (*grpc.ClientConn, error) {
+func getRuntimeService(context *cli.Context, timeout time.Duration) (res internalapi.RuntimeService, err error) {
 	if RuntimeEndpointIsSet && RuntimeEndpoint == "" {
 		return nil, fmt.Errorf("--runtime-endpoint is not set")
 	}
 	logrus.Debug("get runtime connection")
+
+	// Check if a custom timeout is provided.
+	t := Timeout
+	if timeout != 0 {
+		t = timeout
+	}
+
 	// If no EP set then use the default endpoint types
 	if !RuntimeEndpointIsSet {
 		logrus.Warningf("runtime connect using default endpoints: %v. "+
@@ -74,12 +73,25 @@ func getRuntimeClientConnection(context *cli.Context) (*grpc.ClientConn, error) 
 		logrus.Debug("Note that performance maybe affected as each default " +
 			"connection attempt takes n-seconds to complete before timing out " +
 			"and going to the next in sequence.")
-		return getConnection(defaultRuntimeEndpoints)
+
+		for _, endPoint := range defaultRuntimeEndpoints {
+			logrus.Debugf("Connect using endpoint %q with %q timeout", endPoint, t)
+
+			res, err = remote.NewRemoteRuntimeService(endPoint, t)
+			if err != nil {
+				logrus.Error(err)
+				continue
+			}
+
+			logrus.Debugf("Connected successfully using endpoint: %s", endPoint)
+			break
+		}
+		return res, err
 	}
-	return getConnection([]string{RuntimeEndpoint})
+	return remote.NewRemoteRuntimeService(RuntimeEndpoint, t)
 }
 
-func getImageClientConnection(context *cli.Context) (*grpc.ClientConn, error) {
+func getImageService(context *cli.Context) (res internalapi.ImageManagerService, err error) {
 	if ImageEndpoint == "" {
 		if RuntimeEndpointIsSet && RuntimeEndpoint == "" {
 			return nil, fmt.Errorf("--image-endpoint is not set")
@@ -96,44 +108,22 @@ func getImageClientConnection(context *cli.Context) (*grpc.ClientConn, error) {
 		logrus.Debug("Note that performance maybe affected as each default " +
 			"connection attempt takes n-seconds to complete before timing out " +
 			"and going to the next in sequence.")
-		return getConnection(defaultRuntimeEndpoints)
-	}
-	return getConnection([]string{ImageEndpoint})
-}
 
-func getConnection(endPoints []string) (*grpc.ClientConn, error) {
-	if endPoints == nil || len(endPoints) == 0 {
-		return nil, fmt.Errorf("endpoint is not set")
-	}
-	endPointsLen := len(endPoints)
-	var conn *grpc.ClientConn
-	for indx, endPoint := range endPoints {
-		logrus.Debugf("connect using endpoint '%s' with '%s' timeout", endPoint, Timeout)
-		addr, dialer, err := util.GetAddressAndDialer(endPoint)
-		if err != nil {
-			if indx == endPointsLen-1 {
-				return nil, err
+		for _, endPoint := range defaultRuntimeEndpoints {
+			logrus.Debugf("Connect using endpoint %q with %q timeout", endPoint, Timeout)
+
+			res, err = remote.NewRemoteImageService(endPoint, Timeout)
+			if err != nil {
+				logrus.Error(err)
+				continue
 			}
-			logrus.Error(err)
-			continue
-		}
-		conn, err = grpc.Dial(addr, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(Timeout), grpc.WithContextDialer(dialer), grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxMsgSize)))
-		if err != nil {
-			errMsg := errors.Wrapf(err, "connect endpoint '%s', make sure you are running as root and the endpoint has been started", endPoint)
-			if indx == endPointsLen-1 {
-				return nil, errMsg
-			}
-			logrus.Error(errMsg)
-		} else {
-			logrus.Debugf("connected successfully using endpoint: %s", endPoint)
+
+			logrus.Debugf("Connected successfully using endpoint: %s", endPoint)
 			break
 		}
+		return res, err
 	}
-	return conn, nil
-}
-
-func getRuntimeService(context *cli.Context) (internalapi.RuntimeService, error) {
-	return remote.NewRemoteRuntimeService(RuntimeEndpoint, Timeout)
+	return remote.NewRemoteImageService(ImageEndpoint, Timeout)
 }
 
 func getTimeout(timeDuration time.Duration) time.Duration {

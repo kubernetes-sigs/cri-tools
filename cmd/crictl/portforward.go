@@ -25,10 +25,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"golang.org/x/net/context"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
+	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -42,11 +42,10 @@ var runtimePortForwardCommand = &cli.Command{
 			return cli.ShowSubcommandHelp(context)
 		}
 
-		runtimeClient, runtimeConn, err := getRuntimeClient(context)
+		runtimeClient, err := getRuntimeService(context, 0)
 		if err != nil {
 			return err
 		}
-		defer closeConnection(context, runtimeConn)
 
 		var opts = portforwardOptions{
 			id:    args[0],
@@ -63,7 +62,7 @@ var runtimePortForwardCommand = &cli.Command{
 }
 
 // PortForward sends an PortForwardRequest to server, and parses the returned PortForwardResponse
-func PortForward(client pb.RuntimeServiceClient, opts portforwardOptions) error {
+func PortForward(client internalapi.RuntimeService, opts portforwardOptions) error {
 	if opts.id == "" {
 		return fmt.Errorf("ID cannot be empty")
 
@@ -72,7 +71,7 @@ func PortForward(client pb.RuntimeServiceClient, opts portforwardOptions) error 
 		PodSandboxId: opts.id,
 	}
 	logrus.Debugf("PortForwardRequest: %v", request)
-	r, err := client.PortForward(context.Background(), request)
+	r, err := client.PortForward(request)
 	logrus.Debugf("PortForwardResponse; %v", r)
 	if err != nil {
 		return err
