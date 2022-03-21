@@ -62,6 +62,7 @@ jobs:
         run: |
           sudo mkdir -p /etc/crio/crio.conf.d
           printf '[crio.runtime]\nlog_level = "debug"\n' | sudo tee /etc/crio/crio.conf.d/01-log-level.conf
+          printf '[crio.runtime]\nseccomp_use_default_when_empty = false\n' | sudo tee /etc/crio/crio.conf.d/02-seccomp.conf
           sudo systemctl daemon-reload
           sudo systemctl start crio
 
