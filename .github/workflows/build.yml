@@ -47,7 +47,7 @@ jobs:
   releases:
     name: releases / on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 60
 
     strategy:
       matrix:

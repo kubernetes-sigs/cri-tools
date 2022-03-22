@@ -27,6 +27,7 @@ import (
 	"github.com/urfave/cli/v2"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
+	"sigs.k8s.io/release-sdk/sign"
 )
 
 type imageByRef []*pb.Image
@@ -71,6 +72,11 @@ var pullImageCommand = &cli.Command{
 			Aliases: []string{"a"},
 			Usage:   "Annotation to be set on the pulled image",
 		},
+		&cli.BoolFlag{
+			Name:    "verify-signature",
+			Aliases: []string{"s"},
+			Usage:   "Verify the cosign signature of the image before pull",
+		},
 	},
 	ArgsUsage: "NAME[:TAG|@DIGEST]",
 	Action: func(context *cli.Context) error {
@@ -103,7 +109,8 @@ var pullImageCommand = &cli.Command{
 				return err
 			}
 		}
-		r, err := PullImageWithSandbox(imageClient, imageName, auth, sandbox, ann)
+		verifySignature := context.Bool("verify-signature")
+		r, err := PullImageWithSandbox(imageClient, imageName, auth, sandbox, ann, verifySignature)
 		if err != nil {
 			return errors.Wrap(err, "pulling image")
 		}
@@ -550,7 +557,14 @@ func normalizeRepoDigest(repoDigests []string) (string, string) {
 
 // PullImageWithSandbox sends a PullImageRequest to the server, and parses
 // the returned PullImageResponse.
-func PullImageWithSandbox(client internalapi.ImageManagerService, image string, auth *pb.AuthConfig, sandbox *pb.PodSandboxConfig, ann map[string]string) (*pb.PullImageResponse, error) {
+func PullImageWithSandbox(
+	client internalapi.ImageManagerService,
+	image string,
+	auth *pb.AuthConfig,
+	sandbox *pb.PodSandboxConfig,
+	ann map[string]string,
+	verifySignature bool,
+) (*pb.PullImageResponse, error) {
 	request := &pb.PullImageRequest{
 		Image: &pb.ImageSpec{
 			Image:       image,
@@ -563,6 +577,14 @@ func PullImageWithSandbox(client internalapi.ImageManagerService, image string, 
 	if sandbox != nil {
 		request.SandboxConfig = sandbox
 	}
+
+	if verifySignature {
+		signer := sign.New(sign.Default())
+		if _, err := signer.VerifyImage(image); err != nil {
+			return nil, errors.Wrap(err, "verify image signature")
+		}
+	}
+
 	logrus.Debugf("PullImageRequest: %v", request)
 	res, err := client.PullImage(request.Image, request.Auth, request.SandboxConfig)
 	if err != nil {
