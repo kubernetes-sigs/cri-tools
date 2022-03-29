@@ -109,7 +109,7 @@ $(GOLANGCI_LINT):
 
 
 $(GINKGO):
-	$(call go-build,./vendor/github.com/onsi/ginkgo/ginkgo)
+	$(call go-build,./vendor/github.com/onsi/ginkgo/v2/ginkgo)
 
 release:
 	hack/release.sh
@@ -123,7 +123,6 @@ test-e2e: $(GINKGO)
 		-r -p \
 		--randomizeAllSpecs \
 		--randomizeSuites \
-		--succinct \
 		--slowSpecThreshold 60 \
 		test
 

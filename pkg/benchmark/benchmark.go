@@ -26,10 +26,10 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
-	"github.com/onsi/ginkgo/config"
-	"github.com/onsi/ginkgo/reporters"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/ginkgo/v2/reporters"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -47,8 +47,9 @@ func TestPerformance(t *testing.T) {
 		if err := os.MkdirAll(reportDir, 0755); err != nil {
 			glog.Errorf("Failed creating report directory: %v", err)
 		} else {
+			suite, _ := ginkgo.GinkgoConfiguration()
 			// Configure a junit reporter to write to the directory
-			junitFile := fmt.Sprintf("junit_%s%02d.xml", framework.TestContext.ReportPrefix, config.GinkgoConfig.ParallelNode)
+			junitFile := fmt.Sprintf("junit_%s%02d.xml", framework.TestContext.ReportPrefix, suite.ParallelProcess)
 			junitPath := path.Join(reportDir, junitFile)
 			r = append(r, reporters.NewJUnitReporter(junitPath))
 		}
