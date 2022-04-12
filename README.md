@@ -78,7 +78,7 @@ You can reach the maintainers of this project at:
 
 ## Kubernetes Incubator
 
-This is a [Kubernetes Incubator project](https://github.com/kubernetes/community/blob/master/incubator.md). The incubator team for the project is:
+This is a [Kubernetes Incubator project](https://github.com/kubernetes/community/blob/master/archive/incubator.md). The incubator team for the project is:
 
 - Sponsor: Dawn Chen (@dchen1107)
 - Champion: Yu-Ju Hong (@yujuhong)
