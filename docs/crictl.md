@@ -73,8 +73,7 @@ crictl by default connects on Unix to:
 or on Windows to:
 
 - `npipe:////./pipe/dockershim` or
-- `npipe:////./pipe/containerd` or
-- `npipe:////./pipe/crio` or
+- `npipe:////./pipe/containerd-containerd` or
 - `npipe:////./pipe/cri-dockerd`
 
 For other runtimes, use:
