@@ -63,9 +63,24 @@ type BenchmarkingParamsType struct {
 	// for a Pod lifecycle benchmark to take.
 	PodBenchmarkTimeoutSeconds int `yaml:"podBenchmarkTimeoutSeconds"`
 
+	// ImagesNumber is the number of Images to run tests on in image-related benchmarks.
+	ImagesNumber int `yaml:"imagesNumber"`
+
+	// ImagesNumberParallel is the maximum number of image-related benchmarks
+	// to run in parallel.
+	ImagesNumberParallel int `yaml:"imagesNumberParallel"`
+
 	// ImageBenchmarkTimeoutSeconds is the maximum of seconds acceptable for
 	// image-related benchmarks.
 	ImageBenchmarkTimeoutSeconds int `yaml:"imageBenchmarkTimeoutSeconds"`
+
+	// ImagePullingBenchmarkImage is the string ref to the image to be used in
+	// image pulling benchmarks. Internally defaults to BusyBox.
+	ImagePullingBenchmarkImage string `yaml:"imagePullingBenchmarkImage"`
+
+	// ImageListingBenchmarkImages is a list of string image refs to query
+	// during image listing benchmarks.
+	ImageListingBenchmarkImages []string `yaml:"imageListingBenchmarkImages"`
 
 	// ImageBenchmarkTimeoutSeconds is the maximum of seconds acceptable for
 	// benchmarks focused on Pod+Container start performance.
