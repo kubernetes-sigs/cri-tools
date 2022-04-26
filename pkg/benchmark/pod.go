@@ -54,8 +54,8 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				N:           framework.TestContext.BenchmarkingParams.PodsNumber,
 				NumParallel: framework.TestContext.BenchmarkingParams.PodsNumberParallel,
 			}
-			if samplingConfig.N < 1 {
-				samplingConfig.N = 1
+			if samplingConfig.N <= 0 {
+				Skip("skipping pod lifecycle benchmarks since pod number option was not set")
 			}
 			if samplingConfig.NumParallel < 1 {
 				samplingConfig.NumParallel = 1

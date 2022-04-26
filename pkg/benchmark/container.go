@@ -56,8 +56,8 @@ var _ = framework.KubeDescribe("Container", func() {
 				N:           framework.TestContext.BenchmarkingParams.ContainersNumber,
 				NumParallel: framework.TestContext.BenchmarkingParams.ContainersNumberParallel,
 			}
-			if samplingConfig.N < 1 {
-				samplingConfig.N = 1
+			if samplingConfig.N <= 0 {
+				Skip("skipping container lifecycle benchmarks since container number option was not set")
 			}
 			if samplingConfig.NumParallel < 1 {
 				samplingConfig.NumParallel = 1

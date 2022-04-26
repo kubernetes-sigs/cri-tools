@@ -94,8 +94,8 @@ var _ = framework.KubeDescribe("Image", func() {
 				N:           framework.TestContext.BenchmarkingParams.ImagesNumber,
 				NumParallel: framework.TestContext.BenchmarkingParams.ImagesNumberParallel,
 			}
-			if samplingConfig.N < 1 {
-				samplingConfig.N = 1
+			if samplingConfig.N <= 0 {
+				Skip("skipping image lifecycle benchmarks since image number option was not set")
 			}
 			if samplingConfig.NumParallel < 1 {
 				samplingConfig.NumParallel = 1
@@ -188,8 +188,8 @@ var _ = framework.KubeDescribe("Image", func() {
 				N:           framework.TestContext.BenchmarkingParams.ImagesNumber,
 				NumParallel: framework.TestContext.BenchmarkingParams.ImagesNumberParallel,
 			}
-			if samplingConfig.N < 1 {
-				samplingConfig.N = 1
+			if samplingConfig.N <= 0 {
+				Skip("skipping image listing benchmarks since image listing number option was not set")
 			}
 			if samplingConfig.NumParallel < 1 {
 				samplingConfig.NumParallel = 1
