@@ -16,7 +16,7 @@ require (
 	github.com/pborman/uuid v1.2.1
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
-	github.com/urfave/cli/v2 v2.4.0
+	github.com/urfave/cli/v2 v2.5.0
 	golang.org/x/net v0.0.0-20211209124913-491a49abca63
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
 	google.golang.org/grpc v1.45.0 // indirect
