@@ -17,6 +17,7 @@ limitations under the License.
 package benchmark
 
 import (
+	"fmt"
 	"path"
 	"runtime"
 	"time"
@@ -124,21 +125,21 @@ var _ = framework.KubeDescribe("Image", func() {
 					Image: imagePullingBenchmarkImage,
 				}
 
-				By("Pull Image")
+				By(fmt.Sprintf("Pull Image %d", idx))
 				startTime := time.Now().UnixNano()
 				lastStartTime = startTime
 				imageId := framework.PullPublicImage(ic, imagePullingBenchmarkImage, nil)
 				lastEndTime = time.Now().UnixNano()
 				durations[0] = lastEndTime - lastStartTime
 
-				By("Status Image")
+				By(fmt.Sprintf("Status Image %d", idx))
 				lastStartTime = time.Now().UnixNano()
 				_, err = ic.ImageStatus(imageSpec, false)
 				lastEndTime = time.Now().UnixNano()
 				durations[1] = lastEndTime - lastStartTime
 				framework.ExpectNoError(err, "failed to status Image: %v", err)
 
-				By("Remove Image")
+				By(fmt.Sprintf("Remove Image %d", idx))
 				lastStartTime = time.Now().UnixNano()
 				err = ic.RemoveImage(imageSpec)
 				lastEndTime = time.Now().UnixNano()
@@ -212,7 +213,7 @@ var _ = framework.KubeDescribe("Image", func() {
 				var err error
 				durations := make([]int64, len(imageListResultsSet.OperationsNames))
 
-				By("List Images")
+				By(fmt.Sprintf("List Images %d", idx))
 				startTime := time.Now().UnixNano()
 				_, err = ic.ListImages(nil)
 				endTime := time.Now().UnixNano()

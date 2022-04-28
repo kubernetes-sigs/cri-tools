@@ -17,6 +17,7 @@ limitations under the License.
 package benchmark
 
 import (
+	"fmt"
 	"path"
 	"time"
 
@@ -86,35 +87,35 @@ var _ = framework.KubeDescribe("Container", func() {
 
 				podID, podConfig = framework.CreatePodSandboxForContainer(rc)
 
-				By("CreatingContainer")
+				By(fmt.Sprintf("CreatingContainer %d", idx))
 				startTime := time.Now().UnixNano()
 				lastStartTime = startTime
 				containerID = framework.CreateDefaultContainer(rc, ic, podID, podConfig, "Benchmark-container-")
 				lastEndTime = time.Now().UnixNano()
 				durations[0] = lastEndTime - lastStartTime
 
-				By("StartingContainer")
+				By(fmt.Sprintf("StartingContainer %d", idx))
 				lastStartTime = time.Now().UnixNano()
 				err = rc.StartContainer(containerID)
 				lastEndTime = time.Now().UnixNano()
 				durations[1] = lastEndTime - lastStartTime
 				framework.ExpectNoError(err, "failed to start Container: %v", err)
 
-				By("ContainerStatus")
+				By(fmt.Sprintf("ContainerStatus %d", idx))
 				lastStartTime = time.Now().UnixNano()
 				_, err = rc.ContainerStatus(containerID, true)
 				lastEndTime = time.Now().UnixNano()
 				durations[2] = lastEndTime - lastStartTime
 				framework.ExpectNoError(err, "failed to get Container status: %v", err)
 
-				By("ContainerStop")
+				By(fmt.Sprintf("ContainerStop %d", idx))
 				lastStartTime = time.Now().UnixNano()
 				err = rc.StopContainer(containerID, framework.DefaultStopContainerTimeout)
 				lastEndTime = time.Now().UnixNano()
 				durations[3] = lastEndTime - lastStartTime
 				framework.ExpectNoError(err, "failed to stop Container: %v", err)
 
-				By("ContainerRemove")
+				By(fmt.Sprintf("ContainerRemove %d", idx))
 				lastStartTime = time.Now().UnixNano()
 				err = rc.RemoveContainer(containerID)
 				lastEndTime = time.Now().UnixNano()
@@ -130,9 +131,9 @@ var _ = framework.KubeDescribe("Container", func() {
 				}
 				resultsChannel <- &res
 
-				By("stop PodSandbox")
+				By(fmt.Sprintf("stop PodSandbox %d", idx))
 				rc.StopPodSandbox(podID)
-				By("delete PodSandbox")
+				By(fmt.Sprintf("delete PodSandbox %d", idx))
 				rc.RemovePodSandbox(podID)
 
 			}, samplingConfig)

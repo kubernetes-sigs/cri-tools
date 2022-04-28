@@ -17,6 +17,7 @@ limitations under the License.
 package benchmark
 
 import (
+	"fmt"
 	"path"
 	"time"
 
@@ -90,7 +91,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 					Labels:   framework.DefaultPodLabels,
 				}
 
-				By("Creating a pod")
+				By(fmt.Sprintf("Creating a pod %d", idx))
 				startTime := time.Now().UnixNano()
 				lastStartTime = startTime
 				podID, err = c.RunPodSandbox(config, framework.TestContext.RuntimeHandler)
@@ -98,21 +99,21 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				durations[0] = lastEndTime - lastStartTime
 				framework.ExpectNoError(err, "failed to create PodSandbox: %v", err)
 
-				By("Get Pod status")
+				By(fmt.Sprintf("Get Pod status %d", idx))
 				lastStartTime = time.Now().UnixNano()
 				_, err = c.PodSandboxStatus(podID, true)
 				lastEndTime = time.Now().UnixNano()
 				durations[1] = lastEndTime - lastStartTime
 				framework.ExpectNoError(err, "failed to get PodStatus: %v", err)
 
-				By("Stop PodSandbox")
+				By(fmt.Sprintf("Stop PodSandbox %d", idx))
 				lastStartTime = time.Now().UnixNano()
 				err = c.StopPodSandbox(podID)
 				lastEndTime = time.Now().UnixNano()
 				durations[2] = lastEndTime - lastStartTime
 				framework.ExpectNoError(err, "failed to stop PodSandbox: %v", err)
 
-				By("Remove PodSandbox")
+				By(fmt.Sprintf("Remove PodSandbox %d", idx))
 				lastStartTime = time.Now().UnixNano()
 				err = c.RemovePodSandbox(podID)
 				lastEndTime = time.Now().UnixNano()
