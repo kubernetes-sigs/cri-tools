@@ -105,69 +105,16 @@ jobs:
         shell: bash
         if: startsWith(matrix.os, 'windows')
         run: |
-          mingw32-make.exe 
+          mingw32-make.exe
           mingw32-make.exe install
         working-directory: ${{ github.workspace }}/src/github.com/containerd/containerd
 
-      - name: Install ${{matrix.runc}} runtime engine on Linux
+      - name: Install cni on Linux
         if: startsWith(matrix.os, 'ubuntu')
-        env:
-          RUNC_FLAVOR: ${{matrix.runc}}
+        shell: bash
         run: |
-          sudo -E PATH=$PATH script/setup/install-runc
+          sudo -E PATH=$PATH script/setup/install-cni $(grep containernetworking/plugins go.mod | awk '{print $2}')
         working-directory: src/github.com/containerd/containerd
-
-      - name: Build Windows container shims
-        # After Containerd 1.5 just a 'make' or 'make binaries' invocation will build the windows shim alongside the daemon, ctr, and 
-        # other binaries so this step is only needed on < 1.6 
-        if: startsWith(matrix.os, 'windows') && matrix.version != 'main'
-        shell: bash
-        run: |
-          set -o xtrace
-          export CGO_ENABLED=1
-          cd src/github.com/containerd/containerd
-          mingw32-make.exe binaries
-          bindir="$(pwd)"/bin
-          if [ -f "vendor.conf" ]; then
-              SHIM_COMMIT=$(grep 'Microsoft/hcsshim' vendor.conf | awk '{print $2}')
-          else
-              SHIM_COMMIT=$(grep 'Microsoft/hcsshim ' go.mod | awk '{print $2}')
-          fi
-          cd ../../Microsoft/hcsshim
-          git fetch --tags origin "${SHIM_COMMIT}"
-          git checkout "${SHIM_COMMIT}"
-          GO111MODULE=on go build -mod=vendor -o "${bindir}/containerd-shim-runhcs-v1.exe" ./cmd/containerd-shim-runhcs-v1
-          cp "${bindir}"/*.exe /usr/local/bin
-
-      - name: Build cri-tools on Linux
-        if: startsWith(matrix.os, 'ubuntu')
-        run: |
-          make
-          sudo -E PATH=$PATH make install
-        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
-
-      - name: Build cri-tools on Windows
-        if: startsWith(matrix.os, 'windows')
-        run: |
-          make
-          make install
-        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
-
-      - name: Install ginkgo on Linux
-        if: startsWith(matrix.os, 'ubuntu')
-        shell: bash
-        run: |
-          go get -u github.com/onsi/ginkgo/ginkgo
-          ginkgo version
-          sudo cp $(command -v ginkgo) /usr/local/bin
-
-      - name: Install ginkgo on Windows
-        if: startsWith(matrix.os, 'windows')
-        shell: bash
-        run: |
-          go get -u github.com/onsi/ginkgo/ginkgo
-          ginkgo version
-          cp $(command -v ginkgo) /usr/local/bin
 
       - name: Install cni on Windows
         if: startsWith(matrix.os, 'windows')
@@ -273,6 +220,66 @@ jobs:
               }
           }
           EOF'
+
+      - name: Install ${{matrix.runc}} runtime engine on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        env:
+          RUNC_FLAVOR: ${{matrix.runc}}
+        run: |
+          sudo -E PATH=$PATH script/setup/install-runc
+        working-directory: src/github.com/containerd/containerd
+
+      - name: Build Windows container shims
+        # After Containerd 1.5 just a 'make' or 'make binaries' invocation will build the windows shim alongside the daemon, ctr, and
+        # other binaries so this step is only needed on < 1.6
+        if: startsWith(matrix.os, 'windows') && matrix.version != 'main'
+        shell: bash
+        run: |
+          set -o xtrace
+          export CGO_ENABLED=1
+          cd src/github.com/containerd/containerd
+          mingw32-make.exe binaries
+          bindir="$(pwd)"/bin
+          if [ -f "vendor.conf" ]; then
+              SHIM_COMMIT=$(grep 'Microsoft/hcsshim' vendor.conf | awk '{print $2}')
+          else
+              SHIM_COMMIT=$(grep 'Microsoft/hcsshim ' go.mod | awk '{print $2}')
+          fi
+          cd ../../Microsoft/hcsshim
+          git fetch --tags origin "${SHIM_COMMIT}"
+          git checkout "${SHIM_COMMIT}"
+          GO111MODULE=on go build -mod=vendor -o "${bindir}/containerd-shim-runhcs-v1.exe" ./cmd/containerd-shim-runhcs-v1
+          cp "${bindir}"/*.exe /usr/local/bin
+
+      - name: Build cri-tools on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          make
+          sudo -E PATH=$PATH make install
+        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
+
+      - name: Build cri-tools on Windows
+        if: startsWith(matrix.os, 'windows')
+        run: |
+          make
+          make install
+        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
+
+      - name: Install ginkgo on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        shell: bash
+        run: |
+          go get -u github.com/onsi/ginkgo/ginkgo
+          ginkgo version
+          sudo cp $(command -v ginkgo) /usr/local/bin
+
+      - name: Install ginkgo on Windows
+        if: startsWith(matrix.os, 'windows')
+        shell: bash
+        run: |
+          go get -u github.com/onsi/ginkgo/ginkgo
+          ginkgo version
+          cp $(command -v ginkgo) /usr/local/bin
 
       - name: Run critest on Linux
         if: startsWith(matrix.os, 'ubuntu')
