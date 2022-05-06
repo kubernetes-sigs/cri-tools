@@ -8,7 +8,7 @@ require (
 	github.com/docker/go-units v0.4.0
 	github.com/golang/glog v1.0.0
 	github.com/golang/protobuf v1.5.2
-	github.com/onsi/ginkgo v1.16.5
+	github.com/onsi/ginkgo/v2 v2.1.3
 	github.com/onsi/gomega v1.19.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/runc v1.1.1

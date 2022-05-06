@@ -24,7 +24,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/onsi/ginkgo/config"
+	"github.com/onsi/ginkgo/v2"
 	"gopkg.in/yaml.v3"
 )
 
@@ -69,14 +69,16 @@ const DefaultRegistryPrefix = "docker.io/library"
 
 // RegisterFlags registers flags to e2e test suites.
 func RegisterFlags() {
+	suite, reporter := ginkgo.GinkgoConfiguration()
+
 	// Turn on verbose by default to get spec names
-	config.DefaultReporterConfig.Verbose = true
+	reporter.Verbose = true
 
 	// Turn on EmitSpecProgress to get spec progress (especially on interrupt)
-	config.GinkgoConfig.EmitSpecProgress = true
+	suite.EmitSpecProgress = true
 
 	// Randomize specs as well as suites
-	config.GinkgoConfig.RandomizeAllSpecs = true
+	suite.RandomizeAllSpecs = true
 
 	flag.StringVar(&TestContext.ReportPrefix, "report-prefix", "", "Optional prefix for JUnit XML reports. Default is empty, which doesn't prepend anything to the default name.")
 	flag.StringVar(&TestContext.ReportDir, "report-dir", "", "Path to the directory where the JUnit XML reports should be saved. Default is empty, which doesn't generate these reports.")

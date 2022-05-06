@@ -269,7 +269,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         shell: bash
         run: |
-          go get -u github.com/onsi/ginkgo/ginkgo
+          go install github.com/onsi/ginkgo/v2/ginkgo@latest
           ginkgo version
           sudo cp $(command -v ginkgo) /usr/local/bin
 
@@ -277,7 +277,7 @@ jobs:
         if: startsWith(matrix.os, 'windows')
         shell: bash
         run: |
-          go get -u github.com/onsi/ginkgo/ginkgo
+          go install github.com/onsi/ginkgo/v2/ginkgo@latest
           ginkgo version
           cp $(command -v ginkgo) /usr/local/bin
 
