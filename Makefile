@@ -35,7 +35,6 @@ BINDIR ?= /usr/local/bin
 VERSION := $(shell git describe --tags --dirty --always)
 VERSION := $(VERSION:v%=%)
 GO_LDFLAGS := -X $(PROJECT)/pkg/version.Version=$(VERSION)
-BUILDTAGS := selinux
 
 BUILD_PATH := $(shell pwd)/build
 BUILD_BIN_PATH := $(BUILD_PATH)/bin
@@ -67,7 +66,6 @@ $(CRITEST):
 	CGO_ENABLED=0 $(GO_TEST) -c -o $@ \
 		-ldflags '$(GO_LDFLAGS)' \
 		-trimpath \
-		-tags '$(BUILDTAGS)' \
 	     $(PROJECT)/cmd/critest
 
 crictl:
@@ -77,7 +75,6 @@ $(CRICTL):
 	CGO_ENABLED=0 $(GO_BUILD) -o $@ \
 		-ldflags '$(GO_LDFLAGS)' \
 		-trimpath \
-		-tags '$(BUILDTAGS)' \
 		$(PROJECT)/cmd/crictl
 
 clean:
