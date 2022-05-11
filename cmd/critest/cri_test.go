@@ -31,6 +31,7 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/reporters"
+	ginkgotypes "github.com/onsi/ginkgo/v2/types"
 	"github.com/onsi/gomega"
 
 	_ "github.com/kubernetes-sigs/cri-tools/pkg/benchmark"
@@ -135,14 +136,30 @@ func runParallelTestSuite(t *testing.T) {
 	}
 	defer os.Remove(tempFileName)
 
-	ginkgoArgs := []string{fmt.Sprintf("-nodes=%d", *parallel)}
+	ginkgoArgs, err := generateGinkgoRunFlags()
+	if err != nil {
+		t.Fatalf("Failed to generate ginkgo args: %v", err)
+	}
+	ginkgoArgs = append(ginkgoArgs, fmt.Sprintf("--nodes=%d", *parallel))
+
 	var testArgs []string
 	flag.Visit(func(f *flag.Flag) {
+		// NOTE(fuweid):
+		//
+		// The ginkgo has changed the flag var from string to string slice
+		// for some, like ginkgo.Skip/Focus.
+		//
+		// The --skip flag's config is https://github.com/onsi/ginkgo/blob/v2.0.0/types/config.go#L284.
+		// And the value will be appended to https://github.com/onsi/ginkgo/blob/v2.0.0/types/config.go#L22.
+		// The flag var is https://github.com/onsi/ginkgo/blob/v2.0.0/types/flags.go#L428,
+		// which means that we can't get value by interface String().
+		//
+		// So we need to skip the "ginkgo.*" flags and use ginkgo API
+		// to generate the flags.
 		if strings.HasPrefix(f.Name, "ginkgo.") {
-			flagName := strings.TrimPrefix(f.Name, "ginkgo.")
-			ginkgoArgs = append(ginkgoArgs, fmt.Sprintf("-%s=%s", flagName, f.Value.String()))
 			return
 		}
+
 		if f.Name == parallelFlag || f.Name == benchmarkFlag {
 			return
 		}
@@ -182,4 +199,22 @@ func TestCRISuite(t *testing.T) {
 	} else {
 		runTestSuite(t)
 	}
+}
+
+// generateGinkgoRunFlags is based on ginkgotypes.GenerateGinkgoTestRunArgs.
+//
+// Since the GenerateGinkgoTestRunArgs adds "ginkgo." as prefix for each
+// flags and we use --nodes instead of ParallelConfigFlags, we need to call
+// GenerateFlagArgs to get what we want.
+func generateGinkgoRunFlags() ([]string, error) {
+	suiteConfig, reporterConfig := ginkgo.GinkgoConfiguration()
+
+	flags := ginkgotypes.SuiteConfigFlags
+	flags = flags.CopyAppend(ginkgotypes.ReporterConfigFlags...)
+
+	bindings := map[string]interface{}{
+		"S": &suiteConfig,
+		"R": &reporterConfig,
+	}
+	return ginkgotypes.GenerateFlagArgs(flags, bindings)
 }
