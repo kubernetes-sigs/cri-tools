@@ -41,7 +41,7 @@ See the [roadmap](docs/roadmap.md) for information about current and future mile
 ### Install crictl
 
 ```sh
-VERSION="v1.23.0"
+VERSION="v1.24.1"
 wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux-amd64.tar.gz
 sudo tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f crictl-$VERSION-linux-amd64.tar.gz
@@ -50,7 +50,7 @@ rm -f crictl-$VERSION-linux-amd64.tar.gz
 ### Install critest
 
 ```sh
-VERSION="v1.23.0"
+VERSION="v1.24.1"
 wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/critest-$VERSION-linux-amd64.tar.gz
 sudo tar zxvf critest-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f critest-$VERSION-linux-amd64.tar.gz
