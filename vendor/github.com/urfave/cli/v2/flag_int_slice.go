@@ -87,39 +87,10 @@ func (i *IntSlice) Get() interface{} {
 	return *i
 }
 
-// IntSliceFlag is a flag with type *IntSlice
-type IntSliceFlag struct {
-	Name        string
-	Aliases     []string
-	Usage       string
-	EnvVars     []string
-	FilePath    string
-	Required    bool
-	Hidden      bool
-	Value       *IntSlice
-	DefaultText string
-	HasBeenSet  bool
-}
-
-// IsSet returns whether or not the flag has been set through env or file
-func (f *IntSliceFlag) IsSet() bool {
-	return f.HasBeenSet
-}
-
 // String returns a readable representation of this value
 // (for usage defaults)
 func (f *IntSliceFlag) String() string {
 	return withEnvHint(f.GetEnvVars(), stringifyIntSliceFlag(f))
-}
-
-// Names returns the names of the flag
-func (f *IntSliceFlag) Names() []string {
-	return flagNames(f.Name, f.Aliases)
-}
-
-// IsRequired returns whether or not the flag is required
-func (f *IntSliceFlag) IsRequired() bool {
-	return f.Required
 }
 
 // TakesValue returns true of the flag takes a value, otherwise false
@@ -128,8 +99,13 @@ func (f *IntSliceFlag) TakesValue() bool {
 }
 
 // GetUsage returns the usage string for the flag
-func (f IntSliceFlag) GetUsage() string {
+func (f *IntSliceFlag) GetUsage() string {
 	return f.Usage
+}
+
+// GetCategory returns the category for the flag
+func (f *IntSliceFlag) GetCategory() string {
+	return f.Category
 }
 
 // GetValue returns the flags value as string representation and an empty
@@ -139,11 +115,6 @@ func (f *IntSliceFlag) GetValue() string {
 		return f.Value.String()
 	}
 	return ""
-}
-
-// IsVisible returns true if the flag is not hidden, otherwise false
-func (f *IntSliceFlag) IsVisible() bool {
-	return !f.Hidden
 }
 
 // GetDefaultText returns the default text for this flag
@@ -161,12 +132,12 @@ func (f *IntSliceFlag) GetEnvVars() []string {
 
 // Apply populates the flag given the flag set and environment
 func (f *IntSliceFlag) Apply(set *flag.FlagSet) error {
-	if val, ok := flagFromEnvOrFile(f.EnvVars, f.FilePath); ok {
+	if val, source, found := flagFromEnvOrFile(f.EnvVars, f.FilePath); found {
 		f.Value = &IntSlice{}
 
 		for _, s := range flagSplitMultiValues(val) {
 			if err := f.Value.Set(strings.TrimSpace(s)); err != nil {
-				return fmt.Errorf("could not parse %q as int slice value for flag %s: %s", val, f.Name, err)
+				return fmt.Errorf("could not parse %q as int slice value from %s for flag %s: %s", val, source, f.Name, err)
 			}
 		}
 

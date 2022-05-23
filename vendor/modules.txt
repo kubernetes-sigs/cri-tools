@@ -4,6 +4,8 @@ github.com/Azure/go-ansiterm/winterm
 # github.com/Microsoft/go-winio v0.4.17
 github.com/Microsoft/go-winio
 github.com/Microsoft/go-winio/pkg/guid
+# github.com/antzucaro/matchr v0.0.0-20210222213004-b04723ef80f0
+github.com/antzucaro/matchr
 # github.com/cpuguy83/go-md2man/v2 v2.0.1
 github.com/cpuguy83/go-md2man/v2/md2man
 # github.com/cyphar/filepath-securejoin v0.2.3
@@ -125,7 +127,7 @@ github.com/russross/blackfriday/v2
 github.com/sirupsen/logrus
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
-# github.com/urfave/cli/v2 v2.6.0
+# github.com/urfave/cli/v2 v2.8.0
 ## explicit
 github.com/urfave/cli/v2
 # golang.org/x/net v0.0.0-20220225172249-27dd8689420f
