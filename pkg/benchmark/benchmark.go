@@ -33,6 +33,10 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+const (
+	defaultOperationTimes int = 20
+)
+
 // TestPerformance checks configuration parameters (specified through flags) and then runs
 // benchmark tests using the Ginkgo runner.
 // If a "report directory" is specified, one or more JUnit test reports will be

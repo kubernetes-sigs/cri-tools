@@ -18,6 +18,7 @@ package framework
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"strings"
 	"sync"
@@ -25,6 +26,7 @@ import (
 
 	"github.com/docker/distribution/reference"
 	"github.com/pborman/uuid"
+	"gopkg.in/yaml.v3"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
@@ -115,7 +117,7 @@ var _ = BeforeSuite(func() {
 	}
 
 	// Load any custom image definitions:
-	err := TestContext.LoadCustomImagesFileIntoTestingContext()
+	err := TestContext.LoadYamlConfigFiles()
 	if err != nil {
 		panic(err)
 	}
@@ -354,4 +356,21 @@ func PullPublicImage(c internalapi.ImageManagerService, imageName string, podCon
 	id, err := c.PullImage(imageSpec, nil, podConfig)
 	ExpectNoError(err, "failed to pull image: %v", err)
 	return id
+}
+
+// LoadYamlFile attempts to load the given YAML file into the given struct.
+func LoadYamlFile(filepath string, obj interface{}) error {
+	Logf("Attempting to load YAML file %q into %+v", filepath, obj)
+	fileContent, err := os.ReadFile(filepath)
+	if err != nil {
+		return fmt.Errorf("error reading %q file contents: %v", filepath, err)
+	}
+
+	err = yaml.Unmarshal(fileContent, obj)
+	if err != nil {
+		return fmt.Errorf("error unmarshalling %q YAML file: %v", filepath, err)
+	}
+
+	Logf("Successfully loaded YAML file %q into %+v", filepath, obj)
+	return nil
 }

@@ -26,10 +26,32 @@ git clone https://github.com/kubernetes-sigs/cri-tools -b release-1.9 $GOPATH/sr
 
 Before running the test, you need to _ensure that the CRI server under test is running and listening on a Unix socket_ or a Windows tcp socket. Because the benchmark tests are designed to request changes (e.g., create/delete) to the containers and verify that correct status is reported, it expects to be the only user of the CRI server. Please make sure that 1) there are no existing CRI-managed containers running on the node, and 2) no other processes (e.g., Kubelet) will interfere with the tests.
 
+### Defining benchmarking parameters
+
+You can optionally specify some parameters detailing how benchmarks should be run.
+
+```yaml
+# The number of container lifecycle benchmarks to run:
+containersNumber: 100
+
+# The number of container lifecycle benchmarks to run in parallel.
+# The total number of samples will be floor(containersNumber / containersNumberParallel)
+containersNumberParallel: 2
+
+
+# The number of pod lifecycle benchmarks to run:
+podsNumber: 1000
+# The number of pod lifecycle benchmarks to run in parallel.
+# The total number of samples will be floor(podsNumber/ podsNumberParallel)
+podsNumberParallel: 1
+```
+
 ### Run
 
 ```sh
 critest -benchmark
+    [--benchmarking-params-file /path/to/params.yml]
+    [--benchmarking-output-dir /path/to/outdir/]
 ```
 
 This will
@@ -45,5 +67,9 @@ critest connects to Unix: `unix:///var/run/dockershim.sock` or Windows: `tcp://l
 - `-ginkgo.focus`: Only run the tests that match the regular expression.
 - `-image-endpoint`: Set the endpoint of image service. Same with runtime-endpoint if not specified.
 - `-runtime-endpoint`: Set the endpoint of runtime service. Default to Unix: `unix:///var/run/dockershim.sock` or Windows: `tcp://localhost:3735`.
+- `-benchmarking-params-file`: optional path to a YAML file containing parameters describing which
+benchmarks should be run.
+- `-benchmarking-output-dir`: optional path to a pre-existing directory in which to write JSON
+  files detailing the results of the benchmarks.
 - `-ginkgo.skip`: Skip the tests that match the regular expression.
 - `-h`: Should help and all supported options.
