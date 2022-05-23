@@ -76,39 +76,10 @@ func (i *Int64Slice) Get() interface{} {
 	return *i
 }
 
-// Int64SliceFlag is a flag with type *Int64Slice
-type Int64SliceFlag struct {
-	Name        string
-	Aliases     []string
-	Usage       string
-	EnvVars     []string
-	FilePath    string
-	Required    bool
-	Hidden      bool
-	Value       *Int64Slice
-	DefaultText string
-	HasBeenSet  bool
-}
-
-// IsSet returns whether or not the flag has been set through env or file
-func (f *Int64SliceFlag) IsSet() bool {
-	return f.HasBeenSet
-}
-
 // String returns a readable representation of this value
 // (for usage defaults)
 func (f *Int64SliceFlag) String() string {
 	return withEnvHint(f.GetEnvVars(), stringifyInt64SliceFlag(f))
-}
-
-// Names returns the names of the flag
-func (f *Int64SliceFlag) Names() []string {
-	return flagNames(f.Name, f.Aliases)
-}
-
-// IsRequired returns whether or not the flag is required
-func (f *Int64SliceFlag) IsRequired() bool {
-	return f.Required
 }
 
 // TakesValue returns true of the flag takes a value, otherwise false
@@ -117,8 +88,13 @@ func (f *Int64SliceFlag) TakesValue() bool {
 }
 
 // GetUsage returns the usage string for the flag
-func (f Int64SliceFlag) GetUsage() string {
+func (f *Int64SliceFlag) GetUsage() string {
 	return f.Usage
+}
+
+// GetCategory returns the category for the flag
+func (f *Int64SliceFlag) GetCategory() string {
+	return f.Category
 }
 
 // GetValue returns the flags value as string representation and an empty
@@ -128,11 +104,6 @@ func (f *Int64SliceFlag) GetValue() string {
 		return f.Value.String()
 	}
 	return ""
-}
-
-// IsVisible returns true if the flag is not hidden, otherwise false
-func (f *Int64SliceFlag) IsVisible() bool {
-	return !f.Hidden
 }
 
 // GetDefaultText returns the default text for this flag
@@ -150,12 +121,12 @@ func (f *Int64SliceFlag) GetEnvVars() []string {
 
 // Apply populates the flag given the flag set and environment
 func (f *Int64SliceFlag) Apply(set *flag.FlagSet) error {
-	if val, ok := flagFromEnvOrFile(f.EnvVars, f.FilePath); ok {
+	if val, source, found := flagFromEnvOrFile(f.EnvVars, f.FilePath); found {
 		f.Value = &Int64Slice{}
 
 		for _, s := range flagSplitMultiValues(val) {
 			if err := f.Value.Set(strings.TrimSpace(s)); err != nil {
-				return fmt.Errorf("could not parse %q as int64 slice value for flag %s: %s", val, f.Name, err)
+				return fmt.Errorf("could not parse %q as int64 slice value from %s for flag %s: %s", val, source, f.Name, err)
 			}
 		}
 

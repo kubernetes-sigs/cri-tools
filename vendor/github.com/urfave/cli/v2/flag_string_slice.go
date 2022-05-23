@@ -70,41 +70,10 @@ func (s *StringSlice) Get() interface{} {
 	return *s
 }
 
-// StringSliceFlag is a flag with type *StringSlice
-type StringSliceFlag struct {
-	Name        string
-	Aliases     []string
-	Usage       string
-	EnvVars     []string
-	FilePath    string
-	Required    bool
-	Hidden      bool
-	TakesFile   bool
-	Value       *StringSlice
-	DefaultText string
-	HasBeenSet  bool
-	Destination *StringSlice
-}
-
-// IsSet returns whether or not the flag has been set through env or file
-func (f *StringSliceFlag) IsSet() bool {
-	return f.HasBeenSet
-}
-
 // String returns a readable representation of this value
 // (for usage defaults)
 func (f *StringSliceFlag) String() string {
 	return withEnvHint(f.GetEnvVars(), stringifyStringSliceFlag(f))
-}
-
-// Names returns the names of the flag
-func (f *StringSliceFlag) Names() []string {
-	return flagNames(f.Name, f.Aliases)
-}
-
-// IsRequired returns whether or not the flag is required
-func (f *StringSliceFlag) IsRequired() bool {
-	return f.Required
 }
 
 // TakesValue returns true of the flag takes a value, otherwise false
@@ -117,6 +86,11 @@ func (f *StringSliceFlag) GetUsage() string {
 	return f.Usage
 }
 
+// GetCategory returns the category for the flag
+func (f *StringSliceFlag) GetCategory() string {
+	return f.Category
+}
+
 // GetValue returns the flags value as string representation and an empty
 // string if the flag takes no value at all.
 func (f *StringSliceFlag) GetValue() string {
@@ -124,11 +98,6 @@ func (f *StringSliceFlag) GetValue() string {
 		return f.Value.String()
 	}
 	return ""
-}
-
-// IsVisible returns true if the flag is not hidden, otherwise false
-func (f *StringSliceFlag) IsVisible() bool {
-	return !f.Hidden
 }
 
 // GetDefaultText returns the default text for this flag
@@ -153,7 +122,7 @@ func (f *StringSliceFlag) Apply(set *flag.FlagSet) error {
 
 	}
 
-	if val, ok := flagFromEnvOrFile(f.EnvVars, f.FilePath); ok {
+	if val, source, found := flagFromEnvOrFile(f.EnvVars, f.FilePath); found {
 		if f.Value == nil {
 			f.Value = &StringSlice{}
 		}
@@ -164,7 +133,7 @@ func (f *StringSliceFlag) Apply(set *flag.FlagSet) error {
 
 		for _, s := range flagSplitMultiValues(val) {
 			if err := destination.Set(strings.TrimSpace(s)); err != nil {
-				return fmt.Errorf("could not parse %q as string value for flag %s: %s", val, f.Name, err)
+				return fmt.Errorf("could not parse %q as string value from %s for flag %s: %s", val, source, f.Name, err)
 			}
 		}
 

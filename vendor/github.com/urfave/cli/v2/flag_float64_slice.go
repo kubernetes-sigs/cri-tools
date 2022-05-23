@@ -75,39 +75,10 @@ func (f *Float64Slice) Get() interface{} {
 	return *f
 }
 
-// Float64SliceFlag is a flag with type *Float64Slice
-type Float64SliceFlag struct {
-	Name        string
-	Aliases     []string
-	Usage       string
-	EnvVars     []string
-	FilePath    string
-	Required    bool
-	Hidden      bool
-	Value       *Float64Slice
-	DefaultText string
-	HasBeenSet  bool
-}
-
-// IsSet returns whether or not the flag has been set through env or file
-func (f *Float64SliceFlag) IsSet() bool {
-	return f.HasBeenSet
-}
-
 // String returns a readable representation of this value
 // (for usage defaults)
 func (f *Float64SliceFlag) String() string {
 	return withEnvHint(f.GetEnvVars(), stringifyFloat64SliceFlag(f))
-}
-
-// Names returns the names of the flag
-func (f *Float64SliceFlag) Names() []string {
-	return flagNames(f.Name, f.Aliases)
-}
-
-// IsRequired returns whether or not the flag is required
-func (f *Float64SliceFlag) IsRequired() bool {
-	return f.Required
 }
 
 // TakesValue returns true if the flag takes a value, otherwise false
@@ -120,6 +91,11 @@ func (f *Float64SliceFlag) GetUsage() string {
 	return f.Usage
 }
 
+// GetCategory returns the category for the flag
+func (f *Float64SliceFlag) GetCategory() string {
+	return f.Category
+}
+
 // GetValue returns the flags value as string representation and an empty
 // string if the flag takes no value at all.
 func (f *Float64SliceFlag) GetValue() string {
@@ -127,11 +103,6 @@ func (f *Float64SliceFlag) GetValue() string {
 		return f.Value.String()
 	}
 	return ""
-}
-
-// IsVisible returns true if the flag is not hidden, otherwise false
-func (f *Float64SliceFlag) IsVisible() bool {
-	return !f.Hidden
 }
 
 // GetDefaultText returns the default text for this flag
@@ -149,13 +120,13 @@ func (f *Float64SliceFlag) GetEnvVars() []string {
 
 // Apply populates the flag given the flag set and environment
 func (f *Float64SliceFlag) Apply(set *flag.FlagSet) error {
-	if val, ok := flagFromEnvOrFile(f.EnvVars, f.FilePath); ok {
+	if val, source, found := flagFromEnvOrFile(f.EnvVars, f.FilePath); found {
 		if val != "" {
 			f.Value = &Float64Slice{}
 
 			for _, s := range flagSplitMultiValues(val) {
 				if err := f.Value.Set(strings.TrimSpace(s)); err != nil {
-					return fmt.Errorf("could not parse %q as float64 slice value for flag %s: %s", f.Value, f.Name, err)
+					return fmt.Errorf("could not parse %q as float64 slice value from %s for flag %s: %s", f.Value, source, f.Name, err)
 				}
 			}
 
