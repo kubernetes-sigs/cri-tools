@@ -191,6 +191,55 @@ var _ = framework.KubeDescribe("Container", func() {
 			Expect(stats.Cpu.Timestamp).NotTo(BeZero())
 			Expect(stats.Memory.Timestamp).NotTo(BeZero())
 		})
+
+		It("runtime should support listing stats for started containers [Conformance]", func() {
+			By("create container")
+			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-stats-")
+
+			By("start container")
+			startContainer(rc, containerID)
+			filter := &runtimeapi.ContainerStatsFilter{
+				Id: containerID,
+			}
+
+			By("test container stats")
+			stats := listContainerStats(rc, filter)
+			Expect(statFound(stats, containerID)).To(BeTrue(), "Container should be created")
+		})
+
+		It("runtime should support listing stats for started containers when filter is nil [Conformance]", func() {
+			By("create container")
+			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-stats-with-nil-filter-")
+
+			By("start container")
+			startContainer(rc, containerID)
+
+			By("test container stats")
+			stats := listContainerStats(rc, nil)
+			Expect(statFound(stats, containerID)).To(BeTrue(), "Stats should be found")
+		})
+
+		It("runtime should support listing stats for three created containers when filter is nil. [Conformance]", func() {
+			By("create first container ")
+			firstContainerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-stats-with-nil-filter-")
+			By("create second container ")
+			secondContainerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-stats-with-nil-filter-")
+			By("create third container ")
+			thirdContainerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-stats-with-nil-filter-")
+
+			By("start first container")
+			startContainer(rc, firstContainerID)
+			By("start second container")
+			startContainer(rc, secondContainerID)
+			By("start third container")
+			startContainer(rc, thirdContainerID)
+
+			By("test containers stats")
+			stats := listContainerStats(rc, nil)
+			Expect(statFound(stats, firstContainerID)).To(BeTrue(), "Stats should be found")
+			Expect(statFound(stats, secondContainerID)).To(BeTrue(), "Stats should be found")
+			Expect(statFound(stats, thirdContainerID)).To(BeTrue(), "Stats should be found")
+		})
 	})
 
 	Context("runtime should support adding volume and device", func() {
@@ -318,6 +367,16 @@ var _ = framework.KubeDescribe("Container", func() {
 func containerFound(containers []*runtimeapi.Container, containerID string) bool {
 	for _, container := range containers {
 		if container.Id == containerID {
+			return true
+		}
+	}
+	return false
+}
+
+// statFound returns whether stat is found.
+func statFound(stats []*runtimeapi.ContainerStats, containerID string) bool {
+	for _, stat := range stats {
+		if stat.Attributes.Id == containerID {
 			return true
 		}
 	}
@@ -599,5 +658,13 @@ func listContainerStatsForID(c internalapi.RuntimeService, containerID string) *
 	By("List container stats for containerID: " + containerID)
 	stats, err := c.ContainerStats(containerID)
 	framework.ExpectNoError(err, "failed to list container stats for %q status: %v", containerID, err)
+	return stats
+}
+
+// listContainerStats lists stats for containers based on filter
+func listContainerStats(c internalapi.RuntimeService, filter *runtimeapi.ContainerStatsFilter) []*runtimeapi.ContainerStats {
+	By("List container stats for all containers:")
+	stats, err := c.ListContainerStats(filter)
+	framework.ExpectNoError(err, "failed to list container stats for containers status: %v", err)
 	return stats
 }
