@@ -17,24 +17,12 @@ limitations under the License.
 package benchmark
 
 import (
-	"fmt"
 	"math/rand"
-	"os"
-	"path"
 	"testing"
 	"time"
 
-	"github.com/golang/glog"
-	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
-	"github.com/onsi/ginkgo/v2"
-	"github.com/onsi/ginkgo/v2/reporters"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-)
-
-const (
-	defaultOperationTimes int = 20
 )
 
 // TestPerformance checks configuration parameters (specified through flags) and then runs
@@ -44,19 +32,5 @@ const (
 func TestPerformance(t *testing.T) {
 	rand.Seed(time.Now().UTC().UnixNano())
 	RegisterFailHandler(Fail)
-	r := []Reporter{}
-	reportDir := framework.TestContext.ReportDir
-	if reportDir != "" {
-		// Create the directory if it doesn't already exists
-		if err := os.MkdirAll(reportDir, 0755); err != nil {
-			glog.Errorf("Failed creating report directory: %v", err)
-		} else {
-			suite, _ := ginkgo.GinkgoConfiguration()
-			// Configure a junit reporter to write to the directory
-			junitFile := fmt.Sprintf("junit_%s%02d.xml", framework.TestContext.ReportPrefix, suite.ParallelProcess)
-			junitPath := path.Join(reportDir, junitFile)
-			r = append(r, reporters.NewJUnitReporter(junitPath))
-		}
-	}
-	RunSpecsWithDefaultAndCustomReporters(t, "Benchmark Test Suite", r)
+	RunSpecs(t, "Benchmark Test Suite")
 }

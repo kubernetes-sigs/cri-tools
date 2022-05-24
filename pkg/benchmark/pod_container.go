@@ -23,6 +23,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gmeasure"
 )
 
 const (
@@ -40,26 +41,22 @@ func getPodContainerBenchmarkTimeoutSeconds() int {
 var _ = framework.KubeDescribe("PodSandbox", func() {
 	f := framework.NewDefaultCRIFramework()
 
-	var rc internalapi.RuntimeService
-	var ic internalapi.ImageManagerService
-	var podID string
+	var (
+		experiment *gmeasure.Experiment
+		rc         internalapi.RuntimeService
+		ic         internalapi.ImageManagerService
+	)
 
 	BeforeEach(func() {
+		experiment = gmeasure.NewExperiment("start-container-benchmark")
+		AddReportEntry(experiment.Name, experiment)
+
 		rc = f.CRIClient.CRIRuntimeClient
 		ic = f.CRIClient.CRIImageClient
 	})
 
-	AfterEach(func() {
-		By("stop PodSandbox")
-		rc.StopPodSandbox(podID)
-		By("delete PodSandbox")
-		rc.RemovePodSandbox(podID)
-	})
-
 	Context("benchmark about start a container from scratch", func() {
-		Measure("benchmark about start a container from scratch", func(b Benchmarker) {
-			var err error
-
+		It("benchmark about start a container from scratch", func() {
 			podSandboxName := "PodSandbox-for-creating-pod-and-container-performance-test-" + framework.NewUUID()
 			uid := framework.DefaultUIDPrefix + framework.NewUUID()
 			namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
@@ -69,18 +66,31 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				Linux:    &runtimeapi.LinuxPodSandboxConfig{},
 			}
 
-			operation := b.Time("create PodSandbox and container", func() {
+			benchmark := func() {
 				By("run PodSandbox")
-				podID, err = rc.RunPodSandbox(config, framework.TestContext.RuntimeHandler)
+				podID, err := rc.RunPodSandbox(config, framework.TestContext.RuntimeHandler)
 				framework.ExpectNoError(err, "failed to create PodSandbox: %v", err)
+
 				By("create container in PodSandbox")
 				containerID := framework.CreateDefaultContainer(rc, ic, podID, config, "Pod-Container-for-creating-benchmark-")
+
 				By("start container in PodSandbox")
 				err = rc.StartContainer(containerID)
-			})
+				framework.ExpectNoError(err, "failed to start Container: %v", err)
 
-			framework.ExpectNoError(err, "failed to start Container: %v", err)
+				By("stop PodSandbox")
+				rc.StopPodSandbox(podID)
+				By("delete PodSandbox")
+				rc.RemovePodSandbox(podID)
+			}
+
+			// Run a single test to ensure images are available and everything works
+			benchmark()
+
+			// Do the benchmark
+			operation := experiment.MeasureDuration("create PodSandbox and container", benchmark)
+
 			Expect(operation.Seconds()).Should(BeNumerically("<", getPodContainerBenchmarkTimeoutSeconds()), "create PodSandbox shouldn't take too long.")
-		}, defaultOperationTimes)
+		})
 	})
 })
