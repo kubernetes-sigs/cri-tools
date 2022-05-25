@@ -14,7 +14,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.17'
+          go-version: '1.18'
 
       - name: Set Go binary path
         shell: bash
@@ -71,7 +71,7 @@ jobs:
           set -o pipefail
 
           git clone https://github.com/Mirantis/cri-dockerd $GOPATH/src/github.com/Mirantis/cri-dockerd
-          cd $GOPATH/src/github.com/Mirantis/cri-dockerd/src
+          cd $GOPATH/src/github.com/Mirantis/cri-dockerd
           go mod tidy
 
           # Need the flag for errors building on Windows
