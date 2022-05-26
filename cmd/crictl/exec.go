@@ -110,7 +110,8 @@ func ExecSync(client internalapi.RuntimeService, opts execOptions) (int, error) 
 		Timeout:     opts.timeout,
 	}
 	logrus.Debugf("ExecSyncRequest: %v", request)
-	stdout, stderr, err := client.ExecSync(opts.id, opts.cmd, time.Duration(opts.timeout))
+	timeoutDuration := time.Duration(opts.timeout) * time.Second
+	stdout, stderr, err := client.ExecSync(opts.id, opts.cmd, timeoutDuration)
 	if err != nil {
 		return 1, err
 	}
