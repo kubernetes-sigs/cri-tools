@@ -11,7 +11,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.1.4
 	github.com/onsi/gomega v1.19.0
 	github.com/opencontainers/go-digest v1.0.0
-	github.com/opencontainers/runc v1.1.2
+	github.com/opencontainers/runc v1.1.3
 	github.com/opencontainers/selinux v1.10.1
 	github.com/pborman/uuid v1.2.1
 	github.com/pkg/errors v0.9.1
