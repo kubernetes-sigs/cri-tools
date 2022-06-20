@@ -1,9 +1,9 @@
-// Copyright 2018 The Go Authors. All rights reserved.
+// Copyright 2022 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build riscv64 && linux
-// +build riscv64,linux
+//go:build loong64 && linux
+// +build loong64,linux
 
 package unix
 
@@ -12,17 +12,13 @@ import "unsafe"
 //sys	EpollWait(epfd int, events []EpollEvent, msec int) (n int, err error) = SYS_EPOLL_PWAIT
 //sys	Fadvise(fd int, offset int64, length int64, advice int) (err error) = SYS_FADVISE64
 //sys	Fchown(fd int, uid int, gid int) (err error)
-//sys	Fstat(fd int, stat *Stat_t) (err error)
-//sys	Fstatat(fd int, path string, stat *Stat_t, flags int) (err error)
 //sys	Fstatfs(fd int, buf *Statfs_t) (err error)
 //sys	Ftruncate(fd int, length int64) (err error)
 //sysnb	Getegid() (egid int)
 //sysnb	Geteuid() (euid int)
 //sysnb	Getgid() (gid int)
-//sysnb	Getrlimit(resource int, rlim *Rlimit) (err error)
 //sysnb	Getuid() (uid int)
 //sys	Listen(s int, n int) (err error)
-//sys	MemfdSecret(flags int) (fd int, err error)
 //sys	pread(fd int, p []byte, offset int64) (n int, err error) = SYS_PREAD64
 //sys	pwrite(fd int, p []byte, offset int64) (n int, err error) = SYS_PWRITE64
 //sys	Seek(fd int, offset int64, whence int) (off int64, err error) = SYS_LSEEK
@@ -41,10 +37,46 @@ func Select(nfd int, r *FdSet, w *FdSet, e *FdSet, timeout *Timeval) (n int, err
 //sysnb	Setregid(rgid int, egid int) (err error)
 //sysnb	Setresgid(rgid int, egid int, sgid int) (err error)
 //sysnb	Setresuid(ruid int, euid int, suid int) (err error)
-//sysnb	Setrlimit(resource int, rlim *Rlimit) (err error)
 //sysnb	Setreuid(ruid int, euid int) (err error)
 //sys	Shutdown(fd int, how int) (err error)
 //sys	Splice(rfd int, roff *int64, wfd int, woff *int64, len int, flags int) (n int64, err error)
+
+func timespecFromStatxTimestamp(x StatxTimestamp) Timespec {
+	return Timespec{
+		Sec:  x.Sec,
+		Nsec: int64(x.Nsec),
+	}
+}
+
+func Fstatat(fd int, path string, stat *Stat_t, flags int) error {
+	var r Statx_t
+	// Do it the glibc way, add AT_NO_AUTOMOUNT.
+	if err := Statx(fd, path, AT_NO_AUTOMOUNT|flags, STATX_BASIC_STATS, &r); err != nil {
+		return err
+	}
+
+	stat.Dev = Mkdev(r.Dev_major, r.Dev_minor)
+	stat.Ino = r.Ino
+	stat.Mode = uint32(r.Mode)
+	stat.Nlink = r.Nlink
+	stat.Uid = r.Uid
+	stat.Gid = r.Gid
+	stat.Rdev = Mkdev(r.Rdev_major, r.Rdev_minor)
+	// hope we don't get to process files so large to overflow these size
+	// fields...
+	stat.Size = int64(r.Size)
+	stat.Blksize = int32(r.Blksize)
+	stat.Blocks = int64(r.Blocks)
+	stat.Atim = timespecFromStatxTimestamp(r.Atime)
+	stat.Mtim = timespecFromStatxTimestamp(r.Mtime)
+	stat.Ctim = timespecFromStatxTimestamp(r.Ctime)
+
+	return nil
+}
+
+func Fstat(fd int, stat *Stat_t) (err error) {
+	return Fstatat(fd, "", stat, AT_EMPTY_PATH)
+}
 
 func Stat(path string, stat *Stat_t) (err error) {
 	return Fstatat(AT_FDCWD, path, stat, 0)
@@ -93,6 +125,16 @@ func setTimeval(sec, usec int64) Timeval {
 	return Timeval{Sec: sec, Usec: usec}
 }
 
+func Getrlimit(resource int, rlim *Rlimit) (err error) {
+	err = Prlimit(0, resource, nil, rlim)
+	return
+}
+
+func Setrlimit(resource int, rlim *Rlimit) (err error) {
+	err = Prlimit(0, resource, rlim, nil)
+	return
+}
+
 func futimesat(dirfd int, path string, tv *[2]Timeval) (err error) {
 	if tv == nil {
 		return utimensat(dirfd, path, nil, 0)
@@ -137,9 +179,9 @@ func utimes(path string, tv *[2]Timeval) (err error) {
 	return utimensat(AT_FDCWD, path, (*[2]Timespec)(unsafe.Pointer(&ts[0])), 0)
 }
 
-func (r *PtraceRegs) PC() uint64 { return r.Pc }
+func (r *PtraceRegs) PC() uint64 { return r.Era }
 
-func (r *PtraceRegs) SetPC(pc uint64) { r.Pc = pc }
+func (r *PtraceRegs) SetPC(era uint64) { r.Era = era }
 
 func (iov *Iovec) SetLen(length int) {
 	iov.Len = uint64(length)
