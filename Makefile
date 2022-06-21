@@ -90,7 +90,19 @@ install: $(CRITEST) $(CRICTL)
 
 lint: $(GOLANGCI_LINT)
 	$(GOLANGCI_LINT) run
-	./hack/repo-infra/verify/verify-boilerplate.sh
+
+verify-boilerplate: $(BUILD_BIN_PATH)/verify_boilerplate.py
+	$(BUILD_BIN_PATH)/verify_boilerplate.py --boilerplate-dir hack/boilerplate
+
+$(BUILD_BIN_PATH):
+	mkdir -p $(BUILD_BIN_PATH)
+
+REPO_INFRA_VERSION = v0.2.5
+
+$(BUILD_BIN_PATH)/verify_boilerplate.py: $(BUILD_BIN_PATH)
+	curl -sfL https://raw.githubusercontent.com/kubernetes/repo-infra/$(REPO_INFRA_VERSION)/hack/verify_boilerplate.py \
+		-o $(BUILD_BIN_PATH)/verify_boilerplate.py
+	chmod +x $(BUILD_BIN_PATH)/verify_boilerplate.py
 
 install.tools: $(GINKGO) $(GOLANGCI_LINT)
 
@@ -99,7 +111,7 @@ install.lint: $(GOLANGCI_LINT)
 
 $(GOLANGCI_LINT):
 	export \
-		VERSION=v1.40.1 \
+		VERSION=v1.46.2 \
 		URL=https://raw.githubusercontent.com/golangci/golangci-lint \
 		BINDIR=${BUILD_BIN_PATH} && \
 	curl -sfL $$URL/$$VERSION/install.sh | sh -s $$VERSION
@@ -143,4 +155,5 @@ vendor:
 	release \
 	release-notes \
 	test-e2e \
-	vendor
+	vendor \
+	verify-boilerplate
