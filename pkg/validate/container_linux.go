@@ -211,9 +211,18 @@ func createHostPathForMountPropagation(podID string, propagationOpt runtimeapi.M
 	return mntSource, propagationSrcDir, propagationMntPoint, clearHostPath
 }
 
-// createMountPropagationContainer creates a container with volume and Privileged and fails if it gets error.
-func createMountPropagationContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix string, podID string,
-	podConfig *runtimeapi.PodSandboxConfig, hostPath string, PropagationOpt runtimeapi.MountPropagation) string {
+// createMountPropagationContainer creates a container with volume and
+// privileged security constraints. It also validates the container status
+// after creation and fails if any error occurs.
+func createMountPropagationContainer(
+	rc internalapi.RuntimeService,
+	ic internalapi.ImageManagerService,
+	prefix string,
+	podID string,
+	podConfig *runtimeapi.PodSandboxConfig,
+	hostPath string,
+	propagation runtimeapi.MountPropagation,
+) string {
 	By("create a container with volume and name")
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
@@ -230,12 +239,30 @@ func createMountPropagationContainer(rc internalapi.RuntimeService, ic internala
 			{
 				HostPath:      hostPath,
 				ContainerPath: hostPath,
-				Propagation:   PropagationOpt,
+				Propagation:   propagation,
 			},
 		},
 	}
 
-	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
+	containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
+
+	By("verifying container status")
+	resp, err := rc.ContainerStatus(containerID, true)
+	framework.ExpectNoError(err, "unable to get container status")
+	Expect(len(resp.Status.Mounts), 1)
+	Expect(resp.Status.Mounts[0].ContainerPath).To(Equal(hostPath))
+	Expect(resp.Status.Mounts[0].HostPath).To(Equal(hostPath))
+	Expect(resp.Status.Mounts[0].Readonly).To(BeFalse())
+	Expect(resp.Status.Mounts[0].SelinuxRelabel).To(BeFalse())
+
+	// NOTE: dockershim does not populate that field, so we do not have to test it
+	if framework.TestContext.RuntimeServiceAddr != framework.DockerShimSockPathUnix &&
+		framework.TestContext.RuntimeServiceAddr != framework.DockerShimSockPathWindows {
+		By("verifying container status mount propagation")
+		Expect(resp.Status.Mounts[0].Propagation).To(Equal(propagation))
+	}
+
+	return containerID
 }
 
 // createPropagationMountPoint mount "propagationSrcDir" at "propagationMntPoint",

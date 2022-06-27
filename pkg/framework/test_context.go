@@ -120,6 +120,9 @@ var TestContext TestContextType
 // DefaultRegistryPrefix specifies the default prefix used for images
 const DefaultRegistryPrefix = "docker.io/library"
 
+const DockerShimSockPathUnix = "unix:///var/run/dockershim.sock"
+const DockerShimSockPathWindows = "npipe:////./pipe/dockershim"
+
 // RegisterFlags registers flags to e2e test suites.
 func RegisterFlags() {
 	suite, reporter := ginkgo.GinkgoConfiguration()
@@ -139,10 +142,10 @@ func RegisterFlags() {
 	flag.StringVar(&testImagesFilePath, "test-images-file", "", "Optional path to a YAML file containing references to custom container images to be used in tests.")
 	flag.DurationVar(&TestContext.ImageServiceTimeout, "image-service-timeout", 300*time.Second, "Timeout when trying to connect to image service.")
 
-	svcaddr := "unix:///var/run/dockershim.sock"
+	svcaddr := DockerShimSockPathUnix
 	defaultConfigPath := "/etc/crictl.yaml"
 	if runtime.GOOS == "windows" {
-		svcaddr = "npipe:////./pipe/dockershim"
+		svcaddr = DockerShimSockPathWindows
 		defaultConfigPath = filepath.Join(os.Getenv("USERPROFILE"), ".crictl", "crictl.yaml")
 	}
 	flag.StringVar(&TestContext.ConfigPath, "config", defaultConfigPath, "Location of the client config file. If not specified and the default does not exist, the program's directory is searched as well")
