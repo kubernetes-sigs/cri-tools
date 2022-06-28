@@ -17,7 +17,8 @@ limitations under the License.
 package main
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
+
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	internalapi "k8s.io/cri-api/pkg/apis"
@@ -54,7 +55,7 @@ var runtimeStatusCommand = &cli.Command{
 
 		err = Info(context, runtimeClient)
 		if err != nil {
-			return errors.Wrap(err, "getting status of runtime")
+			return fmt.Errorf("getting status of runtime: %w", err)
 		}
 		return nil
 	},

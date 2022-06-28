@@ -19,6 +19,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -169,7 +170,7 @@ func loadPodSandboxConfig(path string) (*pb.PodSandboxConfig, error) {
 func openFile(path string) (*os.File, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("config at %s not found", path)
 		}
 		return nil, err

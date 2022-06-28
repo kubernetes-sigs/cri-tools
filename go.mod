@@ -14,7 +14,6 @@ require (
 	github.com/opencontainers/runc v1.1.3
 	github.com/opencontainers/selinux v1.10.1
 	github.com/pborman/uuid v1.2.1
-	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/urfave/cli/v2 v2.11.0
 	golang.org/x/net v0.0.0-20220617184016-355a448f1bc9
@@ -58,6 +57,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect

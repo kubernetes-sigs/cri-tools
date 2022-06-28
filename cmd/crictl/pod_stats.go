@@ -17,12 +17,12 @@ limitations under the License.
 package main
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"time"
 
 	"github.com/docker/go-units"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/net/context"
@@ -82,7 +82,7 @@ var podStatsCommand = &cli.Command{
 	Action: func(ctx *cli.Context) error {
 		client, err := getRuntimeService(ctx, 0)
 		if err != nil {
-			return errors.Wrap(err, "get runtime service")
+			return fmt.Errorf("get runtime service: %w", err)
 		}
 
 		id := ctx.String("id")
@@ -98,10 +98,14 @@ var podStatsCommand = &cli.Command{
 		}
 		opts.labels, err = parseLabelStringSlice(ctx.StringSlice("label"))
 		if err != nil {
-			return errors.Wrap(err, "parse pod labels")
+			return fmt.Errorf("parse pod labels: %w", err)
 		}
 
-		return errors.Wrap(podStats(ctx.Context, client, opts), "get pod stats")
+		if err := podStats(ctx.Context, client, opts); err != nil {
+			return fmt.Errorf("get pod stats: %w", err)
+		}
+
+		return nil
 	},
 }
 
@@ -158,7 +162,7 @@ func podStats(
 	}
 
 	if err := displayPodStats(ctx, client, filter, display, opts); err != nil {
-		return errors.Wrap(err, "display pod stats")
+		return fmt.Errorf("display pod stats: %w", err)
 	}
 
 	return nil
@@ -230,7 +234,7 @@ func displayPodStats(
 			// Only generate cpuPerc for running sandbox
 			duration := linux.GetCpu().GetTimestamp() - oldLinux.GetCpu().GetTimestamp()
 			if duration == 0 {
-				return errors.Errorf("cpu stat is not updated during sample")
+				return errors.New("cpu stat is not updated during sample")
 			}
 			cpuPerc = float64(cpu-oldLinux.GetCpu().GetUsageCoreNanoSeconds().GetValue()) / float64(duration) * 100
 		}
@@ -256,7 +260,7 @@ func getPodSandboxStats(
 
 	stats, err := client.ListPodSandboxStats(filter)
 	if err != nil {
-		return nil, errors.Wrap(err, "list pod sandbox stats")
+		return nil, fmt.Errorf("list pod sandbox stats: %w", err)
 	}
 	logrus.Debugf("Stats: %v", stats)
 

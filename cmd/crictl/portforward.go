@@ -22,7 +22,6 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	restclient "k8s.io/client-go/rest"
@@ -53,7 +52,7 @@ var runtimePortForwardCommand = &cli.Command{
 		}
 		err = PortForward(runtimeClient, opts)
 		if err != nil {
-			return errors.Wrap(err, "port forward")
+			return fmt.Errorf("port forward: %w", err)
 
 		}
 		return nil

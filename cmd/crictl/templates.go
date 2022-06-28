@@ -19,10 +19,9 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"text/template"
-
-	"github.com/pkg/errors"
 )
 
 func builtinTmplFuncs() template.FuncMap {
@@ -53,19 +52,19 @@ func tmplExecuteRawJSON(tmplStr string, rawJSON string) (string, error) {
 
 	var raw interface{}
 	if err := dec.Decode(&raw); err != nil {
-		return "", errors.Wrapf(err, "failed to decode json")
+		return "", fmt.Errorf("failed to decode json: %w", err)
 	}
 
 	var o = new(bytes.Buffer)
 	tmpl, err := template.New("tmplExecuteRawJSON").Funcs(builtinTmplFuncs()).Parse(tmplStr)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to generate go-template")
+		return "", fmt.Errorf("failed to generate go-template: %w", err)
 	}
 
 	// return error if key doesn't exist
 	tmpl = tmpl.Option("missingkey=error")
 	if err := tmpl.Execute(o, raw); err != nil {
-		return "", errors.Wrapf(err, "failed to template data")
+		return "", fmt.Errorf("failed to template data: %w", err)
 	}
 	return o.String(), nil
 }

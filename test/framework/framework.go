@@ -17,6 +17,7 @@ limitations under the License.
 package framework
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -137,7 +138,7 @@ func SetupCrio() string {
 	)
 	tmpDir := filepath.Join(os.TempDir(), "crio-tmp")
 
-	if _, err := os.Stat(tmpDir); os.IsNotExist(err) {
+	if _, err := os.Stat(tmpDir); errors.Is(err, os.ErrNotExist) {
 		logrus.Info("cloning and building CRI-O")
 
 		Expect(checkoutAndBuild(tmpDir, crioURL, crioVersion)).To(BeNil())

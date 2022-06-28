@@ -19,7 +19,6 @@ package main
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	internalapi "k8s.io/cri-api/pkg/apis"
@@ -37,7 +36,7 @@ var runtimeVersionCommand = &cli.Command{
 		}
 		err = Version(runtimeClient, string(remote.CRIVersionV1))
 		if err != nil {
-			return errors.Wrap(err, "getting the runtime version")
+			return fmt.Errorf("getting the runtime version: %w", err)
 		}
 		return nil
 	},

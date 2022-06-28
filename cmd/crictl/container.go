@@ -18,6 +18,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	goruntime "runtime"
@@ -29,7 +30,6 @@ import (
 
 	"github.com/docker/go-units"
 	godigest "github.com/opencontainers/go-digest"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	internalapi "k8s.io/cri-api/pkg/apis"
@@ -170,7 +170,7 @@ var createContainerCommand = &cli.Command{
 
 		ctrID, err := CreateContainer(imageClient, runtimeClient, opts)
 		if err != nil {
-			return errors.Wrap(err, "creating container")
+			return fmt.Errorf("creating container: %w", err)
 		}
 		fmt.Println(ctrID)
 		return nil
@@ -194,7 +194,7 @@ var startContainerCommand = &cli.Command{
 			containerID := context.Args().Get(i)
 			err := StartContainer(runtimeClient, containerID)
 			if err != nil {
-				return errors.Wrapf(err, "starting the container %q", containerID)
+				return fmt.Errorf("starting the container %q: %w", containerID, err)
 			}
 		}
 		return nil
@@ -262,7 +262,7 @@ var updateContainerCommand = &cli.Command{
 			containerID := context.Args().Get(i)
 			err := UpdateContainerResources(runtimeClient, containerID, options)
 			if err != nil {
-				return errors.Wrapf(err, "updating container resources for %q", containerID)
+				return fmt.Errorf("updating container resources for %q: %w", containerID, err)
 			}
 		}
 		return nil
@@ -294,7 +294,7 @@ var stopContainerCommand = &cli.Command{
 			containerID := context.Args().Get(i)
 			err := StopContainer(runtimeClient, containerID, context.Int64("timeout"))
 			if err != nil {
-				return errors.Wrapf(err, "stopping the container %q", containerID)
+				return fmt.Errorf("stopping the container %q: %w", containerID, err)
 			}
 		}
 		return nil
@@ -410,7 +410,7 @@ var containerStatusCommand = &cli.Command{
 			containerID := context.Args().Get(i)
 			err := ContainerStatus(runtimeClient, containerID, context.String("output"), context.String("template"), context.Bool("quiet"))
 			if err != nil {
-				return errors.Wrapf(err, "getting the status of the container %q", containerID)
+				return fmt.Errorf("getting the status of the container %q: %w", containerID, err)
 			}
 		}
 		return nil
@@ -526,7 +526,7 @@ var listContainersCommand = &cli.Command{
 		}
 
 		if err = ListContainers(runtimeClient, imageClient, opts); err != nil {
-			return errors.Wrap(err, "listing containers")
+			return fmt.Errorf("listing containers: %w", err)
 		}
 		return nil
 	},
@@ -582,7 +582,7 @@ var runContainerCommand = &cli.Command{
 
 		err = RunContainer(imageClient, runtimeClient, opts, context.String("runtime"))
 		if err != nil {
-			return errors.Wrap(err, "running container")
+			return fmt.Errorf("running container: %w", err)
 		}
 		return nil
 	},
@@ -634,26 +634,26 @@ func RunContainer(
 	// Create the pod
 	podSandboxConfig, err := loadPodSandboxConfig(opts.podConfig)
 	if err != nil {
-		return errors.Wrap(err, "load podSandboxConfig")
+		return fmt.Errorf("load podSandboxConfig: %w", err)
 	}
 	// set the timeout for the RunPodSandbox request to 0, because the
 	// timeout option is documented as being for container creation.
 	podID, err := RunPodSandbox(rClient, podSandboxConfig, runtime)
 	if err != nil {
-		return errors.Wrap(err, "run pod sandbox")
+		return fmt.Errorf("run pod sandbox: %w", err)
 	}
 
 	// Create the container
 	containerOptions := createOptions{podID, &opts}
 	ctrID, err := CreateContainer(iClient, rClient, containerOptions)
 	if err != nil {
-		return errors.Wrap(err, "creating container failed")
+		return fmt.Errorf("creating container failed: %w", err)
 	}
 
 	// Start the container
 	err = StartContainer(rClient, ctrID)
 	if err != nil {
-		return errors.Wrapf(err, "starting the container %q", ctrID)
+		return fmt.Errorf("starting the container %q: %w", ctrID, err)
 	}
 	return nil
 }
@@ -1001,7 +1001,7 @@ func ListContainers(runtimeClient internalapi.RuntimeService, imageClient intern
 	}
 	for _, c := range r {
 		if match, err := matchesImage(imageClient, opts.image, c.GetImage().GetImage()); err != nil {
-			return errors.Wrap(err, "check image match")
+			return fmt.Errorf("check image match: %w", err)
 		} else if !match {
 			continue
 		}

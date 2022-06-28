@@ -563,7 +563,7 @@ func pathExists(path string) bool {
 	if err == nil {
 		return true
 	}
-	if os.IsNotExist(err) {
+	if errors.Is(err, os.ErrNotExist) {
 		return false
 	}
 	framework.ExpectNoError(err, "failed to check whether %q Exists: %v", path, err)

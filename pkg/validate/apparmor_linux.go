@@ -18,6 +18,7 @@ package validate
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -25,7 +26,6 @@ import (
 
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	"github.com/opencontainers/runc/libcontainer/apparmor"
-	"github.com/pkg/errors"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
@@ -149,14 +149,14 @@ func checkContainerApparmor(rc internalapi.RuntimeService, containerID string, s
 func loadTestProfiles() error {
 	f, err := ioutil.TempFile("/tmp", "apparmor")
 	if err != nil {
-		return errors.Wrap(err, "open temp file")
+		return fmt.Errorf("open temp file: %w", err)
 	}
 	defer os.Remove(f.Name())
 	defer f.Close()
 
 	// write test profiles to a temp file.
 	if _, err = f.WriteString(testProfiles); err != nil {
-		return errors.Wrap(err, "write profiles to file")
+		return fmt.Errorf("write profiles to file: %w", err)
 	}
 
 	// load apparmor profiles into kernel.
@@ -173,7 +173,7 @@ func loadTestProfiles() error {
 			glog.Infof("apparmor_parser: %s", out)
 		}
 
-		return errors.Wrap(err, "load profiles")
+		return fmt.Errorf("load profiles: %w", err)
 	}
 
 	glog.V(2).Infof("Loaded profiles: %v", out)
