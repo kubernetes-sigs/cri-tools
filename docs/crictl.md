@@ -60,6 +60,7 @@ COMMANDS:
 - `update`:             Update one or more running containers
 - `config`:             Get and set crictl client configuration options
 - `stats`:              List container(s) resource usage statistics
+- `statsp`:             List pod(s) resource usage statistics
 - `completion`:         Output bash shell completion code
 - `checkpoint`:         Checkpoint one or more running containers
 - `help, h`:            Shows a list of commands or help for one command
