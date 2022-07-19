@@ -18,8 +18,7 @@ jobs:
         # ║ hcshim           │           │ runhcs  ║
         # ╚══════════════════╧═══════════╧═════════╝
         os: [ubuntu-18.04, windows-2019]
-        #TODO: change to first release from containerd (1.5.10) with the fix in it 
-        version: [main, 984d3bc057178cac0b043a7f61916f3388fe081c]
+        version: [main, 10c12954828e7c7c9b6e0ea9b0c02b01407d3ae1]
         runtime: [io.containerd.runtime.v1.linux, io.containerd.runc.v1, io.containerd.runc.v2, containerd-shim-runhcs-v1]
         runc: [runc, crun]
         exclude:
@@ -43,7 +42,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.17'
+          go-version: '1.18'
 
       - name: Set env
         shell: bash

@@ -588,6 +588,42 @@ var runContainerCommand = &cli.Command{
 	},
 }
 
+var checkpointContainerCommand = &cli.Command{
+	Name:                   "checkpoint",
+	Usage:                  "Checkpoint one or more running containers",
+	ArgsUsage:              "CONTAINER-ID [CONTAINER-ID...]",
+	UseShortOptionHandling: true,
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:    "export",
+			Aliases: []string{"e"},
+			Usage:   "Specify the name of the archive used to export the checkpoint image.",
+		},
+	},
+	Action: func(context *cli.Context) error {
+		if context.NArg() == 0 {
+			return cli.ShowSubcommandHelp(context)
+		}
+		runtimeClient, err := getRuntimeService(context, 0)
+		if err != nil {
+			return err
+		}
+
+		for i := 0; i < context.NArg(); i++ {
+			containerID := context.Args().Get(i)
+			err := CheckpointContainer(
+				runtimeClient,
+				containerID,
+				context.String("export"),
+			)
+			if err != nil {
+				return fmt.Errorf("checkpointing the container %q failed: %w", containerID, err)
+			}
+		}
+		return nil
+	},
+}
+
 // RunContainer starts a container in the provided sandbox
 func RunContainer(
 	iClient internalapi.ImageManagerService,
@@ -754,6 +790,28 @@ func StopContainer(client internalapi.RuntimeService, id string, timeout int64) 
 		return err
 	}
 	fmt.Println(id)
+	return nil
+}
+
+// CheckpointContainer sends a CheckpointContainerRequest to the server
+func CheckpointContainer(
+	rClient internalapi.RuntimeService,
+	ID string,
+	export string,
+) error {
+	if ID == "" {
+		return errors.New("ID cannot be empty")
+	}
+	request := &pb.CheckpointContainerRequest{
+		ContainerId: ID,
+		Location:    export,
+	}
+	logrus.Debugf("CheckpointContainerRequest: %v", request)
+	err := rClient.CheckpointContainer(request)
+	if err != nil {
+		return err
+	}
+	fmt.Println(ID)
 	return nil
 }
 

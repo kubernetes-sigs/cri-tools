@@ -61,6 +61,7 @@ COMMANDS:
 - `config`:             Get and set crictl client configuration options
 - `stats`:              List container(s) resource usage statistics
 - `completion`:         Output bash shell completion code
+- `checkpoint`:         Checkpoint one or more running containers
 - `help, h`:            Shows a list of commands or help for one command
 
 crictl by default connects on Unix to:
