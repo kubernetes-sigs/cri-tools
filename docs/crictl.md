@@ -204,7 +204,7 @@ List pod sandboxes and check the sandbox is in Ready state:
 ```sh
 $ crictl pods
 POD ID              CREATED             STATE               NAME                NAMESPACE           ATTEMPT
-f84dd361f8dc5       17 seconds ago      Ready               busybox-sandbox     default             1
+f84dd361f8dc5       17 seconds ago      Ready               nginx-sandbox       default             1
 ```
 
 #### Run pod sandbox with runtime handler
