@@ -22,7 +22,6 @@ import (
 	"time"
 
 	dockerterm "github.com/docker/docker/pkg/term"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	restclient "k8s.io/client-go/rest"
@@ -85,7 +84,7 @@ var runtimeExecCommand = &cli.Command{
 		if context.Bool("sync") {
 			exitCode, err := ExecSync(runtimeClient, opts)
 			if err != nil {
-				return errors.Wrap(err, "execing command in container synchronously")
+				return fmt.Errorf("execing command in container synchronously: %w", err)
 			}
 			if exitCode != 0 {
 				return cli.NewExitError("non-zero exit code", exitCode)
@@ -94,7 +93,7 @@ var runtimeExecCommand = &cli.Command{
 		}
 		err = Exec(runtimeClient, opts)
 		if err != nil {
-			return errors.Wrap(err, "execing command in container")
+			return fmt.Errorf("execing command in container: %w", err)
 		}
 		return nil
 	},

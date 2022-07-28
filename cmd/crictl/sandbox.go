@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/docker/go-units"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 
@@ -73,13 +72,13 @@ var runPodCommand = &cli.Command{
 
 		podSandboxConfig, err := loadPodSandboxConfig(sandboxSpec)
 		if err != nil {
-			return errors.Wrap(err, "load podSandboxConfig")
+			return fmt.Errorf("load podSandboxConfig: %w", err)
 		}
 
 		// Test RuntimeServiceClient.RunPodSandbox
 		podID, err := RunPodSandbox(runtimeClient, podSandboxConfig, context.String("runtime"))
 		if err != nil {
-			return errors.Wrap(err, "run pod sandbox")
+			return fmt.Errorf("run pod sandbox: %w", err)
 		}
 		fmt.Println(podID)
 		return nil
@@ -102,7 +101,7 @@ var stopPodCommand = &cli.Command{
 			id := context.Args().Get(i)
 			err := StopPodSandbox(runtimeClient, id)
 			if err != nil {
-				return errors.Wrapf(err, "stopping the pod sandbox %q", id)
+				return fmt.Errorf("stopping the pod sandbox %q: %w", id, err)
 			}
 		}
 		return nil
@@ -155,21 +154,21 @@ var removePodCommand = &cli.Command{
 			funcs = append(funcs, func() error {
 				resp, err := runtimeClient.PodSandboxStatus(podId, false)
 				if err != nil {
-					return errors.Wrapf(err, "getting sandbox status of pod %q", podId)
+					return fmt.Errorf("getting sandbox status of pod %q: %w", podId, err)
 				}
 				if resp.Status.State == pb.PodSandboxState_SANDBOX_READY {
 					if ctx.Bool("force") {
 						if err := StopPodSandbox(runtimeClient, podId); err != nil {
-							return errors.Wrapf(err, "stopping the pod sandbox %q failed", podId)
+							return fmt.Errorf("stopping the pod sandbox %q failed: %w", podId, err)
 						}
 					} else {
-						return errors.Errorf("pod sandbox %q is running, please stop it first", podId)
+						return fmt.Errorf("pod sandbox %q is running, please stop it first", podId)
 					}
 				}
 
 				err = RemovePodSandbox(runtimeClient, podId)
 				if err != nil {
-					return errors.Wrapf(err, "removing the pod sandbox %q", podId)
+					return fmt.Errorf("removing the pod sandbox %q: %w", podId, err)
 				}
 
 				return nil
@@ -214,7 +213,7 @@ var podStatusCommand = &cli.Command{
 
 			err := PodSandboxStatus(runtimeClient, id, context.String("output"), context.Bool("quiet"), context.String("template"))
 			if err != nil {
-				return errors.Wrapf(err, "getting the pod sandbox status for %q", id)
+				return fmt.Errorf("getting the pod sandbox status for %q: %w", id, err)
 			}
 		}
 		return nil
@@ -306,7 +305,7 @@ var listPodCommand = &cli.Command{
 			return err
 		}
 		if err = ListPodSandboxes(runtimeClient, opts); err != nil {
-			return errors.Wrap(err, "listing pod sandboxes")
+			return fmt.Errorf("listing pod sandboxes: %w", err)
 		}
 		return nil
 	},

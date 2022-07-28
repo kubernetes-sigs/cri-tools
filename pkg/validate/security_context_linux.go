@@ -27,7 +27,6 @@ import (
 	"time"
 
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
-	"github.com/pkg/errors"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
@@ -1117,7 +1116,7 @@ func createAndCheckHostNetwork(rc internalapi.RuntimeService, ic internalapi.Ima
 func createSeccompProfileDir() (string, error) {
 	hostPath, err := ioutil.TempDir("", "seccomp-tests")
 	if err != nil {
-		return "", errors.Wrapf(err, "create tempdir %q", hostPath)
+		return "", fmt.Errorf("create tempdir %q: %w", hostPath, err)
 	}
 	return hostPath, nil
 }
@@ -1127,7 +1126,7 @@ func createSeccompProfile(profileContents string, profileName string, hostPath s
 	profilePath := filepath.Join(hostPath, profileName)
 	err := ioutil.WriteFile(profilePath, []byte(profileContents), 0644)
 	if err != nil {
-		return "", errors.Wrapf(err, "create %s", profilePath)
+		return "", fmt.Errorf("create %s: %w", profilePath, err)
 	}
 	return profilePath, nil
 }

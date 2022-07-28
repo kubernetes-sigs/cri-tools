@@ -22,7 +22,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
 
 	"github.com/kubernetes-sigs/cri-tools/pkg/common"
@@ -64,7 +63,7 @@ CRICTL OPTIONS:
 		// Get config from file.
 		config, err := common.ReadConfig(configFile)
 		if err != nil {
-			return errors.Wrap(err, "load config file")
+			return fmt.Errorf("load config file: %w", err)
 		}
 		if context.IsSet("get") {
 			get := context.String("get")
@@ -82,7 +81,7 @@ CRICTL OPTIONS:
 			case "disable-pull-on-run":
 				fmt.Println(config.DisablePullOnRun)
 			default:
-				return errors.Errorf("no configuration option named %s", get)
+				return fmt.Errorf("no configuration option named %s", get)
 			}
 			return nil
 		} else if context.IsSet("set") {
@@ -92,7 +91,7 @@ CRICTL OPTIONS:
 				for _, option := range options {
 					pair := strings.Split(option, "=")
 					if len(pair) != 2 {
-						return errors.Errorf("incorrectly specified option: %v", setting)
+						return fmt.Errorf("incorrectly specified option: %v", setting)
 					}
 					key := pair[0]
 					value := pair[1]
@@ -125,29 +124,29 @@ func setValue(key, value string, config *common.Config) error {
 	case "timeout":
 		n, err := strconv.Atoi(value)
 		if err != nil {
-			return errors.Wrapf(err, "parse timeout value '%s'", value)
+			return fmt.Errorf("parse timeout value '%s': %w", value, err)
 		}
 		config.Timeout = n
 	case "debug":
 		debug, err := strconv.ParseBool(value)
 		if err != nil {
-			return errors.Wrapf(err, "parse debug value '%s'", value)
+			return fmt.Errorf("parse debug value '%s': %w", value, err)
 		}
 		config.Debug = debug
 	case "pull-image-on-create":
 		pi, err := strconv.ParseBool(value)
 		if err != nil {
-			return errors.Wrapf(err, "parse pull-image-on-create value '%s'", value)
+			return fmt.Errorf("parse pull-image-on-create value '%s': %w", value, err)
 		}
 		config.PullImageOnCreate = pi
 	case "disable-pull-on-run":
 		pi, err := strconv.ParseBool(value)
 		if err != nil {
-			return errors.Wrapf(err, "parse disable-pull-on-run value '%s'", value)
+			return fmt.Errorf("parse disable-pull-on-run value '%s': %w", value, err)
 		}
 		config.DisablePullOnRun = pi
 	default:
-		return errors.Errorf("no configuration option named %s", key)
+		return fmt.Errorf("no configuration option named %s", key)
 	}
 	return nil
 }

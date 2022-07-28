@@ -17,11 +17,11 @@ limitations under the License.
 package common
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 // ServerConfiguration is the config for connecting to and using a CRI server
@@ -44,22 +44,22 @@ type ServerConfiguration struct {
 func GetServerConfigFromFile(configFileName, currentDir string) (*ServerConfiguration, error) {
 	serverConfig := ServerConfiguration{}
 	if _, err := os.Stat(configFileName); err != nil {
-		if !os.IsNotExist(err) {
-			return nil, errors.Wrap(err, "load config file")
+		if !errors.Is(err, os.ErrNotExist) {
+			return nil, fmt.Errorf("load config file: %w", err)
 		}
 		// If the config file was not found, try looking in the program's
 		// directory as a fallback. This is to accommodate where the config file
 		// is placed with the cri tools binary.
 		configFileName = filepath.Join(filepath.Dir(currentDir), "crictl.yaml")
 		if _, err := os.Stat(configFileName); err != nil {
-			return nil, errors.Wrap(err, "load config file")
+			return nil, fmt.Errorf("load config file: %w", err)
 		}
 	}
 
 	// Get config from file.
 	config, err := ReadConfig(configFileName)
 	if err != nil {
-		return nil, errors.Wrap(err, "load config file")
+		return nil, fmt.Errorf("load config file: %w", err)
 	}
 
 	// Set the config from file to the server config struct for return

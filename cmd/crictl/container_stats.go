@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/docker/go-units"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	internalapi "k8s.io/cri-api/pkg/apis"
@@ -115,7 +114,7 @@ var statsCommand = &cli.Command{
 		}
 
 		if err = ContainerStats(runtimeClient, opts); err != nil {
-			return errors.Wrap(err, "get container stats")
+			return fmt.Errorf("get container stats: %w", err)
 		}
 		return nil
 	},

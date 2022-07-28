@@ -17,12 +17,12 @@ limitations under the License.
 package common
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	gofilepath "path/filepath"
 	"strconv"
 
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )
 
@@ -106,25 +106,25 @@ func getConfigOptions(yamlData yaml.Node) (*Config, error) {
 		case "timeout":
 			config.Timeout, err = strconv.Atoi(value)
 			if err != nil {
-				return nil, errors.Wrapf(err, "parsing config option '%s'", name)
+				return nil, fmt.Errorf("parsing config option '%s': %w", name, err)
 			}
 		case "debug":
 			config.Debug, err = strconv.ParseBool(value)
 			if err != nil {
-				return nil, errors.Wrapf(err, "parsing config option '%s'", name)
+				return nil, fmt.Errorf("parsing config option '%s': %w", name, err)
 			}
 		case "pull-image-on-create":
 			config.PullImageOnCreate, err = strconv.ParseBool(value)
 			if err != nil {
-				return nil, errors.Wrapf(err, "parsing config option '%s'", name)
+				return nil, fmt.Errorf("parsing config option '%s': %w", name, err)
 			}
 		case "disable-pull-on-run":
 			config.DisablePullOnRun, err = strconv.ParseBool(value)
 			if err != nil {
-				return nil, errors.Wrapf(err, "parsing config option '%s'", name)
+				return nil, fmt.Errorf("parsing config option '%s': %w", name, err)
 			}
 		default:
-			return nil, errors.Errorf("Config option '%s' is not valid", name)
+			return nil, fmt.Errorf("Config option '%s' is not valid", name)
 		}
 		indx += 2
 	}

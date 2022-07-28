@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	internalapi "k8s.io/cri-api/pkg/apis"
@@ -62,7 +61,7 @@ var runtimeAttachCommand = &cli.Command{
 		}
 		err = Attach(runtimeClient, opts)
 		if err != nil {
-			return errors.Wrap(err, "attaching running container failed")
+			return fmt.Errorf("attaching running container failed: %w", err)
 
 		}
 		return nil
