@@ -1015,9 +1015,10 @@ func ListContainers(runtimeClient internalapi.RuntimeService, imageClient intern
 		if !opts.verbose {
 			id := c.Id
 			image := c.Image.Image
+			podID := c.PodSandboxId
 			if !opts.noTrunc {
 				id = getTruncatedID(id, "")
-
+				podID = getTruncatedID(podID, "")
 				// Now c.Image.Image is imageID in kubelet.
 				if digest, err := godigest.Parse(image); err == nil {
 					image = getTruncatedID(digest.String(), string(digest.Algorithm())+":")
@@ -1030,10 +1031,9 @@ func ListContainers(runtimeClient internalapi.RuntimeService, imageClient intern
 				}
 				image = orig
 			}
-			PodID := getTruncatedID(c.PodSandboxId, "")
 			podName := getPodNameFromLabels(c.Labels)
 			display.AddRow([]string{id, image, ctm, convertContainerState(c.State), c.Metadata.Name,
-				fmt.Sprintf("%d", c.Metadata.Attempt), PodID, podName})
+				fmt.Sprintf("%d", c.Metadata.Attempt), podID, podName})
 			continue
 		}
 
