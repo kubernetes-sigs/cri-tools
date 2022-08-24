@@ -773,7 +773,8 @@ func UpdateContainerResources(client internalapi.RuntimeService, id string, opts
 		}
 	}
 	logrus.Debugf("UpdateContainerResourcesRequest: %v", request)
-	if err := client.UpdateContainerResources(id, request.Linux); err != nil {
+	resources := &pb.ContainerResources{Linux: request.Linux}
+	if err := client.UpdateContainerResources(id, resources); err != nil {
 		return err
 	}
 	fmt.Println(id)

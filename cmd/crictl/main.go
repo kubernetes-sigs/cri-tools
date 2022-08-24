@@ -24,6 +24,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"go.opentelemetry.io/otel/trace"
 
 	internalapi "k8s.io/cri-api/pkg/apis"
 	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
@@ -65,6 +66,8 @@ func getRuntimeService(context *cli.Context, timeout time.Duration) (res interna
 		t = timeout
 	}
 
+	tp := trace.NewNoopTracerProvider()
+
 	// If no EP set then use the default endpoint types
 	if !RuntimeEndpointIsSet {
 		logrus.Warningf("runtime connect using default endpoints: %v. "+
@@ -77,7 +80,7 @@ func getRuntimeService(context *cli.Context, timeout time.Duration) (res interna
 		for _, endPoint := range defaultRuntimeEndpoints {
 			logrus.Debugf("Connect using endpoint %q with %q timeout", endPoint, t)
 
-			res, err = remote.NewRemoteRuntimeService(endPoint, t)
+			res, err = remote.NewRemoteRuntimeService(endPoint, t, tp)
 			if err != nil {
 				logrus.Error(err)
 				continue
@@ -88,7 +91,7 @@ func getRuntimeService(context *cli.Context, timeout time.Duration) (res interna
 		}
 		return res, err
 	}
-	return remote.NewRemoteRuntimeService(RuntimeEndpoint, t)
+	return remote.NewRemoteRuntimeService(RuntimeEndpoint, t, tp)
 }
 
 func getImageService(context *cli.Context) (res internalapi.ImageManagerService, err error) {
