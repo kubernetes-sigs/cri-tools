@@ -23,14 +23,12 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/onsi/ginkgo/v2"
-	"github.com/onsi/ginkgo/v2/reporters"
 	ginkgotypes "github.com/onsi/ginkgo/v2/types"
 	"github.com/onsi/gomega"
 
@@ -93,17 +91,7 @@ func isFlagSet(name string) bool {
 // runTestSuite runs cri validation tests and benchmark tests.
 func runTestSuite(t *testing.T) {
 	gomega.RegisterFailHandler(ginkgo.Fail)
-
-	reporter := []ginkgo.Reporter{}
-	if framework.TestContext.ReportDir != "" {
-		if err := os.MkdirAll(framework.TestContext.ReportDir, 0755); err != nil {
-			t.Errorf("Failed creating report directory: %v", err)
-		}
-
-		reporter = append(reporter, reporters.NewJUnitReporter(path.Join(framework.TestContext.ReportDir, fmt.Sprintf("junit_%v.xml", framework.TestContext.ReportPrefix))))
-	}
-
-	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "CRI validation", reporter)
+	ginkgo.RunSpecs(t, "CRI validation")
 }
 
 func generateTempTestName() (string, error) {
