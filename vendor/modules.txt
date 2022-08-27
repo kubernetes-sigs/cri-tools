@@ -29,7 +29,6 @@ github.com/docker/distribution/reference
 ## explicit
 github.com/docker/docker/api/types/time
 github.com/docker/docker/daemon/logger/jsonfilelog/jsonlog
-github.com/docker/docker/pkg/term
 # github.com/docker/go-units v0.4.0
 ## explicit
 github.com/docker/go-units
