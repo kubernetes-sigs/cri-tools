@@ -21,7 +21,7 @@ import (
 	"net/url"
 	"time"
 
-	dockerterm "github.com/docker/docker/pkg/term"
+	mobyterm "github.com/moby/term"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	restclient "k8s.io/client-go/rest"
@@ -161,7 +161,7 @@ func stream(in, tty bool, url *url.URL) error {
 		return err
 	}
 
-	stdin, stdout, stderr := dockerterm.StdStreams()
+	stdin, stdout, stderr := mobyterm.StdStreams()
 	streamOptions := remoteclient.StreamOptions{
 		Stdout: stdout,
 		Stderr: stderr,

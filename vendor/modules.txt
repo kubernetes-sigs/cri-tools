@@ -29,7 +29,6 @@ github.com/docker/distribution/reference
 ## explicit
 github.com/docker/docker/api/types/time
 github.com/docker/docker/daemon/logger/jsonfilelog/jsonlog
-github.com/docker/docker/pkg/term
 # github.com/docker/go-units v0.4.0
 ## explicit
 github.com/docker/go-units
@@ -124,7 +123,7 @@ github.com/mitchellh/go-wordwrap
 ## explicit; go 1.13
 github.com/moby/spdystream
 github.com/moby/spdystream/spdy
-# github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6
+# github.com/moby/term v0.0.0-20220808134915-39b0c02b01ae
 ## explicit; go 1.13
 github.com/moby/term
 github.com/moby/term/windows
