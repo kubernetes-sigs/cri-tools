@@ -180,8 +180,9 @@ func TestCRISuite(t *testing.T) {
 		flag.Set("ginkgo.succinct", "true")
 	} else {
 		// Skip benchmark measurements for validation tests.
-		flag.Set("ginkgo.skipMeasurements", "true")
+		flag.Set("ginkgo.skip", "benchmark")
 	}
+
 	if *parallel > 1 {
 		runParallelTestSuite(t)
 	} else {
