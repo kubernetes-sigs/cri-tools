@@ -28,6 +28,6 @@ const (
 	defaultConfigPath = "/etc/crictl.yaml"
 )
 
-var defaultRuntimeEndpoints = []string{"unix:///var/run/dockershim.sock", "unix:///run/containerd/containerd.sock", "unix:///run/crio/crio.sock", "unix:///var/run/cri-dockerd.sock"}
+var defaultRuntimeEndpoints = []string{"unix:///var/run/dockershim.sock", "unix:///run/containerd/containerd.sock", "unix:///run/crio/crio.sock", "unix:///var/run/cri-dockerd.sock", "unix:///var/run/containerd/containerd.sock"}
 
 var shutdownSignals = []os.Signal{os.Interrupt, syscall.SIGTERM}
