@@ -406,6 +406,14 @@ var removeImageCommand = &cli.Command{
 				}
 				continue
 			}
+			if len(status.Image.RepoTags) == 0 {
+				// RepoTags is nil when pulling image by repoDigest,
+				// so print deleted using that instead.
+				for _, repoDigest := range status.Image.RepoDigests {
+					fmt.Printf("Deleted: %s\n", repoDigest)
+				}
+				continue
+			}
 			for _, repoTag := range status.Image.RepoTags {
 				fmt.Printf("Deleted: %s\n", repoTag)
 			}
