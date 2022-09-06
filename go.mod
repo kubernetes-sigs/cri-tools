@@ -21,12 +21,12 @@ require (
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
 	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/api v0.24.0
-	k8s.io/apimachinery v0.24.0
+	k8s.io/api v0.25.0
+	k8s.io/apimachinery v0.25.0
 	k8s.io/client-go v1.5.2
-	k8s.io/cri-api v0.24.0
-	k8s.io/kubectl v0.24.0
-	k8s.io/kubernetes v1.24.0
+	k8s.io/cri-api v0.25.0
+	k8s.io/kubectl v0.25.0
+	k8s.io/kubernetes v1.25.0
 	sigs.k8s.io/yaml v1.3.0
 )
 
