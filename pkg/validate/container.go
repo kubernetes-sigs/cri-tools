@@ -392,16 +392,23 @@ func getContainerStatus(c internalapi.RuntimeService, containerID string) *runti
 }
 
 // createShellContainer creates a container to run /bin/sh.
-func createShellContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
+func createShellContainer(
+	rc internalapi.RuntimeService,
+	ic internalapi.ImageManagerService,
+	podID string,
+	podConfig *runtimeapi.PodSandboxConfig,
+	prefix string,
+	stdin, stdinOnce, tty bool,
+) string {
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata:  framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:     &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
 		Command:   shellCmd,
 		Linux:     &runtimeapi.LinuxContainerConfig{},
-		Stdin:     true,
-		StdinOnce: true,
-		Tty:       false,
+		Stdin:     stdin,
+		StdinOnce: stdinOnce,
+		Tty:       tty,
 	}
 
 	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
@@ -572,8 +579,9 @@ func pathExists(path string) bool {
 
 // parseDockerJSONLog parses logs in Docker JSON log format.
 // Docker JSON log format example:
-//   {"log":"content 1","stream":"stdout","time":"2016-10-20T18:39:20.57606443Z"}
-//   {"log":"content 2","stream":"stderr","time":"2016-10-20T18:39:20.57606444Z"}
+//
+//	{"log":"content 1","stream":"stdout","time":"2016-10-20T18:39:20.57606443Z"}
+//	{"log":"content 2","stream":"stderr","time":"2016-10-20T18:39:20.57606444Z"}
 func parseDockerJSONLog(log []byte, msg *logMessage) {
 	var l jsonlog.JSONLog
 
@@ -587,8 +595,9 @@ func parseDockerJSONLog(log []byte, msg *logMessage) {
 
 // parseCRILog parses logs in CRI log format.
 // CRI log format example :
-//   2016-10-06T00:17:09.669794202Z stdout P The content of the log entry 1
-//   2016-10-06T00:17:10.113242941Z stderr F The content of the log entry 2
+//
+//	2016-10-06T00:17:09.669794202Z stdout P The content of the log entry 1
+//	2016-10-06T00:17:10.113242941Z stderr F The content of the log entry 2
 func parseCRILog(log string, msg *logMessage) {
 	logMessage := strings.SplitN(log, " ", 4)
 	if len(log) < 4 {

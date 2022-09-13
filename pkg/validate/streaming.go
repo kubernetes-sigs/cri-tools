@@ -110,15 +110,54 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
 
 			By("create a default container")
-			containerID := createShellContainer(rc, ic, podID, podConfig, "container-for-attach-test")
+			containerID := createShellContainer(rc, ic, podID, podConfig, "container-for-attach-test", true, true, false)
 
 			By("start container")
 			startContainer(rc, containerID)
 
-			req := createDefaultAttach(rc, containerID)
+			url := createDefaultAttach(rc, containerID, false)
 
 			By("check the output of attach")
-			checkAttach(rc, req)
+			checkAttach(rc, url, func(writer io.WriteCloser, stdout *safeBuffer) {
+				header := stdout.String()
+				time.Sleep(1 * time.Second)
+				Eventually(func() bool {
+					oldHeader := header
+					header = stdout.String()
+					return len(header) == len(oldHeader)
+				}, 10*time.Second, time.Second).Should(BeTrue(), "The container should stop output when there is no input")
+				writer.Write([]byte(strings.Join(echoHelloCmd, " ") + "\n"))
+				Eventually(func() string {
+					return strings.TrimPrefix(stdout.String(), header)
+				}, time.Minute, time.Second).Should(Equal(attachEchoHelloOutput), "The stdout of attach should be hello")
+				Consistently(func() string {
+					return strings.TrimPrefix(stdout.String(), header)
+				}, 3*time.Second, time.Second).Should(Equal(attachEchoHelloOutput), "The stdout of attach should not contain other things")
+			})
+		})
+
+		It("runtime should support attach to stop a container [Conformance]", func() {
+			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
+
+			By("create a default container")
+			containerID := createShellContainer(rc, ic, podID, podConfig, "container-for-attach-test", true, false, true)
+
+			By("start container")
+			startContainer(rc, containerID)
+
+			url := createDefaultAttach(rc, containerID, true)
+
+			By("check the output of attach")
+			checkAttach(rc, url, func(writer io.WriteCloser, stdout *safeBuffer) {
+				By("exiting container to deattach")
+				_, err := writer.Write([]byte("exit\n"))
+				Expect(err).To(BeNil())
+				Expect(stdout.String()).To(BeEmpty())
+
+				Eventually(func() runtimeapi.ContainerState {
+					return getContainerStatus(rc, containerID).State
+				}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
+			})
 		})
 
 		It("runtime should support portforward [Conformance]", func() {
@@ -225,14 +264,14 @@ func parseURL(c internalapi.RuntimeService, serverURL string) *url.URL {
 	return url
 }
 
-func createDefaultAttach(c internalapi.RuntimeService, containerID string) string {
+func createDefaultAttach(c internalapi.RuntimeService, containerID string, tty bool) string {
 	By("attach container: " + containerID)
 	req := &runtimeapi.AttachRequest{
 		ContainerId: containerID,
 		Stdin:       true,
 		Stdout:      true,
-		Stderr:      true,
-		Tty:         false,
+		Stderr:      !tty,
+		Tty:         tty,
 	}
 
 	resp, err := c.Attach(req)
@@ -263,27 +302,19 @@ func (s *safeBuffer) String() string {
 	return s.buffer.String()
 }
 
-func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
-	localOut := &safeBuffer{buffer: bytes.Buffer{}}
-	localErr := &safeBuffer{buffer: bytes.Buffer{}}
-	reader, writer := io.Pipe()
+func checkAttach(
+	c internalapi.RuntimeService,
+	attachServerURL string,
+	testFn func(stdin io.WriteCloser, stdout *safeBuffer),
+) {
+	stdout := &safeBuffer{buffer: bytes.Buffer{}}
+	stderr := &safeBuffer{buffer: bytes.Buffer{}}
+	stdinReader, stdinWriter := io.Pipe()
+
 	go func() {
 		defer GinkgoRecover()
-		defer writer.Close()
-		header := localOut.String()
-		time.Sleep(1 * time.Second)
-		Eventually(func() bool {
-			oldHeader := header
-			header = localOut.String()
-			return len(header) == len(oldHeader)
-		}, 10*time.Second, time.Second).Should(BeTrue(), "The container should stop output when there is no input")
-		writer.Write([]byte(strings.Join(echoHelloCmd, " ") + "\n"))
-		Eventually(func() string {
-			return strings.TrimPrefix(localOut.String(), header)
-		}, time.Minute, time.Second).Should(Equal(attachEchoHelloOutput), "The stdout of attach should be hello")
-		Consistently(func() string {
-			return strings.TrimPrefix(localOut.String(), header)
-		}, 3*time.Second, time.Second).Should(Equal(attachEchoHelloOutput), "The stdout of attach should not contain other things")
+		defer stdinWriter.Close()
+		testFn(stdinWriter, stdout)
 	}()
 
 	// Only http is supported now.
@@ -293,14 +324,14 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 	framework.ExpectNoError(err, "failed to create executor for %q", attachServerURL)
 
 	err = e.Stream(remoteclient.StreamOptions{
-		Stdin:  reader,
-		Stdout: localOut,
-		Stderr: localErr,
+		Stdin:  stdinReader,
+		Stdout: stdout,
+		Stderr: stderr,
 		Tty:    false,
 	})
 	framework.ExpectNoError(err, "failed to open streamer for %q", attachServerURL)
 
-	Expect(localErr.String()).To(BeEmpty(), "The stderr of attach should be empty")
+	Expect(stderr.String()).To(BeEmpty(), "The stderr of attach should be empty")
 	framework.Logf("Check attach url %q succeed", attachServerURL)
 }
 
