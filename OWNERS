@@ -1,17 +1,13 @@
-# See the OWNERS file documentation:
-#  https://github.com/kubernetes/kubernetes/blob/master/docs/devel/owners.md
+# See the OWNERS docs at https://go.k8s.io/owners
 
 approvers:
-  - Random-Liu
-  - dchen1107
   - feiskyer
-  - heartlock
-  - mrunalp
   - saschagrunert
-  - tallclair
-  - xlgao-zju
-  - yujuhong
-  - runcom
+  - sig-node-approvers
 
 emeritus_approvers:
   - euank
+  - heartlock
+  - tallclair
+  - xlgao-zju
+  - runcom

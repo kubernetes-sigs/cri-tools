@@ -1,0 +1,12 @@
+# See the OWNERS docs at https://go.k8s.io/owners
+
+aliases:
+  # From https://github.com/kubernetes/kubernetes/blob/master/OWNERS_ALIASES#LC220
+  sig-node-approvers:
+    # - dchen1107 # not in k-sigs org
+    # - sjenning # not in k-sigs org
+    - Random-Liu
+    - derekwaynecarr
+    - klueska
+    - mrunalp
+    - yujuhong
