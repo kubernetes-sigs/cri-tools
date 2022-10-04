@@ -13,7 +13,7 @@ require (
 	github.com/onsi/gomega v1.20.2
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/runc v1.1.4
-	github.com/opencontainers/selinux v1.10.1
+	github.com/opencontainers/selinux v1.10.2
 	github.com/pborman/uuid v1.2.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/urfave/cli/v2 v2.16.3
