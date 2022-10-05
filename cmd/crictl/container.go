@@ -77,6 +77,10 @@ type pullOptions struct {
 	// auth is a base64 encoded 'USERNAME[:PASSWORD]' string used for
 	// authentication with a registry when pulling an image
 	auth string
+
+	// Username to use for accessing the registry
+	// password will be requested on the command line
+	username string
 }
 
 var createPullFlags = []cli.Flag{
@@ -98,6 +102,11 @@ var createPullFlags = []cli.Flag{
 		Value: "",
 		Usage: "Use `AUTH_STRING` for accessing the registry. AUTH_STRING is a base64 encoded 'USERNAME[:PASSWORD]'",
 	},
+	&cli.StringFlag{
+		Name:  "username",
+		Value: "",
+		Usage: "Use `USERNAME` for accessing the registry. The password will be requested on the command line",
+	},
 }
 
 var runPullFlags = []cli.Flag{
@@ -118,6 +127,11 @@ var runPullFlags = []cli.Flag{
 		Name:  "auth",
 		Value: "",
 		Usage: "Use `AUTH_STRING` for accessing the registry. AUTH_STRING is a base64 encoded 'USERNAME[:PASSWORD]'",
+	},
+	&cli.StringFlag{
+		Name:  "username",
+		Value: "",
+		Usage: "Use `USERNAME` for accessing the registry. password will be requested",
 	},
 }
 
@@ -158,6 +172,7 @@ var createContainerCommand = &cli.Command{
 					withPull: withPull,
 					creds:    context.String("creds"),
 					auth:     context.String("auth"),
+					username: context.String("username"),
 				},
 				timeout: context.Duration("cancel-timeout"),
 			},
@@ -571,6 +586,7 @@ var runContainerCommand = &cli.Command{
 				withPull: withPull,
 				creds:    context.String("creds"),
 				auth:     context.String("auth"),
+				username: context.String("username"),
 			},
 			timeout: context.Duration("timeout"),
 		}
@@ -684,7 +700,7 @@ func CreateContainer(
 	// reminder if the image is already in cache only the manifest will be pulled
 	// down to verify.
 	if opts.withPull {
-		auth, err := getAuth(opts.creds, opts.auth)
+		auth, err := getAuth(opts.creds, opts.auth, opts.username)
 		if err != nil {
 			return "", err
 		}

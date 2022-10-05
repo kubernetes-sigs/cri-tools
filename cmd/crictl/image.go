@@ -21,10 +21,12 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"syscall"
 
 	"github.com/docker/go-units"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"golang.org/x/term"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
@@ -61,6 +63,12 @@ var pullImageCommand = &cli.Command{
 			EnvVars: []string{"CRICTL_AUTH"},
 		},
 		&cli.StringFlag{
+			Name:    "username",
+			Aliases: []string{"u"},
+			Value:   "",
+			Usage:   "Use `USERNAME` for accessing the registry. The password will be requested on the command line",
+		},
+		&cli.StringFlag{
 			Name:      "pod-config",
 			Value:     "",
 			Usage:     "Use `pod-config.[json|yaml]` to override the the pull context",
@@ -84,7 +92,7 @@ var pullImageCommand = &cli.Command{
 			return err
 		}
 
-		auth, err := getAuth(context.String("creds"), context.String("auth"))
+		auth, err := getAuth(context.String("creds"), context.String("auth"), context.String("username"))
 		if err != nil {
 			return err
 		}
@@ -500,7 +508,20 @@ func parseCreds(creds string) (string, string, error) {
 	return up[0], up[1], nil
 }
 
-func getAuth(creds string, auth string) (*pb.AuthConfig, error) {
+func getAuth(creds string, auth string, username string) (*pb.AuthConfig, error) {
+	if username != "" {
+		fmt.Print("Enter Password:")
+		bytePassword, err := term.ReadPassword(int(syscall.Stdin))
+		fmt.Print("\n")
+		if err != nil {
+			return nil, err
+		}
+		password := string(bytePassword)
+		return &pb.AuthConfig{
+			Username: username,
+			Password: password,
+		}, nil
+	}
 	if creds != "" && auth != "" {
 		return nil, errors.New("both `--creds` and `--auth` are specified")
 	}
