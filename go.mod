@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/docker/distribution v2.8.1+incompatible
-	github.com/docker/docker v20.10.18+incompatible
+	github.com/docker/docker v20.10.19+incompatible
 	github.com/docker/go-units v0.5.0
 	github.com/golang/glog v1.0.0
 	github.com/golang/protobuf v1.5.2
