@@ -16,7 +16,7 @@ require (
 	github.com/opencontainers/selinux v1.10.2
 	github.com/pborman/uuid v1.2.1
 	github.com/sirupsen/logrus v1.9.0
-	github.com/urfave/cli/v2 v2.19.2
+	github.com/urfave/cli/v2 v2.20.2
 	go.opentelemetry.io/otel/trace v0.20.0
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
 	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
