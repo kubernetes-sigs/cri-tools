@@ -68,6 +68,9 @@ for IMAGE in "${!IMAGE_USERS[@]}"; do
     build_image ./image-user "$IMAGE" --build-arg "USER=$USER"
 done
 
+# Build the user with pre-defined group image
+build_image ./image-predefined-group test-image-predefined-group
+
 # Build the hostnet image
 build_image ./hostnet-nginx hostnet-nginx
 
