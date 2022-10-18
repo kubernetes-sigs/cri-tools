@@ -317,6 +317,57 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			Expect(groups).To(ContainElement("5678"))
 		})
 
+		It("if the container's primary UID belongs to some groups in the image, runtime should add SupplementalGroups to them", func() {
+			By("create pod")
+			podID, podConfig, podLogDir = createPodSandboxWithLogDirectory(rc)
+
+			By("create container for security context SupplementalGroups")
+			supplementalGroups := []int64{1234, 5678}
+			containerName := "container-with-SupplementalGroups-and-predefined-group-image-test-" + framework.NewUUID()
+			logPath := fmt.Sprintf("%s.log", containerName)
+			containerConfig := &runtimeapi.ContainerConfig{
+				Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+				Image:    &runtimeapi.ImageSpec{Image: testImagePreDefinedGroup},
+				Command:  []string{"sh", "-c", "id -G; while :; do sleep 1; done"},
+				Linux: &runtimeapi.LinuxContainerConfig{
+					SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
+						RunAsUser:          &runtimeapi.Int64Value{Value: imagePredefinedGroupUID},
+						SupplementalGroups: supplementalGroups,
+					},
+				},
+				LogPath: logPath,
+			}
+			containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
+
+			By("start container")
+			startContainer(rc, containerID)
+			Eventually(func(g Gomega) {
+				g.Expect(getContainerStatus(rc, containerID).State).To(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+				g.Expect(parseLogLine(podConfig, logPath)).NotTo(BeEmpty())
+			}, time.Minute, time.Second*4).Should(Succeed())
+
+			// In testImagePreDefinedGroup,
+			// - its default user is default-user(uid=1000)
+			// - default-user belongs to group-defined-in-image(gid=50000)
+			//
+			// thus, supplementary group of the container processes should be
+			// - 1000: self
+			// - 1234 5678: SupplementalGroups
+			// - 50000: groups define in the container image
+			//
+			// $ id -G
+			// 1000 1234 5678 50000
+			expectedOutput := fmt.Sprintf("%d 1234 5678 %d\n", imagePredefinedGroupUID, imagePredefinedGroupGID)
+
+			By("verify groups for the first process of the container")
+			verifyLogContents(podConfig, logPath, expectedOutput, stdoutType)
+
+			By("verify groups for 'exec'-ed process of container")
+			command := []string{"id", "-G"}
+			o := execSyncContainer(rc, containerID, command)
+			Expect(o).To(BeEquivalentTo(expectedOutput))
+		})
+
 		It("runtime should support RunAsUser", func() {
 			By("create pod")
 			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
