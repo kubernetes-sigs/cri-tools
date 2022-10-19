@@ -322,7 +322,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			podID, podConfig, podLogDir = createPodSandboxWithLogDirectory(rc)
 
 			By("create container for security context SupplementalGroups")
-			supplementalGroups := []int64{1234, 5678}
+			supplementalGroup := int64(1234)
 			containerName := "container-with-SupplementalGroups-and-predefined-group-image-test-" + framework.NewUUID()
 			logPath := fmt.Sprintf("%s.log", containerName)
 			containerConfig := &runtimeapi.ContainerConfig{
@@ -332,7 +332,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				Linux: &runtimeapi.LinuxContainerConfig{
 					SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
 						RunAsUser:          &runtimeapi.Int64Value{Value: imagePredefinedGroupUID},
-						SupplementalGroups: supplementalGroups,
+						SupplementalGroups: []int64{supplementalGroup},
 					},
 				},
 				LogPath: logPath,
@@ -352,12 +352,12 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			//
 			// thus, supplementary group of the container processes should be
 			// - 1000: self
-			// - 1234 5678: SupplementalGroups
+			// - 1234: SupplementalGroups
 			// - 50000: groups define in the container image
 			//
 			// $ id -G
 			// 1000 1234 5678 50000
-			expectedOutput := fmt.Sprintf("%d 1234 5678 %d\n", imagePredefinedGroupUID, imagePredefinedGroupGID)
+			expectedOutput := fmt.Sprintf("%d %d %d\n", imagePredefinedGroupUID, supplementalGroup, imagePredefinedGroupGID)
 
 			By("verify groups for the first process of the container")
 			verifyLogContents(podConfig, logPath, expectedOutput, stdoutType)
