@@ -21,4 +21,4 @@ RUN adduser -u 1000 -D default-user && \
     addgroup default-user group-defined-in-image
 
 # Default User of the image is default-user(uid=1000)
-USER 1000:1000
+USER 1000
