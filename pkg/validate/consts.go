@@ -96,6 +96,9 @@ const (
 	imageUserUIDGroup          = int64(1003)
 	testImageUserUsernameGroup = registry + "test-image-user-username-group"
 	imageUserUsernameGroup     = "www-data"
+	testImagePreDefinedGroup   = registry + "test-image-predefined-group"
+	imagePredefinedGroupUID    = int64(1000)
+	imagePredefinedGroupGID    = int64(50000)
 
 	// Linux defaults
 	testLinuxImageWithoutTag        = registry + "test-image-latest"
