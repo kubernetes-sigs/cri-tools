@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -36,6 +37,8 @@ const (
 	kubeletURLSchema = "http"
 	kubeletURLHost   = "http://127.0.0.1:10250"
 )
+
+const detachSequence = "ctrl-p,ctrl-q"
 
 var runtimeExecCommand = &cli.Command{
 	Name:                   "exec",
@@ -173,6 +176,14 @@ func stream(in, tty bool, url *url.URL) error {
 	logrus.Debugf("StreamOptions: %v", streamOptions)
 	if !tty {
 		return executor.Stream(streamOptions)
+	} else {
+		var detachKeys []byte
+		detachKeys, err = mobyterm.ToBytes(detachSequence)
+		if err != nil {
+			return errors.New("could not bind detach keys")
+		}
+		pr := mobyterm.NewEscapeProxy(streamOptions.Stdin, detachKeys)
+		streamOptions.Stdin = pr
 	}
 	if !in {
 		return fmt.Errorf("tty=true must be specified with interactive=true")
