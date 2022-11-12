@@ -76,7 +76,7 @@ var _ = framework.KubeDescribe("Multiple Containers [Conformance]", func() {
 		})
 
 		It("should support network", func() {
-			checkMainPage(rc, podID, 0)
+			checkMainPage(rc, podID, 0, httpdContainerPort)
 		})
 
 		It("should support container log", func() {

@@ -137,6 +137,9 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			By("start the web server container")
 			startContainer(rc, containerID)
 
+			By("ensure the web server container is serving")
+			checkMainPage(rc, podID, 0, webServerContainerPort)
+
 			req := createDefaultPortForward(rc, podID)
 
 			By("check the output of portforward")
@@ -336,6 +339,6 @@ func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string, 
 	}()
 
 	By(fmt.Sprintf("check if we can get nginx main page via localhost:%d", hostPort))
-	checkMainPage(c, "", hostPort)
+	checkMainPage(c, "", hostPort, 0)
 	framework.Logf("Check port forward url %q succeed", portForwardSeverURL)
 }

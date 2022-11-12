@@ -100,7 +100,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 			startContainer(rc, containerID)
 
 			By("check the port mapping with only container port")
-			checkMainPage(rc, podID, 0)
+			checkMainPage(rc, podID, 0, webServerContainerPort)
 		})
 
 		It("runtime should support port mapping with host port and container port [Conformance]", func() {
@@ -121,7 +121,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 			startContainer(rc, containerID)
 
 			By("check the port mapping with host port and container port")
-			checkMainPage(rc, "", webServerHostPortForPortMapping)
+			checkMainPage(rc, "", webServerHostPortForPortMapping, 0)
 		})
 	})
 })
@@ -229,7 +229,7 @@ func createHostNetWebServerContainer(rc internalapi.RuntimeService, ic internala
 }
 
 // checkMainPage check if the we can get the main page of the pod via given IP:port.
-func checkMainPage(c internalapi.RuntimeService, podID string, hostPort int32) {
+func checkMainPage(c internalapi.RuntimeService, podID string, hostPort int32, containerPort int32) {
 	By("get the IP:port needed to be checked")
 	var err error
 	var resp *http.Response
@@ -241,7 +241,7 @@ func checkMainPage(c internalapi.RuntimeService, podID string, hostPort int32) {
 		status := getPodSandboxStatus(c, podID)
 		Expect(status.GetNetwork()).NotTo(BeNil(), "The network in status should not be nil.")
 		Expect(status.GetNetwork().Ip).NotTo(BeNil(), "The IP should not be nil.")
-		url += status.GetNetwork().Ip + ":" + strconv.Itoa(int(webServerContainerPort))
+		url += status.GetNetwork().Ip + ":" + strconv.Itoa(int(containerPort))
 	}
 	framework.Logf("the IP:port is " + url)
 
