@@ -61,6 +61,9 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			By("start the web server container")
 			startContainer(rc, containerID)
 
+			By("ensure the web server container is serving")
+			checkMainPage(rc, "", webServerHostNetContainerPort, 0)
+
 			req := createDefaultPortForward(rc, podID)
 
 			By("check the output of portforward")
