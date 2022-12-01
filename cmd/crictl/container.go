@@ -264,6 +264,7 @@ var updateContainerCommand = &cli.Command{
 		}
 
 		options := updateOptions{
+			CPUCount:           context.Int64("cpu-count"),
 			CPUMaximum:         context.Int64("cpu-maximum"),
 			CPUPeriod:          context.Int64("cpu-period"),
 			CPUQuota:           context.Int64("cpu-quota"),
