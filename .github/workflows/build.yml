@@ -14,7 +14,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.18'
+          go-version: '1.19'
 
       - name: Set env
         shell: bash
@@ -58,7 +58,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.18'
+          go-version: '1.19'
 
       - name: Set env
         shell: bash
