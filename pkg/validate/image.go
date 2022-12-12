@@ -17,6 +17,7 @@ limitations under the License.
 package validate
 
 import (
+	"context"
 	"fmt"
 	"runtime"
 	"sort"
@@ -215,12 +216,12 @@ func removeImageList(c internalapi.ImageManagerService, imageList []string) {
 // removeImage removes the image named imagesName.
 func removeImage(c internalapi.ImageManagerService, imageName string) {
 	By("Remove image : " + imageName)
-	image, err := c.ImageStatus(&runtimeapi.ImageSpec{Image: imageName}, false)
+	image, err := c.ImageStatus(context.TODO(), &runtimeapi.ImageSpec{Image: imageName}, false)
 	framework.ExpectNoError(err, "failed to get image status: %v", err)
 
 	if image.Image != nil {
 		By("Remove image by ID : " + image.Image.Id)
-		err = c.RemoveImage(&runtimeapi.ImageSpec{Image: image.Image.Id})
+		err = c.RemoveImage(context.TODO(), &runtimeapi.ImageSpec{Image: image.Image.Id})
 		framework.ExpectNoError(err, "failed to remove image: %v", err)
 	}
 }

@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -145,40 +146,40 @@ var createContainerCommand = &cli.Command{
 		Usage:   "Seconds to wait for a container create request to complete before cancelling the request",
 	}),
 
-	Action: func(context *cli.Context) (err error) {
-		if context.Args().Len() != 3 {
-			return cli.ShowSubcommandHelp(context)
+	Action: func(cliCtx *cli.Context) (err error) {
+		if cliCtx.Args().Len() != 3 {
+			return cli.ShowSubcommandHelp(cliCtx)
 		}
-		if context.Bool("no-pull") == true && context.Bool("with-pull") == true {
+		if cliCtx.Bool("no-pull") == true && cliCtx.Bool("with-pull") == true {
 			return errors.New("confict: no-pull and with-pull are both set")
 		}
 
-		withPull := (!context.Bool("no-pull") && PullImageOnCreate) || context.Bool("with-pull")
+		withPull := (!cliCtx.Bool("no-pull") && PullImageOnCreate) || cliCtx.Bool("with-pull")
 
 		var imageClient internalapi.ImageManagerService
 		if withPull {
-			imageClient, err = getImageService(context)
+			imageClient, err = getImageService(cliCtx)
 			if err != nil {
 				return err
 			}
 		}
 
 		opts := createOptions{
-			podID: context.Args().Get(0),
+			podID: cliCtx.Args().Get(0),
 			runOptions: &runOptions{
-				configPath: context.Args().Get(1),
-				podConfig:  context.Args().Get(2),
+				configPath: cliCtx.Args().Get(1),
+				podConfig:  cliCtx.Args().Get(2),
 				pullOptions: &pullOptions{
 					withPull: withPull,
-					creds:    context.String("creds"),
-					auth:     context.String("auth"),
-					username: context.String("username"),
+					creds:    cliCtx.String("creds"),
+					auth:     cliCtx.String("auth"),
+					username: cliCtx.String("username"),
 				},
-				timeout: context.Duration("cancel-timeout"),
+				timeout: cliCtx.Duration("cancel-timeout"),
 			},
 		}
 
-		runtimeClient, err := getRuntimeService(context, opts.timeout)
+		runtimeClient, err := getRuntimeService(cliCtx, opts.timeout)
 		if err != nil {
 			return err
 		}
@@ -196,17 +197,17 @@ var startContainerCommand = &cli.Command{
 	Name:      "start",
 	Usage:     "Start one or more created containers",
 	ArgsUsage: "CONTAINER-ID [CONTAINER-ID...]",
-	Action: func(context *cli.Context) error {
-		if context.NArg() == 0 {
-			return cli.ShowSubcommandHelp(context)
+	Action: func(cliCtx *cli.Context) error {
+		if cliCtx.NArg() == 0 {
+			return cli.ShowSubcommandHelp(cliCtx)
 		}
-		runtimeClient, err := getRuntimeService(context, 0)
+		runtimeClient, err := getRuntimeService(cliCtx, 0)
 		if err != nil {
 			return err
 		}
 
-		for i := 0; i < context.NArg(); i++ {
-			containerID := context.Args().Get(i)
+		for i := 0; i < cliCtx.NArg(); i++ {
+			containerID := cliCtx.Args().Get(i)
 			err := StartContainer(runtimeClient, containerID)
 			if err != nil {
 				return fmt.Errorf("starting the container %q: %w", containerID, err)
@@ -254,28 +255,28 @@ var updateContainerCommand = &cli.Command{
 			Usage: "Memory node(s) to use",
 		},
 	},
-	Action: func(context *cli.Context) error {
-		if context.NArg() == 0 {
-			return cli.ShowSubcommandHelp(context)
+	Action: func(cliCtx *cli.Context) error {
+		if cliCtx.NArg() == 0 {
+			return cli.ShowSubcommandHelp(cliCtx)
 		}
-		runtimeClient, err := getRuntimeService(context, 0)
+		runtimeClient, err := getRuntimeService(cliCtx, 0)
 		if err != nil {
 			return err
 		}
 
 		options := updateOptions{
-			CPUCount:           context.Int64("cpu-count"),
-			CPUMaximum:         context.Int64("cpu-maximum"),
-			CPUPeriod:          context.Int64("cpu-period"),
-			CPUQuota:           context.Int64("cpu-quota"),
-			CPUShares:          context.Int64("cpu-share"),
-			CpusetCpus:         context.String("cpuset-cpus"),
-			CpusetMems:         context.String("cpuset-mems"),
-			MemoryLimitInBytes: context.Int64("memory"),
+			CPUCount:           cliCtx.Int64("cpu-count"),
+			CPUMaximum:         cliCtx.Int64("cpu-maximum"),
+			CPUPeriod:          cliCtx.Int64("cpu-period"),
+			CPUQuota:           cliCtx.Int64("cpu-quota"),
+			CPUShares:          cliCtx.Int64("cpu-share"),
+			CpusetCpus:         cliCtx.String("cpuset-cpus"),
+			CpusetMems:         cliCtx.String("cpuset-mems"),
+			MemoryLimitInBytes: cliCtx.Int64("memory"),
 		}
 
-		for i := 0; i < context.NArg(); i++ {
-			containerID := context.Args().Get(i)
+		for i := 0; i < cliCtx.NArg(); i++ {
+			containerID := cliCtx.Args().Get(i)
 			err := UpdateContainerResources(runtimeClient, containerID, options)
 			if err != nil {
 				return fmt.Errorf("updating container resources for %q: %w", containerID, err)
@@ -297,18 +298,18 @@ var stopContainerCommand = &cli.Command{
 			Usage:   "Seconds to wait to kill the container after a graceful stop is requested",
 		},
 	},
-	Action: func(context *cli.Context) error {
-		if context.NArg() == 0 {
-			return cli.ShowSubcommandHelp(context)
+	Action: func(cliCtx *cli.Context) error {
+		if cliCtx.NArg() == 0 {
+			return cli.ShowSubcommandHelp(cliCtx)
 		}
-		runtimeClient, err := getRuntimeService(context, 0)
+		runtimeClient, err := getRuntimeService(cliCtx, 0)
 		if err != nil {
 			return err
 		}
 
-		for i := 0; i < context.NArg(); i++ {
-			containerID := context.Args().Get(i)
-			err := StopContainer(runtimeClient, containerID, context.Int64("timeout"))
+		for i := 0; i < cliCtx.NArg(); i++ {
+			containerID := cliCtx.Args().Get(i)
+			err := StopContainer(runtimeClient, containerID, cliCtx.Int64("timeout"))
 			if err != nil {
 				return fmt.Errorf("stopping the container %q: %w", containerID, err)
 			}
@@ -342,7 +343,7 @@ var removeContainerCommand = &cli.Command{
 
 		ids := ctx.Args().Slice()
 		if ctx.Bool("all") {
-			r, err := runtimeClient.ListContainers(nil)
+			r, err := runtimeClient.ListContainers(context.TODO(), nil)
 			if err != nil {
 				return err
 			}
@@ -358,7 +359,7 @@ var removeContainerCommand = &cli.Command{
 
 		errored := false
 		for _, id := range ids {
-			resp, err := runtimeClient.ContainerStatus(id, false)
+			resp, err := runtimeClient.ContainerStatus(context.TODO(), id, false)
 			if err != nil {
 				logrus.Error(err)
 				errored = true
@@ -413,18 +414,18 @@ var containerStatusCommand = &cli.Command{
 			Usage: "The template string is only used when output is go-template; The Template format is golang template",
 		},
 	},
-	Action: func(context *cli.Context) error {
-		if context.NArg() == 0 {
-			return cli.ShowSubcommandHelp(context)
+	Action: func(cliCtx *cli.Context) error {
+		if cliCtx.NArg() == 0 {
+			return cli.ShowSubcommandHelp(cliCtx)
 		}
-		runtimeClient, err := getRuntimeService(context, 0)
+		runtimeClient, err := getRuntimeService(cliCtx, 0)
 		if err != nil {
 			return err
 		}
 
-		for i := 0; i < context.NArg(); i++ {
-			containerID := context.Args().Get(i)
-			err := ContainerStatus(runtimeClient, containerID, context.String("output"), context.String("template"), context.Bool("quiet"))
+		for i := 0; i < cliCtx.NArg(); i++ {
+			containerID := cliCtx.Args().Get(i)
+			err := ContainerStatus(runtimeClient, containerID, cliCtx.String("output"), cliCtx.String("template"), cliCtx.Bool("quiet"))
 			if err != nil {
 				return fmt.Errorf("getting the status of the container %q: %w", containerID, err)
 			}
@@ -510,33 +511,33 @@ var listContainersCommand = &cli.Command{
 			Usage:   "Show image path instead of image id",
 		},
 	},
-	Action: func(context *cli.Context) error {
-		runtimeClient, err := getRuntimeService(context, 0)
+	Action: func(cliCtx *cli.Context) error {
+		runtimeClient, err := getRuntimeService(cliCtx, 0)
 		if err != nil {
 			return err
 		}
 
-		imageClient, err := getImageService(context)
+		imageClient, err := getImageService(cliCtx)
 		if err != nil {
 			return err
 		}
 
 		opts := listOptions{
-			id:               context.String("id"),
-			podID:            context.String("pod"),
-			state:            context.String("state"),
-			verbose:          context.Bool("verbose"),
-			quiet:            context.Bool("quiet"),
-			output:           context.String("output"),
-			all:              context.Bool("all"),
-			nameRegexp:       context.String("name"),
-			latest:           context.Bool("latest"),
-			last:             context.Int("last"),
-			noTrunc:          context.Bool("no-trunc"),
-			image:            context.String("image"),
-			resolveImagePath: context.Bool("resolve-image-path"),
+			id:               cliCtx.String("id"),
+			podID:            cliCtx.String("pod"),
+			state:            cliCtx.String("state"),
+			verbose:          cliCtx.Bool("verbose"),
+			quiet:            cliCtx.Bool("quiet"),
+			output:           cliCtx.String("output"),
+			all:              cliCtx.Bool("all"),
+			nameRegexp:       cliCtx.String("name"),
+			latest:           cliCtx.Bool("latest"),
+			last:             cliCtx.Int("last"),
+			noTrunc:          cliCtx.Bool("no-trunc"),
+			image:            cliCtx.String("image"),
+			resolveImagePath: cliCtx.Bool("resolve-image-path"),
 		}
-		opts.labels, err = parseLabelStringSlice(context.StringSlice("label"))
+		opts.labels, err = parseLabelStringSlice(cliCtx.StringSlice("label"))
 		if err != nil {
 			return err
 		}
@@ -562,42 +563,42 @@ var runContainerCommand = &cli.Command{
 		Usage:   "Seconds to wait for a container create request before cancelling the request",
 	}),
 
-	Action: func(context *cli.Context) (err error) {
-		if context.Args().Len() != 2 {
-			return cli.ShowSubcommandHelp(context)
+	Action: func(cliCtx *cli.Context) (err error) {
+		if cliCtx.Args().Len() != 2 {
+			return cli.ShowSubcommandHelp(cliCtx)
 		}
-		if context.Bool("no-pull") == true && context.Bool("with-pull") == true {
+		if cliCtx.Bool("no-pull") == true && cliCtx.Bool("with-pull") == true {
 			return errors.New("confict: no-pull and with-pull are both set")
 		}
 
-		withPull := (!DisablePullOnRun && !context.Bool("no-pull")) || context.Bool("with-pull")
+		withPull := (!DisablePullOnRun && !cliCtx.Bool("no-pull")) || cliCtx.Bool("with-pull")
 
 		var imageClient internalapi.ImageManagerService
 		if withPull {
-			imageClient, err = getImageService(context)
+			imageClient, err = getImageService(cliCtx)
 			if err != nil {
 				return err
 			}
 		}
 
 		opts := runOptions{
-			configPath: context.Args().Get(0),
-			podConfig:  context.Args().Get(1),
+			configPath: cliCtx.Args().Get(0),
+			podConfig:  cliCtx.Args().Get(1),
 			pullOptions: &pullOptions{
 				withPull: withPull,
-				creds:    context.String("creds"),
-				auth:     context.String("auth"),
-				username: context.String("username"),
+				creds:    cliCtx.String("creds"),
+				auth:     cliCtx.String("auth"),
+				username: cliCtx.String("username"),
 			},
-			timeout: context.Duration("timeout"),
+			timeout: cliCtx.Duration("timeout"),
 		}
 
-		runtimeClient, err := getRuntimeService(context, opts.timeout)
+		runtimeClient, err := getRuntimeService(cliCtx, opts.timeout)
 		if err != nil {
 			return err
 		}
 
-		err = RunContainer(imageClient, runtimeClient, opts, context.String("runtime"))
+		err = RunContainer(imageClient, runtimeClient, opts, cliCtx.String("runtime"))
 		if err != nil {
 			return fmt.Errorf("running container: %w", err)
 		}
@@ -617,21 +618,21 @@ var checkpointContainerCommand = &cli.Command{
 			Usage:   "Specify the name of the archive used to export the checkpoint image.",
 		},
 	},
-	Action: func(context *cli.Context) error {
-		if context.NArg() == 0 {
-			return cli.ShowSubcommandHelp(context)
+	Action: func(cliCtx *cli.Context) error {
+		if cliCtx.NArg() == 0 {
+			return cli.ShowSubcommandHelp(cliCtx)
 		}
-		runtimeClient, err := getRuntimeService(context, 0)
+		runtimeClient, err := getRuntimeService(cliCtx, 0)
 		if err != nil {
 			return err
 		}
 
-		for i := 0; i < context.NArg(); i++ {
-			containerID := context.Args().Get(i)
+		for i := 0; i < cliCtx.NArg(); i++ {
+			containerID := cliCtx.Args().Get(i)
 			err := CheckpointContainer(
 				runtimeClient,
 				containerID,
-				context.String("export"),
+				cliCtx.String("export"),
 			)
 			if err != nil {
 				return fmt.Errorf("checkpointing the container %q failed: %w", containerID, err)
@@ -720,7 +721,7 @@ func CreateContainer(
 		SandboxConfig: podConfig,
 	}
 	logrus.Debugf("CreateContainerRequest: %v", request)
-	r, err := rClient.CreateContainer(opts.podID, config, podConfig)
+	r, err := rClient.CreateContainer(context.TODO(), opts.podID, config, podConfig)
 	logrus.Debugf("CreateContainerResponse: %v", r)
 	if err != nil {
 		return "", err
@@ -734,7 +735,7 @@ func StartContainer(client internalapi.RuntimeService, id string) error {
 	if id == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
-	if err := client.StartContainer(id); err != nil {
+	if err := client.StartContainer(context.TODO(), id); err != nil {
 		return err
 	}
 	fmt.Println(id)
@@ -791,7 +792,7 @@ func UpdateContainerResources(client internalapi.RuntimeService, id string, opts
 	}
 	logrus.Debugf("UpdateContainerResourcesRequest: %v", request)
 	resources := &pb.ContainerResources{Linux: request.Linux}
-	if err := client.UpdateContainerResources(id, resources); err != nil {
+	if err := client.UpdateContainerResources(context.TODO(), id, resources); err != nil {
 		return err
 	}
 	fmt.Println(id)
@@ -804,7 +805,7 @@ func StopContainer(client internalapi.RuntimeService, id string, timeout int64) 
 	if id == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
-	if err := client.StopContainer(id, timeout); err != nil {
+	if err := client.StopContainer(context.TODO(), id, timeout); err != nil {
 		return err
 	}
 	fmt.Println(id)
@@ -825,7 +826,7 @@ func CheckpointContainer(
 		Location:    export,
 	}
 	logrus.Debugf("CheckpointContainerRequest: %v", request)
-	err := rClient.CheckpointContainer(request)
+	err := rClient.CheckpointContainer(context.TODO(), request)
 	if err != nil {
 		return err
 	}
@@ -839,7 +840,7 @@ func RemoveContainer(client internalapi.RuntimeService, id string) error {
 	if id == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
-	if err := client.RemoveContainer(id); err != nil {
+	if err := client.RemoveContainer(context.TODO(), id); err != nil {
 		return err
 	}
 	fmt.Println(id)
@@ -892,7 +893,7 @@ func ContainerStatus(client internalapi.RuntimeService, id, output string, tmplS
 		Verbose:     verbose,
 	}
 	logrus.Debugf("ContainerStatusRequest: %v", request)
-	r, err := client.ContainerStatus(id, verbose)
+	r, err := client.ContainerStatus(context.TODO(), id, verbose)
 	logrus.Debugf("ContainerStatusResponse: %v", r)
 	if err != nil {
 		return err
@@ -995,7 +996,7 @@ func ListContainers(runtimeClient internalapi.RuntimeService, imageClient intern
 	if opts.labels != nil {
 		filter.LabelSelector = opts.labels
 	}
-	r, err := runtimeClient.ListContainers(filter)
+	r, err := runtimeClient.ListContainers(context.TODO(), filter)
 	logrus.Debugf("ListContainerResponse: %v", r)
 	if err != nil {
 		return err

@@ -17,6 +17,7 @@ limitations under the License.
 package validate
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -43,9 +44,9 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 		AfterEach(func() {
 			By("stop PodSandbox")
-			rc.StopPodSandbox(podID)
+			rc.StopPodSandbox(context.TODO(), podID)
 			By("delete PodSandbox")
-			rc.RemovePodSandbox(podID)
+			rc.RemovePodSandbox(context.TODO(), podID)
 		})
 
 		It("runtime should support running PodSandbox [Conformance]", func() {
@@ -104,7 +105,7 @@ func testRunDefaultPodSandbox(c internalapi.RuntimeService) string {
 // getPodSandboxStatus gets PodSandboxStatus for podID.
 func getPodSandboxStatus(c internalapi.RuntimeService, podID string) *runtimeapi.PodSandboxStatus {
 	By("Get PodSandbox status for podID: " + podID)
-	status, err := c.PodSandboxStatus(podID, false)
+	status, err := c.PodSandboxStatus(context.TODO(), podID, false)
 	framework.ExpectNoError(err, "failed to get PodSandbox %q status: %v", podID, err)
 	return status.GetStatus()
 }
@@ -112,7 +113,7 @@ func getPodSandboxStatus(c internalapi.RuntimeService, podID string) *runtimeapi
 // stopPodSandbox stops the PodSandbox for podID.
 func stopPodSandbox(c internalapi.RuntimeService, podID string) {
 	By("Stop PodSandbox for podID: " + podID)
-	err := c.StopPodSandbox(podID)
+	err := c.StopPodSandbox(context.TODO(), podID)
 	framework.ExpectNoError(err, "Failed to stop PodSandbox: %v", err)
 	framework.Logf("Stopped PodSandbox %q\n", podID)
 }
@@ -126,7 +127,7 @@ func testStopPodSandbox(c internalapi.RuntimeService, podID string) {
 // removePodSandbox removes the PodSandbox for podID.
 func removePodSandbox(c internalapi.RuntimeService, podID string) {
 	By("Remove PodSandbox for podID: " + podID)
-	err := c.RemovePodSandbox(podID)
+	err := c.RemovePodSandbox(context.TODO(), podID)
 	framework.ExpectNoError(err, "failed to remove PodSandbox: %v", err)
 	framework.Logf("Removed PodSandbox %q\n", podID)
 }
@@ -150,7 +151,7 @@ func listPodSanboxForID(c internalapi.RuntimeService, podID string) []*runtimeap
 // listPodSandbox lists PodSandbox.
 func listPodSandbox(c internalapi.RuntimeService, filter *runtimeapi.PodSandboxFilter) []*runtimeapi.PodSandbox {
 	By("List PodSandbox.")
-	pods, err := c.ListPodSandbox(filter)
+	pods, err := c.ListPodSandbox(context.TODO(), filter)
 	framework.ExpectNoError(err, "failed to list PodSandbox status: %v", err)
 	framework.Logf("List PodSandbox succeed")
 	return pods

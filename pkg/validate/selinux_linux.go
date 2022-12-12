@@ -17,6 +17,7 @@ limitations under the License.
 package validate
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -179,7 +180,7 @@ func createContainerWithSelinux(rc internalapi.RuntimeService, ic internalapi.Im
 	Expect(err).NotTo(HaveOccurred())
 
 	By("start container with selinux")
-	err = rc.StartContainer(containerID)
+	err = rc.StartContainer(context.TODO(), containerID)
 	if shouldStart {
 		Expect(err).NotTo(HaveOccurred())
 	} else {
@@ -196,7 +197,7 @@ func createContainerWithSelinux(rc internalapi.RuntimeService, ic internalapi.Im
 
 func checkContainerSelinux(rc internalapi.RuntimeService, containerID string, shoudRun bool) {
 	By("get container status")
-	status, err := rc.ContainerStatus(containerID, false)
+	status, err := rc.ContainerStatus(context.TODO(), containerID, false)
 	Expect(err).NotTo(HaveOccurred())
 
 	if shoudRun {
@@ -207,22 +208,22 @@ func checkContainerSelinux(rc internalapi.RuntimeService, containerID string, sh
 	}
 
 	cmd := []string{"touch", "foo"}
-	stdout, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	stdout, stderr, err := rc.ExecSync(context.TODO(), containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
 	Expect(err).NotTo(HaveOccurred(), msg)
 }
 
 func cleanupSandbox(rc internalapi.RuntimeService, sandboxID string) {
 	By("stop PodSandbox")
-	rc.StopPodSandbox(sandboxID)
+	rc.StopPodSandbox(context.TODO(), sandboxID)
 	By("delete PodSandbox")
-	rc.RemovePodSandbox(sandboxID)
+	rc.RemovePodSandbox(context.TODO(), sandboxID)
 }
 
 func checkMountLabelRoleType(rc internalapi.RuntimeService, containerID string) {
 	// Check that the mount label policy is correct
 	cmd := []string{"cat", "/proc/1/mountinfo"}
-	stdout, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	stdout, stderr, err := rc.ExecSync(context.TODO(), containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
 	Expect(err).NotTo(HaveOccurred(), msg)
 	Expect(string(stdout)).To(ContainSubstring(":object_r:container_file_t:"))
@@ -231,7 +232,7 @@ func checkMountLabelRoleType(rc internalapi.RuntimeService, containerID string) 
 func checkProcessLabelRoleType(rc internalapi.RuntimeService, containerID string, privileged bool) {
 	// Check that the process label policy is correct
 	cmd := []string{"cat", "/proc/self/attr/current"}
-	stdout, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	stdout, stderr, err := rc.ExecSync(context.TODO(), containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	label := strings.Trim(string(stdout), "\x00")
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
 	Expect(err).NotTo(HaveOccurred(), msg)
@@ -245,7 +246,7 @@ func checkProcessLabelRoleType(rc internalapi.RuntimeService, containerID string
 func checkMountLabelMCS(rc internalapi.RuntimeService, containerID string) {
 	// Check that the mount label MCS is correct
 	cmd := []string{"cat", "/proc/1/mountinfo"}
-	stdout, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	stdout, stderr, err := rc.ExecSync(context.TODO(), containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
 	Expect(err).NotTo(HaveOccurred(), msg)
 	// check that a mount exists with MCS, where level is always s0 and there are two or more categories
@@ -255,7 +256,7 @@ func checkMountLabelMCS(rc internalapi.RuntimeService, containerID string) {
 func checkProcessLabelMCS(rc internalapi.RuntimeService, containerID string, privileged bool) string {
 	// Check that the process label MCS is correct
 	cmd := []string{"cat", "/proc/self/attr/current"}
-	stdout, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	stdout, stderr, err := rc.ExecSync(context.TODO(), containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	label := strings.Trim(string(stdout), "\x00")
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
 	Expect(err).NotTo(HaveOccurred(), msg)

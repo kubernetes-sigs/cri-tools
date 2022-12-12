@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 
@@ -82,7 +83,7 @@ func Attach(client internalapi.RuntimeService, opts attachOptions) error {
 		Stderr:      !opts.tty,
 	}
 	logrus.Debugf("AttachRequest: %v", request)
-	r, err := client.Attach(request)
+	r, err := client.Attach(context.TODO(), request)
 	logrus.Debugf("AttachResponse: %v", r)
 	if err != nil {
 		return err

@@ -182,7 +182,7 @@ func ContainerStats(client internalapi.RuntimeService, opts statsOptions) error 
 
 func getContainerStats(ctx context.Context, client internalapi.RuntimeService, request *pb.ListContainerStatsRequest) (*pb.ListContainerStatsResponse, error) {
 	logrus.Debugf("ListContainerStatsRequest: %v", request)
-	r, err := client.ListContainerStats(request.Filter)
+	r, err := client.ListContainerStats(context.TODO(), request.Filter)
 	logrus.Debugf("ListContainerResponse: %v", r)
 	if err != nil {
 		return nil, err

@@ -17,6 +17,7 @@ limitations under the License.
 package validate
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -57,9 +58,9 @@ var _ = framework.KubeDescribe("Security Context", func() {
 	AfterEach(func() {
 		if podID != "" {
 			By("stop PodSandbox")
-			rc.StopPodSandbox(podID)
+			rc.StopPodSandbox(context.TODO(), podID)
 			By("delete PodSandbox")
-			rc.RemovePodSandbox(podID)
+			rc.RemovePodSandbox(context.TODO(), podID)
 		}
 		if podLogDir != "" {
 			os.RemoveAll(podLogDir)
@@ -541,7 +542,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			stdout, stderr, err := rc.ExecSync(
-				containerID, []string{"ping", "127.0.0.1"},
+				context.TODO(), containerID, []string{"ping", "127.0.0.1"},
 				time.Duration(defaultExecSyncTimeout)*time.Second,
 			)
 			Expect(err).NotTo(BeNil())
@@ -562,7 +563,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			stdout, stderr, err := rc.ExecSync(
-				containerID, []string{"cat", "/proc/self/status"},
+				context.TODO(), containerID, []string{"cat", "/proc/self/status"},
 				time.Duration(defaultExecSyncTimeout)*time.Second,
 			)
 			Expect(err).To(BeNil())
@@ -583,7 +584,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			stdout, stderr, err := rc.ExecSync(
-				containerID, []string{"cat", "/proc/self/status"},
+				context.TODO(), containerID, []string{"cat", "/proc/self/status"},
 				time.Duration(defaultExecSyncTimeout)*time.Second,
 			)
 			Expect(err).To(BeNil())
@@ -615,7 +616,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			cmd := []string{"/bin/sh", "-c", "ls"}
-			_, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+			_, stderr, err := rc.ExecSync(context.TODO(), containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 			Expect(err).To(HaveOccurred())
 			Expect(string(stderr)).To(Equal("/bin/sh: ls: Permission denied\n"))
 		})
@@ -644,7 +645,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			cmd := []string{"touch", "/tmp/test"}
-			_, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+			_, stderr, err := rc.ExecSync(context.TODO(), containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 			Expect(err).To(HaveOccurred())
 			Expect(string(stderr)).To(Equal("touch: /tmp/test: Read-only file system\n"))
 		})
@@ -1087,7 +1088,7 @@ func createPrivilegedContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 func checkNetworkManagement(rc internalapi.RuntimeService, containerID string, manageable bool) {
 	cmd := []string{"brctl", "addbr", "foobar"}
 
-	stdout, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	stdout, stderr, err := rc.ExecSync(context.TODO(), containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
 
 	if manageable {
@@ -1224,7 +1225,7 @@ func seccompTestContainer(rc internalapi.RuntimeService, ic internalapi.ImageMan
 }
 
 func verifySeccomp(rc internalapi.RuntimeService, containerID string, command []string, expectError bool, output string) {
-	stdout, stderr, err := rc.ExecSync(containerID, command, time.Duration(defaultExecSyncTimeout)*time.Second)
+	stdout, stderr, err := rc.ExecSync(context.TODO(), containerID, command, time.Duration(defaultExecSyncTimeout)*time.Second)
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q, with err: %v", command, stdout, stderr, err)
 
 	if expectError {
@@ -1284,7 +1285,7 @@ func createContainerWithExpectation(rc internalapi.RuntimeService,
 		framework.PullPublicImage(ic, imageName, nil)
 	}
 	By("Create container.")
-	containerID, err := rc.CreateContainer(podID, config, podConfig)
+	containerID, err := rc.CreateContainer(context.TODO(), podID, config, podConfig)
 
 	if !expectContainerCreateToPass {
 		msg := fmt.Sprintf("create should fail with err %v", err)
@@ -1301,7 +1302,7 @@ func checkSetHostname(rc internalapi.RuntimeService, containerID string, setable
 	By("set hostname in container to determine whether sethostname is blocked")
 
 	cmd := []string{"hostname", "ANewHostName"}
-	stdout, stderr, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	stdout, stderr, err := rc.ExecSync(context.TODO(), containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
 
 	if setable {

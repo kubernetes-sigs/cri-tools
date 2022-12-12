@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -46,7 +47,7 @@ var runtimeVersionCommand = &cli.Command{
 func Version(client internalapi.RuntimeService, version string) error {
 	request := &pb.VersionRequest{Version: version}
 	logrus.Debugf("VersionRequest: %v", request)
-	r, err := client.Version(version)
+	r, err := client.Version(context.TODO(), version)
 	logrus.Debugf("VersionResponse: %v", r)
 	if err != nil {
 		return err

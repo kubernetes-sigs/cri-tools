@@ -17,6 +17,7 @@ limitations under the License.
 package validate
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"strings"
@@ -46,9 +47,9 @@ var _ = framework.KubeDescribe("Networking", func() {
 
 		AfterEach(func() {
 			By("stop PodSandbox")
-			rc.StopPodSandbox(podID)
+			rc.StopPodSandbox(context.TODO(), podID)
 			By("delete PodSandbox")
-			rc.RemovePodSandbox(podID)
+			rc.RemovePodSandbox(context.TODO(), podID)
 		})
 
 		It("runtime should support DNS config [Conformance]", func() {
@@ -187,7 +188,7 @@ func createPodSandboxWithPortMapping(c internalapi.RuntimeService, portMappings 
 // checkHostname checks the container hostname.
 func checkHostname(c internalapi.RuntimeService, containerID string, hostname string) {
 	By("get the current hostname via execSync")
-	stdout, stderr, err := c.ExecSync(containerID, getHostnameCmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	stdout, stderr, err := c.ExecSync(context.TODO(), containerID, getHostnameCmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	framework.ExpectNoError(err, "failed to execSync in container %q", containerID)
 	Expect(strings.EqualFold(strings.TrimSpace(string(stdout)), hostname)).To(BeTrue())
 	Expect(string(stderr)).To(BeEmpty(), "The stderr should be empty.")
@@ -197,7 +198,7 @@ func checkHostname(c internalapi.RuntimeService, containerID string, hostname st
 // checkDNSConfig checks the content of /etc/resolv.conf.
 func checkDNSConfig(c internalapi.RuntimeService, containerID string, expectedContent []string) {
 	By("get the current dns config via execSync")
-	stdout, stderr, err := c.ExecSync(containerID, getDNSConfigCmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	stdout, stderr, err := c.ExecSync(context.TODO(), containerID, getDNSConfigCmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	framework.ExpectNoError(err, "failed to execSync in container %q", containerID)
 	for _, content := range expectedContent {
 		Expect(string(stdout)).To(ContainSubstring(content), "The stdout output of execSync should contain %q", content)
