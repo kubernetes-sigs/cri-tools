@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -133,7 +134,7 @@ var removePodCommand = &cli.Command{
 
 		ids := ctx.Args().Slice()
 		if ctx.Bool("all") {
-			r, err := runtimeClient.ListPodSandbox(nil)
+			r, err := runtimeClient.ListPodSandbox(context.TODO(), nil)
 			if err != nil {
 				return err
 			}
@@ -152,7 +153,7 @@ var removePodCommand = &cli.Command{
 		for _, id := range ids {
 			podId := id
 			funcs = append(funcs, func() error {
-				resp, err := runtimeClient.PodSandboxStatus(podId, false)
+				resp, err := runtimeClient.PodSandboxStatus(context.TODO(), podId, false)
 				if err != nil {
 					return fmt.Errorf("getting sandbox status of pod %q: %w", podId, err)
 				}
@@ -319,7 +320,7 @@ func RunPodSandbox(client internalapi.RuntimeService, config *pb.PodSandboxConfi
 		RuntimeHandler: runtime,
 	}
 	logrus.Debugf("RunPodSandboxRequest: %v", request)
-	r, err := client.RunPodSandbox(config, runtime)
+	r, err := client.RunPodSandbox(context.TODO(), config, runtime)
 	logrus.Debugf("RunPodSandboxResponse: %v", r)
 	if err != nil {
 		return "", err
@@ -333,7 +334,7 @@ func StopPodSandbox(client internalapi.RuntimeService, id string) error {
 	if id == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
-	if err := client.StopPodSandbox(id); err != nil {
+	if err := client.StopPodSandbox(context.TODO(), id); err != nil {
 		return err
 	}
 
@@ -347,7 +348,7 @@ func RemovePodSandbox(client internalapi.RuntimeService, id string) error {
 	if id == "" {
 		return fmt.Errorf("ID cannot be empty")
 	}
-	if err := client.RemovePodSandbox(id); err != nil {
+	if err := client.RemovePodSandbox(context.TODO(), id); err != nil {
 		return err
 	}
 	fmt.Printf("Removed sandbox %s\n", id)
@@ -386,7 +387,7 @@ func PodSandboxStatus(client internalapi.RuntimeService, id, output string, quie
 		Verbose:      verbose,
 	}
 	logrus.Debugf("PodSandboxStatusRequest: %v", request)
-	r, err := client.PodSandboxStatus(id, verbose)
+	r, err := client.PodSandboxStatus(context.TODO(), id, verbose)
 	logrus.Debugf("PodSandboxStatusResponse: %v", r)
 	if err != nil {
 		return err
@@ -475,7 +476,7 @@ func ListPodSandboxes(client internalapi.RuntimeService, opts listOptions) error
 		Filter: filter,
 	}
 	logrus.Debugf("ListPodSandboxRequest: %v", request)
-	r, err := client.ListPodSandbox(filter)
+	r, err := client.ListPodSandbox(context.TODO(), filter)
 	logrus.Debugf("ListPodSandboxResponse: %v", r)
 	if err != nil {
 		return err

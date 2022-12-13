@@ -17,6 +17,7 @@ limitations under the License.
 package validate
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -68,9 +69,9 @@ var _ = framework.KubeDescribe("Multiple Containers [Conformance]", func() {
 
 		AfterEach(func() {
 			By("stop PodSandbox")
-			Expect(rc.StopPodSandbox(podID)).To(Succeed())
+			Expect(rc.StopPodSandbox(context.TODO(), podID)).To(Succeed())
 			By("delete PodSandbox")
-			Expect(rc.RemovePodSandbox(podID)).To(Succeed())
+			Expect(rc.RemovePodSandbox(context.TODO(), podID)).To(Succeed())
 			By("cleanup log path")
 			Expect(os.RemoveAll(logDir)).To(Succeed())
 		})
@@ -89,12 +90,12 @@ var _ = framework.KubeDescribe("Multiple Containers [Conformance]", func() {
 					return strings.Contains(string(content), expected), nil
 				}
 			}
-			httpdStatus, err := rc.ContainerStatus(httpdContainerID, false)
+			httpdStatus, err := rc.ContainerStatus(context.TODO(), httpdContainerID, false)
 			Expect(err).NotTo(HaveOccurred(), "get httpd container status")
 			Eventually(verifyContainerLog(httpdStatus.GetStatus().GetLogPath(),
 				"httpd -D FOREGROUND"), time.Minute, 100*time.Millisecond).Should(BeTrue())
 
-			busyboxStatus, err := rc.ContainerStatus(busyboxContainerID, false)
+			busyboxStatus, err := rc.ContainerStatus(context.TODO(), busyboxContainerID, false)
 			Expect(err).NotTo(HaveOccurred(), "get busybox container status")
 			Eventually(verifyContainerLog(busyboxStatus.GetStatus().GetLogPath(),
 				defaultLog), time.Minute, 100*time.Millisecond).Should(BeTrue())

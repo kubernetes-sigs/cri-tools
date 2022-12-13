@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sort"
@@ -328,24 +329,24 @@ var removeImageCommand = &cli.Command{
 			Usage:   "Remove all unused images",
 		},
 	},
-	Action: func(ctx *cli.Context) error {
-		imageClient, err := getImageService(ctx)
+	Action: func(cliCtx *cli.Context) error {
+		imageClient, err := getImageService(cliCtx)
 		if err != nil {
 			return err
 		}
 
 		ids := map[string]bool{}
-		for _, id := range ctx.Args().Slice() {
+		for _, id := range cliCtx.Args().Slice() {
 			logrus.Debugf("User specified image to be removed: %v", id)
 			ids[id] = true
 		}
 
-		all := ctx.Bool("all")
-		prune := ctx.Bool("prune")
+		all := cliCtx.Bool("all")
+		prune := cliCtx.Bool("prune")
 
 		// Add all available images to the ID selector
 		if all || prune {
-			r, err := imageClient.ListImages(nil)
+			r, err := imageClient.ListImages(context.TODO(), nil)
 			if err != nil {
 				return err
 			}
@@ -357,13 +358,13 @@ var removeImageCommand = &cli.Command{
 
 		// On prune, remove images which are in use from the ID selector
 		if prune {
-			runtimeClient, err := getRuntimeService(ctx, 0)
+			runtimeClient, err := getRuntimeService(cliCtx, 0)
 			if err != nil {
 				return err
 			}
 
 			// Container images
-			containers, err := runtimeClient.ListContainers(nil)
+			containers, err := runtimeClient.ListContainers(context.TODO(), nil)
 			if err != nil {
 				return err
 			}
@@ -593,7 +594,7 @@ func PullImageWithSandbox(client internalapi.ImageManagerService, image string, 
 		request.SandboxConfig = sandbox
 	}
 	logrus.Debugf("PullImageRequest: %v", request)
-	res, err := client.PullImage(request.Image, request.Auth, request.SandboxConfig)
+	res, err := client.PullImage(context.TODO(), request.Image, request.Auth, request.SandboxConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -607,7 +608,7 @@ func PullImageWithSandbox(client internalapi.ImageManagerService, image string, 
 func ListImages(client internalapi.ImageManagerService, image string) (*pb.ListImagesResponse, error) {
 	request := &pb.ListImagesRequest{Filter: &pb.ImageFilter{Image: &pb.ImageSpec{Image: image}}}
 	logrus.Debugf("ListImagesRequest: %v", request)
-	res, err := client.ListImages(request.Filter)
+	res, err := client.ListImages(context.TODO(), request.Filter)
 	if err != nil {
 		return nil, err
 	}
@@ -624,7 +625,7 @@ func ImageStatus(client internalapi.ImageManagerService, image string, verbose b
 		Verbose: verbose,
 	}
 	logrus.Debugf("ImageStatusRequest: %v", request)
-	res, err := client.ImageStatus(request.Image, request.Verbose)
+	res, err := client.ImageStatus(context.TODO(), request.Image, request.Verbose)
 	if err != nil {
 		return nil, err
 	}
@@ -640,7 +641,7 @@ func RemoveImage(client internalapi.ImageManagerService, image string) error {
 	}
 	request := &pb.RemoveImageRequest{Image: &pb.ImageSpec{Image: image}}
 	logrus.Debugf("RemoveImageRequest: %v", request)
-	if err := client.RemoveImage(request.Image); err != nil {
+	if err := client.RemoveImage(context.TODO(), request.Image); err != nil {
 		return err
 	}
 	return nil
@@ -649,7 +650,7 @@ func RemoveImage(client internalapi.ImageManagerService, image string) error {
 // ImageFsInfo sends an ImageStatusRequest to the server, and parses
 // the returned ImageFsInfoResponse.
 func ImageFsInfo(client internalapi.ImageManagerService) (*pb.ImageFsInfoResponse, error) {
-	res, err := client.ImageFsInfo()
+	res, err := client.ImageFsInfo(context.TODO())
 	if err != nil {
 		return nil, err
 	}

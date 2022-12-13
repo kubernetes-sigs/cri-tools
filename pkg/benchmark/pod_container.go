@@ -17,6 +17,8 @@ limitations under the License.
 package benchmark
 
 import (
+	"context"
+
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -68,20 +70,20 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 			benchmark := func() {
 				By("run PodSandbox")
-				podID, err := rc.RunPodSandbox(config, framework.TestContext.RuntimeHandler)
+				podID, err := rc.RunPodSandbox(context.TODO(), config, framework.TestContext.RuntimeHandler)
 				framework.ExpectNoError(err, "failed to create PodSandbox: %v", err)
 
 				By("create container in PodSandbox")
 				containerID := framework.CreateDefaultContainer(rc, ic, podID, config, "Pod-Container-for-creating-benchmark-")
 
 				By("start container in PodSandbox")
-				err = rc.StartContainer(containerID)
+				err = rc.StartContainer(context.TODO(), containerID)
 				framework.ExpectNoError(err, "failed to start Container: %v", err)
 
 				By("stop PodSandbox")
-				rc.StopPodSandbox(podID)
+				rc.StopPodSandbox(context.TODO(), podID)
 				By("delete PodSandbox")
-				rc.RemovePodSandbox(podID)
+				rc.RemovePodSandbox(context.TODO(), podID)
 			}
 
 			// Run a single test to ensure images are available and everything works

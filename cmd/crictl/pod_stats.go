@@ -258,7 +258,7 @@ func getPodSandboxStats(
 ) ([]*pb.PodSandboxStats, error) {
 	logrus.Debugf("PodSandboxStatsFilter: %v", filter)
 
-	stats, err := client.ListPodSandboxStats(filter)
+	stats, err := client.ListPodSandboxStats(context.TODO(), filter)
 	if err != nil {
 		return nil, fmt.Errorf("list pod sandbox stats: %w", err)
 	}

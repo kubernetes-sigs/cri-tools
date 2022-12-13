@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -70,7 +71,7 @@ func PortForward(client internalapi.RuntimeService, opts portforwardOptions) err
 		PodSandboxId: opts.id,
 	}
 	logrus.Debugf("PortForwardRequest: %v", request)
-	r, err := client.PortForward(request)
+	r, err := client.PortForward(context.TODO(), request)
 	logrus.Debugf("PortForwardResponse; %v", r)
 	if err != nil {
 		return err

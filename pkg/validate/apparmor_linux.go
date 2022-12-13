@@ -18,6 +18,7 @@ package validate
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -76,9 +77,9 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 
 			AfterEach(func() {
 				By("stop PodSandbox")
-				rc.StopPodSandbox(sandboxID)
+				rc.StopPodSandbox(context.TODO(), sandboxID)
 				By("delete PodSandbox")
-				rc.RemovePodSandbox(sandboxID)
+				rc.RemovePodSandbox(context.TODO(), sandboxID)
 			})
 
 			It("should fail with an unloaded profile", func() {
@@ -120,7 +121,7 @@ func createContainerWithAppArmor(rc internalapi.RuntimeService, ic internalapi.I
 	if shouldSucceed {
 		Expect(err).To(BeNil())
 		By("start container with apparmor")
-		err := rc.StartContainer(containerID)
+		err := rc.StartContainer(context.TODO(), containerID)
 		Expect(err).NotTo(HaveOccurred())
 
 		// wait container started and check the status.
@@ -136,7 +137,7 @@ func createContainerWithAppArmor(rc internalapi.RuntimeService, ic internalapi.I
 
 func checkContainerApparmor(rc internalapi.RuntimeService, containerID string, shoudRun bool) {
 	By("get container status")
-	resp, err := rc.ContainerStatus(containerID, false)
+	resp, err := rc.ContainerStatus(context.TODO(), containerID, false)
 	Expect(err).NotTo(HaveOccurred())
 
 	if shoudRun {

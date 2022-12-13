@@ -18,6 +18,7 @@ package validate
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -75,9 +76,9 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		AfterEach(func() {
 			By("stop PodSandbox")
-			rc.StopPodSandbox(podID)
+			rc.StopPodSandbox(context.TODO(), podID)
 			By("delete PodSandbox")
-			rc.RemovePodSandbox(podID)
+			rc.RemovePodSandbox(context.TODO(), podID)
 		})
 
 		It("runtime should support creating container [Conformance]", func() {
@@ -166,11 +167,11 @@ var _ = framework.KubeDescribe("Container", func() {
 			startContainer(rc, containerID)
 
 			By("test execSync with timeout")
-			_, _, err := rc.ExecSync(containerID, sleepCmd, time.Second)
+			_, _, err := rc.ExecSync(context.TODO(), containerID, sleepCmd, time.Second)
 			Expect(err).Should(HaveOccurred(), "execSync should timeout")
 
 			By("timeout exec process should be gone")
-			stdout, stderr, err := rc.ExecSync(containerID, checkSleepCmd,
+			stdout, stderr, err := rc.ExecSync(context.TODO(), containerID, checkSleepCmd,
 				time.Duration(defaultExecSyncTimeout)*time.Second)
 			framework.ExpectNoError(err)
 			Expect(string(stderr)).To(BeEmpty())
@@ -252,9 +253,9 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		AfterEach(func() {
 			By("stop PodSandbox")
-			rc.StopPodSandbox(podID)
+			rc.StopPodSandbox(context.TODO(), podID)
 			By("delete PodSandbox")
-			rc.RemovePodSandbox(podID)
+			rc.RemovePodSandbox(context.TODO(), podID)
 		})
 
 		It("runtime should support starting container with volume [Conformance]", func() {
@@ -308,9 +309,9 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		AfterEach(func() {
 			By("stop PodSandbox")
-			rc.StopPodSandbox(podID)
+			rc.StopPodSandbox(context.TODO(), podID)
 			By("delete PodSandbox")
-			rc.RemovePodSandbox(podID)
+			rc.RemovePodSandbox(context.TODO(), podID)
 			By("clean up the TempDir")
 			os.RemoveAll(hostPath)
 		})
@@ -348,7 +349,7 @@ var _ = framework.KubeDescribe("Container", func() {
 				filepath.Join(podConfig.LogDirectory, newLogPath))).To(Succeed())
 
 			By("reopen container log")
-			Expect(rc.ReopenContainerLog(containerID)).To(Succeed())
+			Expect(rc.ReopenContainerLog(context.TODO(), containerID)).To(Succeed())
 
 			Expect(pathExists(filepath.Join(podConfig.LogDirectory, logPath))).To(
 				BeTrue(), "new container log file should be created")
@@ -386,7 +387,7 @@ func statFound(stats []*runtimeapi.ContainerStats, containerID string) bool {
 // getContainerStatus gets ContainerState for containerID and fails if it gets error.
 func getContainerStatus(c internalapi.RuntimeService, containerID string) *runtimeapi.ContainerStatus {
 	By("Get container status for containerID: " + containerID)
-	status, err := c.ContainerStatus(containerID, false)
+	status, err := c.ContainerStatus(context.TODO(), containerID, false)
 	framework.ExpectNoError(err, "failed to get container %q status: %v", containerID, err)
 	return status.GetStatus()
 }
@@ -410,7 +411,7 @@ func createShellContainer(rc internalapi.RuntimeService, ic internalapi.ImageMan
 // startContainer start the container for containerID.
 func startContainer(c internalapi.RuntimeService, containerID string) {
 	By("Start container for containerID: " + containerID)
-	err := c.StartContainer(containerID)
+	err := c.StartContainer(context.TODO(), containerID)
 	framework.ExpectNoError(err, "failed to start container: %v", err)
 	framework.Logf("Started container %q\n", containerID)
 }
@@ -430,7 +431,7 @@ func stopContainer(c internalapi.RuntimeService, containerID string, timeout int
 
 	go func() {
 		defer GinkgoRecover()
-		err := c.StopContainer(containerID, timeout)
+		err := c.StopContainer(context.TODO(), containerID, timeout)
 		framework.ExpectNoError(err, "failed to stop container: %v", err)
 		stopped <- true
 	}()
@@ -454,7 +455,7 @@ func testStopContainer(c internalapi.RuntimeService, containerID string) {
 // removeContainer removes the container for containerID.
 func removeContainer(c internalapi.RuntimeService, containerID string) {
 	By("Remove container for containerID: " + containerID)
-	err := c.RemoveContainer(containerID)
+	err := c.RemoveContainer(context.TODO(), containerID)
 	framework.ExpectNoError(err, "failed to remove container: %v", err)
 	framework.Logf("Removed container %q\n", containerID)
 }
@@ -465,7 +466,7 @@ func listContainerForID(c internalapi.RuntimeService, containerID string) []*run
 	filter := &runtimeapi.ContainerFilter{
 		Id: containerID,
 	}
-	containers, err := c.ListContainers(filter)
+	containers, err := c.ListContainers(context.TODO(), filter)
 	framework.ExpectNoError(err, "failed to list containers %q status: %v", containerID, err)
 	return containers
 }
@@ -473,7 +474,7 @@ func listContainerForID(c internalapi.RuntimeService, containerID string) []*run
 // execSyncContainer test execSync for containerID and make sure the response is right.
 func execSyncContainer(c internalapi.RuntimeService, containerID string, command []string) string {
 	By("execSync for containerID: " + containerID)
-	stdout, stderr, err := c.ExecSync(containerID, command, time.Duration(defaultExecSyncTimeout)*time.Second)
+	stdout, stderr, err := c.ExecSync(context.TODO(), containerID, command, time.Duration(defaultExecSyncTimeout)*time.Second)
 	framework.ExpectNoError(err, "failed to execSync in container %q", containerID)
 	Expect(string(stderr)).To(BeEmpty(), "The stderr should be empty.")
 	framework.Logf("Execsync succeed")
@@ -656,7 +657,7 @@ func verifyLogContents(podConfig *runtimeapi.PodSandboxConfig, logPath string, l
 // listContainerStatsForID lists container for containerID.
 func listContainerStatsForID(c internalapi.RuntimeService, containerID string) *runtimeapi.ContainerStats {
 	By("List container stats for containerID: " + containerID)
-	stats, err := c.ContainerStats(containerID)
+	stats, err := c.ContainerStats(context.TODO(), containerID)
 	framework.ExpectNoError(err, "failed to list container stats for %q status: %v", containerID, err)
 	return stats
 }
@@ -664,7 +665,7 @@ func listContainerStatsForID(c internalapi.RuntimeService, containerID string) *
 // listContainerStats lists stats for containers based on filter
 func listContainerStats(c internalapi.RuntimeService, filter *runtimeapi.ContainerStatsFilter) []*runtimeapi.ContainerStats {
 	By("List container stats for all containers:")
-	stats, err := c.ListContainerStats(filter)
+	stats, err := c.ListContainerStats(context.TODO(), filter)
 	framework.ExpectNoError(err, "failed to list container stats for containers status: %v", err)
 	return stats
 }

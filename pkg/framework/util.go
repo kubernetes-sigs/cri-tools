@@ -17,6 +17,7 @@ limitations under the License.
 package framework
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"runtime"
@@ -150,7 +151,9 @@ func LoadCRIClient() (*InternalAPIClient, error) {
 		// Fallback to runtime service endpoint
 		imageServiceAddr = TestContext.RuntimeServiceAddr
 	}
-	iService, err := remote.NewRemoteImageService(imageServiceAddr, TestContext.ImageServiceTimeout)
+	iService, err := remote.NewRemoteImageService(imageServiceAddr, TestContext.ImageServiceTimeout,
+		trace.NewNoopTracerProvider(),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -231,7 +234,7 @@ func BuildPodSandboxMetadata(podSandboxName, uid, namespace string, attempt uint
 
 // RunPodSandbox runs a PodSandbox.
 func RunPodSandbox(c internalapi.RuntimeService, config *runtimeapi.PodSandboxConfig) string {
-	podID, err := c.RunPodSandbox(config, TestContext.RuntimeHandler)
+	podID, err := c.RunPodSandbox(context.TODO(), config, TestContext.RuntimeHandler)
 	ExpectNoError(err, "failed to create PodSandbox: %v", err)
 	return podID
 }
@@ -300,7 +303,7 @@ func CreateContainerWithError(rc internalapi.RuntimeService, ic internalapi.Imag
 	}
 
 	By("Create container.")
-	containerID, err := rc.CreateContainer(podID, config, podConfig)
+	containerID, err := rc.CreateContainer(context.TODO(), podID, config, podConfig)
 	return containerID, err
 }
 
@@ -318,14 +321,14 @@ func ImageStatus(c internalapi.ImageManagerService, imageName string) *runtimeap
 	imageSpec := &runtimeapi.ImageSpec{
 		Image: imageName,
 	}
-	status, err := c.ImageStatus(imageSpec, false)
+	status, err := c.ImageStatus(context.TODO(), imageSpec, false)
 	ExpectNoError(err, "failed to get image status: %v", err)
 	return status.GetImage()
 }
 
 // ListImage list the image filtered by the image filter.
 func ListImage(c internalapi.ImageManagerService, filter *runtimeapi.ImageFilter) []*runtimeapi.Image {
-	images, err := c.ListImages(filter)
+	images, err := c.ListImages(context.TODO(), filter)
 	ExpectNoError(err, "Failed to get image list: %v", err)
 	return images
 }
@@ -358,7 +361,7 @@ func PullPublicImage(c internalapi.ImageManagerService, imageName string, podCon
 	imageSpec := &runtimeapi.ImageSpec{
 		Image: imageName,
 	}
-	id, err := c.PullImage(imageSpec, nil, podConfig)
+	id, err := c.PullImage(context.TODO(), imageSpec, nil, podConfig)
 	ExpectNoError(err, "failed to pull image: %v", err)
 	return id
 }

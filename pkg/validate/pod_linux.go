@@ -17,6 +17,7 @@ limitations under the License.
 package validate
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -45,9 +46,9 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 		AfterEach(func() {
 			By("stop PodSandbox")
-			rc.StopPodSandbox(podID)
+			rc.StopPodSandbox(context.TODO(), podID)
 			By("delete PodSandbox")
-			rc.RemovePodSandbox(podID)
+			rc.RemovePodSandbox(context.TODO(), podID)
 		})
 
 		It("should support safe sysctls", func() {
@@ -101,7 +102,7 @@ func createSandboxWithSysctls(rc internalapi.RuntimeService, sysctls map[string]
 // checkSetSysctls checks whether sysctl settings is equal to expected string.
 func checkSetSysctls(rc internalapi.RuntimeService, containerID, sysctlPath, expected string) {
 	cmd := []string{"cat", sysctlPath}
-	stdout, _, err := rc.ExecSync(containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	stdout, _, err := rc.ExecSync(context.TODO(), containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(strings.TrimSpace(string(stdout))).To(Equal(expected))
 }

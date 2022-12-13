@@ -17,6 +17,7 @@ limitations under the License.
 package validate
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"path"
@@ -52,9 +53,9 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 
 		AfterEach(func() {
 			By("stop PodSandbox")
-			rc.StopPodSandbox(podID)
+			rc.StopPodSandbox(context.TODO(), podID)
 			By("delete PodSandbox")
-			rc.RemovePodSandbox(podID)
+			rc.RemovePodSandbox(context.TODO(), podID)
 		})
 
 		It("mount with 'rprivate' should not support propagation", func() {
@@ -247,7 +248,7 @@ func createMountPropagationContainer(
 	containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 
 	By("verifying container status")
-	resp, err := rc.ContainerStatus(containerID, true)
+	resp, err := rc.ContainerStatus(context.TODO(), containerID, true)
 	framework.ExpectNoError(err, "unable to get container status")
 	Expect(len(resp.Status.Mounts), 1)
 	Expect(resp.Status.Mounts[0].ContainerPath).To(Equal(hostPath))

@@ -18,6 +18,7 @@ package validate
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -58,9 +59,9 @@ var _ = framework.KubeDescribe("Streaming", func() {
 
 		AfterEach(func() {
 			By("stop PodSandbox")
-			rc.StopPodSandbox(podID)
+			rc.StopPodSandbox(context.TODO(), podID)
 			By("delete PodSandbox")
-			rc.RemovePodSandbox(podID)
+			rc.RemovePodSandbox(context.TODO(), podID)
 		})
 
 		It("runtime should support exec with tty=false and stdin=false [Conformance]", func() {
@@ -151,7 +152,7 @@ var _ = framework.KubeDescribe("Streaming", func() {
 
 func createExec(c internalapi.RuntimeService, execReq *runtimeapi.ExecRequest) string {
 	By("exec given command in container: " + execReq.ContainerId)
-	resp, err := c.Exec(execReq)
+	resp, err := c.Exec(context.TODO(), execReq)
 	framework.ExpectNoError(err, "failed to exec in container %q", execReq.ContainerId)
 	framework.Logf("Get exec url: " + resp.Url)
 	return resp.Url
@@ -238,7 +239,7 @@ func createDefaultAttach(c internalapi.RuntimeService, containerID string) strin
 		Tty:         false,
 	}
 
-	resp, err := c.Attach(req)
+	resp, err := c.Attach(context.TODO(), req)
 	framework.ExpectNoError(err, "failed to attach in container %q", containerID)
 	framework.Logf("Get attach url: " + resp.Url)
 	return resp.Url
@@ -313,7 +314,7 @@ func createDefaultPortForward(c internalapi.RuntimeService, podID string) string
 		PodSandboxId: podID,
 	}
 
-	resp, err := c.PortForward(req)
+	resp, err := c.PortForward(context.TODO(), req)
 	framework.ExpectNoError(err, "failed to port forward PodSandbox %q", podID)
 	framework.Logf("Get port forward url: " + resp.Url)
 	return resp.Url

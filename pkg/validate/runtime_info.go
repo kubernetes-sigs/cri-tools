@@ -17,6 +17,8 @@ limitations under the License.
 package validate
 
 import (
+	"context"
+
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -62,7 +64,7 @@ func TestGetVersion(c internalapi.RuntimeService) {
 // TestGetRuntimeStatus test if we can get runtime status.
 func TestGetRuntimeStatus(c internalapi.RuntimeService) {
 	var count int
-	status, err := c.Status(false)
+	status, err := c.Status(context.TODO(), false)
 	framework.ExpectNoError(err, "failed to get runtime conditions: %v", err)
 
 	for _, condition := range status.Status.Conditions {
@@ -78,7 +80,7 @@ func TestGetRuntimeStatus(c internalapi.RuntimeService) {
 
 // getVersion gets runtime version info.
 func getVersion(c internalapi.RuntimeService) *runtimeapi.VersionResponse {
-	version, err := c.Version(defaultAPIVersion)
+	version, err := c.Version(context.TODO(), defaultAPIVersion)
 	framework.ExpectNoError(err, "failed to get version: %v", err)
 	return version
 }

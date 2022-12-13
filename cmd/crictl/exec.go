@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/url"
@@ -113,7 +114,7 @@ func ExecSync(client internalapi.RuntimeService, opts execOptions) (int, error) 
 	}
 	logrus.Debugf("ExecSyncRequest: %v", request)
 	timeoutDuration := time.Duration(opts.timeout) * time.Second
-	stdout, stderr, err := client.ExecSync(opts.id, opts.cmd, timeoutDuration)
+	stdout, stderr, err := client.ExecSync(context.TODO(), opts.id, opts.cmd, timeoutDuration)
 	if err != nil {
 		return 1, err
 	}
@@ -134,7 +135,7 @@ func Exec(client internalapi.RuntimeService, opts execOptions) error {
 	}
 
 	logrus.Debugf("ExecRequest: %v", request)
-	r, err := client.Exec(request)
+	r, err := client.Exec(context.TODO(), request)
 	logrus.Debugf("ExecResponse: %v", r)
 	if err != nil {
 		return err

@@ -102,6 +102,8 @@ func getImageService(context *cli.Context) (res internalapi.ImageManagerService,
 		ImageEndpoint = RuntimeEndpoint
 		ImageEndpointIsSet = RuntimeEndpointIsSet
 	}
+	tp := trace.NewNoopTracerProvider()
+
 	logrus.Debugf("get image connection")
 	// If no EP set then use the default endpoint types
 	if !ImageEndpointIsSet {
@@ -115,7 +117,7 @@ func getImageService(context *cli.Context) (res internalapi.ImageManagerService,
 		for _, endPoint := range defaultRuntimeEndpoints {
 			logrus.Debugf("Connect using endpoint %q with %q timeout", endPoint, Timeout)
 
-			res, err = remote.NewRemoteImageService(endPoint, Timeout)
+			res, err = remote.NewRemoteImageService(endPoint, Timeout, tp)
 			if err != nil {
 				logrus.Error(err)
 				continue
@@ -126,7 +128,7 @@ func getImageService(context *cli.Context) (res internalapi.ImageManagerService,
 		}
 		return res, err
 	}
-	return remote.NewRemoteImageService(ImageEndpoint, Timeout)
+	return remote.NewRemoteImageService(ImageEndpoint, Timeout, tp)
 }
 
 func getTimeout(timeDuration time.Duration) time.Duration {
