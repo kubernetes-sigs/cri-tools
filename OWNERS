@@ -5,6 +5,9 @@ approvers:
   - saschagrunert
   - sig-node-approvers
 
+reviewers:
+  - haircommander
+
 emeritus_approvers:
   - euank
   - heartlock
