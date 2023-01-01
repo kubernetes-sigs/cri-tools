@@ -197,7 +197,7 @@ const (
 	webServerHostNetContainerPort int32 = 12003
 
 	// Linux defaults
-	webServerLinuxImage        = "nginx"
+	webServerLinuxImage        = "k8s.gcr.io/e2e-test-images/nginx:1.14-2"
 	hostNetWebServerLinuxImage = registry + "hostnet-nginx-" + runtime.GOARCH
 
 	// Windows defaults
