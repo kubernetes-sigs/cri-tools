@@ -19,8 +19,8 @@ require (
 	github.com/urfave/cli/v2 v2.23.7
 	go.opentelemetry.io/otel/trace v1.10.0
 	golang.org/x/net v0.4.0
-	golang.org/x/sys v0.3.0
-	golang.org/x/term v0.3.0
+	golang.org/x/sys v0.4.0
+	golang.org/x/term v0.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.25.0
 	k8s.io/apimachinery v0.25.0
