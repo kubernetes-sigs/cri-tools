@@ -210,11 +210,24 @@ func displayPodStats(
 		}
 		id := getTruncatedID(s.Attributes.Id, "")
 
-		linux := s.GetLinux()
 		var cpu, mem uint64
+		var ts int64
+
+		linux := s.GetLinux()
+		windows := s.GetWindows()
+
+		if linux != nil && windows != nil {
+			return fmt.Errorf("pod %q has both linux and windows stats which is not supported", id)
+		}
+
 		if linux != nil {
 			cpu = linux.GetCpu().GetUsageCoreNanoSeconds().GetValue()
 			mem = linux.GetMemory().GetWorkingSetBytes().GetValue()
+			ts = linux.GetCpu().GetTimestamp()
+		} else if windows != nil {
+			cpu = windows.GetCpu().GetUsageCoreNanoSeconds().GetValue()
+			mem = windows.GetMemory().GetWorkingSetBytes().GetValue()
+			ts = windows.GetCpu().GetTimestamp()
 		}
 
 		if cpu == 0 && mem == 0 {
@@ -222,21 +235,32 @@ func displayPodStats(
 			continue
 		}
 
+		var oldCpu uint64
+		var oldCpuTs int64
 		old, ok := oldStats[s.Attributes.Id]
 		if !ok {
 			// Skip new pod
 			continue
 		}
+
 		oldLinux := old.GetLinux()
+		oldWindows := old.GetWindows()
+		if linux != nil {
+			oldCpuTs = oldLinux.GetCpu().GetTimestamp()
+			oldCpu = oldLinux.GetCpu().GetUsageCoreNanoSeconds().GetValue()
+		} else if windows != nil {
+			oldCpuTs = oldWindows.GetCpu().GetTimestamp()
+			oldCpu = oldWindows.GetCpu().GetUsageCoreNanoSeconds().GetValue()
+		}
 
 		var cpuPerc float64
 		if cpu != 0 {
 			// Only generate cpuPerc for running sandbox
-			duration := linux.GetCpu().GetTimestamp() - oldLinux.GetCpu().GetTimestamp()
+			duration := ts - oldCpuTs
 			if duration == 0 {
 				return errors.New("cpu stat is not updated during sample")
 			}
-			cpuPerc = float64(cpu-oldLinux.GetCpu().GetUsageCoreNanoSeconds().GetValue()) / float64(duration) * 100
+			cpuPerc = float64(cpu-oldCpu) / float64(duration) * 100
 		}
 		display.AddRow([]string{
 			s.Attributes.GetMetadata().GetName(),
