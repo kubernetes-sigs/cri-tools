@@ -94,10 +94,10 @@ const (
 	DefaultStopContainerTimeout int64 = 60
 
 	// DefaultLinuxContainerImage default container image for Linux
-	DefaultLinuxContainerImage string = "k8s.gcr.io/e2e-test-images/busybox:1.29-2"
+	DefaultLinuxContainerImage string = DefaultRegistryE2ETestImagesPrefix + "busybox:1.29-2"
 
 	// DefaultWindowsContainerImage default container image for Windows
-	DefaultWindowsContainerImage string = "k8s.gcr.io/e2e-test-images/busybox:1.29-2"
+	DefaultWindowsContainerImage string = DefaultLinuxContainerImage
 )
 
 // Set the constants based on operating system and flags

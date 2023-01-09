@@ -117,11 +117,16 @@ type TestContextType struct {
 // TestContext is a test context.
 var TestContext TestContextType
 
-// DefaultRegistryPrefix specifies the default prefix used for images
-const DefaultRegistryPrefix = "docker.io/library"
+const (
+	// DefaultRegistryPrefix specifies the default prefix used for images.
+	DefaultRegistryPrefix = "registry.k8s.io"
 
-const DockerShimSockPathUnix = "unix:///var/run/dockershim.sock"
-const DockerShimSockPathWindows = "npipe:////./pipe/dockershim"
+	// DefaultRegistryE2ETestImagesPrefix is the default prefix for e2e test images.
+	DefaultRegistryE2ETestImagesPrefix = DefaultRegistryPrefix + "/e2e-test-images/"
+
+	DockerShimSockPathUnix    = "unix:///var/run/dockershim.sock"
+	DockerShimSockPathWindows = "npipe:////./pipe/dockershim"
+)
 
 // RegisterFlags registers flags to e2e test suites.
 func RegisterFlags() {
@@ -161,7 +166,7 @@ func RegisterFlags() {
 	} else {
 		TestContext.IsLcow = false
 	}
-	flag.StringVar(&TestContext.RegistryPrefix, "registry-prefix", DefaultRegistryPrefix, "A possible registry prefix added to all images, like 'localhost:5000/'")
+	flag.StringVar(&TestContext.RegistryPrefix, "registry-prefix", DefaultRegistryPrefix, "A possible registry prefix added to all images, like 'localhost:5000'")
 }
 
 // Loads any external file-based parameters into the TestContextType.

@@ -197,12 +197,12 @@ const (
 	webServerHostNetContainerPort int32 = 12003
 
 	// Linux defaults
-	webServerLinuxImage        = "k8s.gcr.io/e2e-test-images/nginx:1.14-2"
+	webServerLinuxImage        = framework.DefaultRegistryE2ETestImagesPrefix + "nginx:1.14-2"
 	hostNetWebServerLinuxImage = registry + "hostnet-nginx-" + runtime.GOARCH
 
 	// Windows defaults
-	webServerWindowsImage        = "k8s.gcr.io/e2e-test-images/nginx:1.14-2"
-	hostNetWebServerWindowsImage = "k8s.gcr.io/e2e-test-images/nginx:1.14-2"
+	webServerWindowsImage        = webServerLinuxImage
+	hostNetWebServerWindowsImage = webServerLinuxImage
 )
 
 var (
