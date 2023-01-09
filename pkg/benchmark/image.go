@@ -34,19 +34,22 @@ import (
 
 const (
 	defaultImageBenchmarkTimeoutSeconds = 10
+
+	// defaultImageListingPrefix is for avoiding Docker Hub's rate limit
+	defaultImageListingPrefix = "public.ecr.aws/docker/library/"
 )
 
 var defaultImageListingBenchmarkImagesAmd64 = []string{
-	"busybox:1.26.2-glibc",
-	"busybox:1-uclibc",
-	"busybox:1",
-	"busybox:1-glibc",
-	"busybox:1-musl",
+	defaultImageListingPrefix + "busybox:1.35.0-glibc",
+	defaultImageListingPrefix + "busybox:1-uclibc",
+	defaultImageListingPrefix + "busybox:1",
+	defaultImageListingPrefix + "busybox:1-glibc",
+	defaultImageListingPrefix + "busybox:1-musl",
 }
 var defaultImageListingBenchmarkImages = []string{
-	"busybox:1",
-	"busybox:1-glibc",
-	"busybox:1-musl",
+	defaultImageListingPrefix + "busybox:1",
+	defaultImageListingPrefix + "busybox:1-glibc",
+	defaultImageListingPrefix + "busybox:1-musl",
 }
 
 var _ = framework.KubeDescribe("Image", func() {

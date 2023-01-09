@@ -34,7 +34,7 @@ import (
 
 const (
 	httpdContainerPort = 80
-	httpdImage         = "httpd"
+	httpdImage         = "k8s.gcr.io/e2e-test-images/httpd:2.4.39-4"
 )
 
 var _ = framework.KubeDescribe("Multiple Containers [Conformance]", func() {
