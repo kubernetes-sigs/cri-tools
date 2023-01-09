@@ -36,9 +36,9 @@ import (
 )
 
 const (
-	nginxContainerImage string = "k8s.gcr.io/e2e-test-images/nginx:1.14-2"
+	nginxContainerImage string = framework.DefaultRegistryE2ETestImagesPrefix + "nginx:1.14-2"
 	localhost           string = "localhost/"
-	noNewPrivsImage     string = "k8s.gcr.io/e2e-test-images/nonewprivs:1.3"
+	noNewPrivsImage     string = framework.DefaultRegistryE2ETestImagesPrefix + "nonewprivs:1.3"
 )
 
 var _ = framework.KubeDescribe("Security Context", func() {
