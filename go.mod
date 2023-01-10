@@ -9,8 +9,8 @@ require (
 	github.com/golang/glog v1.0.0
 	github.com/golang/protobuf v1.5.2
 	github.com/moby/term v0.0.0-20220808134915-39b0c02b01ae
-	github.com/onsi/ginkgo/v2 v2.4.0
-	github.com/onsi/gomega v1.24.0
+	github.com/onsi/ginkgo/v2 v2.7.0
+	github.com/onsi/gomega v1.24.1
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/runc v1.1.4
 	github.com/opencontainers/selinux v1.10.2
@@ -86,7 +86,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b // indirect
 	golang.org/x/text v0.6.0 // indirect
 	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8 // indirect
-	golang.org/x/tools v0.2.0 // indirect
+	golang.org/x/tools v0.4.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220502173005-c8bf987b8c21 // indirect
 	google.golang.org/grpc v1.49.0 // indirect
