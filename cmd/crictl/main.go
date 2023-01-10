@@ -19,6 +19,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"sort"
 	"time"
 
@@ -34,6 +35,7 @@ import (
 )
 
 const defaultTimeout = 2 * time.Second
+const defaultTimeoutWindows = 200 * time.Second
 
 var (
 	// RuntimeEndpoint is CRI server runtime endpoint
@@ -44,7 +46,7 @@ var (
 	ImageEndpoint string
 	// ImageEndpointIsSet is true when ImageEndpoint is configured
 	ImageEndpointIsSet bool
-	// Timeout  of connecting to server (default: 10s)
+	// Timeout  of connecting to server (default: 2s on Linux, 200s on Windows)
 	Timeout time.Duration
 	// Debug enable debug output
 	Debug bool
@@ -135,6 +137,11 @@ func getTimeout(timeDuration time.Duration) time.Duration {
 	if timeDuration.Seconds() > 0 {
 		return timeDuration
 	}
+
+	if runtime.GOOS == "windows" {
+		return defaultTimeoutWindows
+	}
+
 	return defaultTimeout // use default
 }
 
