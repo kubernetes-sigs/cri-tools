@@ -25,7 +25,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"go.opentelemetry.io/otel/trace"
 
 	internalapi "k8s.io/cri-api/pkg/apis"
 	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
@@ -68,8 +67,6 @@ func getRuntimeService(context *cli.Context, timeout time.Duration) (res interna
 		t = timeout
 	}
 
-	tp := trace.NewNoopTracerProvider()
-
 	// If no EP set then use the default endpoint types
 	if !RuntimeEndpointIsSet {
 		logrus.Warningf("runtime connect using default endpoints: %v. "+
@@ -82,7 +79,7 @@ func getRuntimeService(context *cli.Context, timeout time.Duration) (res interna
 		for _, endPoint := range defaultRuntimeEndpoints {
 			logrus.Debugf("Connect using endpoint %q with %q timeout", endPoint, t)
 
-			res, err = remote.NewRemoteRuntimeService(endPoint, t, tp)
+			res, err = remote.NewRemoteRuntimeService(endPoint, t, nil)
 			if err != nil {
 				logrus.Error(err)
 				continue
@@ -93,7 +90,7 @@ func getRuntimeService(context *cli.Context, timeout time.Duration) (res interna
 		}
 		return res, err
 	}
-	return remote.NewRemoteRuntimeService(RuntimeEndpoint, t, tp)
+	return remote.NewRemoteRuntimeService(RuntimeEndpoint, t, nil)
 }
 
 func getImageService(context *cli.Context) (res internalapi.ImageManagerService, err error) {
@@ -104,7 +101,6 @@ func getImageService(context *cli.Context) (res internalapi.ImageManagerService,
 		ImageEndpoint = RuntimeEndpoint
 		ImageEndpointIsSet = RuntimeEndpointIsSet
 	}
-	tp := trace.NewNoopTracerProvider()
 
 	logrus.Debugf("get image connection")
 	// If no EP set then use the default endpoint types
@@ -119,7 +115,7 @@ func getImageService(context *cli.Context) (res internalapi.ImageManagerService,
 		for _, endPoint := range defaultRuntimeEndpoints {
 			logrus.Debugf("Connect using endpoint %q with %q timeout", endPoint, Timeout)
 
-			res, err = remote.NewRemoteImageService(endPoint, Timeout, tp)
+			res, err = remote.NewRemoteImageService(endPoint, Timeout, nil)
 			if err != nil {
 				logrus.Error(err)
 				continue
@@ -130,7 +126,7 @@ func getImageService(context *cli.Context) (res internalapi.ImageManagerService,
 		}
 		return res, err
 	}
-	return remote.NewRemoteImageService(ImageEndpoint, Timeout, tp)
+	return remote.NewRemoteImageService(ImageEndpoint, Timeout, nil)
 }
 
 func getTimeout(timeDuration time.Duration) time.Duration {
