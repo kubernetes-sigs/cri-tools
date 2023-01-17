@@ -27,7 +27,6 @@ import (
 
 	"github.com/docker/distribution/reference"
 	"github.com/pborman/uuid"
-	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/yaml.v3"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -140,7 +139,7 @@ func LoadCRIClient() (*InternalAPIClient, error) {
 	rService, err := remote.NewRemoteRuntimeService(
 		TestContext.RuntimeServiceAddr,
 		TestContext.RuntimeServiceTimeout,
-		trace.NewNoopTracerProvider(),
+		nil,
 	)
 	if err != nil {
 		return nil, err
@@ -151,9 +150,7 @@ func LoadCRIClient() (*InternalAPIClient, error) {
 		// Fallback to runtime service endpoint
 		imageServiceAddr = TestContext.RuntimeServiceAddr
 	}
-	iService, err := remote.NewRemoteImageService(imageServiceAddr, TestContext.ImageServiceTimeout,
-		trace.NewNoopTracerProvider(),
-	)
+	iService, err := remote.NewRemoteImageService(imageServiceAddr, TestContext.ImageServiceTimeout, nil)
 	if err != nil {
 		return nil, err
 	}
