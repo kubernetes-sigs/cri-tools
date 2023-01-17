@@ -135,8 +135,8 @@ func RegisterFlags() {
 	// Turn on verbose by default to get spec names
 	reporter.Verbose = true
 
-	// Turn on EmitSpecProgress to get spec progress (especially on interrupt)
-	suite.EmitSpecProgress = true
+	// Turn on ShowNodeEvents to get spec progress (especially on interrupt)
+	reporter.ShowNodeEvents = true
 
 	// Randomize specs as well as suites
 	suite.RandomizeAllSpecs = true
