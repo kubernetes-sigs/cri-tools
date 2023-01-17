@@ -6,6 +6,8 @@ crictl is currently in Beta and still under quick iterations. It is hosted at th
 
 ## Install crictl
 
+> **NOTE:** The below steps are based on linux-amd64, however you can get downloads for all other platforms (Windows, ARM, etc) in the [releases page](https://github.com/kubernetes-sigs/cri-tools/release).
+
 `crictl` can be downloaded from cri-tools [release page](https://github.com/kubernetes-sigs/cri-tools/releases):
 
 - using `wget`:
