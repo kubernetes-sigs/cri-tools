@@ -16,7 +16,7 @@ require (
 	github.com/opencontainers/selinux v1.10.2
 	github.com/pborman/uuid v1.2.1
 	github.com/sirupsen/logrus v1.9.0
-	github.com/urfave/cli/v2 v2.23.7
+	github.com/urfave/cli/v2 v2.24.1
 	golang.org/x/net v0.5.0
 	golang.org/x/sys v0.4.0
 	golang.org/x/term v0.4.0
