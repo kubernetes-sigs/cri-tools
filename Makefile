@@ -15,13 +15,15 @@
 MAKEFLAGS += --no-print-directory
 GO ?= go
 
+GOARCH ?= $(shell $(GO) env GOARCH)
+
 # test for go module support
 ifeq ($(shell go help mod >/dev/null 2>&1 && echo true), true)
-export GO_BUILD=GO111MODULE=on $(GO) build -mod=vendor
-export GO_TEST=GO111MODULE=on $(GO) test -mod=vendor
+export GO_BUILD=GO111MODULE=on GOARCH=$(GOARCH) $(GO) build -mod=vendor
+export GO_TEST=GO111MODULE=on GOARCH=$(GOARCH) $(GO) test -mod=vendor
 else
-export GO_BUILD=$(GO) build
-export GO_TEST=$(GO) test
+export GO_BUILD=GOARCH=$(GOARCH) $(GO) build
+export GO_TEST=GOARCH=$(GOARCH) $(GO) test
 endif
 
 GOOS := $(shell $(GO) env GOOS)
