@@ -16,19 +16,18 @@ MAKEFLAGS += --no-print-directory
 GO ?= go
 
 GOARCH ?= $(shell $(GO) env GOARCH)
+GOOS ?= $(shell $(GO) env GOOS)
+ifeq ($(GOOS),windows)
+	BIN_EXT := .exe
+endif
 
 # test for go module support
 ifeq ($(shell go help mod >/dev/null 2>&1 && echo true), true)
-export GO_BUILD=GO111MODULE=on GOARCH=$(GOARCH) $(GO) build -mod=vendor
-export GO_TEST=GO111MODULE=on GOARCH=$(GOARCH) $(GO) test -mod=vendor
+export GO_BUILD=GO111MODULE=on GOARCH=$(GOARCH) GOOS=$(GOOS) $(GO) build -mod=vendor
+export GO_TEST=GO111MODULE=on GOARCH=$(GOARCH) GOOS=$(GOOS) $(GO) test -mod=vendor
 else
-export GO_BUILD=GOARCH=$(GOARCH) $(GO) build
-export GO_TEST=GOARCH=$(GOARCH) $(GO) test
-endif
-
-GOOS := $(shell $(GO) env GOOS)
-ifeq ($(GOOS),windows)
-	BIN_EXT := .exe
+export GO_BUILD=GOARCH=$(GOARCH) GOOS=$(GOOS) $(GO) build
+export GO_TEST=GOARCH=$(GOARCH) GOOS=$(GOOS) $(GO) test
 endif
 
 PROJECT := github.com/kubernetes-sigs/cri-tools
@@ -39,7 +38,7 @@ VERSION := $(VERSION:v%=%)
 GO_LDFLAGS := -X $(PROJECT)/pkg/version.Version=$(VERSION)
 
 BUILD_PATH := $(shell pwd)/build
-BUILD_BIN_PATH := $(BUILD_PATH)/bin
+BUILD_BIN_PATH := $(BUILD_PATH)/bin/$(GOOS)/$(GOARCH)
 
 define go-build
 	$(shell cd `pwd` && $(GO_BUILD) -o $(BUILD_BIN_PATH)/$(shell basename $(1)) $(1))
