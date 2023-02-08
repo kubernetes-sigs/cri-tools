@@ -217,12 +217,13 @@ func displayStats(ctx context.Context, client internalapi.RuntimeService, reques
 		return err
 	}
 
-	display.AddRow([]string{columnContainer, columnCPU, columnMemory, columnDisk, columnInodes})
+	display.AddRow([]string{columnContainer, columnName, columnCPU, columnMemory, columnDisk, columnInodes})
 	for _, s := range r.GetStats() {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
 		id := getTruncatedID(s.Attributes.Id, "")
+		name := s.GetAttributes().GetMetadata().GetName()
 		cpu := s.GetCpu().GetUsageCoreNanoSeconds().GetValue()
 		mem := s.GetMemory().GetWorkingSetBytes().GetValue()
 		disk := s.GetWritableLayer().GetUsedBytes().GetValue()
@@ -245,7 +246,7 @@ func displayStats(ctx context.Context, client internalapi.RuntimeService, reques
 			}
 			cpuPerc = float64(cpu-old.GetCpu().GetUsageCoreNanoSeconds().GetValue()) / float64(duration) * 100
 		}
-		display.AddRow([]string{id, fmt.Sprintf("%.2f", cpuPerc), units.HumanSize(float64(mem)),
+		display.AddRow([]string{id, name, fmt.Sprintf("%.2f", cpuPerc), units.HumanSize(float64(mem)),
 			units.HumanSize(float64(disk)), fmt.Sprintf("%d", inodes)})
 
 	}
