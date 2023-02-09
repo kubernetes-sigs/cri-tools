@@ -72,7 +72,7 @@ var pullImageCommand = &cli.Command{
 		&cli.StringFlag{
 			Name:      "pod-config",
 			Value:     "",
-			Usage:     "Use `pod-config.[json|yaml]` to override the the pull context",
+			Usage:     "Use `pod-config.[json|yaml]` to override the the pull c",
 			TakesFile: true,
 		},
 		&cli.StringSliceFlag{
@@ -82,31 +82,35 @@ var pullImageCommand = &cli.Command{
 		},
 	},
 	ArgsUsage: "NAME[:TAG|@DIGEST]",
-	Action: func(context *cli.Context) error {
-		imageName := context.Args().First()
+	Action: func(c *cli.Context) error {
+		imageName := c.Args().First()
 		if imageName == "" {
-			return cli.ShowSubcommandHelp(context)
+			return fmt.Errorf("Image name cannot be empty")
 		}
 
-		imageClient, err := getImageService(context)
+		if c.NArg() > 1 {
+			return cli.ShowSubcommandHelp(c)
+		}
+
+		imageClient, err := getImageService(c)
 		if err != nil {
 			return err
 		}
 
-		auth, err := getAuth(context.String("creds"), context.String("auth"), context.String("username"))
+		auth, err := getAuth(c.String("creds"), c.String("auth"), c.String("username"))
 		if err != nil {
 			return err
 		}
 		var sandbox *pb.PodSandboxConfig
-		if context.IsSet("pod-config") {
-			sandbox, err = loadPodSandboxConfig(context.String("pod-config"))
+		if c.IsSet("pod-config") {
+			sandbox, err = loadPodSandboxConfig(c.String("pod-config"))
 			if err != nil {
 				return fmt.Errorf("load podSandboxConfig: %w", err)
 			}
 		}
 		var ann map[string]string
-		if context.IsSet("annotation") {
-			annotationFlags := context.StringSlice("annotation")
+		if c.IsSet("annotation") {
+			annotationFlags := c.StringSlice("annotation")
 			ann, err = parseLabelStringSlice(annotationFlags)
 			if err != nil {
 				return err
@@ -152,19 +156,23 @@ var listImageCommand = &cli.Command{
 			Usage: "Show output without truncating the ID",
 		},
 	},
-	Action: func(context *cli.Context) error {
-		imageClient, err := getImageService(context)
+	Action: func(c *cli.Context) error {
+		if c.NArg() > 1 {
+			return cli.ShowSubcommandHelp(c)
+		}
+
+		imageClient, err := getImageService(c)
 		if err != nil {
 			return err
 		}
 
-		r, err := ListImages(imageClient, context.Args().First())
+		r, err := ListImages(imageClient, c.Args().First())
 		if err != nil {
 			return fmt.Errorf("listing images: %w", err)
 		}
 		sort.Sort(imageByRef(r.Images))
 
-		switch context.String("output") {
+		switch c.String("output") {
 		case "json":
 			return outputProtobufObjAsJSON(r)
 		case "yaml":
@@ -173,10 +181,10 @@ var listImageCommand = &cli.Command{
 
 		// output in table format by default.
 		display := newTableDisplay(20, 1, 3, ' ', 0)
-		verbose := context.Bool("verbose")
-		showDigest := context.Bool("digests")
-		quiet := context.Bool("quiet")
-		noTrunc := context.Bool("no-trunc")
+		verbose := c.Bool("verbose")
+		showDigest := c.Bool("digests")
+		quiet := c.Bool("quiet")
+		noTrunc := c.Bool("no-trunc")
 		if !verbose && !quiet {
 			if showDigest {
 				display.AddRow([]string{columnImage, columnTag, columnDigest, columnImageID, columnSize})
@@ -251,23 +259,23 @@ var imageStatusCommand = &cli.Command{
 			Usage: "The template string is only used when output is go-template; The Template format is golang template",
 		},
 	},
-	Action: func(context *cli.Context) error {
-		if context.NArg() == 0 {
-			return cli.ShowSubcommandHelp(context)
+	Action: func(c *cli.Context) error {
+		if c.NArg() == 0 {
+			return cli.ShowSubcommandHelp(c)
 		}
-		imageClient, err := getImageService(context)
+		imageClient, err := getImageService(c)
 		if err != nil {
 			return err
 		}
 
-		verbose := !(context.Bool("quiet"))
-		output := context.String("output")
+		verbose := !(c.Bool("quiet"))
+		output := c.String("output")
 		if output == "" { // default to json output
 			output = "json"
 		}
-		tmplStr := context.String("template")
-		for i := 0; i < context.NArg(); i++ {
-			id := context.Args().Get(i)
+		tmplStr := c.String("template")
+		for i := 0; i < c.NArg(); i++ {
+			id := c.Args().Get(i)
 
 			r, err := ImageStatus(imageClient, id, verbose)
 			if err != nil {
@@ -451,17 +459,17 @@ var imageFsInfoCommand = &cli.Command{
 			Usage: "The template string is only used when output is go-template; The Template format is golang template",
 		},
 	},
-	Action: func(context *cli.Context) error {
-		imageClient, err := getImageService(context)
+	Action: func(c *cli.Context) error {
+		imageClient, err := getImageService(c)
 		if err != nil {
 			return err
 		}
 
-		output := context.String("output")
+		output := c.String("output")
 		if output == "" { // default to json output
 			output = "json"
 		}
-		tmplStr := context.String("template")
+		tmplStr := c.String("template")
 
 		r, err := ImageFsInfo(imageClient)
 		if err != nil {

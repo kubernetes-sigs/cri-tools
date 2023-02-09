@@ -48,14 +48,17 @@ var runtimeStatusCommand = &cli.Command{
 			Usage: "The template string is only used when output is go-template; The Template format is golang template",
 		},
 	},
-	Action: func(context *cli.Context) error {
-		runtimeClient, err := getRuntimeService(context, 0)
+	Action: func(c *cli.Context) error {
+		if c.NArg() != 0 {
+			return cli.ShowSubcommandHelp(c)
+		}
+
+		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
 			return err
 		}
 
-		err = Info(context, runtimeClient)
-		if err != nil {
+		if err = Info(c, runtimeClient); err != nil {
 			return fmt.Errorf("getting status of runtime: %w", err)
 		}
 		return nil

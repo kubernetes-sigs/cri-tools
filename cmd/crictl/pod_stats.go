@@ -79,29 +79,32 @@ var podStatsCommand = &cli.Command{
 			Usage:   "Watch pod resources",
 		},
 	},
-	Action: func(ctx *cli.Context) error {
-		client, err := getRuntimeService(ctx, 0)
+	Action: func(c *cli.Context) error {
+		id := c.String("id")
+		if id == "" && c.NArg() > 0 {
+			id = c.Args().First()
+		}
+		if c.NArg() > 1 {
+			return cli.ShowSubcommandHelp(c)
+		}
+
+		client, err := getRuntimeService(c, 0)
 		if err != nil {
 			return fmt.Errorf("get runtime service: %w", err)
 		}
 
-		id := ctx.String("id")
-		if id == "" && ctx.NArg() > 0 {
-			id = ctx.Args().Get(0)
-		}
-
 		opts := podStatsOptions{
 			id:     id,
-			sample: time.Duration(ctx.Int("seconds")) * time.Second,
-			output: ctx.String("output"),
-			watch:  ctx.Bool("watch"),
+			sample: time.Duration(c.Int("seconds")) * time.Second,
+			output: c.String("output"),
+			watch:  c.Bool("watch"),
 		}
-		opts.labels, err = parseLabelStringSlice(ctx.StringSlice("label"))
+		opts.labels, err = parseLabelStringSlice(c.StringSlice("label"))
 		if err != nil {
 			return fmt.Errorf("parse pod labels: %w", err)
 		}
 
-		if err := podStats(ctx.Context, client, opts); err != nil {
+		if err := podStats(c.Context, client, opts); err != nil {
 			return fmt.Errorf("get pod stats: %w", err)
 		}
 
@@ -118,7 +121,7 @@ func (c podStatsByID) Less(i, j int) bool {
 }
 
 func podStats(
-	ctx context.Context,
+	c context.Context,
 	client cri.RuntimeService,
 	opts podStatsOptions,
 ) error {
@@ -161,7 +164,7 @@ func podStats(
 		}
 	}
 
-	if err := displayPodStats(ctx, client, filter, display, opts); err != nil {
+	if err := displayPodStats(c, client, filter, display, opts); err != nil {
 		return fmt.Errorf("display pod stats: %w", err)
 	}
 
@@ -169,7 +172,7 @@ func podStats(
 }
 
 func displayPodStats(
-	ctx context.Context,
+	c context.Context,
 	client cri.RuntimeService,
 	filter *pb.PodSandboxStatsFilter,
 	display *display,
@@ -190,8 +193,8 @@ func displayPodStats(
 
 	oldStats := make(map[string]*pb.PodSandboxStats)
 	for _, s := range stats {
-		if ctx.Err() != nil {
-			return ctx.Err()
+		if c.Err() != nil {
+			return c.Err()
 		}
 		oldStats[s.Attributes.Id] = s
 	}
@@ -205,8 +208,8 @@ func displayPodStats(
 
 	display.AddRow([]string{columnPodName, columnPodID, columnCPU, columnMemory})
 	for _, s := range stats {
-		if ctx.Err() != nil {
-			return ctx.Err()
+		if c.Err() != nil {
+			return c.Err()
 		}
 		id := getTruncatedID(s.Attributes.Id, "")
 

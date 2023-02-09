@@ -44,24 +44,27 @@ var runtimeAttachCommand = &cli.Command{
 			Usage:   "Keep STDIN open",
 		},
 	},
-	Action: func(context *cli.Context) error {
-		id := context.Args().First()
+	Action: func(c *cli.Context) error {
+		id := c.Args().First()
 		if id == "" {
-			return cli.ShowSubcommandHelp(context)
+			return fmt.Errorf("ID cannot be empty")
 		}
 
-		runtimeClient, err := getRuntimeService(context, 0)
+		if c.NArg() != 1 {
+			return cli.ShowSubcommandHelp(c)
+		}
+
+		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
 			return err
 		}
 
 		var opts = attachOptions{
 			id:    id,
-			tty:   context.Bool("tty"),
-			stdin: context.Bool("stdin"),
+			tty:   c.Bool("tty"),
+			stdin: c.Bool("stdin"),
 		}
-		err = Attach(runtimeClient, opts)
-		if err != nil {
+		if err = Attach(runtimeClient, opts); err != nil {
 			return fmt.Errorf("attaching running container failed: %w", err)
 
 		}

@@ -30,13 +30,16 @@ import (
 var runtimeVersionCommand = &cli.Command{
 	Name:  "version",
 	Usage: "Display runtime version information",
-	Action: func(context *cli.Context) error {
-		runtimeClient, err := getRuntimeService(context, 0)
+	Action: func(c *cli.Context) error {
+		if c.NArg() != 0 {
+			cli.ShowSubcommandHelp(c)
+		}
+
+		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
 			return err
 		}
-		err = Version(runtimeClient, string(remote.CRIVersionV1))
-		if err != nil {
+		if err := Version(runtimeClient, string(remote.CRIVersionV1)); err != nil {
 			return fmt.Errorf("getting the runtime version: %w", err)
 		}
 		return nil

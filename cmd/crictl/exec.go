@@ -68,24 +68,24 @@ var runtimeExecCommand = &cli.Command{
 			Usage:   "Keep STDIN open",
 		},
 	},
-	Action: func(context *cli.Context) error {
-		if context.Args().Len() < 2 {
-			return cli.ShowSubcommandHelp(context)
+	Action: func(c *cli.Context) error {
+		if c.NArg() < 2 {
+			return cli.ShowSubcommandHelp(c)
 		}
 
-		runtimeClient, err := getRuntimeService(context, 0)
+		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
 			return err
 		}
 
 		var opts = execOptions{
-			id:      context.Args().First(),
-			timeout: context.Int64("timeout"),
-			tty:     context.Bool("tty"),
-			stdin:   context.Bool("interactive"),
-			cmd:     context.Args().Slice()[1:],
+			id:      c.Args().First(),
+			timeout: c.Int64("timeout"),
+			tty:     c.Bool("tty"),
+			stdin:   c.Bool("interactive"),
+			cmd:     c.Args().Slice()[1:],
 		}
-		if context.Bool("sync") {
+		if c.Bool("sync") {
 			exitCode, err := ExecSync(runtimeClient, opts)
 			if err != nil {
 				return fmt.Errorf("execing command in container synchronously: %w", err)
