@@ -43,6 +43,8 @@ const (
 	columnDisk       = "DISK"
 	columnCPU        = "CPU %"
 	columnPodname    = "POD"
+	columnKey        = "KEY"
+	columnValue      = "VALUE"
 )
 
 // display use to output something on screen with table format.

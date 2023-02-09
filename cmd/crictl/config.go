@@ -52,6 +52,10 @@ CRICTL OPTIONS:
 			Name:  "set",
 			Usage: "set option (can specify multiple or separate values with commas: opt1=val1,opt2=val2)",
 		},
+		&cli.BoolFlag{
+			Name:  "list",
+			Usage: "show all option value",
+		},
 	},
 	Action: func(context *cli.Context) error {
 		configFile := context.String("config")
@@ -65,6 +69,7 @@ CRICTL OPTIONS:
 		if err != nil {
 			return fmt.Errorf("load config file: %w", err)
 		}
+
 		if context.IsSet("get") {
 			get := context.String("get")
 			switch get {
@@ -101,6 +106,19 @@ CRICTL OPTIONS:
 				}
 			}
 			return common.WriteConfig(config, configFile)
+		} else if context.Bool("list") {
+			display := newTableDisplay(20, 1, 3, ' ', 0)
+			display.AddRow([]string{columnKey, columnValue})
+			display.AddRow([]string{"runtime-endpoint", config.RuntimeEndpoint})
+			display.AddRow([]string{"image-endpoint", config.RuntimeEndpoint})
+			display.AddRow([]string{"timeout", config.RuntimeEndpoint})
+			display.AddRow([]string{"debug", config.RuntimeEndpoint})
+			display.AddRow([]string{"pull-image-on-create", config.RuntimeEndpoint})
+			display.AddRow([]string{"disable-pull-on-run", config.RuntimeEndpoint})
+			display.ClearScreen()
+			display.Flush()
+
+			return nil
 		} else { // default for backwards compatibility
 			key := context.Args().First()
 			if key == "" {
