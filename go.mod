@@ -17,7 +17,7 @@ require (
 	github.com/pborman/uuid v1.2.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/urfave/cli/v2 v2.24.3
-	golang.org/x/net v0.6.0
+	golang.org/x/net v0.7.0
 	golang.org/x/sys v0.5.0
 	golang.org/x/term v0.5.0
 	gopkg.in/yaml.v3 v3.0.1
