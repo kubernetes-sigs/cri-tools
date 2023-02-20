@@ -36,28 +36,24 @@ var runtimePortForwardCommand = &cli.Command{
 	Name:      "port-forward",
 	Usage:     "Forward local port to a pod",
 	ArgsUsage: "POD-ID [LOCAL_PORT:]REMOTE_PORT",
-	Action: func(context *cli.Context) error {
-		args := context.Args().Slice()
-		if len(args) < 2 {
-			return cli.ShowSubcommandHelp(context)
+	Action: func(c *cli.Context) error {
+		if c.NArg() < 2 {
+			return cli.ShowSubcommandHelp(c)
 		}
 
-		runtimeClient, err := getRuntimeService(context, 0)
+		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
 			return err
 		}
 
 		var opts = portforwardOptions{
-			id:    args[0],
-			ports: args[1:],
+			id:    c.Args().Get(0),
+			ports: c.Args().Tail(),
 		}
-		err = PortForward(runtimeClient, opts)
-		if err != nil {
+		if err = PortForward(runtimeClient, opts); err != nil {
 			return fmt.Errorf("port forward: %w", err)
-
 		}
 		return nil
-
 	},
 }
 

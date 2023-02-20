@@ -60,13 +60,13 @@ var runPodCommand = &cli.Command{
 		},
 	},
 
-	Action: func(context *cli.Context) error {
-		sandboxSpec := context.Args().First()
-		if sandboxSpec == "" {
-			return cli.ShowSubcommandHelp(context)
+	Action: func(c *cli.Context) error {
+		sandboxSpec := c.Args().First()
+		if c.NArg() != 1 || sandboxSpec == "" {
+			return cli.ShowSubcommandHelp(c)
 		}
 
-		runtimeClient, err := getRuntimeService(context, context.Duration("cancel-timeout"))
+		runtimeClient, err := getRuntimeService(c, c.Duration("cancel-timeout"))
 		if err != nil {
 			return err
 		}
@@ -77,7 +77,7 @@ var runPodCommand = &cli.Command{
 		}
 
 		// Test RuntimeServiceClient.RunPodSandbox
-		podID, err := RunPodSandbox(runtimeClient, podSandboxConfig, context.String("runtime"))
+		podID, err := RunPodSandbox(runtimeClient, podSandboxConfig, c.String("runtime"))
 		if err != nil {
 			return fmt.Errorf("run pod sandbox: %w", err)
 		}
@@ -90,16 +90,16 @@ var stopPodCommand = &cli.Command{
 	Name:      "stopp",
 	Usage:     "Stop one or more running pods",
 	ArgsUsage: "POD-ID [POD-ID...]",
-	Action: func(context *cli.Context) error {
-		if context.NArg() == 0 {
-			return cli.ShowSubcommandHelp(context)
+	Action: func(c *cli.Context) error {
+		if c.NArg() == 0 {
+			return cli.ShowSubcommandHelp(c)
 		}
-		runtimeClient, err := getRuntimeService(context, 0)
+		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
 			return err
 		}
-		for i := 0; i < context.NArg(); i++ {
-			id := context.Args().Get(i)
+		for i := 0; i < c.NArg(); i++ {
+			id := c.Args().Get(i)
 			err := StopPodSandbox(runtimeClient, id)
 			if err != nil {
 				return fmt.Errorf("stopping the pod sandbox %q: %w", id, err)
@@ -201,18 +201,18 @@ var podStatusCommand = &cli.Command{
 			Usage: "The template string is only used when output is go-template; The Template format is golang template",
 		},
 	},
-	Action: func(context *cli.Context) error {
-		if context.NArg() == 0 {
-			return cli.ShowSubcommandHelp(context)
+	Action: func(c *cli.Context) error {
+		if c.NArg() == 0 {
+			return cli.ShowSubcommandHelp(c)
 		}
-		runtimeClient, err := getRuntimeService(context, 0)
+		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
 			return err
 		}
-		for i := 0; i < context.NArg(); i++ {
-			id := context.Args().Get(i)
+		for i := 0; i < c.NArg(); i++ {
+			id := c.Args().Get(i)
 
-			err := PodSandboxStatus(runtimeClient, id, context.String("output"), context.Bool("quiet"), context.String("template"))
+			err := PodSandboxStatus(runtimeClient, id, c.String("output"), c.Bool("quiet"), c.String("template"))
 			if err != nil {
 				return fmt.Errorf("getting the pod sandbox status for %q: %w", id, err)
 			}
@@ -282,26 +282,26 @@ var listPodCommand = &cli.Command{
 			Usage: "Show output without truncating the ID",
 		},
 	},
-	Action: func(context *cli.Context) error {
+	Action: func(c *cli.Context) error {
 		var err error
-		runtimeClient, err := getRuntimeService(context, 0)
+		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
 			return err
 		}
 
 		opts := listOptions{
-			id:                 context.String("id"),
-			state:              context.String("state"),
-			verbose:            context.Bool("verbose"),
-			quiet:              context.Bool("quiet"),
-			output:             context.String("output"),
-			latest:             context.Bool("latest"),
-			last:               context.Int("last"),
-			noTrunc:            context.Bool("no-trunc"),
-			nameRegexp:         context.String("name"),
-			podNamespaceRegexp: context.String("namespace"),
+			id:                 c.String("id"),
+			state:              c.String("state"),
+			verbose:            c.Bool("verbose"),
+			quiet:              c.Bool("quiet"),
+			output:             c.String("output"),
+			latest:             c.Bool("latest"),
+			last:               c.Int("last"),
+			noTrunc:            c.Bool("no-trunc"),
+			nameRegexp:         c.String("name"),
+			podNamespaceRegexp: c.String("namespace"),
 		}
-		opts.labels, err = parseLabelStringSlice(context.StringSlice("label"))
+		opts.labels, err = parseLabelStringSlice(c.StringSlice("label"))
 		if err != nil {
 			return err
 		}

@@ -67,26 +67,31 @@ var logsCommand = &cli.Command{
 			Usage:   "Show timestamps",
 		},
 	},
-	Action: func(cliCtx *cli.Context) (retErr error) {
-		runtimeService, err := getRuntimeService(cliCtx, 0)
+	Action: func(c *cli.Context) (retErr error) {
+		containerID := c.Args().First()
+		if containerID == "" {
+			return fmt.Errorf("ID cannot be empty")
+		}
+
+		if c.NArg() > 1 {
+			return cli.ShowSubcommandHelp(c)
+		}
+
+		runtimeService, err := getRuntimeService(c, 0)
 		if err != nil {
 			return err
 		}
 
-		containerID := cliCtx.Args().First()
-		if containerID == "" {
-			return fmt.Errorf("ID cannot be empty")
-		}
-		tailLines := cliCtx.Int64("tail")
-		limitBytes := cliCtx.Int64("limit-bytes")
-		since, err := parseTimestamp(cliCtx.String("since"))
+		tailLines := c.Int64("tail")
+		limitBytes := c.Int64("limit-bytes")
+		since, err := parseTimestamp(c.String("since"))
 		if err != nil {
 			return err
 		}
-		timestamp := cliCtx.Bool("timestamps")
-		previous := cliCtx.Bool("previous")
+		timestamp := c.Bool("timestamps")
+		previous := c.Bool("previous")
 		logOptions := logs.NewLogOptions(&v1.PodLogOptions{
-			Follow:     cliCtx.Bool("follow"),
+			Follow:     c.Bool("follow"),
 			TailLines:  &tailLines,
 			LimitBytes: &limitBytes,
 			SinceTime:  since,
@@ -109,7 +114,7 @@ var logsCommand = &cli.Command{
 				logPath[strings.LastIndex(logPath, "."):])
 		}
 		// build a WithCancel context based on cli.context
-		readLogCtx, cancelFn := context.WithCancel(cliCtx.Context)
+		readLogCtx, cancelFn := context.WithCancel(c.Context)
 		go func() {
 			<-SetupInterruptSignalHandler()
 			// cancel readLogCtx when Interrupt signal received

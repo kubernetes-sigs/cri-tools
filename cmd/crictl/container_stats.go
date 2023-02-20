@@ -89,26 +89,30 @@ var statsCommand = &cli.Command{
 			Usage:   "Watch pod resources",
 		},
 	},
-	Action: func(context *cli.Context) error {
-		runtimeClient, err := getRuntimeService(context, 0)
+	Action: func(c *cli.Context) error {
+		if c.NArg() > 1 {
+			return cli.ShowSubcommandHelp(c)
+		}
+
+		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
 			return err
 		}
 
-		id := context.String("id")
-		if id == "" && context.NArg() > 0 {
-			id = context.Args().Get(0)
+		id := c.String("id")
+		if id == "" && c.NArg() > 0 {
+			id = c.Args().First()
 		}
 
 		opts := statsOptions{
-			all:    context.Bool("all"),
+			all:    c.Bool("all"),
 			id:     id,
-			podID:  context.String("pod"),
-			sample: time.Duration(context.Int("seconds")) * time.Second,
-			output: context.String("output"),
-			watch:  context.Bool("watch"),
+			podID:  c.String("pod"),
+			sample: time.Duration(c.Int("seconds")) * time.Second,
+			output: c.String("output"),
+			watch:  c.Bool("watch"),
 		}
-		opts.labels, err = parseLabelStringSlice(context.StringSlice("label"))
+		opts.labels, err = parseLabelStringSlice(c.StringSlice("label"))
 		if err != nil {
 			return err
 		}
