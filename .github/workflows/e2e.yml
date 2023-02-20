@@ -1,5 +1,11 @@
 name: cri-tools e2e test
-on: [push, pull_request]
+on:
+  push:
+    tags:
+      - "*"
+    branches:
+      - master
+  pull_request:
 jobs:
   test-e2e:
     name: ${{ matrix.os }}
