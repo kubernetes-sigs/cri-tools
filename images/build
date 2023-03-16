@@ -8,6 +8,7 @@ ARCHITECTURES=(
     ppc64le
     s390x
     mips64le
+    riscv64
 )
 
 # Prepare the system
