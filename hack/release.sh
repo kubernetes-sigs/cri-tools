@@ -29,6 +29,7 @@ CRI_CTL_PLATFORMS=(
     linux/ppc64le
     linux/s390x
     linux/mips64le
+    linux/riscv64
     windows/amd64
     windows/386
     darwin/amd64
