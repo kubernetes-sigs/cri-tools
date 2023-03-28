@@ -22,7 +22,7 @@ jobs:
         # ╟──────────────────┼───────────┼─────────╢
         # ║ hcshim           │           │ runhcs  ║
         # ╚══════════════════╧═══════════╧═════════╝
-        os: [ubuntu-18.04, windows-2019]
+        os: [ubuntu-20.04, windows-2019]
         version: [main, v1.6.12]
         runtime: [io.containerd.runtime.v1.linux, io.containerd.runc.v1, io.containerd.runc.v2, containerd-shim-runhcs-v1]
         runc: [runc, crun]
@@ -34,7 +34,7 @@ jobs:
           - runtime: io.containerd.runtime.v1.linux
             os: windows-2019
           - runtime: containerd-shim-runhcs-v1
-            os: ubuntu-18.04
+            os: ubuntu-20.04
           - runtime: io.containerd.runc.v1
             runc: crun
           - runtime: io.containerd.runtime.v1.linux
@@ -94,7 +94,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            btrfs-tools \
+            btrfs-progs \
+            libbtrfs-dev \
             libseccomp2 \
             libseccomp-dev \
             socat
