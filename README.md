@@ -36,6 +36,14 @@ Version matrix:
 
 See the [roadmap](docs/roadmap.md) for information about current and future milestones.
 
+## Release Support Matrix
+
+The [releases](https://github.com/kubernetes-sigs/cri-tools/releases) are in tandem
+with Kubernetes releases in general. As referenced in above version matrix,
+since release `1.16`, we maintain `master` branch of this repo. However, for critical
+fixes in previous releases, we would only consider the releases which are still not EOL
+in Kubernetes releases.
+
 ## Install
 
 ### Install crictl
