@@ -1,8 +1,8 @@
 # Container Runtime Interface (CRI) CLI
 
-crictl provides a CLI for CRI-compatible container runtimes. This allows the CRI runtime developers to debug their runtime without needing to set up Kubernetes components.
+`crictl` provides a CLI for CRI-compatible container runtimes. This allows the CRI runtime developers to debug their runtime without needing to set up Kubernetes components.
 
-crictl is currently in Beta and still under quick iterations. It is hosted at the [cri-tools](https://github.com/kubernetes-sigs/cri-tools) repository. We encourage the CRI developers to report bugs or help extend the coverage by adding more functionalities.
+`crictl` is currently in Beta and still under quick iterations. It is hosted at the [cri-tools](https://github.com/kubernetes-sigs/cri-tools) repository. We encourage the CRI developers to report bugs or help extend the coverage by adding more functionalities.
 
 ## Install crictl
 
@@ -31,7 +31,7 @@ rm -f crictl-$VERSION-linux-amd64.tar.gz
 ## Usage
 
 ```sh
-crictl  [global options] command [command options] [arguments...]
+crictl [global options] command [command options] [arguments...]
 ```
 
 COMMANDS:
@@ -60,14 +60,14 @@ COMMANDS:
 - `stop`:               Stop one or more running containers
 - `stopp`:              Stop one or more running pods
 - `update`:             Update one or more running containers
-- `config`:             Get and set crictl client configuration options
+- `config`:             Get and set `crictl` client configuration options
 - `stats`:              List container(s) resource usage statistics
 - `statsp`:             List pod(s) resource usage statistics
 - `completion`:         Output bash shell completion code
 - `checkpoint`:         Checkpoint one or more running containers
 - `help, h`:            Shows a list of commands or help for one command
 
-crictl by default connects on Unix to:
+`crictl` by default connects on Unix to:
 
 - `unix:///var/run/dockershim.sock` or
 - `unix:///run/containerd/containerd.sock` or
@@ -136,46 +136,49 @@ via sudo (`sudo -E crictl ...`).
 
 ## Additional options
 
-- `--timeout`, `-t`: Timeout of connecting to server in seconds (default: 2s).
+- `--timeout`, `-t`: Timeout of connecting to server in seconds (default: `2s`).
 0 or less is interpreted as unset and converted to the default. There is no
 option for no timeout value set and the smallest supported timeout is `1s`
 - `--debug`, `-D`: Enable debug output
 - `--help`, `-h`: show help
-- `--version`, `-v`: print the version information of crictl
-- `--config`, `-c`: Location of the client config file. If not specified and the default does not exist, the program's directory is searched as well (default: "/etc/crictl.yaml") [$CRI_CONFIG_FILE]
+- `--version`, `-v`: print the version information of `crictl`
+- `--config`, `-c`: Location of the client config file (default: `/etc/crictl.yaml`). Can be changed by setting `CRI_CONFIG_FILE` environment variable. If not specified and the default does not exist, the program's directory is searched as well
 
 ## Client Configuration Options
-Use the crictl config command to get and set the crictl client configuration
+
+Use the `crictl` config command to get and set the `crictl` client configuration
 options.
-```
+
 USAGE:
-   crictl config [command options] [<crictl options>]
-```
-For example `crictl config --set debug=true` will enable debug mode when giving subsequent crictl commands.
 
-CRICTL OPTIONS:
+```sh
+crictl config [command options] [<crictl options>]
 ```
-   runtime-endpoint:       Container runtime endpoint
-   image-endpoint:         Image endpoint
-   timeout:                Timeout of connecting to server (default: 2s)
-   debug:                  Enable debug output (default: false)
-   pull-image-on-create:   Enable pulling image on create requests (default: false)
-   disable-pull-on-run:    Disable pulling image on run requests (default: false)
 
-```
-OPTIONS:
-```
-   --get value  show the option value
-   --set value  set option (can specify multiple or separate values with commas: opt1=val1,opt2=val2)
-   --help, -h   show help (default: false)
-```
+For example `crictl config --set debug=true` will enable debug mode when giving subsequent `crictl` commands.
+
+COMMAND OPTIONS:
+
+- `--get value`: Show the option value
+- `--set value`: Set option (can specify multiple or separate values with commas: opt1=val1,opt2=val2)
+- `--help`, `-h`: Show help (default: `false`)
+
+`crictl` OPTIONS:
+
+- `runtime-endpoint`: Container runtime endpoint (no default value)
+- `image-endpoint`: Image endpoint (no default value)
+- `timeout`: Timeout of connecting to server (default: `2s`)
+- `debug`: Enable debug output (default: `false`)
+- `pull-image-on-create`: Enable pulling image on create requests (default: `false`)
+- `disable-pull-on-run`: Disable pulling image on run requests (default: `false`)
+
 > When enabled `pull-image-on-create` modifies the create container command to first pull the container's image.
 This feature is used as a helper to make creating containers easier and faster.
 Some users of `crictl` may desire to not pull the image necessary to create the container.
-For example, the image may have already been pulled or otherwise loaded into the container runtime, or the user may be running without a network. For this reason the default for `pull-image-on-create` is false.
+For example, the image may have already been pulled or otherwise loaded into the container runtime, or the user may be running without a network. For this reason the default for `pull-image-on-create` is `false`.
 
-> By default the run command first pulls the container image, and `disable-pull-on-run` is false.
-Some users of `crictl` may desire to set `disable-pull-on-run` to true to not pull the image by default when using the run command.
+> By default the run command first pulls the container image, and `disable-pull-on-run` is `false`.
+Some users of `crictl` may desire to set `disable-pull-on-run` to `true` to not pull the image by default when using the run command.
 
 > To override these default pull configuration settings, `--no-pull` and `--with-pull` options are provided for the create and run commands.
 
@@ -209,7 +212,7 @@ POD ID              CREATED             STATE               NAME                
 f84dd361f8dc5       17 seconds ago      Ready               nginx-sandbox       default             1
 ```
 
-#### Run pod sandbox with runtime handler
+### Run pod sandbox with runtime handler
 
 Runtime handler requires runtime support. The following example shows running a pod sandbox with `runsc` handler on containerd runtime.
 
