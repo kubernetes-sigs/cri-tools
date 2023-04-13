@@ -1,6 +1,6 @@
 module github.com/kubernetes-sigs/cri-tools
 
-go 1.19
+go 1.20
 
 require (
 	github.com/docker/distribution v2.8.1+incompatible
@@ -24,9 +24,9 @@ require (
 	k8s.io/api v0.25.0
 	k8s.io/apimachinery v0.25.0
 	k8s.io/client-go v1.5.2
-	k8s.io/cri-api v0.26.0
-	k8s.io/kubectl v0.26.0
-	k8s.io/kubernetes v1.26.0
+	k8s.io/cri-api v0.27.0
+	k8s.io/kubectl v0.27.0
+	k8s.io/kubernetes v1.27.0
 	sigs.k8s.io/yaml v1.3.0
 )
 
