@@ -19,6 +19,9 @@ set -e
 export GO111MODULE=on
 go mod tidy && go mod vendor && go mod verify
 
+# Test if we can resolve all go modules
+go list -mod=readonly -m all
+
 STATUS=$(git status --porcelain)
 if [[ -z $STATUS ]]; then
     echo "tree is clean"
