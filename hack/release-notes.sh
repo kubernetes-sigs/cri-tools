@@ -23,4 +23,5 @@ release-notes \
     --org kubernetes-sigs \
     --repo cri-tools \
     --required-author "" \
+    --dependencies=false \
     --output release-notes.md
