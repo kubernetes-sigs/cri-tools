@@ -34,6 +34,7 @@ PROJECT := github.com/kubernetes-sigs/cri-tools
 BINDIR ?= /usr/local/bin
 
 VERSION ?= $(shell git describe --tags --dirty --always | sed 's/^v//')
+GOFLAGS ?= -trimpath
 GO_LDFLAGS := $(GO_LDFLAGS) -X $(PROJECT)/pkg/version.Version=$(VERSION)
 
 BUILD_PATH := $(shell pwd)/build
@@ -65,7 +66,7 @@ critest:
 $(CRITEST):
 	CGO_ENABLED=0 $(GO_TEST) -c -o $@ \
 		-ldflags '$(GO_LDFLAGS)' \
-		-trimpath \
+		$(GOFLAGS) \
 	     $(PROJECT)/cmd/critest
 
 crictl:
@@ -74,7 +75,7 @@ crictl:
 $(CRICTL):
 	CGO_ENABLED=0 $(GO_BUILD) -o $@ \
 		-ldflags '$(GO_LDFLAGS)' \
-		-trimpath \
+		$(GOFLAGS) \
 		$(PROJECT)/cmd/crictl
 
 clean:
