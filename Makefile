@@ -33,8 +33,7 @@ endif
 PROJECT := github.com/kubernetes-sigs/cri-tools
 BINDIR ?= /usr/local/bin
 
-VERSION := $(shell git describe --tags --dirty --always)
-VERSION := $(VERSION:v%=%)
+VERSION ?= $(shell git describe --tags --dirty --always | sed 's/^v//')
 GO_LDFLAGS := -X $(PROJECT)/pkg/version.Version=$(VERSION)
 
 BUILD_PATH := $(shell pwd)/build
