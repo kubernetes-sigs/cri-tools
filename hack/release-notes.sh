@@ -16,9 +16,14 @@
 
 set -euo pipefail
 
-go install k8s.io/release/cmd/release-notes@latest
+BINARY=./build/release-notes
+VERSION=v0.15.1
 
-release-notes \
+curl -sSfL -o $BINARY \
+    https://github.com/kubernetes/release/releases/download/$VERSION/release-notes-linux-amd64
+chmod +x $BINARY
+
+$BINARY \
     --discover minor-to-minor \
     --org kubernetes-sigs \
     --repo cri-tools \
