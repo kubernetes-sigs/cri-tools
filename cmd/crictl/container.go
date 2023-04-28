@@ -351,6 +351,10 @@ var removeContainerCommand = &cli.Command{
 		}
 
 		if len(ids) == 0 {
+			if ctx.Bool("all") {
+				logrus.Info("No containers to remove")
+				return nil
+			}
 			return cli.ShowSubcommandHelp(ctx)
 		}
 

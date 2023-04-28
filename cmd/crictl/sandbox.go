@@ -144,8 +144,11 @@ var removePodCommand = &cli.Command{
 			}
 		}
 
-		lenIDs := len(ids)
-		if lenIDs == 0 {
+		if len(ids) == 0 {
+			if ctx.Bool("all") {
+				logrus.Info("No pods to remove")
+				return nil
+			}
 			return cli.ShowSubcommandHelp(ctx)
 		}
 
