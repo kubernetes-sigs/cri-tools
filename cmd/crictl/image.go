@@ -393,8 +393,11 @@ var removeImageCommand = &cli.Command{
 		}
 
 		if len(ids) == 0 {
-			logrus.Info("No images to remove")
-			return nil
+			if all || prune {
+				logrus.Info("No images to remove")
+				return nil
+			}
+			return cli.ShowSubcommandHelp(cliCtx)
 		}
 
 		errored := false
