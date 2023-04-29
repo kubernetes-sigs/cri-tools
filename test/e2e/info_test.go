@@ -41,6 +41,6 @@ var _ = t.Describe("info", func() {
 	})
 
 	It("should fail with additional argument", func() {
-		t.CrictlExpectFailure("--invalid", "", "flag provided but not defined")
+		t.CrictlExpectFailure("--invalid", "crictl - client for CRI", "flag provided but not defined")
 	})
 })
