@@ -83,50 +83,54 @@ func lcmd(format string, args ...interface{}) *Session {
 	return cmd("", format, args...)
 }
 
-// Run crictl and return the resulting session
-func (t *TestFramework) Crictl(args string) *Session {
-	return lcmd("crictl %s", args).Wait()
-}
-
 // Run crictl on the specified endpoint and return the resulting session
 func (t *TestFramework) CrictlWithEndpoint(endpoint, args string) *Session {
 	return lcmd("crictl --runtime-endpoint=%s %s", endpoint, args).Wait(time.Minute)
 }
 
-// Run crictl and expect success containing the specified output
-func (t *TestFramework) CrictlExpectSuccess(args, expectedOut string) {
-	t.CrictlExpectSuccessWithEndpoint("", args, expectedOut)
-}
-
-// Run crictl and expect success containing the specified output
-func (t *TestFramework) CrictlExpectSuccessWithEndpoint(endpoint, args, expectedOut string) {
+// Run crictl and expect exit, expectedOut, expectedErr
+func (t *TestFramework) CrictlExpect(
+	endpoint, args string, exit int, expectedOut, expectedErr string,
+) {
 	// When
 	res := t.CrictlWithEndpoint(endpoint, args)
 
 	// Then
-	Expect(res).To(Exit(0))
-	Expect(res.Out).To(Say(expectedOut))
-	Expect(string(res.Err.Contents())).To(BeEmpty())
+	Expect(res).To(Exit(exit))
+	if expectedOut == "" {
+		Expect(string(res.Out.Contents())).To(BeEmpty())
+	} else {
+		Expect(res.Out).To(Say(expectedOut))
+	}
+	if expectedErr == "" {
+		Expect(string(res.Err.Contents())).To(BeEmpty())
+	} else {
+		Expect(res.Err).To(Say(expectedErr))
+	}
+}
+
+// Run crictl and expect success containing the specified output
+func (t *TestFramework) CrictlExpectSuccess(args, expectedOut string) {
+	t.CrictlExpect("", args, 0, expectedOut, "")
+}
+
+// Run crictl and expect success containing the specified output
+func (t *TestFramework) CrictlExpectSuccessWithEndpoint(endpoint, args, expectedOut string) {
+	t.CrictlExpect(endpoint, args, 0, expectedOut, "")
 }
 
 // Run crictl and expect error containing the specified outputs
 func (t *TestFramework) CrictlExpectFailure(
 	args string, expectedOut, expectedErr string,
 ) {
-	t.CrictlExpectFailureWithEndpoint("", args, expectedOut, expectedErr)
+	t.CrictlExpect("", args, 1, expectedOut, expectedErr)
 }
 
 // Run crictl and expect failure containing the specified output
 func (t *TestFramework) CrictlExpectFailureWithEndpoint(
 	endpoint, args, expectedOut, expectedErr string,
 ) {
-	// When
-	res := t.CrictlWithEndpoint(endpoint, args)
-
-	// Then
-	Expect(res).To(Exit(1))
-	Expect(res.Out).To(Say(expectedOut))
-	Expect(res.Err).To(Say(expectedErr))
+	t.CrictlExpect(endpoint, args, 1, expectedOut, expectedErr)
 }
 
 func SetupCrio() string {
