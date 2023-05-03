@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Run critest with default dockershim.
+# Run critest with default cri-dockerd.
 
 set -o errexit
 set -o nounset

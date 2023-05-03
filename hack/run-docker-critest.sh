@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Run critest with default dockershim.
+# Run critest with default cri-dockerd.
 
 set -o errexit
 set -o nounset
@@ -38,13 +38,12 @@ fi
 # regex of SKIP
 SKIP=$(echo $SKIP|sed "s/ /\\\s/g" -)
 
-# Start dockershim first
+# Start cri-dockerd first
 logs_dir="$GOPATH/logs"
 mkdir -p $logs_dir
-ep="unix:///var/run/dockershim.sock"
-sudo /usr/local/bin/cri-dockerd --network-plugin="" --container-runtime-endpoint=${ep} >$logs_dir/cri-dockerd.log 2>&1 &
+sudo /usr/local/bin/cri-dockerd --network-plugin="" >$logs_dir/cri-dockerd.log 2>&1 &
 
-# Wait a while for dockershim starting.
+# Wait a while for cri-dockerd starting.
 sleep 10
 
 # Run e2e test cases

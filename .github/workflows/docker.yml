@@ -1,4 +1,4 @@
-name: critest dockershim
+name: critest docker
 on:
   push:
     tags:
@@ -8,9 +8,9 @@ on:
   pull_request:
 jobs:
   #
-  # Run CRI tests against dockershim
+  # Run CRI tests against docker
   #
-  build-and-critest-dockershim:
+  build-and-critest-docker:
     strategy:
       matrix:
         os: [ubuntu-20.04, windows-2019]
@@ -91,7 +91,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           sudo -E PATH=$PATH make install.ginkgo
-          sudo -E PATH=$PATH hack/run-dockershim-critest.sh
+          sudo -E PATH=$PATH hack/run-docker-critest.sh
         working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
 
       - name: Run critest on Windows
@@ -112,12 +112,11 @@ jobs:
           # TODO: Skipping these tests because there are no manifests for windows/amd64
           SKIP="runtime should support execSync|runtime should support portforward|runtime should support starting container with log|runtime should support execSync with timeout|runtime should support removing running container|runtime should support port mapping with only container port|runtime should support creating container|runtime should support starting container with volume|runtime should support exec with tty=true and stdin=true|runtime should support set hostname|runtime should support removing stopped container|runtime should support removing created container|runtime should support running PodSandbox|runtime should support port mapping with host port and container port|runtime should support exec with tty=false and stdin=false|runtime should support DNS config|runtime should support attach|runtime should support listing container stats|runtime should support reopening container log|runtime should support stopping container|runtime should support starting container with volume when host path is a symlink|runtime should support removing PodSandbox|runtime should support stopping PodSandbox|runtime should support starting container|runtime should support basic operations on container|runtime should support listing stats for started containers|runtime should support listing stats for started containers when filter is nil|runtime should support listing stats for three created containers when filter is nil"
 
-          # Start dockershim first
-          ep=npipe:////./pipe/dockershim
-          /usr/local/bin/cri-dockerd --network-plugin="" --container-runtime-endpoint=${ep} &> "${REPORT_DIR}/dockerd-cri.log" &
+          # Start cri-dockerd first
+          /usr/local/bin/cri-dockerd --network-plugin="" &> "${REPORT_DIR}/dockerd-cri.log" &
           pid=$!
 
-          # Wait a while for dockershim starting.
+          # Wait a while for cri-dockerd starting.
           sleep 10
 
           # Run cri test cases
