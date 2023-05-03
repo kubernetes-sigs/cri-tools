@@ -9,10 +9,11 @@ CRI validation testing is currently Alpha and still under quick iterations. We e
 The benchmarking tests binary `critest` can be downloaded from [Releasing page](https://github.com/kubernetes-sigs/cri-tools/releases):
 
 ```sh
-VERSION="v1.17.0"
-wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/critest-$VERSION-linux-amd64.tar.gz
-sudo tar zxvf critest-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
-rm -f critest-$VERSION-linux-amd64.tar.gz
+VERSION="v1.27.0"
+ARCH="amd64"
+wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/critest-$VERSION-linux-$ARCH.tar.gz
+sudo tar zxvf critest-$VERSION-linux-$ARCH.tar.gz -C /usr/local/bin
+rm -f critest-$VERSION-linux-$ARCH.tar.gz
 ```
 
 critest requires [ginkgo](https://github.com/onsi/ginkgo) to run parallel tests. It could be installed by
