@@ -1,5 +1,11 @@
 name: critest dockershim
-on: [push, pull_request]
+on:
+  push:
+    tags:
+      - "*"
+    branches:
+      - master
+  pull_request:
 jobs:
   #
   # Run CRI tests against dockershim
