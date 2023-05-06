@@ -46,14 +46,14 @@ This will
 - Run the tests using `ginkgo`
 - Output the test results to STDOUT
 
-critest connects to Unix: `unix:///var/run/cri-dockerd.sock` or Windows: `npipe:////./pipe/cri-dockerd` by default. For other runtimes, the endpoint can be set by flags `--runtime-endpoint` and `--image-endpoint`.
+For all runtimes, the endpoint can be set by flags `--runtime-endpoint` and `--image-endpoint`.
 
 ## Additional options
 
 - `-ginkgo.focus`: Only run the tests that match the regular expression.
 - `-image-endpoint`: Set the endpoint of image service. Same with runtime-endpoint if not specified.
 - `-test-images-file`: Optional path to a YAML file containing references to custom container images to be used in tests.
-- `-runtime-endpoint`: Set the endpoint of runtime service. Default to `unix:///var/run/cri-dockerd.sock` or Windows: `npipe:////./pipe/cri-dockerd`.
+- `-runtime-endpoint`: Set the endpoint of runtime service.
 - `-ginkgo.skip`: Skip the tests that match the regular expression.
 - `-parallel`: The number of parallel test nodes to run (default 1). [ginkgo](https://github.com/onsi/ginkgo) must be installed to run parallel tests.
 - `-h`: Should help and all supported options.

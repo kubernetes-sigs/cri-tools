@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Run critest with default cri-dockerd.
+# Run critest with cri-dockerd.
 
 set -o errexit
 set -o nounset
@@ -51,7 +51,7 @@ sleep 10
 # Skip runtime should support execSync with timeout because docker doesn't
 # support it.
 # Skip apparmor test as we don't enable apparmor yet in this CI job.
-sudo critest -ginkgo.skip=${SKIP}
+sudo critest --runtime-endpoint=unix:///var/run/cri-dockerd.sock -ginkgo.skip=${SKIP}
 
 # Run benchmark test cases
-sudo critest -benchmark
+sudo critest --runtime-endpoint=unix:///var/run/cri-dockerd.sock -benchmark

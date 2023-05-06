@@ -60,13 +60,13 @@ This will
 - Run the benchmark tests using `ginkgo`
 - Output the test results to STDOUT
 
-critest connects to Unix: `unix:///var/run/cri-dockerd.sock` or Windows: `npipe:////./pipe/cri-dockerd` by default. For other runtimes, the endpoint can be set by flags `--runtime-endpoint` and `--image-endpoint`.
+For all runtimes, the endpoint can be set by flags `--runtime-endpoint` and `--image-endpoint`.
 
 ## Additional options
 
 - `-ginkgo.focus`: Only run the tests that match the regular expression.
 - `-image-endpoint`: Set the endpoint of image service. Same with runtime-endpoint if not specified.
-- `-runtime-endpoint`: Set the endpoint of runtime service. Default to Unix: `unix:///var/run/cri-dockerd.sock` or Windows: `npipe:////./pipe/cri-dockerd`.
+- `-runtime-endpoint`: Set the endpoint of runtime service.
 - `-benchmarking-params-file`: optional path to a YAML file containing parameters describing which
 benchmarks should be run.
 - `-benchmarking-output-dir`: optional path to a pre-existing directory in which to write JSON

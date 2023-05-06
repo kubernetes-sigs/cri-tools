@@ -136,11 +136,14 @@ func AddBeforeSuiteCallback(callback func()) bool {
 
 // LoadCRIClient creates a InternalAPIClient.
 func LoadCRIClient() (*InternalAPIClient, error) {
-	rService, err := remote.NewRemoteRuntimeService(
-		TestContext.RuntimeServiceAddr,
+	var runtimeServiceAddr = TestContext.RuntimeServiceAddr
+	if runtimeServiceAddr == "" {
+		// No default for runtime service endpoint
+		return nil, fmt.Errorf("runtime endpoint is not set")
+	}
+	rService, err := remote.NewRemoteRuntimeService(runtimeServiceAddr,
 		TestContext.RuntimeServiceTimeout,
-		nil,
-	)
+		nil)
 	if err != nil {
 		return nil, err
 	}
@@ -148,9 +151,11 @@ func LoadCRIClient() (*InternalAPIClient, error) {
 	var imageServiceAddr = TestContext.ImageServiceAddr
 	if imageServiceAddr == "" {
 		// Fallback to runtime service endpoint
-		imageServiceAddr = TestContext.RuntimeServiceAddr
+		imageServiceAddr = runtimeServiceAddr
 	}
-	iService, err := remote.NewRemoteImageService(imageServiceAddr, TestContext.ImageServiceTimeout, nil)
+	iService, err := remote.NewRemoteImageService(imageServiceAddr,
+		TestContext.ImageServiceTimeout,
+		nil)
 	if err != nil {
 		return nil, err
 	}

@@ -123,9 +123,6 @@ const (
 
 	// DefaultRegistryE2ETestImagesPrefix is the default prefix for e2e test images.
 	DefaultRegistryE2ETestImagesPrefix = DefaultRegistryPrefix + "/e2e-test-images/"
-
-	CriDockerdSockPathUnix    = "unix:///var/run/cri-dockerd.sock"
-	CriDockerdSockPathWindows = "npipe:////./pipe/cri-dockerd"
 )
 
 // RegisterFlags registers flags to e2e test suites.
@@ -147,14 +144,12 @@ func RegisterFlags() {
 	flag.StringVar(&testImagesFilePath, "test-images-file", "", "Optional path to a YAML file containing references to custom container images to be used in tests.")
 	flag.DurationVar(&TestContext.ImageServiceTimeout, "image-service-timeout", 300*time.Second, "Timeout when trying to connect to image service.")
 
-	svcaddr := CriDockerdSockPathUnix
 	defaultConfigPath := "/etc/crictl.yaml"
 	if runtime.GOOS == "windows" {
-		svcaddr = CriDockerdSockPathWindows
 		defaultConfigPath = filepath.Join(os.Getenv("USERPROFILE"), ".crictl", "crictl.yaml")
 	}
 	flag.StringVar(&TestContext.ConfigPath, "config", defaultConfigPath, "Location of the client config file. If not specified and the default does not exist, the program's directory is searched as well")
-	flag.StringVar(&TestContext.RuntimeServiceAddr, "runtime-endpoint", svcaddr, "Runtime service socket for client to connect.")
+	flag.StringVar(&TestContext.RuntimeServiceAddr, "runtime-endpoint", "", "Runtime service socket for client to connect.")
 	flag.DurationVar(&TestContext.RuntimeServiceTimeout, "runtime-service-timeout", 300*time.Second, "Timeout when trying to connect to a runtime service.")
 	flag.StringVar(&TestContext.RuntimeHandler, "runtime-handler", "", "Runtime handler to use in the test.")
 
