@@ -54,11 +54,11 @@ jobs:
   releases:
     name: releases / on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 40
 
     strategy:
       matrix:
-        os: [ubuntu-20.04, macos-10.15]  # TODO: make releases on 'linux-ppc64le' 'windows-2019'
+        os: [ubuntu-20.04, macos-11]  # TODO: make releases on 'linux-ppc64le' 'windows-2019'
                                          # Ref: https://github.com/uraimo/run-on-arch-action
     steps:
       - name: Install Go
