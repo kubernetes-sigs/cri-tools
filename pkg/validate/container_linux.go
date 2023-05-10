@@ -22,6 +22,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"time"
 
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	"golang.org/x/sys/unix"
@@ -162,6 +163,55 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 	})
 })
 
+var _ = framework.KubeDescribe("Container OOM", func() {
+	f := framework.NewDefaultCRIFramework()
+
+	var rc internalapi.RuntimeService
+	var ic internalapi.ImageManagerService
+
+	BeforeEach(func() {
+		rc = f.CRIClient.CRIRuntimeClient
+		ic = f.CRIClient.CRIImageClient
+	})
+
+	Context("runtime should output OOMKilled reason", func() {
+		var podID string
+		var podConfig *runtimeapi.PodSandboxConfig
+
+		BeforeEach(func() {
+			podID, podConfig = createPrivilegedPodSandbox(rc, true)
+		})
+
+		AfterEach(func() {
+			By("stop PodSandbox")
+			rc.StopPodSandbox(context.TODO(), podID)
+			By("delete PodSandbox")
+			rc.RemovePodSandbox(context.TODO(), podID)
+		})
+
+		It("should terminate with exitCode 137 and reason OOMKilled", func() {
+			By("create container")
+			containerID := createOOMKilledContainer(rc, ic, "OOM-test-", podID, podConfig)
+
+			By("start container")
+			startContainer(rc, containerID)
+
+			By("container is stopped because of OOM")
+			Eventually(func() runtimeapi.ContainerState {
+				return getContainerStatus(rc, containerID).State
+			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
+
+			state := getContainerStatus(rc, containerID)
+
+			By("exit code is 137")
+			Expect(state.ExitCode, int32(137))
+
+			By("reason is OOMKilled")
+			Expect(state.Reason, "OOMKilled")
+		})
+	})
+})
+
 // createHostPath creates the hostPath for mount propagation test.
 func createHostPathForMountPropagation(podID string, propagationOpt runtimeapi.MountPropagation) (string, string, string, func()) {
 	hostPath, err := ioutil.TempDir("", "test"+podID)
@@ -271,4 +321,38 @@ func createMountPropagationContainer(
 func createPropagationMountPoint(propagationSrcDir, propagationMntPoint string) {
 	err := unix.Mount(propagationSrcDir, propagationMntPoint, "bind", unix.MS_BIND|unix.MS_REC, "")
 	framework.ExpectNoError(err, "failed to mount \"propagationMntPoint\": %v", err)
+}
+
+func createOOMKilledContainer(
+	rc internalapi.RuntimeService,
+	ic internalapi.ImageManagerService,
+	prefix string,
+	podID string,
+	podConfig *runtimeapi.PodSandboxConfig,
+) string {
+	By("create a container that will be killed by OOMKiller")
+	containerName := prefix + framework.NewUUID()
+	containerConfig := &runtimeapi.ContainerConfig{
+		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
+		Command: []string{
+			"sh",
+			"-c",
+			"dd if=/dev/zero of=/dev/null bs=20M",
+		},
+		Linux: &runtimeapi.LinuxContainerConfig{
+			Resources: &runtimeapi.LinuxContainerResources{
+				MemoryLimitInBytes:     15 * 1024 * 1024,
+				MemorySwapLimitInBytes: 15 * 1024 * 1024,
+			},
+		},
+	}
+
+	containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
+
+	By("verifying container status")
+	_, err := rc.ContainerStatus(context.TODO(), containerID, true)
+	framework.ExpectNoError(err, "unable to get container status")
+
+	return containerID
 }
