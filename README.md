@@ -37,8 +37,6 @@ Version matrix:
 | 1.8.X              | v0.2              | release-1.8      |
 | 1.7.X              | v0.1              | release-1.7      |
 
-See the [roadmap](docs/roadmap.md) for information about current and future milestones.
-
 ## Release Support Matrix
 
 The [releases](https://github.com/kubernetes-sigs/cri-tools/releases) are in tandem
