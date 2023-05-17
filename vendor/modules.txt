@@ -1,3 +1,5 @@
+# github.com/AdaLogics/go-fuzz-headers v0.0.0-20230106234847-43070de90fa1
+## explicit; go 1.18
 # github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1
 ## explicit; go 1.16
 github.com/Azure/go-ansiterm
@@ -31,7 +33,7 @@ github.com/davecgh/go-spew/spew
 ## explicit
 github.com/docker/distribution/digestset
 github.com/docker/distribution/reference
-# github.com/docker/docker v23.0.6+incompatible
+# github.com/docker/docker v24.0.0+incompatible
 ## explicit
 github.com/docker/docker/api/types/time
 github.com/docker/docker/daemon/logger/jsonfilelog/jsonlog
