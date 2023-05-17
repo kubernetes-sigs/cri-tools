@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/docker/distribution v2.8.2+incompatible
-	github.com/docker/docker v23.0.6+incompatible
+	github.com/docker/docker v24.0.0+incompatible
 	github.com/docker/go-units v0.5.0
 	github.com/golang/glog v1.1.1
 	github.com/golang/protobuf v1.5.3
@@ -31,6 +31,7 @@ require (
 )
 
 require (
+	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230106234847-43070de90fa1 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Microsoft/go-winio v0.4.17 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
