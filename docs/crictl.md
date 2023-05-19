@@ -6,7 +6,7 @@
 
 ## Install crictl
 
-> **NOTE:** The below steps are based on linux-amd64, however you can get downloads for all other platforms (Windows, ARM, etc) in the [releases page](https://github.com/kubernetes-sigs/cri-tools/release).
+> **NOTE:** The below steps are based on linux-amd64, however you can get downloads for all other platforms (Windows, ARM, etc) in the [releases page](https://github.com/kubernetes-sigs/cri-tools/releases).
 
 `crictl` can be downloaded from cri-tools [release page](https://github.com/kubernetes-sigs/cri-tools/releases):
 
