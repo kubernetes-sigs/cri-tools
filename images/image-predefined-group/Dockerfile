@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM busybox
+FROM busybox:1.36.1
 
 # User default-user(uid=1000) belongs to
 # group-defined-in-image(gid=50000) group in this image.
