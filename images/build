@@ -1,6 +1,25 @@
 #!/usr/bin/env bash
 set -euox pipefail
 
+cd "$(dirname "$0")"
+
+DRY_RUN=false
+
+parse_args() {
+    while getopts 'd' OPTION; do
+        case "$OPTION" in
+        d)
+            DRY_RUN=true
+            ;;
+        ?)
+            exit 1
+            ;;
+        esac
+    done
+}
+
+parse_args "$@"
+
 ARCHITECTURES=(
     amd64
     arm
@@ -8,7 +27,6 @@ ARCHITECTURES=(
     ppc64le
     s390x
     mips64le
-    riscv64
 )
 
 # Prepare the system
@@ -16,7 +34,9 @@ REGISTRY=${REGISTRY:-gcr.io/k8s-staging-cri-tools}
 QEMUVERSION=5.2.0-2
 
 export DOCKER_CLI_EXPERIMENTAL=enabled
-gcloud auth configure-docker
+if [[ $DRY_RUN != true ]]; then
+    gcloud auth configure-docker
+fi
 docker run --rm --privileged multiarch/qemu-user-static:$QEMUVERSION --reset -p yes >/dev/null
 BUILDER=$(docker buildx create --use)
 
@@ -43,16 +63,21 @@ build_image() {
             -t "$FULL_IMAGE_NAME" \
             "${ARGS[@]}" \
             "$DIR"
-        docker push "$FULL_IMAGE_NAME"
+
+        if [[ $DRY_RUN != true ]]; then
+            docker push "$FULL_IMAGE_NAME"
+        fi
     done
 
-    MANIFEST="$REGISTRY/$IMAGE:latest"
-    docker manifest create --amend "$MANIFEST" "${IMAGE_NAMES[@]}"
-    for ARCH in "${ARCHITECTURES[@]}"; do
-        FULL_IMAGE_NAME="$REGISTRY/$IMAGE-$ARCH:latest"
-        docker manifest annotate --arch "$ARCH" "$MANIFEST" "$FULL_IMAGE_NAME"
-    done
-    docker manifest push "$MANIFEST"
+    if [[ $DRY_RUN != true ]]; then
+        MANIFEST="$REGISTRY/$IMAGE:latest"
+        docker manifest create --amend "$MANIFEST" "${IMAGE_NAMES[@]}"
+        for ARCH in "${ARCHITECTURES[@]}"; do
+            FULL_IMAGE_NAME="$REGISTRY/$IMAGE-$ARCH:latest"
+            docker manifest annotate --arch "$ARCH" "$MANIFEST" "$FULL_IMAGE_NAME"
+        done
+        docker manifest push "$MANIFEST"
+    fi
 }
 
 # Build the user images
@@ -75,50 +100,52 @@ build_image ./image-predefined-group test-image-predefined-group
 # Build the hostnet image
 build_image ./hostnet-nginx hostnet-nginx
 
-# Build the windows images
-declare -A IMAGE_WINDOWS
-IMAGE_WINDOWS=(
-    ["win-test-image-1"]="latest"
-    ["win-test-image-2"]="latest"
-    ["win-test-image-3"]="latest"
-    ["win-test-image-latest"]="latest"
-    ["win-test-image-digest"]="latest"
-)
-WIN_DIR=image-test-win
-for IMAGE in "${!IMAGE_WINDOWS[@]}"; do
-    TAG=${IMAGE_WINDOWS[$IMAGE]}
+if [[ $DRY_RUN != true ]]; then
+    # Build the windows images
+    declare -A IMAGE_WINDOWS
+    IMAGE_WINDOWS=(
+        ["win-test-image-1"]="latest"
+        ["win-test-image-2"]="latest"
+        ["win-test-image-3"]="latest"
+        ["win-test-image-latest"]="latest"
+        ["win-test-image-digest"]="latest"
+    )
+    WIN_DIR=image-test-win
+    for IMAGE in "${!IMAGE_WINDOWS[@]}"; do
+        TAG=${IMAGE_WINDOWS[$IMAGE]}
+        touch "$WIN_DIR/$IMAGE"
+        docker buildx build \
+            --pull --push \
+            --platform "windows/amd64" \
+            --build-arg "TEST=$IMAGE" \
+            -t "$REGISTRY/$IMAGE:$TAG" \
+            $WIN_DIR
+        rm -f "$WIN_DIR/$IMAGE"
+    done
+
+    IMAGE=win-test-image-tags
     touch "$WIN_DIR/$IMAGE"
     docker buildx build \
         --pull --push \
         --platform "windows/amd64" \
         --build-arg "TEST=$IMAGE" \
-        -t "$REGISTRY/$IMAGE:$TAG" \
+        -t "$REGISTRY/$IMAGE:1" \
+        -t "$REGISTRY/$IMAGE:2" \
+        -t "$REGISTRY/$IMAGE:3" \
         $WIN_DIR
     rm -f "$WIN_DIR/$IMAGE"
-done
 
-IMAGE=win-test-image-tags
-touch "$WIN_DIR/$IMAGE"
-docker buildx build \
-    --pull --push \
-    --platform "windows/amd64" \
-    --build-arg "TEST=$IMAGE" \
-    -t "$REGISTRY/$IMAGE:1" \
-    -t "$REGISTRY/$IMAGE:2" \
-    -t "$REGISTRY/$IMAGE:3" \
-    $WIN_DIR
-rm -f "$WIN_DIR/$IMAGE"
-
-IMAGE=win-test-image-tag
-touch "$WIN_DIR/$IMAGE"
-docker buildx build \
-    --pull --push \
-    --platform "windows/amd64" \
-    --build-arg "TEST=$IMAGE" \
-    -t "$REGISTRY/$IMAGE:test" \
-    -t "$REGISTRY/$IMAGE:all" \
-    $WIN_DIR
-rm -f "$WIN_DIR/$IMAGE"
+    IMAGE=win-test-image-tag
+    touch "$WIN_DIR/$IMAGE"
+    docker buildx build \
+        --pull --push \
+        --platform "windows/amd64" \
+        --build-arg "TEST=$IMAGE" \
+        -t "$REGISTRY/$IMAGE:test" \
+        -t "$REGISTRY/$IMAGE:all" \
+        $WIN_DIR
+    rm -f "$WIN_DIR/$IMAGE"
+fi
 
 # Build the other test images
 IMAGE_TEST=(
@@ -139,7 +166,7 @@ done
 IMAGE_NAMES=()
 IMAGE=test-image-tags
 TAGS=(1 2 3)
-touch $DIR/same-image
+touch "$DIR/same-image"
 for ARCH in "${ARCHITECTURES[@]}"; do
     for TAG in "${TAGS[@]}"; do
         FULL_IMAGE_NAME="$REGISTRY/$IMAGE-$ARCH:$TAG"
@@ -153,20 +180,24 @@ for ARCH in "${ARCHITECTURES[@]}"; do
             --build-arg TEST=same-image \
             "$DIR"
 
-        docker push "$FULL_IMAGE_NAME"
+        if [[ $DRY_RUN != true ]]; then
+            docker push "$FULL_IMAGE_NAME"
+        fi
     done
 done
-rm -f $DIR/same-image
+rm -f "$DIR/same-image"
 
-for TAG in "${TAGS[@]}"; do
-    MANIFEST="$REGISTRY/$IMAGE:$TAG"
-    docker manifest create --amend "$MANIFEST" "${IMAGE_NAMES[@]}"
-    for ARCH in "${ARCHITECTURES[@]}"; do
-        FULL_IMAGE_NAME="$REGISTRY/$IMAGE-$ARCH:$TAG"
-        docker manifest annotate --arch "$ARCH" "$MANIFEST" "$FULL_IMAGE_NAME"
+if [[ $DRY_RUN != true ]]; then
+    for TAG in "${TAGS[@]}"; do
+        MANIFEST="$REGISTRY/$IMAGE:$TAG"
+        docker manifest create --amend "$MANIFEST" "${IMAGE_NAMES[@]}"
+        for ARCH in "${ARCHITECTURES[@]}"; do
+            FULL_IMAGE_NAME="$REGISTRY/$IMAGE-$ARCH:$TAG"
+            docker manifest annotate --arch "$ARCH" "$MANIFEST" "$FULL_IMAGE_NAME"
+        done
+        docker manifest push "$MANIFEST"
     done
-    docker manifest push "$MANIFEST"
-done
+fi
 
 # Build test-image-tag
 IMAGE_NAMES=()
@@ -186,15 +217,19 @@ for TAG in "${TAGS[@]}"; do
             --build-arg "TEST=$TAG" \
             "$DIR"
 
-        docker push "$FULL_IMAGE_NAME"
+        if [[ $DRY_RUN != true ]]; then
+            docker push "$FULL_IMAGE_NAME"
+        fi
     done
     rm -f "$DIR/$TAG"
 
-    MANIFEST="$REGISTRY/$IMAGE:$TAG"
-    docker manifest create --amend "$MANIFEST" "${IMAGE_NAMES[@]}"
-    for ARCH in "${ARCHITECTURES[@]}"; do
-        FULL_IMAGE_NAME="$REGISTRY/$IMAGE-$ARCH:$TAG"
-        docker manifest annotate --arch "$ARCH" "$MANIFEST" "$FULL_IMAGE_NAME"
-    done
-    docker manifest push "$MANIFEST"
+    if [[ $DRY_RUN != true ]]; then
+        MANIFEST="$REGISTRY/$IMAGE:$TAG"
+        docker manifest create --amend "$MANIFEST" "${IMAGE_NAMES[@]}"
+        for ARCH in "${ARCHITECTURES[@]}"; do
+            FULL_IMAGE_NAME="$REGISTRY/$IMAGE-$ARCH:$TAG"
+            docker manifest annotate --arch "$ARCH" "$MANIFEST" "$FULL_IMAGE_NAME"
+        done
+        docker manifest push "$MANIFEST"
+    fi
 done
