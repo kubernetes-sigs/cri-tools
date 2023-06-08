@@ -47,9 +47,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Install Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v4
         with:
           go-version: '1.20'
+          cache: false
 
       - name: Set env
         shell: bash
@@ -58,7 +59,7 @@ jobs:
           echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
 
       - name: Cache go modules and build cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/go/pkg/mod
@@ -68,21 +69,21 @@ jobs:
           restore-keys: ${{ runner.os }}-go-
 
       - name: Checkout containerd/containerd ${{ format(matrix.version, '/') }}
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: ${{ github.workspace }}/src/github.com/containerd/containerd
           repository: containerd/containerd
           ref: ${{ format(matrix.version, '/') }}
 
       - name: Checkout Microsoft/hcsshim
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         if: startsWith(matrix.os, 'windows')
         with:
           repository: Microsoft/hcsshim
           path: src/github.com/Microsoft/hcsshim
 
       - name: Checkout cri-tools for this commit
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: ${{github.workspace}}/src/github.com/kubernetes-sigs/cri-tools
 
