@@ -18,9 +18,10 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Install go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v4
         with:
           go-version: '1.20'
+          cache: false
 
       - name: Setup environment
         shell: bash
@@ -29,7 +30,7 @@ jobs:
           echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
 
       - name: Cache go modules and build cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/go/pkg/mod
@@ -72,7 +73,7 @@ jobs:
           sudo systemctl start crio
 
       - name: Checkout cri-tools for this commit
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: ${{github.workspace}}/src/github.com/kubernetes-sigs/cri-tools
 

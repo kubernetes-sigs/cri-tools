@@ -18,9 +18,10 @@ jobs:
 
     steps:
       - name: Install Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v4
         with:
           go-version: '1.20'
+          cache: false
 
       - name: Set env
         shell: bash
@@ -29,7 +30,7 @@ jobs:
           echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
 
       - name: Cache go modules and build cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/go/pkg/mod
@@ -39,7 +40,7 @@ jobs:
           restore-keys: ${{ runner.os }}-go-
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: src/github.com/kubernetes-sigs/cri-tools
 
@@ -62,9 +63,10 @@ jobs:
                                          # Ref: https://github.com/uraimo/run-on-arch-action
     steps:
       - name: Install Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v4
         with:
           go-version: '1.20'
+          cache: false
 
       - name: Set env
         shell: bash
@@ -73,7 +75,7 @@ jobs:
           echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
 
       - name: Cache go modules and build cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/go/pkg/mod
@@ -83,7 +85,7 @@ jobs:
           restore-keys: ${{ runner.os }}-go-
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: src/github.com/kubernetes-sigs/cri-tools
           fetch-depth: 0
