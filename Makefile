@@ -137,6 +137,19 @@ test-e2e: $(GINKGO)
 		--slowSpecThreshold 60 \
 		test
 
+test-crictl: $(GINKGO)
+	$(GINKGO) $(TESTFLAGS) \
+		-r -p \
+		--randomize-all \
+		--randomize-suites \
+		--poll-progress-after 60s \
+		cmd/crictl
+	# Run go test for templates_test.go and util_test.go
+	CGO_ENABLED=$(CGO_ENABLED) $(GO_TEST) \
+		-ldflags '$(GO_LDFLAGS)' \
+		$(GOFLAGS) \
+		$(PROJECT)/cmd/crictl
+
 vendor:
 	export GO111MODULE=on GOSUMDB= && \
 		$(GO) mod tidy && \

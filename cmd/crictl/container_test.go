@@ -26,59 +26,112 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-// fakeContainersWithCreatedAtAsc creates fake containers in the least recent order of the createdAt.
-func fakeContainersWithCreatedAtAsc(names ...string) []*pb.Container {
-	containers := []*pb.Container{}
+// fakeContainersWithCreatedAtDesc creates fake containers in the least recent order of the createdAt.
+func fakeContainersWithCreatedAtDesc(names ...string) []*pb.Container {
+	containers := make([]*pb.Container, len(names), len(names))
 	creationTime := time.Date(2023, 1, 1, 12, 00, 00, 00, time.UTC)
-	for _, name := range names {
-		containers = append(containers, &pb.Container{
-			Metadata: &pb.ContainerMetadata{
-				Name: name,
-			},
-			CreatedAt: creationTime.UnixNano(),
-		})
-		creationTime = creationTime.Add(time.Second)
+	for i, name := range names {
+		containers[i] = fakeContainer(name, creationTime.UnixNano())
+		creationTime = creationTime.Truncate(time.Hour)
 	}
 	return containers
 }
 
-var _ = Describe("container.go", func() {
-	Describe("getContainersList", func() {
-		containers := fakeContainersWithCreatedAtAsc("Test1", "Dev1", "Test2", "Dev2")
-		It("returns containers filtered with the regexp in order by createdAt desc", func() {
-			actual := getContainersList(containers, listOptions{nameRegexp: "Test.*"})
-			Expect(actual).To(HaveExactElements([]*pb.Container{containers[2], containers[0]}))
-		})
-		It("returns the most recent container with the latest option", func() {
-			actual := getContainersList(containers, listOptions{latest: true})
-			Expect(actual).To(HaveExactElements([]*pb.Container{containers[3]}))
-		})
-		It("returns last n containers with the last option", func() {
-			actual := getContainersList(containers, listOptions{last: 2})
-			Expect(actual).To(HaveExactElements([]*pb.Container{containers[3], containers[2]}))
-		})
-		It("returns all containers when the last is larger than the input length in order by createdAt desc", func() {
-			actual := getContainersList(containers, listOptions{last: 5})
-			Expect(actual).To(HaveExactElements([]*pb.Container{containers[3], containers[2], containers[1], containers[0]}))
-		})
-	})
+func fakeContainer(name string, createdAt int64) *pb.Container {
+	return &pb.Container{
+		Metadata: &pb.ContainerMetadata{
+			Name: name,
+		},
+		CreatedAt: createdAt,
+	}
+}
 
-	Describe("getPodNameFromLabels", func() {
-		It("returns the value of the `KubernetesPodNameLabel` label", func() {
-			actual := getPodNameFromLabels(map[string]string{types.KubernetesPodNameLabel: "myPodName"})
-			Expect(actual).To(Equal("myPodName"))
-		})
-		It("returns only the value of the `KubernetesPodNameLabel` when the label and the other labels in the input", func() {
-			actual := getPodNameFromLabels(map[string]string{types.KubernetesPodNameLabel: "myPodName", "otherLabel": "otherValue"})
-			Expect(actual).To(Equal("myPodName"))
-		})
-		It("returns unknown when `KubernetesPodNameLabel` is not in the input labels", func() {
-			actual := getPodNameFromLabels(map[string]string{"otherLabel": "otherValue"})
-			Expect(actual).To(Equal("unknown"))
-		})
-		It("returns unknown when the input labels is empty", func() {
-			actual := getPodNameFromLabels(map[string]string{})
-			Expect(actual).To(Equal("unknown"))
-		})
-	})
-})
+var _ = DescribeTable("getContainersList",
+	func(input []*pb.Container, options listOptions, indexes []int) {
+		actual := getContainersList(input, options)
+		var expected []*pb.Container
+		for _, i := range indexes {
+			expected = append(expected, input[i])
+		}
+		Expect(actual).To(HaveExactElements(expected))
+	},
+	Entry("returns containers in order by createdAt desc",
+		[]*pb.Container{
+			fakeContainer("test0", time.Date(2023, 1, 2, 12, 00, 00, 00, time.UTC).UnixNano()),
+			fakeContainer("test1", time.Date(2023, 1, 1, 12, 00, 00, 00, time.UTC).UnixNano()),
+			fakeContainer("test2", time.Date(2023, 1, 3, 12, 00, 00, 00, time.UTC).UnixNano()),
+		},
+		listOptions{},
+		[]int{2, 0, 1},
+	),
+	Entry("regards a container with no creation date as the oldest container",
+		[]*pb.Container{
+			{
+				Metadata: &pb.ContainerMetadata{
+					Name: "v0",
+				},
+			},
+			fakeContainer("v1", time.Date(2023, 1, 1, 12, 00, 00, 00, time.UTC).UnixNano()),
+		},
+		listOptions{},
+		[]int{1, 0},
+	),
+	Entry("returns containers filtered with the regexp",
+		fakeContainersWithCreatedAtDesc("Test0", "Dev1", "Test2", "Dev3"),
+		listOptions{nameRegexp: "Test.*"},
+		[]int{0, 2},
+	),
+	Entry("returns no containers when there are no containers matched with the regexp",
+		fakeContainersWithCreatedAtDesc("Test0", "Dev1", "Test2", "Dev3"),
+		listOptions{nameRegexp: "Prod.*"},
+		[]int{},
+	),
+	Entry("returns the most recent container with the latest option",
+		fakeContainersWithCreatedAtDesc("v0", "v1", "v2"),
+		listOptions{latest: true},
+		[]int{0},
+	),
+	Entry("returns last n containers with the last option",
+		fakeContainersWithCreatedAtDesc("v0", "v1", "v2"),
+		listOptions{last: 2},
+		[]int{0, 1},
+	),
+	Entry("prioritizes last more than latest",
+		fakeContainersWithCreatedAtDesc("v0", "v1", "v2"),
+		listOptions{last: 2, latest: true},
+		[]int{0, 1},
+	),
+	Entry("returns all containers when the last is larger than the input length in order by createdAt desc",
+		fakeContainersWithCreatedAtDesc("v0", "v1", "v2"),
+		listOptions{last: 5},
+		[]int{0, 1, 2},
+	),
+	Entry("returns nothing when last is set and there are no containers",
+		fakeContainersWithCreatedAtDesc(),
+		listOptions{last: 2},
+		[]int{},
+	),
+)
+
+var _ = DescribeTable("getPodNameFromLabels",
+	func(input map[string]string, expected string) {
+		actual := getPodNameFromLabels(input)
+		Expect(actual).To(Equal(expected))
+	},
+	Entry("returns the value of the `KubernetesPodNameLabel` label",
+		map[string]string{types.KubernetesPodNameLabel: "myPodName"},
+		"myPodName",
+	),
+	Entry("returns only the value of the `KubernetesPodNameLabel` when the label and the other labels in the input",
+		map[string]string{types.KubernetesPodNameLabel: "myPodName", "otherLabel": "otherValue"},
+		"myPodName",
+	),
+	Entry("returns unknown when `KubernetesPodNameLabel` is not in the input labels",
+		map[string]string{"otherLabel": "otherValue"},
+		"unknown",
+	),
+	Entry("returns the value of the `KubernetesPodNameLabel` label",
+		map[string]string{},
+		"unknown",
+	),
+)
