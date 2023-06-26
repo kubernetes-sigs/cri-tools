@@ -497,7 +497,8 @@ var imageFsInfoCommand = &cli.Command{
 
 			// otherwise output in table format
 			fmt.Printf("TimeStamp: %d\n", info.Timestamp)
-			fmt.Printf("UsedBytes: %s\n", info.UsedBytes)
+			fmt.Printf("Disk: %s\n", units.HumanSize(float64(info.UsedBytes.GetValue())))
+			fmt.Printf("Inodes: %d\n", info.InodesUsed.GetValue())
 			fmt.Printf("Mountpoint: %s\n", info.FsId.Mountpoint)
 		}
 
