@@ -54,7 +54,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 			podID = testRunDefaultPodSandbox(rc)
 
 			By("test list PodSandbox")
-			pods := listPodSanboxForID(rc, podID)
+			pods := listPodSandboxForID(rc, podID)
 			Expect(podSandboxFound(pods, podID)).To(BeTrue(), "PodSandbox should be listed")
 		})
 
@@ -135,12 +135,12 @@ func removePodSandbox(c internalapi.RuntimeService, podID string) {
 // testRemovePodSandbox removes a PodSandbox and make sure it is removed.
 func testRemovePodSandbox(c internalapi.RuntimeService, podID string) {
 	removePodSandbox(c, podID)
-	pods := listPodSanboxForID(c, podID)
+	pods := listPodSandboxForID(c, podID)
 	Expect(podSandboxFound(pods, podID)).To(BeFalse(), "PodSandbox should be removed")
 }
 
-// listPodSanboxForID lists PodSandbox for podID.
-func listPodSanboxForID(c internalapi.RuntimeService, podID string) []*runtimeapi.PodSandbox {
+// listPodSandboxForID lists PodSandbox for podID.
+func listPodSandboxForID(c internalapi.RuntimeService, podID string) []*runtimeapi.PodSandbox {
 	By("List PodSandbox for podID: " + podID)
 	filter := &runtimeapi.PodSandboxFilter{
 		Id: podID,
