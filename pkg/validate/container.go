@@ -214,9 +214,12 @@ var _ = framework.KubeDescribe("Container", func() {
 
 			By("start container")
 			startContainer(rc, containerID)
+			filter := &runtimeapi.ContainerStatsFilter{
+				Id: containerID,
+			}
 
 			By("test container stats")
-			stats := listContainerStats(rc, nil)
+			stats := listContainerStats(rc, filter)
 			Expect(statFound(stats, containerID)).To(BeTrue(), "Stats should be found")
 		})
 
@@ -236,10 +239,21 @@ var _ = framework.KubeDescribe("Container", func() {
 			startContainer(rc, thirdContainerID)
 
 			By("test containers stats")
-			stats := listContainerStats(rc, nil)
-			Expect(statFound(stats, firstContainerID)).To(BeTrue(), "Stats should be found")
-			Expect(statFound(stats, secondContainerID)).To(BeTrue(), "Stats should be found")
-			Expect(statFound(stats, thirdContainerID)).To(BeTrue(), "Stats should be found")
+			firstFilter := &runtimeapi.ContainerStatsFilter{
+				Id: firstContainerID,
+			}
+			firstStats := listContainerStats(rc, firstFilter)
+			secondFilter := &runtimeapi.ContainerStatsFilter{
+				Id: secondContainerID,
+			}
+			secondStats := listContainerStats(rc, secondFilter)
+			thirdFilter := &runtimeapi.ContainerStatsFilter{
+				Id: thirdContainerID,
+			}
+			thirdStats := listContainerStats(rc, thirdFilter)
+			Expect(statFound(firstStats, firstContainerID)).To(BeTrue(), "Stats should be found")
+			Expect(statFound(secondStats, secondContainerID)).To(BeTrue(), "Stats should be found")
+			Expect(statFound(thirdStats, thirdContainerID)).To(BeTrue(), "Stats should be found")
 		})
 	})
 
