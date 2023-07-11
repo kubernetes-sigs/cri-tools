@@ -87,16 +87,6 @@ const (
 	// Add support for distributed tracing in the API Server
 	APIServerTracing featuregate.Feature = "APIServerTracing"
 
-	// owner: @tallclair
-	// alpha: v1.7
-	// beta: v1.8
-	// GA: v1.12
-	//
-	// AdvancedAuditing enables a much more general API auditing pipeline, which includes support for
-	// pluggable output backends and an audit policy specifying how different requests should be
-	// audited.
-	AdvancedAuditing featuregate.Feature = "AdvancedAuditing"
-
 	// owner: @cici37 @jpbetz
 	// kep: http://kep.k8s.io/3488
 	// alpha: v1.26
@@ -112,17 +102,6 @@ const (
 	// Enables expression validation for Custom Resource
 	CustomResourceValidationExpressions featuregate.Feature = "CustomResourceValidationExpressions"
 
-	// owner: @apelisse
-	// alpha: v1.12
-	// beta: v1.13
-	// stable: v1.18
-	//
-	// Allow requests to be processed but not stored, so that
-	// validation, merging, mutation can be tested without
-	// committing.
-	DryRun featuregate.Feature = "DryRun"
-
-	// owner: @wojtek-t
 	// alpha: v1.20
 	// beta: v1.21
 	// GA: v1.24
@@ -247,13 +226,9 @@ var defaultKubernetesFeatureGates = map[featuregate.Feature]featuregate.FeatureS
 
 	APIServerTracing: {Default: true, PreRelease: featuregate.Beta},
 
-	AdvancedAuditing: {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.28
-
 	ValidatingAdmissionPolicy: {Default: false, PreRelease: featuregate.Alpha},
 
 	CustomResourceValidationExpressions: {Default: true, PreRelease: featuregate.Beta},
-
-	DryRun: {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.28
 
 	EfficientWatchResumption: {Default: true, PreRelease: featuregate.GA, LockToDefault: true},
 

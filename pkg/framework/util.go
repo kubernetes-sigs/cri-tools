@@ -299,6 +299,10 @@ func CreateContainerWithError(rc internalapi.RuntimeService, ic internalapi.Imag
 		PullPublicImage(ic, imageName, podConfig)
 	}
 
+	if config.Image.UserSpecifiedImage == "" {
+		config.Image.UserSpecifiedImage = imageName
+	}
+
 	By("Create container.")
 	containerID, err := rc.CreateContainer(context.TODO(), podID, config, podConfig)
 	return containerID, err
