@@ -699,6 +699,11 @@ func CreateContainer(
 		}
 	}
 
+	image := config.GetImage().GetImage()
+	if config.Image.UserSpecifiedImage == "" {
+		config.Image.UserSpecifiedImage = image
+	}
+
 	// When there is a with-pull request or the image default mode is to
 	// pull-image-on-create(true) and no-pull was not set we pull the image when
 	// they ask for a create as a helper on the cli to reduce extra steps. As a
@@ -711,7 +716,6 @@ func CreateContainer(
 		}
 
 		// Try to pull the image before container creation
-		image := config.GetImage().GetImage()
 		ann := config.GetImage().GetAnnotations()
 		if _, err := PullImageWithSandbox(iClient, image, auth, podConfig, ann); err != nil {
 			return "", err
