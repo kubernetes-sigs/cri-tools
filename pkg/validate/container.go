@@ -19,7 +19,6 @@ package validate
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -28,7 +27,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/docker/daemon/logger/jsonfilelog/jsonlog"
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -571,22 +569,6 @@ func pathExists(path string) bool {
 	return false
 }
 
-// parseDockerJSONLog parses logs in Docker JSON log format.
-// Docker JSON log format example:
-//
-//	{"log":"content 1","stream":"stdout","time":"2016-10-20T18:39:20.57606443Z"}
-//	{"log":"content 2","stream":"stderr","time":"2016-10-20T18:39:20.57606444Z"}
-func parseDockerJSONLog(log []byte, msg *logMessage) {
-	var l jsonlog.JSONLog
-
-	err := json.Unmarshal(log, &l)
-	framework.ExpectNoError(err, "failed with %v to unmarshal log %q", err, l)
-
-	msg.timestamp = l.Created
-	msg.stream = streamType(l.Stream)
-	msg.log = l.Log
-}
-
 // parseCRILog parses logs in CRI log format.
 // CRI log format example :
 //
@@ -621,15 +603,7 @@ func parseLogLine(podConfig *runtimeapi.PodSandboxConfig, logPath string) []logM
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		line := scanner.Text()
-
-		// to determine whether the log is Docker format or CRI format.
-		if strings.HasPrefix(line, "{") {
-			parseDockerJSONLog([]byte(line), &msg)
-		} else {
-			parseCRILog(line, &msg)
-		}
-
+		parseCRILog(scanner.Text(), &msg)
 		msgLog = append(msgLog, msg)
 	}
 
