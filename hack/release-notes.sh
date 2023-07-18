@@ -16,17 +16,18 @@
 
 set -euo pipefail
 
-BINARY=./build/release-notes
+BUILD_DIR=build
+BINARY=$BUILD_DIR/release-notes
 VERSION=v0.15.1
 
-curl -sSfL -o $BINARY \
+mkdir -p $BUILD_DIR
+curl -sSfL --retry 5 --retry-delay 10 -o $BINARY \
     https://github.com/kubernetes/release/releases/download/$VERSION/release-notes-linux-amd64
 chmod +x $BINARY
 
 $BINARY \
-    --discover minor-to-minor \
+    --discover patch-to-patch \
     --org kubernetes-sigs \
     --repo cri-tools \
     --required-author "" \
-    --dependencies=false \
     --output release-notes.md
