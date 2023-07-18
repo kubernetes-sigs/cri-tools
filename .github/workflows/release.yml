@@ -6,7 +6,7 @@ on:
 jobs:
   publish:
     name: release
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-go@v4
         with:
@@ -30,8 +30,7 @@ jobs:
           fetch-depth: 0
           path: src/github.com/kubernetes-sigs/cri-tools
       - run: |
-          make release-notes
-          make release
+          make release-notes release
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         working-directory: src/github.com/kubernetes-sigs/cri-tools
