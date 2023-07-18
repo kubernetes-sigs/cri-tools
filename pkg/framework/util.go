@@ -22,11 +22,10 @@ import (
 	"os"
 	"runtime"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/docker/distribution/reference"
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 	"gopkg.in/yaml.v3"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -37,12 +36,6 @@ import (
 )
 
 var (
-	//lock for uuid
-	uuidLock sync.Mutex
-
-	// lastUUID record last generated uuid from NewUUID()
-	lastUUID uuid.UUID
-
 	// the callbacks to run during BeforeSuite
 	beforeSuiteCallbacks []func()
 
@@ -191,18 +184,7 @@ func ExpectNoError(err error, explain ...interface{}) {
 
 // NewUUID creates a new UUID string.
 func NewUUID() string {
-	uuidLock.Lock()
-	defer uuidLock.Unlock()
-	result := uuid.NewUUID()
-	// The UUID package is naive and can generate identical UUIDs if the
-	// time interval is quick enough.
-	// The UUID uses 100 ns increments so it's short enough to actively
-	// wait for a new value.
-	for uuid.Equal(lastUUID, result) == true {
-		result = uuid.NewUUID()
-	}
-	lastUUID = result
-	return result.String()
+	return uuid.New().String()
 }
 
 // RunDefaultPodSandbox runs a PodSandbox with default options.
