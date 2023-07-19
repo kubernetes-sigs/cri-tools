@@ -22,8 +22,8 @@ import (
 	"path"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
+	"github.com/sirupsen/logrus"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
@@ -143,18 +143,18 @@ var _ = framework.KubeDescribe("Container", func() {
 			resultsChannel <- nil
 			err := resultsManager.AwaitAllResults(60)
 			if err != nil {
-				glog.Errorf("Results manager failed to await all results: %s", err)
+				logrus.Errorf("Results manager failed to await all results: %v", err)
 			}
 
 			if framework.TestContext.BenchmarkingOutputDir != "" {
 				filepath := path.Join(framework.TestContext.BenchmarkingOutputDir, "container_benchmark_data.json")
 				err = resultsManager.WriteResultsFile(filepath)
 				if err != nil {
-					glog.Errorf("Error occurred while writing benchmark results to file %s: %s", filepath, err)
+					logrus.Errorf("Error occurred while writing benchmark results to file %s: %v", filepath, err)
 				}
 			} else {
-				glog.Infof("No benchmarking output dir provided, skipping writing benchmarking results file.")
-				glog.Infof("Benchmark results were: %+v", resultsManager.resultsSet)
+				logrus.Infof("No benchmarking output dir provided, skipping writing benchmarking results file")
+				logrus.Infof("Benchmark results were: %+v", resultsManager.resultsSet)
 			}
 		})
 	})
