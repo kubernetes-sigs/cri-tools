@@ -27,10 +27,10 @@ import (
 
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	"github.com/opencontainers/runc/libcontainer/apparmor"
+	"github.com/sirupsen/logrus"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	"github.com/golang/glog"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -168,15 +168,15 @@ func loadTestProfiles() error {
 	// apparmor_parser does not always return an error code, so consider any stderr output an error.
 	if err != nil || stderr.Len() > 0 {
 		if stderr.Len() > 0 {
-			glog.Warning(stderr.String())
+			logrus.Warn(stderr.String())
 		}
 		if len(out) > 0 {
-			glog.Infof("apparmor_parser: %s", out)
+			logrus.Infof("apparmor_parser: %s", out)
 		}
 
 		return fmt.Errorf("load profiles: %w", err)
 	}
 
-	glog.V(2).Infof("Loaded profiles: %v", out)
+	logrus.Infof("Loaded profiles: %v", out)
 	return nil
 }

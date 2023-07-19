@@ -22,7 +22,7 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/golang/glog"
+	"github.com/sirupsen/logrus"
 )
 
 // LifecycleBenchmarkDatapoint encodes a single benchmark for a lifecycle operation.
@@ -107,7 +107,7 @@ func (lbrm *LifecycleBenchmarksResultsManager) awaitResult() {
 		case res = <-lbrm.resultsChannel:
 			// Receiving nil indicates results are over:
 			if res == nil {
-				glog.Info("Results ended.")
+				logrus.Info("Results ended")
 				lbrm.resultsConsumerRunning = false
 				lbrm.resultsOverChannel <- true
 				return
@@ -115,7 +115,7 @@ func (lbrm *LifecycleBenchmarksResultsManager) awaitResult() {
 
 			// Warn if an improper number of results was received:
 			if len(res.OperationsDurationsNs) != numOperations {
-				glog.Warningf("Received improper number of datapoints for operations %+v: %+v", lbrm.resultsSet.OperationsNames, res.OperationsDurationsNs)
+				logrus.Warnf("Received improper number of datapoints for operations %+v: %+v", lbrm.resultsSet.OperationsNames, res.OperationsDurationsNs)
 			}
 
 			// Register the result:
@@ -123,7 +123,7 @@ func (lbrm *LifecycleBenchmarksResultsManager) awaitResult() {
 
 		case <-timeout:
 			err := fmt.Errorf("Timed out after waiting %d seconds for new results.", lbrm.resultsChannelTimeoutSeconds)
-			glog.Error(err)
+			logrus.Error(err.Error())
 			panic(err)
 		}
 	}
@@ -152,7 +152,7 @@ func (lbrm *LifecycleBenchmarksResultsManager) AwaitAllResults(timeoutSeconds in
 		lbrm.resultsConsumerRunning = false
 		return nil
 	case <-timeout:
-		glog.Warningf("Failed to await all results. Results registered so far were: %+v", lbrm.resultsSet)
+		logrus.Warnf("Failed to await all results. Results registered so far were: %+v", lbrm.resultsSet)
 		return fmt.Errorf("Benchmark results waiting timed out after %d seconds.", timeoutSeconds)
 	}
 }

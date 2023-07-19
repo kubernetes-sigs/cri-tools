@@ -23,8 +23,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
+	"github.com/sirupsen/logrus"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
@@ -91,7 +91,7 @@ var _ = framework.KubeDescribe("Image", func() {
 			// NOTE(aznashwan): default to using first test image from listing benchmark images:
 			if imagePullingBenchmarkImage == "" {
 				imagePullingBenchmarkImage = testImageList[0]
-				glog.Infof("Defaulting to using following image: %s", imagePullingBenchmarkImage)
+				logrus.Infof("Defaulting to using following image: %s", imagePullingBenchmarkImage)
 			}
 
 			// Setup shared sampling config from TestContext:
@@ -165,18 +165,18 @@ var _ = framework.KubeDescribe("Image", func() {
 			lifecycleResultsChannel <- nil
 			err = lifecycleResultsManager.AwaitAllResults(60)
 			if err != nil {
-				glog.Errorf("Results manager failed to await all results: %s", err)
+				logrus.Errorf("Results manager failed to await all results: %v", err)
 			}
 
 			if framework.TestContext.BenchmarkingOutputDir != "" {
 				filepath := path.Join(framework.TestContext.BenchmarkingOutputDir, "image_lifecycle_benchmark_data.json")
 				err = lifecycleResultsManager.WriteResultsFile(filepath)
 				if err != nil {
-					glog.Errorf("Error occurred while writing benchmark results to file %s: %s", filepath, err)
+					logrus.Errorf("Error occurred while writing benchmark results to file %s: %v", filepath, err)
 				}
 			} else {
-				glog.Infof("No benchmarking out dir provided, skipping writing benchmarking results.")
-				glog.Infof("Image lifecycle results were: %+v", lifecycleResultsManager.resultsSet)
+				logrus.Info("No benchmarking out dir provided, skipping writing benchmarking results")
+				logrus.Infof("Image lifecycle results were: %+v", lifecycleResultsManager.resultsSet)
 			}
 		})
 
@@ -239,18 +239,18 @@ var _ = framework.KubeDescribe("Image", func() {
 			imagesResultsChannel <- nil
 			err = imageListResultsManager.AwaitAllResults(60)
 			if err != nil {
-				glog.Errorf("Results manager failed to await all results: %s", err)
+				logrus.Errorf("Results manager failed to await all results: %v", err)
 			}
 
 			if framework.TestContext.BenchmarkingOutputDir != "" {
 				filepath := path.Join(framework.TestContext.BenchmarkingOutputDir, "image_listing_benchmark_data.json")
 				err = imageListResultsManager.WriteResultsFile(filepath)
 				if err != nil {
-					glog.Errorf("Error occurred while writing benchmark results to file %s: %s", filepath, err)
+					logrus.Errorf("Error occurred while writing benchmark results to file %s: %v", filepath, err)
 				}
 			} else {
-				glog.Infof("No benchmarking out dir provided, skipping writing benchmarking results.")
-				glog.Infof("Image listing results were: %+v", imageListResultsManager.resultsSet)
+				logrus.Info("No benchmarking out dir provided, skipping writing benchmarking results")
+				logrus.Infof("Image listing results were: %+v", imageListResultsManager.resultsSet)
 			}
 		})
 	})
