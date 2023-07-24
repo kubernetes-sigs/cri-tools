@@ -10,7 +10,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/moby/term v0.5.0
 	github.com/onsi/ginkgo/v2 v2.11.0
-	github.com/onsi/gomega v1.27.8
+	github.com/onsi/gomega v1.27.9
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/runc v1.1.8
 	github.com/opencontainers/selinux v1.11.0
