@@ -1219,8 +1219,11 @@ func createSeccompContainer(rc internalapi.RuntimeService,
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
-		Command:  []string{"sleep", "60"},
+		Image: &runtimeapi.ImageSpec{
+			Image:              framework.TestContext.TestImageList.DefaultTestContainerImage,
+			UserSpecifiedImage: framework.TestContext.TestImageList.DefaultTestContainerImage,
+		},
+		Command: []string{"sleep", "60"},
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
 				Privileged: privileged,
