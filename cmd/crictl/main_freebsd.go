@@ -1,6 +1,3 @@
-//go:build !windows && !freebsd
-// +build !windows,!freebsd
-
 /*
 Copyright 2017 The Kubernetes Authors.
 
@@ -25,9 +22,9 @@ import (
 )
 
 const (
-	defaultConfigPath = "/etc/crictl.yaml"
+	defaultConfigPath = "/usr/local/etc/crictl.yaml"
 )
 
-var defaultRuntimeEndpoints = []string{"unix:///var/run/dockershim.sock", "unix:///run/containerd/containerd.sock", "unix:///run/crio/crio.sock", "unix:///var/run/cri-dockerd.sock"}
+var defaultRuntimeEndpoints = []string{"unix:///var/run/dockershim.sock", "unix:///var/run/containerd/containerd.sock", "unix:///var/run/crio/crio.sock", "unix:///var/run/cri-dockerd.sock"}
 
 var shutdownSignals = []os.Signal{os.Interrupt, syscall.SIGTERM}
