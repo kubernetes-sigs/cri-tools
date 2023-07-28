@@ -2,11 +2,9 @@
 
 approvers:
   - feiskyer
+  - haircommander
   - saschagrunert
   - sig-node-approvers
-
-reviewers:
-  - haircommander
 
 emeritus_approvers:
   - euank
