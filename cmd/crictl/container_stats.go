@@ -132,75 +132,36 @@ func (c containerStatsByID) Less(i, j int) bool {
 	return c[i].Attributes.Id < c[j].Attributes.Id
 }
 
+type containerStatsDisplayer struct {
+	opts    statsOptions
+	request *pb.ListContainerStatsRequest
+	*display
+}
+
 // ContainerStats sends a ListContainerStatsRequest to the server, and
 // parses the returned ListContainerStatsResponse.
 func ContainerStats(client internalapi.RuntimeService, opts statsOptions) error {
-	filter := &pb.ContainerStatsFilter{}
-	if opts.id != "" {
-		filter.Id = opts.id
-	}
-	if opts.podID != "" {
-		filter.PodSandboxId = opts.podID
-	}
-	if opts.labels != nil {
-		filter.LabelSelector = opts.labels
-	}
-	request := &pb.ListContainerStatsRequest{
-		Filter: filter,
+	d := containerStatsDisplayer{
+		opts: opts,
+		request: &pb.ListContainerStatsRequest{
+			Filter: &pb.ContainerStatsFilter{
+				Id:            opts.id,
+				PodSandboxId:  opts.podID,
+				LabelSelector: opts.labels,
+			},
+		},
+		display: newTableDisplay(20, 1, 3, ' ', 0),
 	}
 
-	display := newTableDisplay(20, 1, 3, ' ', 0)
-	if !opts.watch {
-		if err := displayStats(context.TODO(), client, request, display, opts); err != nil {
-			return err
-		}
-	} else {
-		displayErrCh := make(chan error, 1)
-		ticker := time.NewTicker(500 * time.Millisecond)
-		defer ticker.Stop()
-		watchCtx, cancelFn := context.WithCancel(context.Background())
-		defer cancelFn()
-		// Put the displayStats in another goroutine.
-		// because it might be time consuming with lots of containers.
-		// and we want to cancel it ASAP when user hit CtrlC
-		go func() {
-			for range ticker.C {
-				if err := displayStats(watchCtx, client, request, display, opts); err != nil {
-					displayErrCh <- err
-					break
-				}
-			}
-		}()
-		// listen for CtrlC or error
-		select {
-		case <-SetupInterruptSignalHandler():
-			cancelFn()
-			return nil
-		case err := <-displayErrCh:
-			return err
-		}
-	}
-
-	return nil
+	return handleDisplay(context.TODO(), client, opts.watch, d.displayStats)
 }
 
-func getContainerStats(ctx context.Context, client internalapi.RuntimeService, request *pb.ListContainerStatsRequest) (*pb.ListContainerStatsResponse, error) {
-	logrus.Debugf("ListContainerStatsRequest: %v", request)
-	r, err := client.ListContainerStats(context.TODO(), request.Filter)
-	logrus.Debugf("ListContainerResponse: %v", r)
-	if err != nil {
-		return nil, err
-	}
-	sort.Sort(containerStatsByID(r))
-	return &pb.ListContainerStatsResponse{Stats: r}, nil
-}
-
-func displayStats(ctx context.Context, client internalapi.RuntimeService, request *pb.ListContainerStatsRequest, display *display, opts statsOptions) error {
-	r, err := getContainerStats(ctx, client, request)
+func (d containerStatsDisplayer) displayStats(ctx context.Context, client internalapi.RuntimeService) error {
+	r, err := getContainerStats(ctx, client, d.request)
 	if err != nil {
 		return err
 	}
-	switch opts.output {
+	switch d.opts.output {
 	case "json":
 		return outputProtobufObjAsJSON(r)
 	case "yaml":
@@ -214,14 +175,14 @@ func displayStats(ctx context.Context, client internalapi.RuntimeService, reques
 		oldStats[s.Attributes.Id] = s
 	}
 
-	time.Sleep(opts.sample)
+	time.Sleep(d.opts.sample)
 
-	r, err = getContainerStats(ctx, client, request)
+	r, err = getContainerStats(ctx, client, d.request)
 	if err != nil {
 		return err
 	}
 
-	display.AddRow([]string{columnContainer, columnName, columnCPU, columnMemory, columnDisk, columnInodes})
+	d.display.AddRow([]string{columnContainer, columnName, columnCPU, columnMemory, columnDisk, columnInodes})
 	for _, s := range r.GetStats() {
 		if ctx.Err() != nil {
 			return ctx.Err()
@@ -232,7 +193,7 @@ func displayStats(ctx context.Context, client internalapi.RuntimeService, reques
 		mem := s.GetMemory().GetWorkingSetBytes().GetValue()
 		disk := s.GetWritableLayer().GetUsedBytes().GetValue()
 		inodes := s.GetWritableLayer().GetInodesUsed().GetValue()
-		if !opts.all && cpu == 0 && mem == 0 {
+		if !d.opts.all && cpu == 0 && mem == 0 {
 			// Skip non-running container
 			continue
 		}
@@ -250,12 +211,23 @@ func displayStats(ctx context.Context, client internalapi.RuntimeService, reques
 			}
 			cpuPerc = float64(cpu-old.GetCpu().GetUsageCoreNanoSeconds().GetValue()) / float64(duration) * 100
 		}
-		display.AddRow([]string{id, name, fmt.Sprintf("%.2f", cpuPerc), units.HumanSize(float64(mem)),
+		d.display.AddRow([]string{id, name, fmt.Sprintf("%.2f", cpuPerc), units.HumanSize(float64(mem)),
 			units.HumanSize(float64(disk)), fmt.Sprintf("%d", inodes)})
 
 	}
-	display.ClearScreen()
-	display.Flush()
+	d.display.ClearScreen()
+	d.display.Flush()
 
 	return nil
+}
+
+func getContainerStats(ctx context.Context, client internalapi.RuntimeService, request *pb.ListContainerStatsRequest) (*pb.ListContainerStatsResponse, error) {
+	logrus.Debugf("ListContainerStatsRequest: %v", request)
+	r, err := client.ListContainerStats(context.TODO(), request.Filter)
+	logrus.Debugf("ListContainerResponse: %v", r)
+	if err != nil {
+		return nil, err
+	}
+	sort.Sort(containerStatsByID(r))
+	return &pb.ListContainerStatsResponse{Stats: r}, nil
 }

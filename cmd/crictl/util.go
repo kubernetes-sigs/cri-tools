@@ -18,6 +18,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -28,10 +29,12 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
+	cri "k8s.io/cri-api/pkg/apis"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"sigs.k8s.io/yaml"
@@ -354,4 +357,43 @@ func getRepoImage(imageClient internalapi.ImageManagerService, image string) (st
 		return r.Image.RepoTags[0], nil
 	}
 	return image, nil
+}
+
+func handleDisplay(
+	ctx context.Context,
+	client cri.RuntimeService,
+	watch bool,
+	displayFunc func(context.Context, cri.RuntimeService) error,
+) error {
+	if !watch {
+		return displayFunc(ctx, client)
+	}
+
+	displayErrCh := make(chan error, 1)
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+
+	watchCtx, cancelFn := context.WithCancel(ctx)
+	defer cancelFn()
+
+	// Put the displayPodMetrics in another goroutine, because it might be
+	// time consuming with lots of pods and we want to cancel it
+	// ASAP when user hit CtrlC
+	go func() {
+		for range ticker.C {
+			if err := displayFunc(watchCtx, client); err != nil {
+				displayErrCh <- err
+				break
+			}
+		}
+	}()
+
+	// listen for CtrlC or error
+	select {
+	case <-SetupInterruptSignalHandler():
+		cancelFn()
+		return nil
+	case err := <-displayErrCh:
+		return err
+	}
 }

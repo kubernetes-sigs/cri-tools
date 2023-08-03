@@ -120,6 +120,12 @@ func (c podStatsByID) Less(i, j int) bool {
 	return c[i].Attributes.Id < c[j].Attributes.Id
 }
 
+type podStatsDisplayer struct {
+	filter *pb.PodSandboxStatsFilter
+	opts   podStatsOptions
+	*display
+}
+
 func podStats(
 	c context.Context,
 	client cri.RuntimeService,
@@ -133,58 +139,25 @@ func podStats(
 		filter.LabelSelector = opts.labels
 	}
 
-	display := newTableDisplay(20, 1, 3, ' ', 0)
-	if opts.watch {
-		displayErrCh := make(chan error, 1)
-		ticker := time.NewTicker(500 * time.Millisecond)
-		defer ticker.Stop()
-
-		watchCtx, cancelFn := context.WithCancel(context.Background())
-		defer cancelFn()
-
-		// Put the displayPodStats in another goroutine, because it might be
-		// time consuming with lots of pods and we want to cancel it
-		// ASAP when user hit CtrlC
-		go func() {
-			for range ticker.C {
-				if err := displayPodStats(watchCtx, client, filter, display, opts); err != nil {
-					displayErrCh <- err
-					break
-				}
-			}
-		}()
-
-		// listen for CtrlC or error
-		select {
-		case <-SetupInterruptSignalHandler():
-			cancelFn()
-			return nil
-		case err := <-displayErrCh:
-			return err
-		}
+	d := podStatsDisplayer{
+		filter:  filter,
+		opts:    opts,
+		display: newTableDisplay(20, 1, 3, ' ', 0),
 	}
-
-	if err := displayPodStats(c, client, filter, display, opts); err != nil {
-		return fmt.Errorf("display pod stats: %w", err)
-	}
-
-	return nil
+	return handleDisplay(c, client, opts.watch, d.displayPodStats)
 }
 
-func displayPodStats(
+func (d *podStatsDisplayer) displayPodStats(
 	c context.Context,
 	client cri.RuntimeService,
-	filter *pb.PodSandboxStatsFilter,
-	display *display,
-	opts podStatsOptions,
 ) error {
-	stats, err := getPodSandboxStats(client, filter)
+	stats, err := getPodSandboxStats(client, d.filter)
 	if err != nil {
 		return err
 	}
 
 	response := &pb.ListPodSandboxStatsResponse{Stats: stats}
-	switch opts.output {
+	switch d.opts.output {
 	case "json":
 		return outputProtobufObjAsJSON(response)
 	case "yaml":
@@ -199,14 +172,14 @@ func displayPodStats(
 		oldStats[s.Attributes.Id] = s
 	}
 
-	time.Sleep(opts.sample)
+	time.Sleep(d.opts.sample)
 
-	stats, err = getPodSandboxStats(client, filter)
+	stats, err = getPodSandboxStats(client, d.filter)
 	if err != nil {
 		return err
 	}
 
-	display.AddRow([]string{columnPodName, columnPodID, columnCPU, columnMemory})
+	d.display.AddRow([]string{columnPodName, columnPodID, columnCPU, columnMemory})
 	for _, s := range stats {
 		if c.Err() != nil {
 			return c.Err()
@@ -265,7 +238,7 @@ func displayPodStats(
 			}
 			cpuPerc = float64(cpu-oldCpu) / float64(duration) * 100
 		}
-		display.AddRow([]string{
+		d.display.AddRow([]string{
 			s.Attributes.GetMetadata().GetName(),
 			id,
 			fmt.Sprintf("%.2f", cpuPerc),
@@ -273,8 +246,8 @@ func displayPodStats(
 		})
 
 	}
-	display.ClearScreen()
-	display.Flush()
+	d.display.ClearScreen()
+	d.display.Flush()
 
 	return nil
 }
