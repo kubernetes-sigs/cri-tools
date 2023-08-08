@@ -6,6 +6,7 @@ linters:
   disable-all: true
   enable:
     - depguard
+    - dupl
     - durationcheck
     - forcetypeassert
     - gofmt
@@ -22,13 +23,12 @@ linters:
     - promlinter
     - tagliatelle
     - typecheck
-    - wastedassign
     - unused
+    - wastedassign
     # - asciicheck
     # - bodyclose
     # - cyclop
     # - dogsled
-    # - dupl
     # - errcheck
     # - errorlint
     # - exhaustive

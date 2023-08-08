@@ -126,17 +126,17 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 		})
 
-		It("runtime should support HostIpc is true", func() {
+		testHostIPC := func(mode runtimeapi.NamespaceMode) {
 			By("create shared memory segment on the host")
 			out, err := exec.Command("ipcmk", "-M", "1048576").Output()
 			framework.ExpectNoError(err, "failed to execute ipcmk -M 1048576")
 			rawID := strings.TrimSpace(string(out))
 			segmentID := strings.TrimPrefix(rawID, "Shared memory id: ")
 
-			By("create podSandbox for security context HostIPC is true")
+			By("create podSandbox for security context HostIPC is " + mode.String())
 			namespaceOption := &runtimeapi.NamespaceOption{
 				Pid:     runtimeapi.NamespaceMode_POD,
-				Ipc:     runtimeapi.NamespaceMode_NODE,
+				Ipc:     mode,
 				Network: runtimeapi.NamespaceMode_POD,
 			}
 			podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podSandboxName, "")
@@ -152,42 +152,25 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				return getContainerStatus(rc, containerID).State
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
-			By("check if the shared memory segment is included in the container")
+			By("check if the shared memory segment is (not) included in the container")
 			command := []string{"ipcs", "-m"}
 			o := execSyncContainer(rc, containerID, command)
-			Expect(o).To(ContainSubstring(segmentID), "The shared memory segment should be included in the container")
+
+			const substr = "The shared memory segment should be included in the container"
+			switch mode {
+			case runtimeapi.NamespaceMode_NODE:
+				Expect(o).To(ContainSubstring(segmentID), substr)
+			case runtimeapi.NamespaceMode_POD:
+				Expect(o).NotTo(ContainSubstring(segmentID), substr)
+			}
+		}
+
+		It("runtime should support HostIpc is true", func() {
+			testHostIPC(runtimeapi.NamespaceMode_NODE)
 		})
 
 		It("runtime should support HostIpc is false", func() {
-			By("create shared memory segment on the host")
-			out, err := exec.Command("ipcmk", "-M", "1048576").Output()
-			framework.ExpectNoError(err, "failed to execute ipcmk -M 1048576")
-			rawID := strings.TrimSpace(string(out))
-			segmentID := strings.TrimPrefix(rawID, "Shared memory id: ")
-
-			By("create podSandbox for security context HostIpc is false")
-			namespaceOption := &runtimeapi.NamespaceOption{
-				Pid:     runtimeapi.NamespaceMode_POD,
-				Ipc:     runtimeapi.NamespaceMode_POD,
-				Network: runtimeapi.NamespaceMode_POD,
-			}
-			podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podSandboxName, "")
-
-			By("create a default container with namespace")
-			prefix := "namespace-container-"
-			containerName := prefix + framework.NewUUID()
-			containerID, _, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.TestContext.TestImageList.DefaultTestContainerImage, namespaceOption, pauseCmd, "")
-
-			By("start container")
-			startContainer(rc, containerID)
-			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
-			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
-
-			By("check if the shared memory segment is not included in the container")
-			command := []string{"ipcs", "-m"}
-			o := execSyncContainer(rc, containerID, command)
-			Expect(o).NotTo(ContainSubstring(segmentID), "The shared memory segment should be included in the container")
+			testHostIPC(runtimeapi.NamespaceMode_POD)
 		})
 
 		It("runtime should support PodPID", func() {
