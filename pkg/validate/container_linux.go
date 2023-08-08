@@ -59,13 +59,13 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 			rc.RemovePodSandbox(context.TODO(), podID)
 		})
 
-		It("mount with 'rprivate' should not support propagation", func() {
+		testMountPropagation := func(propagation runtimeapi.MountPropagation) {
 			By("create host path and flag file")
-			mntSource, propagationSrcDir, propagationMntPoint, clearHostPath := createHostPathForMountPropagation(podID, runtimeapi.MountPropagation_PROPAGATION_PRIVATE)
+			mntSource, propagationSrcDir, propagationMntPoint, clearHostPath := createHostPathForMountPropagation(podID, propagation)
 			defer clearHostPath() // clean up the TempDir
 
 			By("create container with volume")
-			containerID := createMountPropagationContainer(rc, ic, "mount-propagation-test-", podID, podConfig, mntSource, runtimeapi.MountPropagation_PROPAGATION_PRIVATE)
+			containerID := createMountPropagationContainer(rc, ic, "mount-propagation-test-", podID, podConfig, mntSource, propagation)
 
 			By("test start container with volume")
 			testStartContainer(rc, containerID)
@@ -76,7 +76,13 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 			By("check whether propagationMntPoint contains file or dir in container")
 			command := []string{"ls", "-A", propagationMntPoint}
 			output := execSyncContainer(rc, containerID, command)
-			Expect(len(output)).To(BeZero(), "len(output) should be zero.")
+
+			switch propagation {
+			case runtimeapi.MountPropagation_PROPAGATION_PRIVATE:
+				Expect(len(output)).To(BeZero(), "len(output) should be zero.")
+			case runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL, runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER:
+				Expect(len(output)).NotTo(BeZero(), "len(output) should not be zero.")
+			}
 
 			By("create a directory named containerMntPoint as a mount point in container")
 			containerMntPoint := path.Join(mntSource, "containerMntPoint")
@@ -90,75 +96,25 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 			By("check whether containerMntPoint contains file or dir in host")
 			fileInfo, err := ioutil.ReadDir(containerMntPoint)
 			framework.ExpectNoError(err, "failed to ReadDir %q in Host", containerMntPoint)
-			Expect(len(fileInfo)).To(BeZero(), "len(fileInfo) should be zero.")
+
+			switch propagation {
+			case runtimeapi.MountPropagation_PROPAGATION_PRIVATE, runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER:
+				Expect(len(fileInfo)).To(BeZero(), "len(fileInfo) should be zero.")
+			case runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL:
+				Expect(len(fileInfo)).NotTo(BeZero(), "len(fileInfo) should not be zero.")
+			}
+		}
+
+		It("mount with 'rprivate' should not support propagation", func() {
+			testMountPropagation(runtimeapi.MountPropagation_PROPAGATION_PRIVATE)
 		})
 
 		It("mount with 'rshared' should support propagation from host to container and vice versa", func() {
-			By("create host path and flag file")
-			mntSource, propagationSrcDir, propagationMntPoint, clearHostPath := createHostPathForMountPropagation(podID, runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL)
-			defer clearHostPath() // clean up the TempDir
-
-			By("create container with volume")
-			containerID := createMountPropagationContainer(rc, ic, "mount-propagation-test-", podID, podConfig, mntSource, runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL)
-
-			By("test start container with volume")
-			testStartContainer(rc, containerID)
-
-			By("create a propatation mount point in host")
-			createPropagationMountPoint(propagationSrcDir, propagationMntPoint)
-
-			By("check whether propagationMntPoint contains file or dir in container")
-			command := []string{"ls", "-A", propagationMntPoint}
-			output := execSyncContainer(rc, containerID, command)
-			Expect(len(output)).NotTo(BeZero(), "len(output) should not be zero.")
-
-			By("create a directory named containerMntPoint as a mount point in container")
-			containerMntPoint := path.Join(mntSource, "containerMntPoint")
-			command = []string{"sh", "-c", "mkdir -p " + containerMntPoint}
-			execSyncContainer(rc, containerID, command)
-
-			By("mount /etc to the mount point in container")
-			command = []string{"sh", "-c", "mount --bind /etc " + containerMntPoint}
-			execSyncContainer(rc, containerID, command)
-
-			By("check whether containerMntPoint contains file or dir in host")
-			fileInfo, err := ioutil.ReadDir(containerMntPoint)
-			framework.ExpectNoError(err, "failed to ReadDir %q in Host", containerMntPoint)
-			Expect(len(fileInfo)).NotTo(BeZero(), "len(fileInfo) should not be zero.")
+			testMountPropagation(runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL)
 		})
 
 		It("mount with 'rslave' should support propagation from host to container", func() {
-			By("create host path and flag file")
-			mntSource, propagationSrcDir, propagationMntPoint, clearHostPath := createHostPathForMountPropagation(podID, runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER)
-			defer clearHostPath() // clean up the TempDir
-
-			By("create container with volume")
-			containerID := createMountPropagationContainer(rc, ic, "mount-propagation-test-", podID, podConfig, mntSource, runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER)
-
-			By("test start container with volume")
-			testStartContainer(rc, containerID)
-
-			By("create a propatation mount point in host")
-			createPropagationMountPoint(propagationSrcDir, propagationMntPoint)
-
-			By("check whether propagationMntPoint contains file or dir in container")
-			command := []string{"ls", "-A", propagationMntPoint}
-			output := execSyncContainer(rc, containerID, command)
-			Expect(len(output)).NotTo(BeZero(), "len(output) should not be zero.")
-
-			By("create a directory named containerMntPoint as a mount point in container")
-			containerMntPoint := path.Join(mntSource, "containerMntPoint")
-			command = []string{"sh", "-c", "mkdir -p " + containerMntPoint}
-			execSyncContainer(rc, containerID, command)
-
-			By("mount /etc to the mount point in container")
-			command = []string{"sh", "-c", "mount --bind /etc " + containerMntPoint}
-			execSyncContainer(rc, containerID, command)
-
-			By("check whether containerMntPoint contains file or dir in host")
-			fileInfo, err := ioutil.ReadDir(containerMntPoint)
-			framework.ExpectNoError(err, "failed to ReadDir %q in Host", containerMntPoint)
-			Expect(len(fileInfo)).To(BeZero(), "len(fileInfo) should be zero.")
+			testMountPropagation(runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER)
 		})
 	})
 })
