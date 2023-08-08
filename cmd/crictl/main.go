@@ -175,6 +175,7 @@ func main() {
 		configCommand,
 		statsCommand,
 		podStatsCommand,
+		podMetricsCommand,
 		completionCommand,
 		checkpointContainerCommand,
 		runtimeConfigCommand,

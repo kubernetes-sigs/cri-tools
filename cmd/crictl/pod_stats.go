@@ -49,7 +49,7 @@ type podStatsOptions struct {
 
 var podStatsCommand = &cli.Command{
 	Name:                   "statsp",
-	Usage:                  "List pod resource usage statistics",
+	Usage:                  "List pod statistics. Stats represent a structured API that will fulfill the Kubelet's /stats/summary endpoint.",
 	UseShortOptionHandling: true,
 	ArgsUsage:              "[ID]",
 	Flags: []cli.Flag{
