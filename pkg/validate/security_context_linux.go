@@ -657,10 +657,23 @@ var _ = framework.KubeDescribe("Security Context", func() {
          }
      ]
 }`
+
+			// seccompProcStatusField is the field of /proc/$PID/status referencing the seccomp filter type.
+			seccompProcStatusField = "Seccomp:"
+
+			// procSelfStatusPath is the path to /proc/self/status.
+			procSelfStatusPath = "/proc/self/status"
 		)
-		var profileDir, blockHostNameProfilePath, blockchmodProfilePath string
-		var err error
-		sysAdminCap := []string{"SYS_ADMIN"}
+
+		var (
+			profileDir, blockHostNameProfilePath, blockchmodProfilePath string
+			err                                                         error
+
+			sysAdminCap = []string{"SYS_ADMIN"}
+
+			// seccompProcSelfStatusGrepCommand is the command to grep the seccomp status of the current process.
+			seccompProcSelfStatusGrepCommand = []string{"grep", seccompProcStatusField, procSelfStatusPath}
+		)
 
 		BeforeEach(func() {
 			profileDir, err = createSeccompProfileDir()
@@ -689,7 +702,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			podID, containerID = seccompTestContainer(rc, ic, seccompProfile)
 
 			By("verify seccomp profile")
-			verifySeccomp(rc, containerID, []string{"grep", "ecc", "/proc/self/status"}, false, "0") // seccomp disabled
+			verifySeccomp(rc, containerID, seccompProcSelfStatusGrepCommand, false, "0") // seccomp disabled
 		})
 
 		It("should support seccomp localhost profile on the container", func() {
@@ -714,7 +727,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			podID, containerID = seccompTestContainer(rc, ic, seccompProfile)
 
 			By("verify seccomp profile")
-			verifySeccomp(rc, containerID, []string{"grep", "ecc", "/proc/self/status"}, false, "1") // seccomp enabled
+			verifySeccomp(rc, containerID, seccompProcSelfStatusGrepCommand, false, "2") // seccomp enabled
 		})
 
 		It("should support nil profile, which is unconfined", func() {
@@ -724,7 +737,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			podID, containerID = seccompTestContainer(rc, ic, nil)
 
 			By("verify seccomp profile")
-			verifySeccomp(rc, containerID, []string{"grep", "ecc", "/proc/self/status"}, false, "0") // seccomp disabled
+			verifySeccomp(rc, containerID, seccompProcSelfStatusGrepCommand, false, "0") // seccomp disabled
 		})
 
 		// SYS_ADMIN capability allows sethostname, and seccomp is unconfined. sethostname should work.
