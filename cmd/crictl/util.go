@@ -260,6 +260,34 @@ func outputStatusInfo(status string, info map[string]string, format string, tmpl
 	return nil
 }
 
+func outputEvent(event proto.Message, format string, tmplStr string) error {
+	switch format {
+	case "yaml":
+		err := outputProtobufObjAsYAML(event)
+		if err != nil {
+			return err
+		}
+	case "json":
+		err := outputProtobufObjAsJSON(event)
+		if err != nil {
+			return err
+		}
+	case "go-template":
+		jsonEvent, err := protobufObjectToJSON(event)
+		if err != nil {
+			return err
+		}
+		output, err := tmplExecuteRawJSON(tmplStr, jsonEvent)
+		if err != nil {
+			return err
+		}
+		fmt.Println(output)
+	default:
+		fmt.Printf("Don't support %q format\n", format)
+	}
+	return nil
+}
+
 func parseLabelStringSlice(ss []string) (map[string]string, error) {
 	labels := make(map[string]string)
 	for _, s := range ss {

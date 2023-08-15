@@ -65,6 +65,7 @@ COMMANDS:
 - `statsp`:             List pod(s) resource usage statistics
 - `completion`:         Output bash shell completion code
 - `checkpoint`:         Checkpoint one or more running containers
+- `events, event`:      Fetch the events of containers
 - `help, h`:            Shows a list of commands or help for one command
 
 `crictl` by default connects on Unix to:
