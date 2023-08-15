@@ -25,9 +25,14 @@ curl -sSfL --retry 5 --retry-delay 10 -o $BINARY \
     https://github.com/kubernetes/release/releases/download/$VERSION/release-notes-linux-amd64
 chmod +x $BINARY
 
+PREVOUS_TAG=$(git tag | tail -2 | head -1)
+LATEST_TAG=$(git tag | tail -1)
+
 $BINARY \
-    --discover patch-to-patch \
     --org kubernetes-sigs \
     --repo cri-tools \
     --required-author "" \
+    --branch master \
+    --start-rev "$PREVOUS_TAG" \
+    --end-rev "$LATEST_TAG" \
     --output release-notes.md
