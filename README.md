@@ -87,14 +87,6 @@ You can reach the maintainers of this project at:
 - Slack: #sig-node
 - Mailing List: <https://groups.google.com/forum/#!forum/kubernetes-sig-node>
 
-## Kubernetes Incubator
-
-This is a [Kubernetes Incubator project](https://github.com/kubernetes/community/blob/master/archive/incubator.md). The incubator team for the project is:
-
-- Sponsor: Dawn Chen (@dchen1107)
-- Champion: Yu-Ju Hong (@yujuhong)
-- SIG: sig-node
-
 ## Contributing
 
 Interested in contributing? Check out the [documentation](CONTRIBUTING.md).
