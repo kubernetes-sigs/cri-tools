@@ -92,7 +92,7 @@ func Events(cliContext *cli.Context, client internalapi.RuntimeService) error {
 		case e := <-containerEventsCh:
 			err := outputEvent(e, cliContext.String("output"), cliContext.String("template"))
 			if err != nil {
-				fmt.Printf("formatting container event: %s\n", err)
+				fmt.Printf("failed to format container event with the error: %s\n", err)
 			}
 		}
 	}
