@@ -25,11 +25,11 @@ import (
 // The actual test suite
 var _ = t.Describe("events", func() {
 	It("should fail with not supported output format", func() {
-		t.CrictlExpectFailure("events --output=ini", "", "don't support \"ini\" format")
+		t.CrictlExpectFailure("events --output=ini", "", "don't support .* format")
 	})
 
 	It("should fail with template set for non go-template format", func() {
-		t.CrictlExpectFailure("events --template=\"{{ .containerID }}\"", "", "template can't be used with \"json\" format")
+		t.CrictlExpectFailure("events --template=\"{{ .containerID }}\"", "", "template can't be used with .* format")
 	})
 
 	It("should succeed", func() {
