@@ -28,7 +28,7 @@ import (
 
 var eventsCommand = &cli.Command{
 	Name:                   "events",
-	Usage:                  "Fetch the events of containers",
+	Usage:                  "Stream the events of containers",
 	Aliases:                []string{"event"},
 	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
@@ -46,6 +46,16 @@ var eventsCommand = &cli.Command{
 	Action: func(c *cli.Context) error {
 		if c.NArg() != 0 {
 			return cli.ShowSubcommandHelp(c)
+		}
+
+		switch format := c.String("output"); format {
+		case "json", "yaml":
+			if len(c.String("template")) > 0 {
+				return fmt.Errorf("template can't be used with %q format", format)
+			}
+		case "go-template":
+		default:
+			return fmt.Errorf("don't support %q format", format)
 		}
 
 		runtimeClient, err := getRuntimeService(c, 0)
@@ -82,7 +92,7 @@ func Events(cliContext *cli.Context, client internalapi.RuntimeService) error {
 		case e := <-containerEventsCh:
 			err := outputEvent(e, cliContext.String("output"), cliContext.String("template"))
 			if err != nil {
-				return err
+				fmt.Printf("formatting container event: %s\n", err)
 			}
 		}
 	}
