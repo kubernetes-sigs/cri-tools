@@ -32,6 +32,10 @@ var _ = t.Describe("events", func() {
 		t.CrictlExpectFailure("events --template=\"{{ .containerID }}\"", "", "template can't be used with .* format")
 	})
 
+	It("should fail with bad template set for go-template format", func() {
+		t.CrictlExpectFailure("events --output=go-template --template=\"{{\"", "", "failed to parse go-template")
+	})
+
 	It("should succeed", func() {
 		// Given
 		endpoint, testDir, crio := t.StartCrio()
@@ -41,7 +45,7 @@ var _ = t.Describe("events", func() {
 		Expect(session.Out).ToNot(Say("unknown method GetContainerEvents")) // no errors
 
 		// Then
-		session.Terminate()
+		defer session.Terminate()
 		t.StopCrio(testDir, crio)
 	})
 })
