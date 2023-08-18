@@ -20,32 +20,41 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gbytes"
+	. "github.com/onsi/gomega/gexec"
 )
 
 // The actual test suite
-var _ = t.Describe("events", func() {
+var _ = t.Describe("events options validation", func() {
 	It("should fail with not supported output format", func() {
 		t.CrictlExpectFailure("events --output=ini", "", "don't support .* format")
 	})
 
 	It("should fail with template set for non go-template format", func() {
-		t.CrictlExpectFailure("events --template=\"{{ .containerID }}\"", "", "template can't be used with .* format")
+		t.CrictlExpectFailure("events --template={{.containerID}}", "", "template can't be used with .* format")
 	})
 
 	It("should fail with bad template set for go-template format", func() {
-		t.CrictlExpectFailure("events --output=go-template --template=\"{{\"", "", "failed to parse go-template")
+		t.CrictlExpectFailure("events --output=go-template --template={{", "", "failed to parse go-template")
+	})
+})
+
+// The actual test suite
+var _ = t.Describe("events", func() {
+	var (
+		endpoint, testDir string
+		crio              *Session
+	)
+	BeforeEach(func() {
+		endpoint, testDir, crio = t.StartCrio()
+	})
+
+	AfterEach(func() {
+		t.StopCrio(testDir, crio)
 	})
 
 	It("should succeed", func() {
-		// Given
-		endpoint, testDir, crio := t.StartCrio()
-
-		// When
 		session := t.CrictlWithEndpointNoWait(endpoint, "events")
-		Expect(session.Out).ToNot(Say("unknown method GetContainerEvents")) // no errors
-
-		// Then
 		defer session.Terminate()
-		t.StopCrio(testDir, crio)
+		Expect(session.Out).ToNot(Say("unknown method GetContainerEvents")) // no errors
 	})
 })
