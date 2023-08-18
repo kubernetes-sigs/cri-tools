@@ -88,6 +88,11 @@ func (t *TestFramework) CrictlWithEndpoint(endpoint, args string) *Session {
 	return lcmd("crictl --runtime-endpoint=%s %s", endpoint, args).Wait(time.Minute)
 }
 
+// Run crictl on the specified endpoint and return the resulting session without wait
+func (t *TestFramework) CrictlWithEndpointNoWait(endpoint, args string) *Session {
+	return lcmd("crictl --runtime-endpoint=%s %s", endpoint, args)
+}
+
 // Run crictl and expect exit, expectedOut, expectedErr
 func (t *TestFramework) CrictlExpect(
 	endpoint, args string, exit int, expectedOut, expectedErr string,
@@ -136,9 +141,9 @@ func (t *TestFramework) CrictlExpectFailureWithEndpoint(
 func SetupCrio() string {
 	const (
 		crioURL       = "https://github.com/cri-o/cri-o"
-		crioVersion   = "v1.23.1"
+		crioVersion   = "v1.26.4"
 		conmonURL     = "https://github.com/containers/conmon"
-		conmonVersion = "v2.0.32"
+		conmonVersion = "v2.1.7"
 	)
 	tmpDir := filepath.Join(os.TempDir(), "crio-tmp")
 
@@ -202,7 +207,8 @@ func (t *TestFramework) StartCrio() (string, string, *Session) {
 		" --cni-config-dir=%s"+
 		" --root=%s"+
 		" --runroot=%s"+
-		" --pinns-path=%s",
+		" --pinns-path=%s"+
+		" --enable-pod-events",
 		filepath.Join(tmpDir, "bin", "crio"),
 		filepath.Join(t.crioDir, "crio.conf"),
 		endpoint,
