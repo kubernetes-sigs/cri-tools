@@ -231,6 +231,9 @@ var listImageCommand = &cli.Command{
 			if image.Username != "" {
 				fmt.Printf("Username: %v\n", image.Username)
 			}
+			if image.Pinned {
+				fmt.Printf("Pinned: %v\n", image.Pinned)
+			}
 			fmt.Printf("\n")
 		}
 		display.Flush()
