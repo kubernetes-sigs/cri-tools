@@ -37,6 +37,7 @@ const (
 	columnNamespace  = "NAMESPACE"
 	columnSize       = "SIZE"
 	columnTag        = "TAG"
+	columnPinned     = "PINNED"
 	columnDigest     = "DIGEST"
 	columnMemory     = "MEM"
 	columnInodes     = "INODES"
