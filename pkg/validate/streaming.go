@@ -198,7 +198,11 @@ func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, stdou
 		streamOptions.Stdin = localInRead
 		streamOptions.Tty = true
 	}
-	err = e.Stream(streamOptions)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err = e.StreamWithContext(ctx, streamOptions)
 	framework.ExpectNoError(err, "failed to open streamer for %q", execServerURL)
 
 	if stdoutExactMatch {
@@ -296,7 +300,10 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 	e, err := remoteclient.NewSPDYExecutor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}, "POST", url)
 	framework.ExpectNoError(err, "failed to create executor for %q", attachServerURL)
 
-	err = e.Stream(remoteclient.StreamOptions{
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err = e.StreamWithContext(ctx, remoteclient.StreamOptions{
 		Stdin:  reader,
 		Stdout: localOut,
 		Stderr: localErr,

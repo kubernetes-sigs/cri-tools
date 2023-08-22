@@ -95,7 +95,11 @@ var runtimeExecCommand = &cli.Command{
 			}
 			return nil
 		}
-		err = Exec(runtimeClient, opts)
+
+		ctx, cancel := context.WithCancel(c.Context)
+		defer cancel()
+
+		err = Exec(ctx, runtimeClient, opts)
 		if err != nil {
 			return fmt.Errorf("execing command in container: %w", err)
 		}
@@ -124,7 +128,7 @@ func ExecSync(client internalapi.RuntimeService, opts execOptions) (int, error) 
 }
 
 // Exec sends an ExecRequest to server, and parses the returned ExecResponse
-func Exec(client internalapi.RuntimeService, opts execOptions) error {
+func Exec(ctx context.Context, client internalapi.RuntimeService, opts execOptions) error {
 	request := &pb.ExecRequest{
 		ContainerId: opts.id,
 		Cmd:         opts.cmd,
@@ -135,7 +139,7 @@ func Exec(client internalapi.RuntimeService, opts execOptions) error {
 	}
 
 	logrus.Debugf("ExecRequest: %v", request)
-	r, err := client.Exec(context.TODO(), request)
+	r, err := client.Exec(ctx, request)
 	logrus.Debugf("ExecResponse: %v", r)
 	if err != nil {
 		return err
@@ -156,10 +160,10 @@ func Exec(client internalapi.RuntimeService, opts execOptions) error {
 	}
 
 	logrus.Debugf("Exec URL: %v", URL)
-	return stream(opts.stdin, opts.tty, URL)
+	return stream(ctx, opts.stdin, opts.tty, URL)
 }
 
-func stream(in, tty bool, url *url.URL) error {
+func stream(ctx context.Context, in, tty bool, url *url.URL) error {
 	executor, err := remoteclient.NewSPDYExecutor(&restclient.Config{TLSClientConfig: restclient.TLSClientConfig{Insecure: true}}, "POST", url)
 	if err != nil {
 		return err
@@ -176,7 +180,7 @@ func stream(in, tty bool, url *url.URL) error {
 	}
 	logrus.Debugf("StreamOptions: %v", streamOptions)
 	if !tty {
-		return executor.Stream(streamOptions)
+		return executor.StreamWithContext(ctx, streamOptions)
 	} else {
 		var detachKeys []byte
 		detachKeys, err = mobyterm.ToBytes(detachSequence)
@@ -198,5 +202,5 @@ func stream(in, tty bool, url *url.URL) error {
 		return fmt.Errorf("input is not a terminal")
 	}
 	streamOptions.TerminalSizeQueue = t.MonitorSize(t.GetSize())
-	return t.Safe(func() error { return executor.Stream(streamOptions) })
+	return t.Safe(func() error { return executor.StreamWithContext(ctx, streamOptions) })
 }
