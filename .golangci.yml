@@ -21,6 +21,7 @@ linters:
     - prealloc
     - predeclared
     - promlinter
+    - staticcheck
     - tagliatelle
     - typecheck
     - unused
@@ -66,7 +67,6 @@ linters:
     # - rowserrcheck
     # - scopelint
     # - sqlclosecheck
-    # - staticcheck
     # - stylecheck
     # - testpackage
     # - thelper
@@ -77,6 +77,8 @@ linters:
     # - wrapcheck
     # - wsl
 linters-settings:
+  staticcheck:
+    checks: ["SA1019"]
   gocritic:
     enabled-checks:
       # Diagnostic

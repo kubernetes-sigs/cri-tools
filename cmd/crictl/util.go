@@ -31,8 +31,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/jsonpb" //nolint:staticcheck
+	"github.com/golang/protobuf/proto"  //nolint:staticcheck
 	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
 	cri "k8s.io/cri-api/pkg/apis"
 	internalapi "k8s.io/cri-api/pkg/apis"
