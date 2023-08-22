@@ -18,7 +18,6 @@ package validate
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -159,7 +158,7 @@ func listPodSandbox(c internalapi.RuntimeService, filter *runtimeapi.PodSandboxF
 
 // createLogTempDir creates the log temp directory for podSandbox.
 func createLogTempDir(podSandboxName string) (string, string) {
-	hostPath, err := ioutil.TempDir("", "podLogTest")
+	hostPath, err := os.MkdirTemp("", "podLogTest")
 	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
 	podLogPath := filepath.Join(hostPath, podSandboxName)
 	err = os.MkdirAll(podLogPath, 0777)

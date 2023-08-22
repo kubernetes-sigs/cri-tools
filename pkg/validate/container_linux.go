@@ -18,7 +18,6 @@ package validate
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -94,7 +93,7 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 			execSyncContainer(rc, containerID, command)
 
 			By("check whether containerMntPoint contains file or dir in host")
-			fileInfo, err := ioutil.ReadDir(containerMntPoint)
+			fileInfo, err := os.ReadDir(containerMntPoint)
 			framework.ExpectNoError(err, "failed to ReadDir %q in Host", containerMntPoint)
 
 			switch propagation {
@@ -170,7 +169,7 @@ var _ = framework.KubeDescribe("Container OOM", func() {
 
 // createHostPath creates the hostPath for mount propagation test.
 func createHostPathForMountPropagation(podID string, propagationOpt runtimeapi.MountPropagation) (string, string, string, func()) {
-	hostPath, err := ioutil.TempDir("", "test"+podID)
+	hostPath, err := os.MkdirTemp("", "test"+podID)
 	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
 
 	mntSource := filepath.Join(hostPath, "mnt")

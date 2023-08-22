@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -490,7 +489,7 @@ func verifyExecSyncOutput(c internalapi.RuntimeService, containerID string, comm
 
 // createHostPath creates the hostPath and flagFile for volume.
 func createHostPath(podID string) (string, string) {
-	hostPath, err := ioutil.TempDir("", "test"+podID)
+	hostPath, err := os.MkdirTemp("", "test"+podID)
 	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
 
 	flagFile := "testVolume.file"

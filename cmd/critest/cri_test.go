@@ -19,7 +19,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -100,7 +99,7 @@ func generateTempTestName() (string, error) {
 		suffix[i] = letterBytes[rand.Intn(len(letterBytes))]
 	}
 
-	dir, err := ioutil.TempDir("", "cri-test")
+	dir, err := os.MkdirTemp("", "cri-test")
 	if err != nil {
 		return "", err
 	}

@@ -19,7 +19,6 @@ package validate
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -83,7 +82,7 @@ var _ = framework.KubeDescribe("Multiple Containers [Conformance]", func() {
 		It("should support container log", func() {
 			verifyContainerLog := func(path, expected string) func() (bool, error) {
 				return func() (bool, error) {
-					content, err := ioutil.ReadFile(path)
+					content, err := os.ReadFile(path)
 					if err != nil {
 						return false, err
 					}

@@ -19,7 +19,6 @@ package framework
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -175,7 +174,7 @@ func checkoutAndBuild(dir, url, rev string) error {
 // Start the container runtime process
 func (t *TestFramework) StartCrio() (string, string, *Session) {
 	// Create a new sandbox directory
-	tmpDir, err := ioutil.TempDir("", "crictl-e2e-")
+	tmpDir, err := os.MkdirTemp("", "crictl-e2e-")
 	Expect(err).To(BeNil())
 
 	// Copy everything together

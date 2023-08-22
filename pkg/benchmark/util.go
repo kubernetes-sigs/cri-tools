@@ -19,7 +19,7 @@ package benchmark
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -165,7 +165,7 @@ func (lbrm *LifecycleBenchmarksResultsManager) WriteResultsFile(filepath string)
 
 	data, err := json.MarshalIndent(lbrm.resultsSet, "", " ")
 	if err == nil {
-		err = ioutil.WriteFile(filepath, data, 0644)
+		err = os.WriteFile(filepath, data, 0644)
 		if err != nil {
 			return fmt.Errorf("Failed to write benchmarks results to file: %v", filepath)
 		}
