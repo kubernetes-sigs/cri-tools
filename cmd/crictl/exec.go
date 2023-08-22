@@ -91,7 +91,7 @@ var runtimeExecCommand = &cli.Command{
 				return fmt.Errorf("execing command in container synchronously: %w", err)
 			}
 			if exitCode != 0 {
-				return cli.NewExitError("non-zero exit code", exitCode)
+				return cli.Exit("non-zero exit code", exitCode)
 			}
 			return nil
 		}
