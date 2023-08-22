@@ -28,6 +28,8 @@ import (
 	"github.com/docker/go-units"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 
 	errorUtils "k8s.io/apimachinery/pkg/util/errors"
 	internalapi "k8s.io/cri-api/pkg/apis"
@@ -509,6 +511,7 @@ func ListPodSandboxes(client internalapi.RuntimeService, opts listOptions) error
 			columnPodRuntime,
 		})
 	}
+	c := cases.Title(language.Und)
 	for _, pod := range r {
 		if opts.quiet {
 			fmt.Printf("%s\n", pod.Id)
@@ -564,7 +567,7 @@ func ListPodSandboxes(client internalapi.RuntimeService, opts listOptions) error
 			}
 		}
 		fmt.Printf("%s: %s\n",
-			strings.Title(strings.ToLower(columnPodRuntime)),
+			c.String(columnPodRuntime),
 			getSandboxesRuntimeHandler(pod))
 
 		fmt.Println()
