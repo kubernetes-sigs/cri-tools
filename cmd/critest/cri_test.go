@@ -25,7 +25,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	ginkgotypes "github.com/onsi/ginkgo/v2/types"
@@ -54,7 +53,6 @@ var (
 
 func init() {
 	framework.RegisterFlags()
-	rand.Seed(time.Now().UnixNano())
 	getConfigFromFile()
 }
 
