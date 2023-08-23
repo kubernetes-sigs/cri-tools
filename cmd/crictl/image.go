@@ -155,6 +155,10 @@ var listImageCommand = &cli.Command{
 			Name:  "no-trunc",
 			Usage: "Show output without truncating the ID",
 		},
+		&cli.BoolFlag{
+			Name:  "pinned",
+			Usage: "Show whether the image is pinned or not",
+		},
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() > 1 {
@@ -183,14 +187,19 @@ var listImageCommand = &cli.Command{
 		display := newTableDisplay(20, 1, 3, ' ', 0)
 		verbose := c.Bool("verbose")
 		showDigest := c.Bool("digests")
+		showPinned := c.Bool("pinned")
 		quiet := c.Bool("quiet")
 		noTrunc := c.Bool("no-trunc")
 		if !verbose && !quiet {
+			row := []string{columnImage, columnTag}
 			if showDigest {
-				display.AddRow([]string{columnImage, columnTag, columnDigest, columnImageID, columnSize})
-			} else {
-				display.AddRow([]string{columnImage, columnTag, columnImageID, columnSize})
+				row = append(row, columnDigest)
 			}
+			row = append(row, columnImageID, columnSize)
+			if showPinned {
+				row = append(row, columnPinned)
+			}
+			display.AddRow(row)
 		}
 		for _, image := range r.Images {
 			if quiet {
@@ -207,11 +216,15 @@ var listImageCommand = &cli.Command{
 					repoDigest = getTruncatedID(repoDigest, "sha256:")
 				}
 				for _, repoTagPair := range repoTagPairs {
+					row := []string{repoTagPair[0], repoTagPair[1]}
 					if showDigest {
-						display.AddRow([]string{repoTagPair[0], repoTagPair[1], repoDigest, id, size})
-					} else {
-						display.AddRow([]string{repoTagPair[0], repoTagPair[1], id, size})
+						row = append(row, repoDigest)
 					}
+					row = append(row, id, size)
+					if showPinned {
+						row = append(row, fmt.Sprintf("%v", image.Pinned))
+					}
+					display.AddRow(row)
 				}
 				continue
 			}
@@ -230,6 +243,9 @@ var listImageCommand = &cli.Command{
 			}
 			if image.Username != "" {
 				fmt.Printf("Username: %v\n", image.Username)
+			}
+			if image.Pinned {
+				fmt.Printf("Pinned: %v\n", image.Pinned)
 			}
 			fmt.Printf("\n")
 		}
