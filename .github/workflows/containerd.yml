@@ -25,7 +25,9 @@ jobs:
         os: [ubuntu-20.04, windows-2019]
         # not every command likes the slash in branch name.
         # So will use format command to replace to either `_` or '/'
-        version: [main, 'release{0}1.6', 'release{0}1.7']
+        version:
+          - 5ee98395a04657baa15a97f372a53e09b14efb0a
+          - b2553c36d2d41d917a73d8eedd2313f33e85df6f
         runtime: [io.containerd.runtime.v1.linux, io.containerd.runc.v1, io.containerd.runc.v2, containerd-shim-runhcs-v1]
         runc: [runc, crun]
         exclude:
