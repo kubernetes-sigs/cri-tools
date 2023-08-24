@@ -235,6 +235,7 @@ jobs:
         env:
           RUNC_FLAVOR: ${{matrix.runc}}
         run: |
+          sudo rm -rf $(command -v runc)
           sudo -E PATH=$PATH script/setup/install-runc
         working-directory: src/github.com/containerd/containerd
 
