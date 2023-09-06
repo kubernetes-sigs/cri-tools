@@ -69,21 +69,21 @@ jobs:
           restore-keys: ${{ runner.os }}-go-
 
       - name: Checkout containerd/containerd ${{ format(matrix.version, '/') }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: ${{ github.workspace }}/src/github.com/containerd/containerd
           repository: containerd/containerd
           ref: ${{ format(matrix.version, '/') }}
 
       - name: Checkout Microsoft/hcsshim
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         if: startsWith(matrix.os, 'windows')
         with:
           repository: Microsoft/hcsshim
           path: src/github.com/Microsoft/hcsshim
 
       - name: Checkout cri-tools for this commit
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: ${{github.workspace}}/src/github.com/kubernetes-sigs/cri-tools
 

@@ -73,7 +73,7 @@ jobs:
           sudo systemctl start crio
 
       - name: Checkout cri-tools for this commit
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: ${{github.workspace}}/src/github.com/kubernetes-sigs/cri-tools
 
