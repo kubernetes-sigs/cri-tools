@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"time"
@@ -148,7 +147,7 @@ func checkContainerApparmor(rc internalapi.RuntimeService, containerID string, s
 }
 
 func loadTestProfiles() error {
-	f, err := ioutil.TempFile("/tmp", "apparmor")
+	f, err := os.CreateTemp("/tmp", "apparmor")
 	if err != nil {
 		return fmt.Errorf("open temp file: %w", err)
 	}

@@ -17,9 +17,7 @@ limitations under the License.
 package validate
 
 import (
-	"math/rand"
 	"testing"
-	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -31,7 +29,6 @@ import (
 // generated in this directory.
 // This function is called on each Ginkgo node in parallel mode.
 func TestE2ECRI(t *testing.T) {
-	rand.Seed(time.Now().UTC().UnixNano())
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "E2ECRI Suite")
 }

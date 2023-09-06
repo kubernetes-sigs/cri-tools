@@ -31,10 +31,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/jsonpb" //nolint:staticcheck
+	"github.com/golang/protobuf/proto"  //nolint:staticcheck
 	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
-	cri "k8s.io/cri-api/pkg/apis"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"sigs.k8s.io/yaml"
@@ -389,9 +388,9 @@ func getRepoImage(imageClient internalapi.ImageManagerService, image string) (st
 
 func handleDisplay(
 	ctx context.Context,
-	client cri.RuntimeService,
+	client internalapi.RuntimeService,
 	watch bool,
-	displayFunc func(context.Context, cri.RuntimeService) error,
+	displayFunc func(context.Context, internalapi.RuntimeService) error,
 ) error {
 	if !watch {
 		return displayFunc(ctx, client)

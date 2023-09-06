@@ -18,7 +18,6 @@ package common
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	gofilepath "path/filepath"
 	"strconv"
@@ -41,7 +40,7 @@ type Config struct {
 // ReadConfig reads from a file with the given name and returns a config or
 // an error if the file was unable to be parsed.
 func ReadConfig(filepath string) (*Config, error) {
-	data, err := ioutil.ReadFile(filepath)
+	data, err := os.ReadFile(filepath)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +74,7 @@ func WriteConfig(c *Config, filepath string) error {
 	if err := os.MkdirAll(gofilepath.Dir(filepath), 0o755); err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filepath, data, 0o644)
+	return os.WriteFile(filepath, data, 0o644)
 }
 
 // Extracts config options from the yaml data which is loaded from file

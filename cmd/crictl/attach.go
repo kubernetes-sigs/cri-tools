@@ -59,12 +59,15 @@ var runtimeAttachCommand = &cli.Command{
 			return err
 		}
 
+		ctx, cancel := context.WithCancel(c.Context)
+		defer cancel()
+
 		var opts = attachOptions{
 			id:    id,
 			tty:   c.Bool("tty"),
 			stdin: c.Bool("stdin"),
 		}
-		if err = Attach(runtimeClient, opts); err != nil {
+		if err = Attach(ctx, runtimeClient, opts); err != nil {
 			return fmt.Errorf("attaching running container failed: %w", err)
 
 		}
@@ -73,7 +76,7 @@ var runtimeAttachCommand = &cli.Command{
 }
 
 // Attach sends an AttachRequest to server, and parses the returned AttachResponse
-func Attach(client internalapi.RuntimeService, opts attachOptions) error {
+func Attach(ctx context.Context, client internalapi.RuntimeService, opts attachOptions) error {
 	if opts.id == "" {
 		return fmt.Errorf("ID cannot be empty")
 
@@ -86,7 +89,7 @@ func Attach(client internalapi.RuntimeService, opts attachOptions) error {
 		Stderr:      !opts.tty,
 	}
 	logrus.Debugf("AttachRequest: %v", request)
-	r, err := client.Attach(context.TODO(), request)
+	r, err := client.Attach(ctx, request)
 	logrus.Debugf("AttachResponse: %v", r)
 	if err != nil {
 		return err
@@ -106,5 +109,5 @@ func Attach(client internalapi.RuntimeService, opts attachOptions) error {
 	}
 
 	logrus.Debugf("Attach URL: %v", URL)
-	return stream(opts.stdin, opts.tty, URL)
+	return stream(ctx, opts.stdin, opts.tty, URL)
 }

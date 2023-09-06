@@ -20,16 +20,21 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"text/template"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func builtinTmplFuncs() template.FuncMap {
+	t := cases.Title(language.Und)
+	l := cases.Lower(language.Und)
+	u := cases.Upper(language.Und)
 	return template.FuncMap{
 		"json":  jsonBuiltinTmplFunc,
-		"title": strings.Title,
-		"lower": strings.ToLower,
-		"upper": strings.ToUpper,
+		"title": t.String,
+		"lower": l.String,
+		"upper": u.String,
 	}
 }
 

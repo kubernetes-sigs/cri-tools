@@ -19,7 +19,6 @@ package validate
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -1130,7 +1129,7 @@ func createAndCheckHostNetwork(rc internalapi.RuntimeService, ic internalapi.Ima
 
 // createSeccompProfileDir creates a seccomp test profile directory.
 func createSeccompProfileDir() (string, error) {
-	hostPath, err := ioutil.TempDir("", "seccomp-tests")
+	hostPath, err := os.MkdirTemp("", "seccomp-tests")
 	if err != nil {
 		return "", fmt.Errorf("create tempdir %q: %w", hostPath, err)
 	}
@@ -1140,7 +1139,7 @@ func createSeccompProfileDir() (string, error) {
 // createSeccompProfile creates a seccomp test profile with profileContents.
 func createSeccompProfile(profileContents string, profileName string, hostPath string) (string, error) {
 	profilePath := filepath.Join(hostPath, profileName)
-	err := ioutil.WriteFile(profilePath, []byte(profileContents), 0644)
+	err := os.WriteFile(profilePath, []byte(profileContents), 0644)
 	if err != nil {
 		return "", fmt.Errorf("create %s: %w", profilePath, err)
 	}
