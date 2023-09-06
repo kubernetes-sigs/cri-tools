@@ -10,7 +10,7 @@ jobs:
   images:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: images/build -d
 
   linters:
@@ -46,7 +46,7 @@ jobs:
           restore-keys: ${{ runner.os }}-go-
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: src/github.com/kubernetes-sigs/cri-tools
 
@@ -91,7 +91,7 @@ jobs:
           restore-keys: ${{ runner.os }}-go-
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: src/github.com/kubernetes-sigs/cri-tools
           fetch-depth: 0
