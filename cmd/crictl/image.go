@@ -494,28 +494,37 @@ var imageFsInfoCommand = &cli.Command{
 		if err != nil {
 			return fmt.Errorf("image filesystem info request: %w", err)
 		}
-		for _, info := range r.ImageFilesystems {
-			status, err := protobufObjectToJSON(info)
-			if err != nil {
-				return fmt.Errorf("marshal image filesystem info to json: %w", err)
-			}
-
-			switch output {
-			case "json", "yaml", "go-template":
-				if err := outputStatusInfo(status, nil, output, tmplStr); err != nil {
-					return fmt.Errorf("output image filesystem info: %w", err)
+		fileSystemReport := func(filesystem []*pb.FilesystemUsage) error {
+			for _, info := range filesystem {
+				status, err := protobufObjectToJSON(info)
+				if err != nil {
+					return fmt.Errorf("marshal filesystem info to json: %w", err)
 				}
-				continue
-			case "table": // table output is after this switch block
-			default:
-				return fmt.Errorf("output option cannot be %s", output)
-			}
 
-			// otherwise output in table format
-			fmt.Printf("TimeStamp: %d\n", info.Timestamp)
-			fmt.Printf("Disk: %s\n", units.HumanSize(float64(info.UsedBytes.GetValue())))
-			fmt.Printf("Inodes: %d\n", info.InodesUsed.GetValue())
-			fmt.Printf("Mountpoint: %s\n", info.FsId.Mountpoint)
+				switch output {
+				case "json", "yaml", "go-template":
+					if err := outputStatusInfo(status, nil, output, tmplStr); err != nil {
+						return fmt.Errorf("output filesystem info: %w", err)
+					}
+					continue
+				case "table": // table output is after this switch block
+				default:
+					return fmt.Errorf("output option cannot be %s", output)
+				}
+
+				// otherwise output in table format
+				fmt.Printf("TimeStamp: %d\n", info.Timestamp)
+				fmt.Printf("Disk: %s\n", units.HumanSize(float64(info.UsedBytes.GetValue())))
+				fmt.Printf("Inodes: %d\n", info.InodesUsed.GetValue())
+				fmt.Printf("Mountpoint: %s\n", info.FsId.Mountpoint)
+			}
+			return nil
+		}
+		if err := fileSystemReport(r.ImageFilesystems); err != nil {
+			return err
+		}
+		if err := fileSystemReport(r.ContainerFilesystems); err != nil {
+			return err
 		}
 
 		return nil
