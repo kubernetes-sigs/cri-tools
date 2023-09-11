@@ -618,12 +618,18 @@ var checkpointContainerCommand = &cli.Command{
 		&cli.StringFlag{
 			Name:    "export",
 			Aliases: []string{"e"},
-			Usage:   "Specify the name of the archive used to export the checkpoint image.",
+			Usage:   "Specify the name of the tar archive (/path/to/checkpoint.tar) used to export the checkpoint image.",
 		},
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
 			return fmt.Errorf("ID cannot be empty")
+		}
+		if c.String("export") == "" {
+			return fmt.Errorf(
+				"Cannot checkpoint a container without specifying the checkpoint destination. " +
+					"Use --export=/path/to/checkpoint.tar",
+			)
 		}
 		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {

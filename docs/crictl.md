@@ -369,6 +369,15 @@ CONTAINER           IMAGE               CREATED             STATE               
 b25b4f26e3429       busybox:latest      14 seconds ago      Running             busybox             0                   158d7a6665ff3
 ```
 
+### Checkpoint a running container
+
+```sh
+$ crictl checkpoint --export=/path/to/checkpoint.tar 39fcdd7a4f1d4
+39fcdd7a4f1d4
+$ ls /path/to/checkpoint.tar
+/path/to/checkpoint.tar
+```
+
 ## More information
 
 * See the [Kubernetes.io Debugging Kubernetes nodes with crictl doc](https://kubernetes.io/docs/tasks/debug-application-cluster/crictl/)
