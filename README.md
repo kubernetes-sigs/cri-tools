@@ -20,13 +20,12 @@ cri-tools aims to provide a series of debugging and validation tools for Kubelet
 - Building a new kubelet container runtime based on CRI.
 - Managing pods/containers for CRI-compatible runtimes by end-users, e.g. pods created by crictl may be removed automatically by kubelet because of non-exist on the kube-apiserver.
 
-## Current Status
-
-Version matrix:
+## Compatibility matrix: cri-tools ⬄ Kubernetes
 
 | Kubernetes Version | cri-tools Version | cri-tools branch |
 | ------------------ | ----------------- | ---------------- |
-| ≥ 1.16.x           | ≥ 1.16.x          | master           |
+| ≥ 1.27.x           | ≥ 1.27.x          | master           |
+| ≥ 1.16.x ≤ 1.26.x  | ≥ 1.16.x ≤ 1.26.x | master           |
 | 1.15.X             | v1.15.0           | release-1.15     |
 | 1.14.X             | v1.14.0           | release-1.14     |
 | 1.13.X             | v1.13.0           | release-1.13     |
@@ -37,15 +36,23 @@ Version matrix:
 | 1.8.X              | v0.2              | release-1.8      |
 | 1.7.X              | v0.1              | release-1.7      |
 
-See the [roadmap](docs/roadmap.md) for information about current and future milestones.
+It's recommended to use the same cri-tools and Kubernetes minor version, because
+new features added to the Container Runtime Interface (CRI) may not be fully
+supported if they diverge.
 
-## Release Support Matrix
+cri-tools follows the Kubernetes release cycles with respect to its minor
+versions (`1.x.y`). Patch releases (`1.x.z`) for Kubernetes are not in sync with
+those from cri-tools, because they are scheduled for each month, whereas
+cri-tools provides them only if necessary. If a Kubernetes release goes [End of
+Life](https://kubernetes.io/releases/patch-releases/), then the corresponding
+cri-tools version can be considered in the same way.
 
-The [releases](https://github.com/kubernetes-sigs/cri-tools/releases) are in tandem
-with Kubernetes releases in general. As referenced in above version matrix,
-since release `1.16`, we maintain `master` branch of this repo. However, for critical
-fixes in previous releases, we would only consider the releases which are still not EOL
-in Kubernetes releases.
+All new minor versions of cri-tools are being created from the `master` branch,
+whereas corresponding `release-1.x` branches will be created if a patch release
+is planned.
+
+See the [roadmap](docs/roadmap.md) for information about current and future
+milestones.
 
 ## Install
 
