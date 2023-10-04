@@ -28,10 +28,9 @@ github.com/cyphar/filepath-securejoin
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/docker/distribution v2.8.2+incompatible
-## explicit
-github.com/docker/distribution/digestset
-github.com/docker/distribution/reference
+# github.com/distribution/reference v0.5.0
+## explicit; go 1.20
+github.com/distribution/reference
 # github.com/docker/docker v24.0.6+incompatible
 ## explicit
 github.com/docker/docker/api/types/time

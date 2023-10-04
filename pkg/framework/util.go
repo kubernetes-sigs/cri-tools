@@ -24,7 +24,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/distribution/reference"
+	"github.com/distribution/reference"
 	"github.com/google/uuid"
 	"gopkg.in/yaml.v3"
 	internalapi "k8s.io/cri-api/pkg/apis"

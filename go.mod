@@ -3,7 +3,7 @@ module github.com/kubernetes-sigs/cri-tools
 go 1.20
 
 require (
-	github.com/docker/distribution v2.8.2+incompatible
+	github.com/distribution/reference v0.5.0
 	github.com/docker/docker v24.0.6+incompatible
 	github.com/docker/go-units v0.5.0
 	github.com/golang/protobuf v1.5.3
