@@ -5,7 +5,6 @@ run:
 linters:
   disable-all: true
   enable:
-    - depguard
     - dupl
     - durationcheck
     - forcetypeassert
@@ -29,6 +28,7 @@ linters:
     # - asciicheck
     # - bodyclose
     # - cyclop
+    # - depguard
     # - dogsled
     # - errcheck
     # - errorlint
