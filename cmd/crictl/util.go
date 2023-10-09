@@ -152,6 +152,15 @@ func loadContainerConfig(path string) (*pb.ContainerConfig, error) {
 	if err := utilyaml.NewYAMLOrJSONDecoder(f, 4096).Decode(&config); err != nil {
 		return nil, err
 	}
+
+	if config.Metadata == nil {
+		return nil, errors.New("metadata is not set")
+	}
+
+	if config.Metadata.Name == "" {
+		return nil, fmt.Errorf("name is not in metadata %q", config.Metadata)
+	}
+
 	return &config, nil
 }
 
@@ -166,6 +175,15 @@ func loadPodSandboxConfig(path string) (*pb.PodSandboxConfig, error) {
 	if err := utilyaml.NewYAMLOrJSONDecoder(f, 4096).Decode(&config); err != nil {
 		return nil, err
 	}
+
+	if config.Metadata == nil {
+		return nil, errors.New("metadata is not set")
+	}
+
+	if config.Metadata.Name == "" || config.Metadata.Namespace == "" || config.Metadata.Uid == "" {
+		return nil, fmt.Errorf("name, namespace or uid is not in metadata %q", config.Metadata)
+	}
+
 	return &config, nil
 }
 
