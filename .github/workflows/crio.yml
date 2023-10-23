@@ -62,7 +62,7 @@ jobs:
       - name: Install CRI-O latest main
         if: ${{matrix.version == 'main'}}
         run: |
-          curl https://raw.githubusercontent.com/cri-o/cri-o/main/scripts/get | sudo bash
+          curl https://raw.githubusercontent.com/cri-o/packaging/main/get | sudo bash
 
       - name: Configure and start CRI-O
         run: |
