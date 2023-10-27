@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/distribution/reference v0.5.0
-	github.com/docker/docker v24.0.6+incompatible
+	github.com/docker/docker v24.0.7+incompatible
 	github.com/docker/go-units v0.5.0
 	github.com/golang/protobuf v1.5.3
 	github.com/google/uuid v1.3.1
