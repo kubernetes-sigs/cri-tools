@@ -26,6 +26,7 @@ import (
 
 	"github.com/distribution/reference"
 	"github.com/google/uuid"
+	"github.com/kubernetes-sigs/cri-tools/pkg/common"
 	"gopkg.in/yaml.v3"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -192,11 +193,12 @@ func RunDefaultPodSandbox(c internalapi.RuntimeService, prefix string) string {
 	podSandboxName := prefix + NewUUID()
 	uid := DefaultUIDPrefix + NewUUID()
 	namespace := DefaultNamespacePrefix + NewUUID()
-
 	config := &runtimeapi.PodSandboxConfig{
 		Metadata: BuildPodSandboxMetadata(podSandboxName, uid, namespace, DefaultAttempt),
-		Linux:    &runtimeapi.LinuxPodSandboxConfig{},
-		Labels:   DefaultPodLabels,
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			CgroupParent: common.GetCgroupParent(context.TODO(), c),
+		},
+		Labels: DefaultPodLabels,
 	}
 	return RunPodSandbox(c, config)
 }
@@ -225,8 +227,10 @@ func CreatePodSandboxForContainer(c internalapi.RuntimeService) (string, *runtim
 	namespace := DefaultNamespacePrefix + NewUUID()
 	config := &runtimeapi.PodSandboxConfig{
 		Metadata: BuildPodSandboxMetadata(podSandboxName, uid, namespace, DefaultAttempt),
-		Linux:    &runtimeapi.LinuxPodSandboxConfig{},
-		Labels:   DefaultPodLabels,
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			CgroupParent: common.GetCgroupParent(context.TODO(), c),
+		},
+		Labels: DefaultPodLabels,
 	}
 
 	podID := RunPodSandbox(c, config)

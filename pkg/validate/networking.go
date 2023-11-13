@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kubernetes-sigs/cri-tools/pkg/common"
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -136,6 +137,9 @@ func createPodSandWithHostname(c internalapi.RuntimeService, hostname string) (s
 		Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 		Hostname: hostname,
 		Labels:   framework.DefaultPodLabels,
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			CgroupParent: common.GetCgroupParent(context.TODO(), c),
+		},
 	}
 
 	podID := framework.RunPodSandbox(c, config)
@@ -154,7 +158,9 @@ func createPodSandWithDNSConfig(c internalapi.RuntimeService) (string, *runtimea
 			Searches: []string{defaultDNSSearch},
 			Options:  []string{defaultDNSOption},
 		},
-		Linux:  &runtimeapi.LinuxPodSandboxConfig{},
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			CgroupParent: common.GetCgroupParent(context.TODO(), c),
+		},
 		Labels: framework.DefaultPodLabels,
 	}
 
@@ -170,8 +176,10 @@ func createPodSandboxWithPortMapping(c internalapi.RuntimeService, portMappings 
 	config := &runtimeapi.PodSandboxConfig{
 		Metadata:     framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 		PortMappings: portMappings,
-		Linux:        &runtimeapi.LinuxPodSandboxConfig{},
-		Labels:       framework.DefaultPodLabels,
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			CgroupParent: common.GetCgroupParent(context.TODO(), c),
+		},
+		Labels: framework.DefaultPodLabels,
 	}
 	if hostNet {
 		config.Linux.SecurityContext = &runtimeapi.LinuxSandboxSecurityContext{

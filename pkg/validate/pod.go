@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/kubernetes-sigs/cri-tools/pkg/common"
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -175,10 +176,12 @@ func createPodSandboxWithLogDirectory(c internalapi.RuntimeService) (string, *ru
 	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
 
 	hostPath, podLogPath := createLogTempDir(podSandboxName)
-
 	podConfig := &runtimeapi.PodSandboxConfig{
 		Metadata:     framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 		LogDirectory: podLogPath,
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			CgroupParent: common.GetCgroupParent(context.TODO(), c),
+		},
 	}
 	return framework.RunPodSandbox(c, podConfig), podConfig, hostPath
 }

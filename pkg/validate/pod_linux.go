@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kubernetes-sigs/cri-tools/pkg/common"
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -89,11 +90,11 @@ func createSandboxWithSysctls(rc internalapi.RuntimeService, sysctls map[string]
 	podSandboxName := "pod-sandbox-with-sysctls-" + framework.NewUUID()
 	uid := framework.DefaultUIDPrefix + framework.NewUUID()
 	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
-
 	podConfig := &runtimeapi.PodSandboxConfig{
 		Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 		Linux: &runtimeapi.LinuxPodSandboxConfig{
-			Sysctls: sysctls,
+			CgroupParent: common.GetCgroupParent(context.TODO(), rc),
+			Sysctls:      sysctls,
 		},
 	}
 	return framework.RunPodSandbox(rc, podConfig), podConfig

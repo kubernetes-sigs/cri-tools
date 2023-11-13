@@ -19,6 +19,7 @@ package benchmark
 import (
 	"context"
 
+	"github.com/kubernetes-sigs/cri-tools/pkg/common"
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -62,10 +63,11 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 			podSandboxName := "PodSandbox-for-creating-pod-and-container-performance-test-" + framework.NewUUID()
 			uid := framework.DefaultUIDPrefix + framework.NewUUID()
 			namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
-
 			config := &runtimeapi.PodSandboxConfig{
 				Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
-				Linux:    &runtimeapi.LinuxPodSandboxConfig{},
+				Linux: &runtimeapi.LinuxPodSandboxConfig{
+					CgroupParent: common.GetCgroupParent(context.TODO(), rc),
+				},
 			}
 
 			benchmark := func() {
