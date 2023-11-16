@@ -20,13 +20,13 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-20.04]  # TODO: pass linters on 'macos-10.15' and 'windows-2019'
+        os: [ubuntu-22.04]  # TODO: pass linters on 'macos-10.15' and 'windows-2019'
 
     steps:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.20'
+          go-version: '1.21'
           cache: false
 
       - name: Set env
@@ -65,13 +65,13 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-20.04, macos-11]  # TODO: make releases on 'linux-ppc64le' 'windows-2019'
+        os: [ubuntu-22.04, macos-11]  # TODO: make releases on 'linux-ppc64le' 'windows-2019'
                                          # Ref: https://github.com/uraimo/run-on-arch-action
     steps:
       - name: Install Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.20'
+          go-version: '1.21'
           cache: false
 
       - name: Set env
