@@ -27,7 +27,7 @@ import (
 )
 
 func builtinTmplFuncs() template.FuncMap {
-	t := cases.Title(language.Und)
+	t := cases.Title(language.Und, cases.NoLower)
 	l := cases.Lower(language.Und)
 	u := cases.Upper(language.Und)
 	return template.FuncMap{
