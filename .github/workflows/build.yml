@@ -58,6 +58,11 @@ jobs:
           hack/verify-go-modules.sh
         working-directory: src/github.com/kubernetes-sigs/cri-tools
 
+      - name: Test
+        shell: bash
+        run: make test-crictl
+        working-directory: src/github.com/kubernetes-sigs/cri-tools
+
   releases:
     name: releases / on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
