@@ -27,7 +27,7 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/kubernetes/pkg/kubelet/types"
+	"k8s.io/kubelet/pkg/types"
 
 	"github.com/docker/go-units"
 	godigest "github.com/opencontainers/go-digest"

@@ -682,7 +682,10 @@ func ImageFsInfo(client internalapi.ImageManagerService) (*pb.ImageFsInfoRespons
 	if err != nil {
 		return nil, err
 	}
-	resp := &pb.ImageFsInfoResponse{ImageFilesystems: res}
+	resp := &pb.ImageFsInfoResponse{
+		ImageFilesystems:     res.GetImageFilesystems(),
+		ContainerFilesystems: res.GetContainerFilesystems(),
+	}
 	logrus.Debugf("ImageFsInfoResponse: %v", resp)
 	return resp, nil
 }
