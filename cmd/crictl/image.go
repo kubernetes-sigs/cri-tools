@@ -72,7 +72,7 @@ var pullImageCommand = &cli.Command{
 		&cli.StringFlag{
 			Name:      "pod-config",
 			Value:     "",
-			Usage:     "Use `pod-config.[json|yaml]` to override the the pull c",
+			Usage:     "Use `pod-config.[json|yaml]` to override the pull c",
 			TakesFile: true,
 		},
 		&cli.StringSliceFlag{

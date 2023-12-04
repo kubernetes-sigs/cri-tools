@@ -48,7 +48,7 @@ var _ = framework.KubeDescribe("Streaming", func() {
 		})
 
 		It("runtime should support portforward in host network", func() {
-			By("create a PodSandbox with container port port mapping in host network")
+			By("create a PodSandbox with container port mapping in host network")
 			var podConfig *runtimeapi.PodSandboxConfig
 			portMappings := []*runtimeapi.PortMapping{
 				{

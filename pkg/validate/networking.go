@@ -85,7 +85,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 		})
 
 		It("runtime should support port mapping with only container port [Conformance]", func() {
-			By("create a PodSandbox with container port port mapping")
+			By("create a PodSandbox with container port mapping")
 			var podConfig *runtimeapi.PodSandboxConfig
 			portMappings := []*runtimeapi.PortMapping{
 				{
@@ -105,7 +105,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 		})
 
 		It("runtime should support port mapping with host port and container port [Conformance]", func() {
-			By("create a PodSandbox with host port and container port port mapping")
+			By("create a PodSandbox with host port and container port mapping")
 			var podConfig *runtimeapi.PodSandboxConfig
 			portMappings := []*runtimeapi.PortMapping{
 				{
