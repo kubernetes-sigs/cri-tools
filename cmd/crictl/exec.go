@@ -26,6 +26,7 @@ import (
 	mobyterm "github.com/moby/term"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"k8s.io/apimachinery/pkg/util/httpstream"
 	restclient "k8s.io/client-go/rest"
 	remoteclient "k8s.io/client-go/tools/remotecommand"
 	internalapi "k8s.io/cri-api/pkg/apis"
@@ -163,8 +164,27 @@ func Exec(ctx context.Context, client internalapi.RuntimeService, opts execOptio
 	return stream(ctx, opts.stdin, opts.tty, URL)
 }
 
+func getExecutor(url *url.URL) (exec remoteclient.Executor, err error) {
+	config := &restclient.Config{TLSClientConfig: restclient.TLSClientConfig{Insecure: true}}
+
+	exec, err = remoteclient.NewSPDYExecutor(config, "POST", url)
+	if err != nil {
+		return
+	}
+	if !IsEnabledWebsockets() {
+		return
+	}
+	wexec, err := remoteclient.NewWebSocketExecutor(config, "GET", url.String())
+	if err != nil {
+		return
+	}
+
+	exec, err = remoteclient.NewFallbackExecutor(wexec, exec, httpstream.IsUpgradeFailure)
+	return
+}
+
 func stream(ctx context.Context, in, tty bool, url *url.URL) error {
-	executor, err := remoteclient.NewSPDYExecutor(&restclient.Config{TLSClientConfig: restclient.TLSClientConfig{Insecure: true}}, "POST", url)
+	executor, err := getExecutor(url)
 	if err != nil {
 		return err
 	}

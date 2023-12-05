@@ -70,6 +70,10 @@ func SetupInterruptSignalHandler() <-chan struct{} {
 	return signalIntStopCh
 }
 
+func IsEnabledWebsockets() bool {
+	return strings.ToLower(os.Getenv("CRICTL_REMOTE_COMMAND_WEBSOCKETS")) == "true"
+}
+
 type listOptions struct {
 	// id of container or sandbox
 	id string
