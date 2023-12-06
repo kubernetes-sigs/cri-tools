@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kubernetes-sigs/cri-tools/pkg/common"
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -122,6 +123,9 @@ func createMultiContainerTestPodSandbox(c internalapi.RuntimeService) (string, *
 			},
 		},
 		Labels: framework.DefaultPodLabels,
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			CgroupParent: common.GetCgroupParent(context.TODO(), c),
+		},
 	}
 	return framework.RunPodSandbox(c, podConfig), podConfig, logDir
 }

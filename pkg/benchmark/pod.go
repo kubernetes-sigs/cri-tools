@@ -22,6 +22,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/kubernetes-sigs/cri-tools/pkg/common"
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	"github.com/sirupsen/logrus"
 	internalapi "k8s.io/cri-api/pkg/apis"
@@ -85,11 +86,12 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				podSandboxName := "PodSandbox-for-creating-performance-test-" + framework.NewUUID()
 				uid := framework.DefaultUIDPrefix + framework.NewUUID()
 				namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
-
 				config := &runtimeapi.PodSandboxConfig{
 					Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
-					Linux:    &runtimeapi.LinuxPodSandboxConfig{},
-					Labels:   framework.DefaultPodLabels,
+					Linux: &runtimeapi.LinuxPodSandboxConfig{
+						CgroupParent: common.GetCgroupParent(context.TODO(), c),
+					},
+					Labels: framework.DefaultPodLabels,
 				}
 
 				By(fmt.Sprintf("Creating a pod %d", idx))

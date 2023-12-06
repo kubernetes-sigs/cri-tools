@@ -26,6 +26,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kubernetes-sigs/cri-tools/pkg/common"
 	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -950,6 +951,7 @@ func createNamespacePodSandbox(rc internalapi.RuntimeService, podSandboxNamespac
 			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
 				NamespaceOptions: podSandboxNamespace,
 			},
+			CgroupParent: common.GetCgroupParent(context.TODO(), rc),
 		},
 		LogDirectory: podLogPath,
 		Labels:       framework.DefaultPodLabels,
@@ -1022,6 +1024,7 @@ func createPrivilegedPodSandbox(rc internalapi.RuntimeService, privileged bool) 
 			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
 				Privileged: privileged,
 			},
+			CgroupParent: common.GetCgroupParent(context.TODO(), rc),
 		},
 		Labels: framework.DefaultPodLabels,
 	}
@@ -1158,6 +1161,7 @@ func seccompTestContainer(rc internalapi.RuntimeService, ic internalapi.ImageMan
 			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
 				Seccomp: profile,
 			},
+			CgroupParent: common.GetCgroupParent(context.TODO(), rc),
 		},
 		Labels: framework.DefaultPodLabels,
 	}
