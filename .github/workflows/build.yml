@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: '1.21'
           cache: false
@@ -74,7 +74,7 @@ jobs:
                                          # Ref: https://github.com/uraimo/run-on-arch-action
     steps:
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: '1.21'
           cache: false
