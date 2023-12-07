@@ -494,38 +494,34 @@ var imageFsInfoCommand = &cli.Command{
 		if err != nil {
 			return fmt.Errorf("image filesystem info request: %w", err)
 		}
-		fileSystemReport := func(filesystem []*pb.FilesystemUsage) error {
-			for _, info := range filesystem {
-				status, err := protobufObjectToJSON(info)
-				if err != nil {
-					return fmt.Errorf("marshal filesystem info to json: %w", err)
-				}
+		status, err := protobufObjectToJSON(r)
+		if err != nil {
+			return fmt.Errorf("marshal filesystem info to json: %w", err)
+		}
 
-				switch output {
-				case "json", "yaml", "go-template":
-					if err := outputStatusInfo(status, nil, output, tmplStr); err != nil {
-						return fmt.Errorf("output filesystem info: %w", err)
-					}
-					continue
-				case "table": // table output is after this switch block
-				default:
-					return fmt.Errorf("output option cannot be %s", output)
-				}
-
-				// otherwise output in table format
-				fmt.Printf("TimeStamp: %d\n", info.Timestamp)
-				fmt.Printf("Disk: %s\n", units.HumanSize(float64(info.UsedBytes.GetValue())))
-				fmt.Printf("Inodes: %d\n", info.InodesUsed.GetValue())
-				fmt.Printf("Mountpoint: %s\n", info.FsId.Mountpoint)
+		switch output {
+		case "json", "yaml", "go-template":
+			if err := outputStatusInfo(status, nil, output, tmplStr); err != nil {
+				return fmt.Errorf("output filesystem info: %w", err)
 			}
 			return nil
+		case "table": // table output is after this switch block
+		default:
+			return fmt.Errorf("output option cannot be %s", output)
 		}
-		if err := fileSystemReport(r.ImageFilesystems); err != nil {
-			return err
+
+		tablePrintFileSystem := func(fileLabel string, filesystem []*pb.FilesystemUsage) {
+			fmt.Printf("%s Filesystem \n", fileLabel)
+			for i, val := range filesystem {
+				fmt.Printf("TimeStamp[%d]: %d\n", i, val.Timestamp)
+				fmt.Printf("Disk[%d]: %s\n", i, units.HumanSize(float64(val.UsedBytes.GetValue())))
+				fmt.Printf("Inodes[%d]: %d\n", i, val.InodesUsed.GetValue())
+				fmt.Printf("Mountpoint[%d]: %s\n", i, val.FsId.Mountpoint)
+			}
 		}
-		if err := fileSystemReport(r.ContainerFilesystems); err != nil {
-			return err
-		}
+		// otherwise output in table format
+		tablePrintFileSystem("Container", r.ContainerFilesystems)
+		tablePrintFileSystem("Image", r.ImageFilesystems)
 
 		return nil
 
