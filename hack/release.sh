@@ -24,7 +24,6 @@ VERSION=$(git describe --abbrev=0 --tag)
 CRI_CTL_PLATFORMS=(
     linux/amd64
     linux/386
-    linux/arm
     linux/arm64
     linux/ppc64le
     linux/s390x
@@ -39,7 +38,6 @@ CRI_CTL_PLATFORMS=(
 CRI_TEST_PLATFORMS=(
     linux/amd64
     linux/386
-    linux/arm
     linux/arm64
     windows/amd64
     windows/386
