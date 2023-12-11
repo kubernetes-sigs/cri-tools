@@ -57,7 +57,7 @@ jobs:
           sudo cp $(command -v ginkgo) /usr/local/bin
 
       - name: Setup GCloud
-        uses: google-github-actions/setup-gcloud@v1
+        uses: google-github-actions/setup-gcloud@v2
 
       - name: Install CRI-O latest main
         if: ${{matrix.version == 'main'}}
