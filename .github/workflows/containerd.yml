@@ -351,7 +351,7 @@ jobs:
           exit ${TEST_RC}
 
       - name: Upload containerd ${{ format(matrix.version, '/') }} logs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: containerd-${{ format(matrix.version, '_') }}-${{ matrix.os }}-${{matrix.runtime}}-${{matrix.runc}}-${{github.sha}}.log
           path: ${{env.CONTD_CRI_DIR}}/containerd-cri.log
