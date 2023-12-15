@@ -40,11 +40,11 @@ jobs:
           artifacts: src/github.com/kubernetes-sigs/cri-tools/_output/releases/*
           bodyFile: src/github.com/kubernetes-sigs/cri-tools/release-notes.md
           token: ${{ secrets.GH_TOKEN }}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: release-notes
           path: src/github.com/kubernetes-sigs/cri-tools/release-notes.md
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: src/github.com/kubernetes-sigs/cri-tools/_output

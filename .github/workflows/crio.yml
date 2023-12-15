@@ -92,7 +92,7 @@ jobs:
           sudo journalctl -u crio > cri-o.log
 
       - name: Upload CRI-O logs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cri-o-${{matrix.version}}-${{github.sha}}.log
           path: cri-o.log
