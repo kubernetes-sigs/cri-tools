@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package semconv // import "go.opentelemetry.io/otel/semconv/v1.21.0"
-
-const (
-	// ExceptionEventName is the name of the Span event representing an exception.
-	ExceptionEventName = "exception"
-)
+/*
+Package otlptrace contains abstractions for OTLP span exporters.
+See the official OTLP span exporter implementations:
+  - [go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc],
+  - [go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp].
+*/
+package otlptrace // import "go.opentelemetry.io/otel/exporters/otlp/otlptrace"
