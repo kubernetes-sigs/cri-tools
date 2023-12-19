@@ -1,0 +1,612 @@
+.TH Container Runtime Interface (CRI) CLI
+.PP
+\fB\fCcrictl\fR provides a CLI for CRI\-compatible container runtimes. This allows the CRI runtime developers to debug their runtime without needing to set up Kubernetes components.
+
+.PP
+\fB\fCcrictl\fR is currently in Beta and still under quick iterations. It is hosted at the cri\-tools
+\[la]https://github.com/kubernetes-sigs/cri-tools\[ra] repository. We encourage the CRI developers to report bugs or help extend the coverage by adding more functionalities.
+
+.SH Install crictl
+.PP
+.RS
+
+.PP
+\fBNOTE:\fP The below steps are based on linux\-amd64, however you can get downloads for all other platforms (Windows, ARM, etc) in the releases page
+\[la]https://github.com/kubernetes-sigs/cri-tools/releases\[ra]\&.
+.RE
+
+.PP
+\fB\fCcrictl\fR can be downloaded from cri\-tools release page
+\[la]https://github.com/kubernetes-sigs/cri-tools/releases\[ra]:
+
+.RS
+.IP \(bu 2
+using \fB\fCwget\fR:
+
+.RE
+
+.PP
+.RS
+
+.nf
+VERSION="v1.26.0" # check latest version in /releases page
+wget https://github.com/kubernetes\-sigs/cri\-tools/releases/download/$VERSION/crictl\-$VERSION\-linux\-amd64.tar.gz
+sudo tar zxvf crictl\-$VERSION\-linux\-amd64.tar.gz \-C /usr/local/bin
+rm \-f crictl\-$VERSION\-linux\-amd64.tar.gz
+
+.fi
+.RE
+
+.RS
+.IP \(bu 2
+using \fB\fCcurl\fR:
+
+.RE
+
+.PP
+.RS
+
+.nf
+VERSION="v1.26.0" # check latest version in /releases page
+curl \-L https://github.com/kubernetes\-sigs/cri\-tools/releases/download/$VERSION/crictl\-${VERSION}\-linux\-amd64.tar.gz \-\-output crictl\-${VERSION}\-linux\-amd64.tar.gz
+sudo tar zxvf crictl\-$VERSION\-linux\-amd64.tar.gz \-C /usr/local/bin
+rm \-f crictl\-$VERSION\-linux\-amd64.tar.gz
+
+.fi
+.RE
+
+.SH Usage
+.PP
+.RS
+
+.nf
+crictl [global options] command [command options] [arguments...]
+
+.fi
+.RE
+
+.PP
+COMMANDS:
+
+.RS
+.IP \(bu 2
+\fB\fCattach\fR:             Attach to a running container
+.IP \(bu 2
+\fB\fCcreate\fR:             Create a new container
+.IP \(bu 2
+\fB\fCexec\fR:               Run a command in a running container
+.IP \(bu 2
+\fB\fCversion\fR:            Display runtime version information
+.IP \(bu 2
+\fB\fCimages, image, img\fR: List images
+.IP \(bu 2
+\fB\fCinspect\fR:            Display the status of one or more containers
+.IP \(bu 2
+\fB\fCinspecti\fR:           Return the status of one or more images
+.IP \(bu 2
+\fB\fCimagefsinfo\fR:        Return image filesystem info
+.IP \(bu 2
+\fB\fCinspectp\fR:           Display the status of one or more pods
+.IP \(bu 2
+\fB\fClogs\fR:               Fetch the logs of a container
+.IP \(bu 2
+\fB\fCport\-forward\fR:       Forward local port to a pod
+.IP \(bu 2
+\fB\fCps\fR:                 List containers
+.IP \(bu 2
+\fB\fCpull\fR:               Pull an image from a registry
+.IP \(bu 2
+\fB\fCrun\fR:                Run a new container inside a sandbox
+.IP \(bu 2
+\fB\fCrunp\fR:               Run a new pod
+.IP \(bu 2
+\fB\fCrm\fR:                 Remove one or more containers
+.IP \(bu 2
+\fB\fCrmi\fR:                Remove one or more images
+.IP \(bu 2
+\fB\fCrmp\fR:                Remove one or more pods
+.IP \(bu 2
+\fB\fCpods\fR:               List pods
+.IP \(bu 2
+\fB\fCstart\fR:              Start one or more created containers
+.IP \(bu 2
+\fB\fCinfo\fR:               Display information of the container runtime
+.IP \(bu 2
+\fB\fCstop\fR:               Stop one or more running containers
+.IP \(bu 2
+\fB\fCstopp\fR:              Stop one or more running pods
+.IP \(bu 2
+\fB\fCupdate\fR:             Update one or more running containers
+.IP \(bu 2
+\fB\fCconfig\fR:             Get and set \fB\fCcrictl\fR client configuration options
+.IP \(bu 2
+\fB\fCstats\fR:              List container(s) resource usage statistics
+.IP \(bu 2
+\fB\fCstatsp\fR:             List pod(s) resource usage statistics
+.IP \(bu 2
+\fB\fCcompletion\fR:         Output bash shell completion code
+.IP \(bu 2
+\fB\fCcheckpoint\fR:         Checkpoint one or more running containers
+.IP \(bu 2
+\fB\fCevents, event\fR:      Stream the events of containers
+.IP \(bu 2
+\fB\fChelp, h\fR:            Shows a list of commands or help for one command
+
+.RE
+
+.PP
+\fB\fCcrictl\fR by default connects on Unix to:
+
+.RS
+.IP \(bu 2
+\fB\fCunix:///var/run/dockershim.sock\fR or
+.IP \(bu 2
+\fB\fCunix:///run/containerd/containerd.sock\fR or
+.IP \(bu 2
+\fB\fCunix:///run/crio/crio.sock\fR or
+.IP \(bu 2
+\fB\fCunix:///var/run/cri\-dockerd.sock\fR
+
+.RE
+
+.PP
+or on Windows to:
+
+.RS
+.IP \(bu 2
+\fB\fCnpipe:////./pipe/dockershim\fR or
+.IP \(bu 2
+\fB\fCnpipe:////./pipe/containerd\-containerd\fR or
+.IP \(bu 2
+\fB\fCnpipe:////./pipe/cri\-dockerd\fR
+
+.RE
+
+.PP
+For other runtimes, use:
+
+.RS
+.IP \(bu 2
+frakti
+\[la]https://github.com/kubernetes/frakti\[ra]: \fB\fCunix:///var/run/frakti.sock\fR
+
+.RE
+
+.PP
+The endpoint can be set in three ways:
+
+.RS
+.IP \(bu 2
+By setting global option flags \fB\fC\-\-runtime\-endpoint\fR (\fB\fC\-r\fR) and \fB\fC\-\-image\-endpoint\fR (\fB\fC\-i\fR)
+.IP \(bu 2
+By setting environment variables \fB\fCCONTAINER\_RUNTIME\_ENDPOINT\fR and \fB\fCIMAGE\_SERVICE\_ENDPOINT\fR
+.IP \(bu 2
+By setting the endpoint in the config file \fB\fC\-\-config=/etc/crictl.yaml\fR
+
+.RE
+
+.PP
+If the endpoint is not set then it works as follows:
+
+.RS
+.IP \(bu 2
+If the runtime endpoint is not set, \fB\fCcrictl\fR will by default try to connect using:
+
+.RS
+.IP \(bu 2
+dockershim
+.IP \(bu 2
+containerd
+.IP \(bu 2
+cri\-o
+.IP \(bu 2
+cri\-dockerd
+
+.RE
+.IP \(bu 2
+If the image endpoint is not set, \fB\fCcrictl\fR will by default use the runtime endpoint setting
+
+.RE
+
+.PP
+.RS
+
+.PP
+Note: The default endpoints are now deprecated and the runtime endpoint should always be set instead.
+The performance maybe affected as each default connection attempt takes n\-seconds to complete before timing out and going to the next in sequence.
+.RE
+
+.PP
+Unix:
+
+.PP
+.RS
+
+.nf
+$ cat /etc/crictl.yaml
+runtime\-endpoint: unix:///var/run/dockershim.sock
+image\-endpoint: unix:///var/run/dockershim.sock
+timeout: 2
+debug: true
+pull\-image\-on\-create: false
+
+.fi
+.RE
+
+.PP
+Windows:
+
+.PP
+.RS
+
+.nf
+C:\\> type %USERPROFILE%\\.crictl\\crictl.yaml
+runtime\-endpoint: tcp://localhost:3735
+image\-endpoint: tcp://localhost:3735
+timeout: 2
+debug: true
+pull\-image\-on\-create: false
+
+.fi
+.RE
+
+.SS Connection troubleshooting
+.PP
+Some runtimes might use cmux
+\[la]https://github.com/soheilhy/cmux\[ra] for connection
+multiplexing, which can cause issues during the initial gRPC
+\[la]https://grpc.io\[ra]
+connection setup. If it does not seem to be possible to connect to the runtime
+\fB\fC*.sock\fR, then exporting the environment variable
+\fB\fCGRPC\_GO\_REQUIRE\_HANDSHAKE=off\fR might solve the issue. Please take into account
+that the environment has to be preserved when running
+via sudo (\fB\fCsudo \-E crictl ...\fR).
+
+.SH Additional options
+.RS
+.IP \(bu 2
+\fB\fC\-\-timeout\fR, \fB\fC\-t\fR: Timeout of connecting to server in seconds (default: \fB\fC2s\fR).
+0 or less is interpreted as unset and converted to the default. There is no
+option for no timeout value set and the smallest supported timeout is \fB\fC1s\fR
+.IP \(bu 2
+\fB\fC\-\-debug\fR, \fB\fC\-D\fR: Enable debug output
+.IP \(bu 2
+\fB\fC\-\-help\fR, \fB\fC\-h\fR: show help
+.IP \(bu 2
+\fB\fC\-\-version\fR, \fB\fC\-v\fR: print the version information of \fB\fCcrictl\fR
+.IP \(bu 2
+\fB\fC\-\-config\fR, \fB\fC\-c\fR: Location of the client config file (default: \fB\fC/etc/crictl.yaml\fR). Can be changed by setting \fB\fCCRI\_CONFIG\_FILE\fR environment variable. If not specified and the default does not exist, the program's directory is searched as well
+
+.RE
+
+.SH Client Configuration Options
+.PP
+Use the \fB\fCcrictl\fR config command to get and set the \fB\fCcrictl\fR client configuration
+options.
+
+.PP
+USAGE:
+
+.PP
+.RS
+
+.nf
+crictl config [command options] [<crictl options>]
+
+.fi
+.RE
+
+.PP
+For example \fB\fCcrictl config \-\-set debug=true\fR will enable debug mode when giving subsequent \fB\fCcrictl\fR commands.
+
+.PP
+COMMAND OPTIONS:
+
+.RS
+.IP \(bu 2
+\fB\fC\-\-get value\fR: Show the option value
+.IP \(bu 2
+\fB\fC\-\-set value\fR: Set option (can specify multiple or separate values with commas: opt1=val1,opt2=val2)
+.IP \(bu 2
+\fB\fC\-\-help\fR, \fB\fC\-h\fR: Show help (default: \fB\fCfalse\fR)
+
+.RE
+
+.PP
+\fB\fCcrictl\fR OPTIONS:
+
+.RS
+.IP \(bu 2
+\fB\fCruntime\-endpoint\fR: Container runtime endpoint (no default value)
+.IP \(bu 2
+\fB\fCimage\-endpoint\fR: Image endpoint (no default value)
+.IP \(bu 2
+\fB\fCtimeout\fR: Timeout of connecting to server (default: \fB\fC2s\fR)
+.IP \(bu 2
+\fB\fCdebug\fR: Enable debug output (default: \fB\fCfalse\fR)
+.IP \(bu 2
+\fB\fCpull\-image\-on\-create\fR: Enable pulling image on create requests (default: \fB\fCfalse\fR)
+.IP \(bu 2
+\fB\fCdisable\-pull\-on\-run\fR: Disable pulling image on run requests (default: \fB\fCfalse\fR)
+
+.RE
+
+.PP
+.RS
+
+.PP
+When enabled \fB\fCpull\-image\-on\-create\fR modifies the create container command to first pull the container's image.
+This feature is used as a helper to make creating containers easier and faster.
+Some users of \fB\fCcrictl\fR may desire to not pull the image necessary to create the container.
+For example, the image may have already been pulled or otherwise loaded into the container runtime, or the user may be running without a network. For this reason the default for \fB\fCpull\-image\-on\-create\fR is \fB\fCfalse\fR\&.
+.PP
+By default the run command first pulls the container image, and \fB\fCdisable\-pull\-on\-run\fR is \fB\fCfalse\fR\&.
+Some users of \fB\fCcrictl\fR may desire to set \fB\fCdisable\-pull\-on\-run\fR to \fB\fCtrue\fR to not pull the image by default when using the run command.
+
+.PP
+To override these default pull configuration settings, \fB\fC\-\-no\-pull\fR and \fB\fC\-\-with\-pull\fR options are provided for the create and run commands.
+
+.RE
+
+.SH Examples
+.SS Run pod sandbox with config file
+.PP
+.RS
+
+.nf
+$ cat pod\-config.json
+{
+    "metadata": {
+        "name": "nginx\-sandbox",
+        "namespace": "default",
+        "attempt": 1,
+        "uid": "hdishd83djaidwnduwk28bcsb"
+    },
+    "log\_directory": "/tmp",
+    "linux": {
+    }
+}
+
+$ crictl runp pod\-config.json
+f84dd361f8dc51518ed291fbadd6db537b0496536c1d2d6c05ff943ce8c9a54f
+
+.fi
+.RE
+
+.PP
+List pod sandboxes and check the sandbox is in Ready state:
+
+.PP
+.RS
+
+.nf
+$ crictl pods
+POD ID              CREATED             STATE               NAME                NAMESPACE           ATTEMPT
+f84dd361f8dc5       17 seconds ago      Ready               nginx\-sandbox       default             1
+
+.fi
+.RE
+
+.SS Run pod sandbox with runtime handler
+.PP
+Runtime handler requires runtime support. The following example shows running a pod sandbox with \fB\fCrunsc\fR handler on containerd runtime.
+
+.PP
+.RS
+
+.nf
+$ cat pod\-config.json
+{
+    "metadata": {
+        "name": "nginx\-runsc\-sandbox",
+        "namespace": "default",
+        "attempt": 1,
+        "uid": "hdishd83djaidwnduwk28bcsb"
+    },
+    "log\_directory": "/tmp",
+    "linux": {
+    }
+}
+
+$ crictl runp \-\-runtime=runsc pod\-config.json
+c112976cb6caa43a967293e2c62a2e0d9d8191d5109afef230f403411147548c
+
+$ crictl inspectp c112976cb6caa43a967293e2c62a2e0d9d8191d5109afef230f403411147548c
+...
+    "runtime": {
+      "runtimeType": "io.containerd.runtime.v1.linux",
+      "runtimeEngine": "/usr/local/sbin/runsc",
+      "runtimeRoot": "/run/containerd/runsc"
+    },
+...
+
+.fi
+.RE
+
+.SS Pull a busybox image
+.PP
+.RS
+
+.nf
+$ crictl pull busybox
+Image is up to date for busybox@sha256:141c253bc4c3fd0a201d32dc1f493bcf3fff003b6df416dea4f41046e0f37d47
+
+.fi
+.RE
+
+.PP
+List images and check the busybox image has been pulled:
+
+.PP
+.RS
+
+.nf
+$ crictl images
+IMAGE               TAG                 IMAGE ID            SIZE
+busybox             latest              8c811b4aec35f       1.15MB
+k8s.gcr.io/pause    3.1                 da86e6ba6ca19       742kB
+
+.fi
+.RE
+
+.SS Create container in the pod sandbox with config file
+.PP
+.RS
+
+.nf
+$ cat pod\-config.json
+{
+    "metadata": {
+        "name": "nginx\-sandbox",
+        "namespace": "default",
+        "attempt": 1,
+        "uid": "hdishd83djaidwnduwk28bcsb"
+    },
+    "log\_directory": "/tmp",
+    "linux": {
+    }
+}
+
+$ cat container\-config.json
+{
+  "metadata": {
+      "name": "busybox"
+  },
+  "image":{
+      "image": "busybox"
+  },
+  "command": [
+      "top"
+  ],
+  "log\_path":"busybox.0.log",
+  "linux": {
+  }
+}
+
+$ crictl create f84dd361f8dc51518ed291fbadd6db537b0496536c1d2d6c05ff943ce8c9a54f container\-config.json pod\-config.json
+3e025dd50a72d956c4f14881fbb5b1080c9275674e95fb67f965f6478a957d60
+
+.fi
+.RE
+
+.PP
+List containers and check the container is in Created state:
+
+.PP
+.RS
+
+.nf
+$ crictl ps \-a
+CONTAINER ID        IMAGE               CREATED             STATE               NAME                ATTEMPT
+3e025dd50a72d       busybox             32 seconds ago      Created             busybox             0
+
+.fi
+.RE
+
+.SS Start container
+.PP
+.RS
+
+.nf
+$ crictl start 3e025dd50a72d956c4f14881fbb5b1080c9275674e95fb67f965f6478a957d60
+3e025dd50a72d956c4f14881fbb5b1080c9275674e95fb67f965f6478a957d60
+
+$ crictl ps
+CONTAINER ID        IMAGE               CREATED              STATE               NAME                ATTEMPT
+3e025dd50a72d       busybox             About a minute ago   Running             busybox             0
+
+.fi
+.RE
+
+.SS Exec a command in container
+.PP
+.RS
+
+.nf
+crictl exec \-i \-t 3e025dd50a72d956c4f14881fbb5b1080c9275674e95fb67f965f6478a957d60 ls
+bin   dev   etc   home  proc  root  sys   tmp   usr   var
+
+.fi
+.RE
+
+.SS Create and start a container within one command
+.PP
+It is possible to start a container within a single command, whereas the image
+will be pulled automatically, too:
+
+.PP
+.RS
+
+.nf
+$ cat pod\-config.json
+{
+    "metadata": {
+        "name": "nginx\-sandbox",
+        "namespace": "default",
+        "attempt": 1,
+        "uid": "hdishd83djaidwnduwk28bcsb"
+    },
+    "log\_directory": "/tmp",
+    "linux": {
+    }
+}
+
+$ cat container\-config.json
+{
+  "metadata": {
+      "name": "busybox"
+  },
+  "image":{
+      "image": "busybox"
+  },
+  "command": [
+      "top"
+  ],
+  "log\_path":"busybox.0.log",
+  "linux": {
+  }
+}
+
+$ crictl run container\-config.json pod\-config.json
+b25b4f26e342969eb40d05e98130eee0846557d667e93deac992471a3b8f1cf4
+
+.fi
+.RE
+
+.PP
+List containers and check the container is in Running state:
+
+.PP
+.RS
+
+.nf
+$ crictl ps
+CONTAINER           IMAGE               CREATED             STATE               NAME                ATTEMPT             POD ID
+b25b4f26e3429       busybox:latest      14 seconds ago      Running             busybox             0                   158d7a6665ff3
+
+.fi
+.RE
+
+.SS Checkpoint a running container
+.PP
+.RS
+
+.nf
+$ crictl checkpoint \-\-export=/path/to/checkpoint.tar 39fcdd7a4f1d4
+39fcdd7a4f1d4
+$ ls /path/to/checkpoint.tar
+/path/to/checkpoint.tar
+
+.fi
+.RE
+
+.SH More information
+.RS
+.IP \(bu 2
+See the Kubernetes.io Debugging Kubernetes nodes with crictl doc
+\[la]https://kubernetes.io/docs/tasks/debug-application-cluster/crictl/\[ra]
+.IP \(bu 2
+Visit kubernetes\-sigs/cri\-tools
+\[la]https://github.com/kubernetes-sigs/cri-tools\[ra] for more information.
+
+.RE
