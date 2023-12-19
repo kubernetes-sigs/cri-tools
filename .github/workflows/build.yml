@@ -56,6 +56,7 @@ jobs:
           make lint
           make verify-boilerplate
           hack/verify-go-modules.sh
+          hack/verify-docs.sh
         working-directory: src/github.com/kubernetes-sigs/cri-tools
 
       - name: Test
