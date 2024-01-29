@@ -7,7 +7,7 @@ require (
 	github.com/docker/docker v25.0.1+incompatible
 	github.com/docker/go-units v0.5.0
 	github.com/golang/protobuf v1.5.3
-	github.com/google/uuid v1.5.0
+	github.com/google/uuid v1.6.0
 	github.com/moby/term v0.5.0
 	github.com/onsi/ginkgo/v2 v2.15.0
 	github.com/onsi/gomega v1.31.1
