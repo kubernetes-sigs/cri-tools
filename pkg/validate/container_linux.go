@@ -261,12 +261,8 @@ func createMountPropagationContainer(
 	Expect(resp.Status.Mounts[0].Readonly).To(BeFalse())
 	Expect(resp.Status.Mounts[0].SelinuxRelabel).To(BeFalse())
 
-	// NOTE: dockershim does not populate that field, so we do not have to test it
-	if framework.TestContext.RuntimeServiceAddr != framework.DockerShimSockPathUnix &&
-		framework.TestContext.RuntimeServiceAddr != framework.DockerShimSockPathWindows {
-		By("verifying container status mount propagation")
-		Expect(resp.Status.Mounts[0].Propagation).To(Equal(propagation))
-	}
+	By("verifying container status mount propagation")
+	Expect(resp.Status.Mounts[0].Propagation).To(Equal(propagation))
 
 	return containerID
 }
