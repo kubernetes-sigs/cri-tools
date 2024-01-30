@@ -139,8 +139,6 @@ COMMANDS:
 
 .RS
 .IP \(bu 2
-\fB\fCunix:///var/run/dockershim.sock\fR or
-.IP \(bu 2
 \fB\fCunix:///run/containerd/containerd.sock\fR or
 .IP \(bu 2
 \fB\fCunix:///run/crio/crio.sock\fR or
@@ -153,8 +151,6 @@ COMMANDS:
 or on Windows to:
 
 .RS
-.IP \(bu 2
-\fB\fCnpipe:////./pipe/dockershim\fR or
 .IP \(bu 2
 \fB\fCnpipe:////./pipe/containerd\-containerd\fR or
 .IP \(bu 2
@@ -194,8 +190,6 @@ If the runtime endpoint is not set, \fB\fCcrictl\fR will by default try to conne
 
 .RS
 .IP \(bu 2
-dockershim
-.IP \(bu 2
 containerd
 .IP \(bu 2
 cri\-o
@@ -224,8 +218,8 @@ Unix:
 
 .nf
 $ cat /etc/crictl.yaml
-runtime\-endpoint: unix:///var/run/dockershim.sock
-image\-endpoint: unix:///var/run/dockershim.sock
+runtime\-endpoint: unix:///run/containerd/containerd.sock
+image\-endpoint: unix:///run/containerd/containerd.sock
 timeout: 2
 debug: true
 pull\-image\-on\-create: false
@@ -241,8 +235,8 @@ Windows:
 
 .nf
 C:\\> type %USERPROFILE%\\.crictl\\crictl.yaml
-runtime\-endpoint: tcp://localhost:3735
-image\-endpoint: tcp://localhost:3735
+runtime\-endpoint: npipe:////./pipe/containerd\-containerd
+image\-endpoint: npipe:////./pipe/containerd\-containerd
 timeout: 2
 debug: true
 pull\-image\-on\-create: false

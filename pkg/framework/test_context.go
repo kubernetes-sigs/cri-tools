@@ -124,8 +124,8 @@ const (
 	// DefaultRegistryE2ETestImagesPrefix is the default prefix for e2e test images.
 	DefaultRegistryE2ETestImagesPrefix = DefaultRegistryPrefix + "/e2e-test-images/"
 
-	DockerShimSockPathUnix    = "unix:///var/run/dockershim.sock"
-	DockerShimSockPathWindows = "npipe:////./pipe/dockershim"
+	ContainerdSockPathUnix    = "unix:///run/containerd/containerd.sock"
+	ContainerdSockPathWindows = "npipe:////./pipe/containerd-containerd"
 )
 
 // RegisterFlags registers flags to e2e test suites.
@@ -147,10 +147,10 @@ func RegisterFlags() {
 	flag.StringVar(&testImagesFilePath, "test-images-file", "", "Optional path to a YAML file containing references to custom container images to be used in tests.")
 	flag.DurationVar(&TestContext.ImageServiceTimeout, "image-service-timeout", 300*time.Second, "Timeout when trying to connect to image service.")
 
-	svcaddr := DockerShimSockPathUnix
+	svcaddr := ContainerdSockPathUnix
 	defaultConfigPath := "/etc/crictl.yaml"
 	if runtime.GOOS == "windows" {
-		svcaddr = DockerShimSockPathWindows
+		svcaddr = ContainerdSockPathWindows
 		defaultConfigPath = filepath.Join(os.Getenv("USERPROFILE"), ".crictl", "crictl.yaml")
 	}
 	flag.StringVar(&TestContext.ConfigPath, "config", defaultConfigPath, "Location of the client config file. If not specified and the default does not exist, the program's directory is searched as well")

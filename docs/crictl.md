@@ -70,14 +70,12 @@ COMMANDS:
 
 `crictl` by default connects on Unix to:
 
-- `unix:///var/run/dockershim.sock` or
 - `unix:///run/containerd/containerd.sock` or
 - `unix:///run/crio/crio.sock` or
 - `unix:///var/run/cri-dockerd.sock`
 
 or on Windows to:
 
-- `npipe:////./pipe/dockershim` or
 - `npipe:////./pipe/containerd-containerd` or
 - `npipe:////./pipe/cri-dockerd`
 
@@ -94,7 +92,6 @@ The endpoint can be set in three ways:
 If the endpoint is not set then it works as follows:
 
 - If the runtime endpoint is not set, `crictl` will by default try to connect using:
-  - dockershim
   - containerd
   - cri-o
   - cri-dockerd
@@ -107,8 +104,8 @@ Unix:
 
 ```sh
 $ cat /etc/crictl.yaml
-runtime-endpoint: unix:///var/run/dockershim.sock
-image-endpoint: unix:///var/run/dockershim.sock
+runtime-endpoint: unix:///run/containerd/containerd.sock
+image-endpoint: unix:///run/containerd/containerd.sock
 timeout: 2
 debug: true
 pull-image-on-create: false
@@ -118,8 +115,8 @@ Windows:
 
 ```cmd
 C:\> type %USERPROFILE%\.crictl\crictl.yaml
-runtime-endpoint: tcp://localhost:3735
-image-endpoint: tcp://localhost:3735
+runtime-endpoint: npipe:////./pipe/containerd-containerd
+image-endpoint: npipe:////./pipe/containerd-containerd
 timeout: 2
 debug: true
 pull-image-on-create: false
