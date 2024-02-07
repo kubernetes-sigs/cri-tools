@@ -323,7 +323,7 @@ var imageStatusCommand = &cli.Command{
 			}
 			switch output {
 			case "json", "yaml", "go-template":
-				if err := outputStatusInfo(status, r.Info, output, tmplStr); err != nil {
+				if err := outputStatusInfo(status, "", r.Info, output, tmplStr); err != nil {
 					return fmt.Errorf("output status for %q: %w", id, err)
 				}
 				continue
@@ -521,7 +521,7 @@ var imageFsInfoCommand = &cli.Command{
 
 		switch output {
 		case "json", "yaml", "go-template":
-			if err := outputStatusInfo(status, nil, output, tmplStr); err != nil {
+			if err := outputStatusInfo(status, "", nil, output, tmplStr); err != nil {
 				return fmt.Errorf("output filesystem info: %w", err)
 			}
 			return nil

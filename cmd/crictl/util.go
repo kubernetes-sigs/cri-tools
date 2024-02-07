@@ -231,7 +231,7 @@ func outputProtobufObjAsYAML(obj proto.Message) error {
 	return nil
 }
 
-func outputStatusInfo(status string, info map[string]string, format string, tmplStr string) error {
+func outputStatusInfo(status, handlers string, info map[string]string, format string, tmplStr string) error {
 	// Sort all keys
 	keys := []string{}
 	for k := range info {
@@ -240,6 +240,9 @@ func outputStatusInfo(status string, info map[string]string, format string, tmpl
 	sort.Strings(keys)
 
 	jsonInfo := "{" + "\"status\":" + status + ","
+	if handlers != "" {
+		jsonInfo += "\"runtimeHandlers\":" + handlers + ","
+	}
 	for _, k := range keys {
 		var res interface{}
 		// We attempt to convert key into JSON if possible else use it directly

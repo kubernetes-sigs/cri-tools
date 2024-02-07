@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -79,5 +80,9 @@ func Info(cliContext *cli.Context, client internalapi.RuntimeService) error {
 	if err != nil {
 		return err
 	}
-	return outputStatusInfo(status, r.Info, cliContext.String("output"), cliContext.String("template"))
+	handlers, err := json.Marshal(r.RuntimeHandlers) // protobufObjectToJSON cannot be used
+	if err != nil {
+		return err
+	}
+	return outputStatusInfo(status, string(handlers), r.Info, cliContext.String("output"), cliContext.String("template"))
 }

@@ -307,3 +307,199 @@ func createOOMKilledContainer(
 
 	return containerID
 }
+
+var _ = framework.KubeDescribe("Container Mount Readonly", func() {
+	f := framework.NewDefaultCRIFramework()
+
+	var rc internalapi.RuntimeService
+	var ic internalapi.ImageManagerService
+
+	BeforeEach(func() {
+		rc = f.CRIClient.CRIRuntimeClient
+		ic = f.CRIClient.CRIImageClient
+	})
+
+	Context("runtime should support readonly mounts", func() {
+		var podID string
+		var podConfig *runtimeapi.PodSandboxConfig
+
+		BeforeEach(func() {
+			podID, podConfig = createPrivilegedPodSandbox(rc, true)
+		})
+
+		AfterEach(func() {
+			By("stop PodSandbox")
+			rc.StopPodSandbox(context.TODO(), podID)
+			By("delete PodSandbox")
+			rc.RemovePodSandbox(context.TODO(), podID)
+		})
+
+		testRRO := func(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, rro bool) {
+			if rro && !runtimeSupportsRRO(rc, framework.TestContext.RuntimeHandler) {
+				Skip("runtime does not implement recursive readonly mounts")
+				return
+			}
+
+			By("create host path")
+			hostPath, clearHostPath := createHostPathForRROMount(podID)
+			defer clearHostPath() // clean up the TempDir
+
+			By("create container with volume")
+			containerID := createRROMountContainer(rc, ic, podID, podConfig, hostPath, "/mnt", rro)
+
+			By("test start container with volume")
+			testStartContainer(rc, containerID)
+
+			By("check whether `touch /mnt/tmpfs/file` succeeds")
+			command := []string{"touch", "/mnt/tmpfs/file"}
+			if rro {
+				command = []string{"sh", "-c", `touch /mnt/tmpfs/foo 2>&1 | grep -q "Read-only file system"`}
+			}
+			execSyncContainer(rc, containerID, command)
+		}
+
+		It("should support non-recursive readonly mounts", func() {
+			testRRO(rc, ic, false)
+		})
+		It("should support recursive readonly mounts", func() {
+			testRRO(rc, ic, true)
+		})
+		testRROInvalidPropagation := func(prop runtimeapi.MountPropagation) {
+			if !runtimeSupportsRRO(rc, framework.TestContext.RuntimeHandler) {
+				Skip("runtime does not implement recursive readonly mounts")
+				return
+			}
+			hostPath, clearHostPath := createHostPathForRROMount(podID)
+			defer clearHostPath() // clean up the TempDir
+			mounts := []*runtimeapi.Mount{
+				{
+					HostPath:          hostPath,
+					ContainerPath:     "/mnt",
+					Readonly:          true,
+					RecursiveReadOnly: true,
+					SelinuxRelabel:    true,
+					Propagation:       prop,
+				},
+			}
+			const expectErr = true
+			createMountContainer(rc, ic, podID, podConfig, mounts, expectErr)
+		}
+		It("should reject a recursive readonly mount with PROPAGATION_HOST_TO_CONTAINER", func() {
+			testRROInvalidPropagation(runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER)
+		})
+		It("should reject a recursive readonly mount with PROPAGATION_BIDIRECTIONAL", func() {
+			testRROInvalidPropagation(runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL)
+		})
+		It("should reject a recursive readonly mount with ReadOnly: false", func() {
+			if !runtimeSupportsRRO(rc, framework.TestContext.RuntimeHandler) {
+				Skip("runtime does not implement recursive readonly mounts")
+				return
+			}
+			hostPath, clearHostPath := createHostPathForRROMount(podID)
+			defer clearHostPath() // clean up the TempDir
+			mounts := []*runtimeapi.Mount{
+				{
+					HostPath:          hostPath,
+					ContainerPath:     "/mnt",
+					Readonly:          false,
+					RecursiveReadOnly: true,
+					SelinuxRelabel:    true,
+				},
+			}
+			const expectErr = true
+			createMountContainer(rc, ic, podID, podConfig, mounts, expectErr)
+		})
+	})
+})
+
+func runtimeSupportsRRO(rc internalapi.RuntimeService, runtimeHandlerName string) bool {
+	ctx := context.Background()
+	status, err := rc.Status(ctx, false)
+	framework.ExpectNoError(err, "failed to check runtime status")
+	for _, h := range status.RuntimeHandlers {
+		if h.Name == runtimeHandlerName {
+			if f := h.Features; f != nil {
+				return f.RecursiveReadOnlyMounts
+			}
+		}
+	}
+	return false
+}
+
+// createHostPathForRROMount creates the hostPath for RRO mount test.
+//
+// hostPath contains a "tmpfs" directory with tmpfs mounted on it.
+func createHostPathForRROMount(podID string) (string, func()) {
+	hostPath, err := os.MkdirTemp("", "test"+podID)
+	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
+
+	tmpfsMntPoint := filepath.Join(hostPath, "tmpfs")
+	err = os.MkdirAll(tmpfsMntPoint, 0700)
+	framework.ExpectNoError(err, "failed to create tmpfs dir %q: %v", tmpfsMntPoint, err)
+
+	err = unix.Mount("none", tmpfsMntPoint, "tmpfs", 0, "")
+	framework.ExpectNoError(err, "failed to mount tmpfs on dir %q: %v", tmpfsMntPoint, err)
+
+	clearHostPath := func() {
+		By("clean up the TempDir")
+		err := unix.Unmount(tmpfsMntPoint, unix.MNT_DETACH)
+		framework.ExpectNoError(err, "failed to unmount \"tmpfsMntPoint\": %v", err)
+		err = os.RemoveAll(hostPath)
+		framework.ExpectNoError(err, "failed to remove \"hostPath\": %v", err)
+	}
+
+	return hostPath, clearHostPath
+}
+
+func createRROMountContainer(
+	rc internalapi.RuntimeService,
+	ic internalapi.ImageManagerService,
+	podID string,
+	podConfig *runtimeapi.PodSandboxConfig,
+	hostPath, containerPath string,
+	rro bool,
+) string {
+	mounts := []*runtimeapi.Mount{
+		{
+			HostPath:          hostPath,
+			ContainerPath:     containerPath,
+			Readonly:          true,
+			RecursiveReadOnly: rro,
+			SelinuxRelabel:    true,
+		},
+	}
+	return createMountContainer(rc, ic, podID, podConfig, mounts, false)
+}
+
+func createMountContainer(
+	rc internalapi.RuntimeService,
+	ic internalapi.ImageManagerService,
+	podID string,
+	podConfig *runtimeapi.PodSandboxConfig,
+	mounts []*runtimeapi.Mount,
+	expectErr bool,
+) string {
+	By("create a container with volume and name")
+	containerName := "test-mount-" + framework.NewUUID()
+	containerConfig := &runtimeapi.ContainerConfig{
+		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
+		Command:  pauseCmd,
+		Mounts:   mounts,
+	}
+
+	if expectErr {
+		_, err := framework.CreateContainerWithError(rc, ic, containerConfig, podID, podConfig)
+		Expect(err).To(HaveOccurred())
+		return ""
+	}
+
+	containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
+
+	By("verifying container status")
+	resp, err := rc.ContainerStatus(context.TODO(), containerID, true)
+	framework.ExpectNoError(err, "unable to get container status")
+	Expect(len(resp.Status.Mounts), len(mounts))
+
+	return containerID
+}
