@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"runtime"
@@ -25,11 +26,15 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 
 	internalapi "k8s.io/cri-api/pkg/apis"
 	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 
 	"github.com/kubernetes-sigs/cri-tools/pkg/common"
+	"github.com/kubernetes-sigs/cri-tools/pkg/tracing"
 	"github.com/kubernetes-sigs/cri-tools/pkg/version"
 )
 
@@ -53,9 +58,11 @@ var (
 	PullImageOnCreate bool
 	// DisablePullOnRun disable pulling image on run requests
 	DisablePullOnRun bool
+	// tracerProvider is the global OpenTelemetry tracing instance.
+	tracerProvider *sdktrace.TracerProvider
 )
 
-func getRuntimeService(context *cli.Context, timeout time.Duration) (res internalapi.RuntimeService, err error) {
+func getRuntimeService(_ *cli.Context, timeout time.Duration) (res internalapi.RuntimeService, err error) {
 	if RuntimeEndpointIsSet && RuntimeEndpoint == "" {
 		return nil, fmt.Errorf("--runtime-endpoint is not set")
 	}
@@ -65,6 +72,13 @@ func getRuntimeService(context *cli.Context, timeout time.Duration) (res interna
 	t := Timeout
 	if timeout != 0 {
 		t = timeout
+	}
+
+	// Use the noop tracer provider and not tracerProvider directly, otherwise
+	// we'll panic in the unary call interceptor
+	var tp trace.TracerProvider = noop.NewTracerProvider()
+	if tracerProvider != nil {
+		tp = tracerProvider
 	}
 
 	// If no EP set then use the default endpoint types
@@ -79,7 +93,7 @@ func getRuntimeService(context *cli.Context, timeout time.Duration) (res interna
 		for _, endPoint := range defaultRuntimeEndpoints {
 			logrus.Debugf("Connect using endpoint %q with %q timeout", endPoint, t)
 
-			res, err = remote.NewRemoteRuntimeService(endPoint, t, nil)
+			res, err = remote.NewRemoteRuntimeService(endPoint, t, tp)
 			if err != nil {
 				logrus.Error(err)
 				continue
@@ -90,10 +104,10 @@ func getRuntimeService(context *cli.Context, timeout time.Duration) (res interna
 		}
 		return res, err
 	}
-	return remote.NewRemoteRuntimeService(RuntimeEndpoint, t, nil)
+	return remote.NewRemoteRuntimeService(RuntimeEndpoint, t, tp)
 }
 
-func getImageService(context *cli.Context) (res internalapi.ImageManagerService, err error) {
+func getImageService(*cli.Context) (res internalapi.ImageManagerService, err error) {
 	if ImageEndpoint == "" {
 		if RuntimeEndpointIsSet && RuntimeEndpoint == "" {
 			return nil, fmt.Errorf("--image-endpoint is not set")
@@ -103,6 +117,14 @@ func getImageService(context *cli.Context) (res internalapi.ImageManagerService,
 	}
 
 	logrus.Debugf("get image connection")
+
+	// Use the noop tracer provider and not tracerProvider directly, otherwise
+	// we'll panic in the unary call interceptor
+	var tp trace.TracerProvider = noop.NewTracerProvider()
+	if tracerProvider != nil {
+		tp = tracerProvider
+	}
+
 	// If no EP set then use the default endpoint types
 	if !ImageEndpointIsSet {
 		logrus.Warningf("image connect using default endpoints: %v. "+
@@ -115,7 +137,7 @@ func getImageService(context *cli.Context) (res internalapi.ImageManagerService,
 		for _, endPoint := range defaultRuntimeEndpoints {
 			logrus.Debugf("Connect using endpoint %q with %q timeout", endPoint, Timeout)
 
-			res, err = remote.NewRemoteImageService(endPoint, Timeout, nil)
+			res, err = remote.NewRemoteImageService(endPoint, Timeout, tp)
 			if err != nil {
 				logrus.Error(err)
 				continue
@@ -126,7 +148,7 @@ func getImageService(context *cli.Context) (res internalapi.ImageManagerService,
 		}
 		return res, err
 	}
-	return remote.NewRemoteImageService(ImageEndpoint, Timeout, nil)
+	return remote.NewRemoteImageService(ImageEndpoint, Timeout, tp)
 }
 
 func getTimeout(timeDuration time.Duration) time.Duration {
@@ -220,6 +242,20 @@ func main() {
 			Aliases: []string{"D"},
 			Usage:   "Enable debug mode",
 		},
+		&cli.BoolFlag{
+			Name:  "enable-tracing",
+			Usage: "Enable OpenTelemetry tracing.",
+		},
+		&cli.IntFlag{
+			Name:  "tracing-sampling-rate-per-million",
+			Usage: "Number of samples to collect per million OpenTelemetry spans. Set to 1000000 or -1 to always sample.",
+			Value: -1,
+		},
+		&cli.StringFlag{
+			Name:  "tracing-endpoint",
+			Usage: "Address to which the gRPC tracing collector will send spans to.",
+			Value: "127.0.0.1:4317",
+		},
 	}
 
 	app.Before = func(context *cli.Context) (err error) {
@@ -290,6 +326,19 @@ func main() {
 		if Debug {
 			logrus.SetLevel(logrus.DebugLevel)
 		}
+
+		// Configure tracing if enabled
+		if context.IsSet("enable-tracing") {
+			tracerProvider, err = tracing.Init(
+				context.Context,
+				context.String("tracing-endpoint"),
+				context.Int("tracing-sampling-rate-per-million"),
+			)
+			if err != nil {
+				return fmt.Errorf("init tracing: %w", err)
+			}
+		}
+
 		return nil
 	}
 	// sort all flags
@@ -300,5 +349,14 @@ func main() {
 
 	if err := app.Run(os.Args); err != nil {
 		logrus.Fatal(err)
+	}
+
+	// Ensure that all spans are processed.
+	if tracerProvider != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), Timeout)
+		defer cancel()
+		if err := tracerProvider.Shutdown(ctx); err != nil {
+			logrus.Errorf("Unable to shutdown tracer provider: %v", err)
+		}
 	}
 }
