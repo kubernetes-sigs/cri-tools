@@ -298,27 +298,28 @@ jobs:
           set -o errexit
           set -o nounset
           set -o pipefail
+          set -x
 
-          BDIR="$(mktemp -d -p $PWD)"
+          BDIR="/var/lib/containerd-critest"
           echo "containerd temp dir: ${BDIR}"
-          mkdir -p ${BDIR}/{root,state}
+          sudo mkdir -p ${BDIR}/{root,state}
 
-          cat > ${BDIR}/config.toml <<EOF
+          sudo bash -c 'cat > ${BDIR}/config.toml <<EOF
           version = 2
           [plugins]
             [plugins.cri.containerd.default_runtime]
               runtime_type = \"${{matrix.runtime}}\"
-          EOF
+          EOF'
 
           # Remove possibly existing containerd configuration
           sudo rm -rf /etc/containerd
-
-          sudo PATH=$PATH /usr/local/bin/containerd -a ${BDIR}/c.sock -root ${BDIR}/root -state ${BDIR}/state -log-level debug &> ${BDIR}/containerd-cri.log &
+          sudo PATH=$PATH bash -c "/usr/local/bin/containerd -a ${BDIR}/c.sock -root ${BDIR}/root -state ${BDIR}/state -log-level debug &> ${BDIR}/containerd-cri.log &"
           sudo /usr/local/bin/ctr -a ${BDIR}/c.sock version
           sudo /usr/local/sbin/runc --version
+          sudo mount
 
-          sudo -E PATH=$PATH critest --runtime-endpoint=unix:///${BDIR}/c.sock --parallel=8
-          TEST_RC=$?
+          TEST_RC=0
+          sudo -E PATH=$PATH critest --ginkgo.vv --runtime-endpoint=unix:///${BDIR}/c.sock --parallel=8 || TEST_RC=$?
           test $TEST_RC -ne 0 && cat ${BDIR}/containerd-cri.log
           sudo pkill containerd
           echo "CONTD_CRI_DIR=$BDIR" >> $GITHUB_ENV
