@@ -12,6 +12,7 @@ jobs:
   #
   build-and-critest-containerd:
     strategy:
+      fail-fast: false
       matrix:
         # ╔══════════════════╤═══════════╤═════════╗
         # ║ master / release │ ubuntu    │ windows ║
