@@ -333,7 +333,6 @@ jobs:
 
           export PATH="/usr/local/bin:$PATH"
           FOCUS="${FOCUS:-"Conformance"}"
-          SKIP="${SKIP:-""}"
           REPORT_DIR="${REPORT_DIR:-"c/_artifacts"}"
           mkdir -p "${REPORT_DIR}"
 
@@ -342,7 +341,7 @@ jobs:
           ctr version
 
           set +o errexit
-          critest --runtime-endpoint=npipe:////./pipe/containerd-containerd --ginkgo.focus="${FOCUS}" --ginkgo.skip="${SKIP}" --report-dir="${REPORT_DIR}" --report-prefix="windows"
+          critest --runtime-endpoint=npipe:////./pipe/containerd-containerd --ginkgo.focus="${FOCUS}" --report-dir="${REPORT_DIR}" --report-prefix="windows"
           TEST_RC=$?
           test $TEST_RC -ne 0 && cat ${REPORT_DIR}/containerd.log
           set -o errexit
