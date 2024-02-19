@@ -1,5 +1,8 @@
+//go:build go1.21
+// +build go1.21
+
 /*
-Copyright 2023 The Kubernetes Authors.
+Copyright 2021 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,6 +17,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package kubernetes holds packages which implement a clientset for Kubernetes
-// APIs.
-package kubernetes // import "k8s.io/client-go/kubernetes"
+package klog
+
+import (
+	"log/slog"
+
+	"github.com/go-logr/logr"
+)
+
+// SetSlogLogger reconfigures klog to log through the slog logger. The logger must not be nil.
+func SetSlogLogger(logger *slog.Logger) {
+	SetLoggerWithOptions(logr.FromSlogHandler(logger.Handler()), ContextualLogger(true))
+}

@@ -155,14 +155,6 @@ const (
 	// to a chunking list request.
 	RemainingItemCount featuregate.Feature = "RemainingItemCount"
 
-	// owner: @wojtek-t
-	// alpha: v1.16
-	// beta: v1.20
-	// GA: v1.24
-	//
-	// Deprecates and removes SelfLink from ObjectMeta and ListMeta.
-	RemoveSelfLink featuregate.Feature = "RemoveSelfLink"
-
 	// owner: @apelisse, @lavalamp
 	// alpha: v1.14
 	// beta: v1.16
@@ -255,6 +247,7 @@ const (
 
 	// owner: @tkashem
 	// beta: v1.29
+	// GA: v1.30
 	//
 	// Allow Priority & Fairness in the API server to use a zero value for
 	// the 'nominalConcurrencyShares' field of the 'limited' section of a
@@ -301,8 +294,6 @@ var defaultKubernetesFeatureGates = map[featuregate.Feature]featuregate.FeatureS
 
 	RemainingItemCount: {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.32
 
-	RemoveSelfLink: {Default: true, PreRelease: featuregate.GA, LockToDefault: true},
-
 	ServerSideApply: {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.29
 
 	ServerSideFieldValidation: {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.29
@@ -325,5 +316,5 @@ var defaultKubernetesFeatureGates = map[featuregate.Feature]featuregate.FeatureS
 
 	ConsistentListFromCache: {Default: false, PreRelease: featuregate.Alpha},
 
-	ZeroLimitedNominalConcurrencyShares: {Default: false, PreRelease: featuregate.Beta},
+	ZeroLimitedNominalConcurrencyShares: {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // remove in 1.32
 }
