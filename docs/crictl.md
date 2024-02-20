@@ -182,6 +182,11 @@ Some users of `crictl` may desire to set `disable-pull-on-run` to `true` to not 
 
 ## Examples
 
+- [Run pod sandbox with config file](#run-pod-sandbox-with-config-file) 
+- [Run pod sandbox with runtime handler](#run-pod-sandbox-with-runtime-handler)
+- [Pull a busybox image](#pull-a-busybox-image)
+- [Filter images](#filter-images)
+
 ### Run pod sandbox with config file
 
 ```sh
@@ -255,6 +260,104 @@ $ crictl images
 IMAGE               TAG                 IMAGE ID            SIZE
 busybox             latest              8c811b4aec35f       1.15MB
 k8s.gcr.io/pause    3.1                 da86e6ba6ca19       742kB
+```
+
+### Filter images
+
+The following filters are available `--filter`, `-f`, filters are chainable and processed in the declared order:
+
+1. `before=<image-name>[:<tag>]|<image id>|<image@digest>`
+1. `dangling=(true/false)`
+1. `reference=/regex/`
+1. `since=<image-name>[:<tag>]|<image id>|<image@digest>`
+
+List all images:
+
+```sh
+$ crictl images --digests
+IMAGE                                                      TAG                 DIGEST              IMAGE ID            SIZE
+docker.io/library/busybox                                  latest              538721340ded1       3f57d9401f8d4       4.5MB
+docker.io/library/nginx                                    latest              05aa73005987c       e4720093a3c13       191MB
+gcr.io/k8s-staging-cri-tools/hostnet-nginx-amd64           latest              aa74ea387dbbe       1ee3f9825c42b       147MB
+gcr.io/k8s-staging-cri-tools/test-image-predefined-group   latest              2b2fc189c502a       84410ab6e30d9       5.11MB
+registry.k8s.io/e2e-test-images/busybox                    1.29-2              c318242786b13       84eebb9ca1734       1.37MB
+registry.k8s.io/e2e-test-images/httpd                      2.4.39-4            3fe7acf013d12       444b9e2765dc9       132MB
+registry.k8s.io/e2e-test-images/nginx                      1.14-2              13616070e3f29       02e45a31af51c       17.2MB
+registry.k8s.io/e2e-test-images/nonewprivs                 1.3                 8ac1264691820       3e3d1785c0b6e       7.37MB
+registry.k8s.io/pause                                      3.9                 7031c1b283388       e6f1816883972       750kB
+```
+
+List images by `reference`:
+
+```sh
+$ crictl images --filter 'reference=k8s'
+IMAGE                                                      TAG                 IMAGE ID            SIZE
+gcr.io/k8s-staging-cri-tools/hostnet-nginx-amd64           latest              1ee3f9825c42b       147MB
+gcr.io/k8s-staging-cri-tools/test-image-predefined-group   latest              84410ab6e30d9       5.11MB
+registry.k8s.io/e2e-test-images/busybox                    1.29-2              84eebb9ca1734       1.37MB
+registry.k8s.io/e2e-test-images/httpd                      2.4.39-4            444b9e2765dc9       132MB
+registry.k8s.io/e2e-test-images/nginx                      1.14-2              02e45a31af51c       17.2MB
+registry.k8s.io/e2e-test-images/nonewprivs                 1.3                 3e3d1785c0b6e       7.37MB
+registry.k8s.io/pause                                      3.9                 e6f1816883972       750kB
+```
+
+List images by `reference` with regex:
+
+```sh
+$ crictl images --filter 'reference=nginx'
+IMAGE                                              TAG                 IMAGE ID            SIZE
+docker.io/library/nginx                            latest              e4720093a3c13       191MB
+gcr.io/k8s-staging-cri-tools/hostnet-nginx-amd64   latest              1ee3f9825c42b       147MB
+registry.k8s.io/e2e-test-images/nginx              1.14-2              02e45a31af51c       17.2MB
+$ crictl images --filter 'reference=.*(nginx)$'
+IMAGE                                   TAG                 IMAGE ID            SIZE
+docker.io/library/nginx                 latest              e4720093a3c13       191MB
+registry.k8s.io/e2e-test-images/nginx   1.14-2              02e45a31af51c       17.2MB
+```
+
+Chain `--filter`:
+
+```sh
+$ crictl images --filter 'reference=nginx' --filter 'reference=\.k8s\.'
+IMAGE                                   TAG                 IMAGE ID            SIZE
+registry.k8s.io/e2e-test-images/nginx   1.14-2              02e45a31af51c       17.2MB
+$ crictl images --filter 'since=registry.k8s.io/e2e-test-images/busybox@sha256:c318242786b139d18676b1c09a0ad7f15fc17f8f16a5b2e625cd0dc8c9703daf' --filter 'reference=nginx'
+IMAGE                                              TAG                 IMAGE ID            SIZE
+docker.io/library/nginx                            latest              e4720093a3c13       191MB
+gcr.io/k8s-staging-cri-tools/hostnet-nginx-amd64   latest              1ee3f9825c42b       147MB
+```
+
+List images `before=<image-name>[:<tag>]`:
+
+```sh
+$ crictl images --filter 'before=gcr.io/k8s-staging-cri-tools/hostnet-nginx-amd64:latest'
+IMAGE                                                      TAG                 IMAGE ID            SIZE
+gcr.io/k8s-staging-cri-tools/test-image-predefined-group   latest              84410ab6e30d9       5.11MB
+registry.k8s.io/e2e-test-images/busybox                    1.29-2              84eebb9ca1734       1.37MB
+registry.k8s.io/e2e-test-images/httpd                      2.4.39-4            444b9e2765dc9       132MB
+registry.k8s.io/e2e-test-images/nginx                      1.14-2              02e45a31af51c       17.2MB
+registry.k8s.io/e2e-test-images/nonewprivs                 1.3                 3e3d1785c0b6e       7.37MB
+registry.k8s.io/pause                                      3.9                 e6f1816883972       750kB
+```
+
+List images `since=<image-name>[:<tag>]`:
+
+```sh
+$ crictl images --filter 'since=gcr.io/k8s-staging-cri-tools/hostnet-nginx-amd64:latest'
+IMAGE                       TAG                 IMAGE ID            SIZE
+docker.io/library/busybox   latest              3f57d9401f8d4       4.5MB
+docker.io/library/nginx     latest              e4720093a3c13       191MB
+```
+
+List images `since=<image@digest>`:
+
+```sh
+crictl images --filter 'since=registry.k8s.io/e2e-test-images/busybox@sha256:c318242786b139d18676b1c09a0ad7f15fc17f8f16a5b2e625cd0dc8c9703daf'
+IMAGE                                                      TAG                 IMAGE ID            SIZE
+docker.io/library/busybox                                  latest              3f57d9401f8d4       4.5MB
+docker.io/library/nginx                                    latest              e4720093a3c13       191MB
+gcr.io/k8s-staging-cri-tools/hostnet-nginx-amd64           latest              1ee3f9825c42b       147MB
+gcr.io/k8s-staging-cri-tools/test-image-predefined-group   latest              84410ab6e30d9       5.11MB
 ```
 
 ### Create container in the pod sandbox with config file

@@ -343,6 +343,22 @@ To override these default pull configuration settings, \fB\fC\-\-no\-pull\fR and
 .RE
 
 .SH Examples
+.RS
+.IP \(bu 2
+Run pod sandbox with config file
+\[la]#run-pod-sandbox-with-config-file\[ra]
+.IP \(bu 2
+Run pod sandbox with runtime handler
+\[la]#run-pod-sandbox-with-runtime-handler\[ra]
+.IP \(bu 2
+Pull a busybox image
+\[la]#pull-a-busybox-image\[ra]
+.IP \(bu 2
+Filter images
+\[la]#filter-images\[ra]
+
+.RE
+
 .SS Run pod sandbox with config file
 .PP
 .RS
@@ -439,6 +455,153 @@ $ crictl images
 IMAGE               TAG                 IMAGE ID            SIZE
 busybox             latest              8c811b4aec35f       1.15MB
 k8s.gcr.io/pause    3.1                 da86e6ba6ca19       742kB
+
+.fi
+.RE
+
+.SS Filter images
+.PP
+The following filters are available \fB\fC\-\-filter\fR, \fB\fC\-f\fR, filters are chainable and processed in the declared order:
+
+.RS
+.IP "  1." 5
+\fB\fCbefore=<image\-name>[:<tag>]|<image id>|<image@digest>\fR
+.IP "  2." 5
+\fB\fCdangling=(true/false)\fR
+.IP "  3." 5
+\fB\fCreference=/regex/\fR
+.IP "  4." 5
+\fB\fCsince=<image\-name>[:<tag>]|<image id>|<image@digest>\fR
+
+.RE
+
+.PP
+List all images:
+
+.PP
+.RS
+
+.nf
+$ crictl images \-\-digests
+IMAGE                                                      TAG                 DIGEST              IMAGE ID            SIZE
+docker.io/library/busybox                                  latest              538721340ded1       3f57d9401f8d4       4.5MB
+docker.io/library/nginx                                    latest              05aa73005987c       e4720093a3c13       191MB
+gcr.io/k8s\-staging\-cri\-tools/hostnet\-nginx\-amd64           latest              aa74ea387dbbe       1ee3f9825c42b       147MB
+gcr.io/k8s\-staging\-cri\-tools/test\-image\-predefined\-group   latest              2b2fc189c502a       84410ab6e30d9       5.11MB
+registry.k8s.io/e2e\-test\-images/busybox                    1.29\-2              c318242786b13       84eebb9ca1734       1.37MB
+registry.k8s.io/e2e\-test\-images/httpd                      2.4.39\-4            3fe7acf013d12       444b9e2765dc9       132MB
+registry.k8s.io/e2e\-test\-images/nginx                      1.14\-2              13616070e3f29       02e45a31af51c       17.2MB
+registry.k8s.io/e2e\-test\-images/nonewprivs                 1.3                 8ac1264691820       3e3d1785c0b6e       7.37MB
+registry.k8s.io/pause                                      3.9                 7031c1b283388       e6f1816883972       750kB
+
+.fi
+.RE
+
+.PP
+List images by \fB\fCreference\fR:
+
+.PP
+.RS
+
+.nf
+$ crictl images \-\-filter 'reference=k8s'
+IMAGE                                                      TAG                 IMAGE ID            SIZE
+gcr.io/k8s\-staging\-cri\-tools/hostnet\-nginx\-amd64           latest              1ee3f9825c42b       147MB
+gcr.io/k8s\-staging\-cri\-tools/test\-image\-predefined\-group   latest              84410ab6e30d9       5.11MB
+registry.k8s.io/e2e\-test\-images/busybox                    1.29\-2              84eebb9ca1734       1.37MB
+registry.k8s.io/e2e\-test\-images/httpd                      2.4.39\-4            444b9e2765dc9       132MB
+registry.k8s.io/e2e\-test\-images/nginx                      1.14\-2              02e45a31af51c       17.2MB
+registry.k8s.io/e2e\-test\-images/nonewprivs                 1.3                 3e3d1785c0b6e       7.37MB
+registry.k8s.io/pause                                      3.9                 e6f1816883972       750kB
+
+.fi
+.RE
+
+.PP
+List images by \fB\fCreference\fR with regex:
+
+.PP
+.RS
+
+.nf
+$ crictl images \-\-filter 'reference=nginx'
+IMAGE                                              TAG                 IMAGE ID            SIZE
+docker.io/library/nginx                            latest              e4720093a3c13       191MB
+gcr.io/k8s\-staging\-cri\-tools/hostnet\-nginx\-amd64   latest              1ee3f9825c42b       147MB
+registry.k8s.io/e2e\-test\-images/nginx              1.14\-2              02e45a31af51c       17.2MB
+$ crictl images \-\-filter 'reference=.*(nginx)$'
+IMAGE                                   TAG                 IMAGE ID            SIZE
+docker.io/library/nginx                 latest              e4720093a3c13       191MB
+registry.k8s.io/e2e\-test\-images/nginx   1.14\-2              02e45a31af51c       17.2MB
+
+.fi
+.RE
+
+.PP
+Chain \fB\fC\-\-filter\fR:
+
+.PP
+.RS
+
+.nf
+$ crictl images \-\-filter 'reference=nginx' \-\-filter 'reference=\\.k8s\\.'
+IMAGE                                   TAG                 IMAGE ID            SIZE
+registry.k8s.io/e2e\-test\-images/nginx   1.14\-2              02e45a31af51c       17.2MB
+$ crictl images \-\-filter 'since=registry.k8s.io/e2e\-test\-images/busybox@sha256:c318242786b139d18676b1c09a0ad7f15fc17f8f16a5b2e625cd0dc8c9703daf' \-\-filter 'reference=nginx'
+IMAGE                                              TAG                 IMAGE ID            SIZE
+docker.io/library/nginx                            latest              e4720093a3c13       191MB
+gcr.io/k8s\-staging\-cri\-tools/hostnet\-nginx\-amd64   latest              1ee3f9825c42b       147MB
+
+.fi
+.RE
+
+.PP
+List images \fB\fCbefore=<image\-name>[:<tag>]\fR:
+
+.PP
+.RS
+
+.nf
+$ crictl images \-\-filter 'before=gcr.io/k8s\-staging\-cri\-tools/hostnet\-nginx\-amd64:latest'
+IMAGE                                                      TAG                 IMAGE ID            SIZE
+gcr.io/k8s\-staging\-cri\-tools/test\-image\-predefined\-group   latest              84410ab6e30d9       5.11MB
+registry.k8s.io/e2e\-test\-images/busybox                    1.29\-2              84eebb9ca1734       1.37MB
+registry.k8s.io/e2e\-test\-images/httpd                      2.4.39\-4            444b9e2765dc9       132MB
+registry.k8s.io/e2e\-test\-images/nginx                      1.14\-2              02e45a31af51c       17.2MB
+registry.k8s.io/e2e\-test\-images/nonewprivs                 1.3                 3e3d1785c0b6e       7.37MB
+registry.k8s.io/pause                                      3.9                 e6f1816883972       750kB
+
+.fi
+.RE
+
+.PP
+List images \fB\fCsince=<image\-name>[:<tag>]\fR:
+
+.PP
+.RS
+
+.nf
+$ crictl images \-\-filter 'since=gcr.io/k8s\-staging\-cri\-tools/hostnet\-nginx\-amd64:latest'
+IMAGE                       TAG                 IMAGE ID            SIZE
+docker.io/library/busybox   latest              3f57d9401f8d4       4.5MB
+docker.io/library/nginx     latest              e4720093a3c13       191MB
+
+.fi
+.RE
+
+.PP
+List images \fB\fCsince=<image@digest>\fR:
+
+.PP
+.RS
+
+.nf
+crictl images \-\-filter 'since=registry.k8s.io/e2e\-test\-images/busybox@sha256:c318242786b139d18676b1c09a0ad7f15fc17f8f16a5b2e625cd0dc8c9703daf'
+IMAGE                                                      TAG                 IMAGE ID            SIZE
+docker.io/library/busybox                                  latest              3f57d9401f8d4       4.5MB
+docker.io/library/nginx                                    latest              e4720093a3c13       191MB
+gcr.io/k8s\-staging\-cri\-tools/hostnet\-nginx\-amd64           latest              1ee3f9825c42b       147MB
+gcr.io/k8s\-staging\-cri\-tools/test\-image\-predefined\-group   latest              84410ab6e30d9       5.11MB
 
 .fi
 .RE

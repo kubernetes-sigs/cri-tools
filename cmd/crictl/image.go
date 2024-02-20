@@ -20,6 +20,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"syscall"
@@ -142,6 +144,11 @@ var listImageCommand = &cli.Command{
 			Aliases: []string{"q"},
 			Usage:   "Only show image IDs",
 		},
+		&cli.StringSliceFlag{
+			Name:    "filter",
+			Aliases: []string{"f"},
+			Usage:   "The filtering flag format is of 'dangling=(true/false)', 'reference=regex', '(before|since)=<image-name>[:<tag>]|<image id>|<image@digest>'",
+		},
 		&cli.StringFlag{
 			Name:    "output",
 			Aliases: []string{"o"},
@@ -174,7 +181,15 @@ var listImageCommand = &cli.Command{
 		if err != nil {
 			return fmt.Errorf("listing images: %w", err)
 		}
+
 		sort.Sort(imageByRef(r.Images))
+
+		if len(c.StringSlice("filter")) > 0 && len(r.Images) > 0 {
+			r.Images, err = filterImagesList(r.Images, c.StringSlice("filter"))
+			if err != nil {
+				return fmt.Errorf("listing images: %w", err)
+			}
+		}
 
 		switch c.String("output") {
 		case "json":
@@ -524,7 +539,6 @@ var imageFsInfoCommand = &cli.Command{
 		tablePrintFileSystem("Image", r.ImageFilesystems)
 
 		return nil
-
 	},
 }
 
@@ -648,6 +662,89 @@ func ListImages(client internalapi.ImageManagerService, image string) (*pb.ListI
 	resp := &pb.ListImagesResponse{Images: res}
 	logrus.Debugf("ListImagesResponse: %v", resp)
 	return resp, nil
+}
+
+// filterImagesList filter images based on --filter flag
+func filterImagesList(imageList []*pb.Image, filters []string) ([]*pb.Image, error) {
+	filtered := []*pb.Image{}
+	filtered = append(filtered, imageList...)
+	for _, filter := range filters {
+		switch {
+		case strings.HasPrefix(filter, "before="):
+			reversedList := filtered
+			slices.Reverse(reversedList)
+			filtered = filterByBeforeSince(strings.TrimPrefix(filter, "before="), reversedList)
+			slices.Reverse(filtered)
+		case strings.HasPrefix(filter, "dangling="):
+			filtered = filterByDangling(strings.TrimPrefix(filter, "dangling="), filtered)
+		case strings.HasPrefix(filter, "reference="):
+			filtered = filterByReference(strings.TrimPrefix(filter, "reference="), filtered)
+		case strings.HasPrefix(filter, "since="):
+			filtered = filterByBeforeSince(strings.TrimPrefix(filter, "since="), filtered)
+		default:
+			return []*pb.Image{}, fmt.Errorf("Unknown filter flag: %v", filter)
+		}
+	}
+	return filtered, nil
+}
+
+func filterByBeforeSince(filterValue string, imageList []*pb.Image) []*pb.Image {
+	filtered := []*pb.Image{}
+	for _, img := range imageList {
+		// Filter by <image-name>[:<tag>]
+		if strings.Contains(filterValue, ":") && !strings.Contains(filterValue, "@") {
+			imageName, _ := normalizeRepoDigest(img.RepoDigests)
+			repoTagPairs := normalizeRepoTagPair(img.RepoTags, imageName)
+			if strings.Join(repoTagPairs[0], ":") == filterValue {
+				break
+			}
+			filtered = append(filtered, img)
+		}
+		// Filter by <image id>
+		if !strings.Contains(filterValue, ":") && !strings.Contains(filterValue, "@") {
+			if strings.HasPrefix(img.Id, filterValue) {
+				break
+			}
+			filtered = append(filtered, img)
+		}
+		// Filter by <image@sha>
+		if strings.Contains(filterValue, ":") && strings.Contains(filterValue, "@") {
+			if len(img.RepoDigests) > 0 {
+				if strings.HasPrefix(img.RepoDigests[0], filterValue) {
+					break
+				}
+				filtered = append(filtered, img)
+			}
+		}
+	}
+	return filtered
+}
+
+func filterByReference(filterValue string, imageList []*pb.Image) []*pb.Image {
+	filtered := []*pb.Image{}
+	re, _ := regexp.Compile(filterValue)
+	for _, img := range imageList {
+		imgName, _ := normalizeRepoDigest(img.RepoDigests)
+		if re.MatchString(imgName) || imgName == filterValue {
+			filtered = append(filtered, img)
+		}
+	}
+
+	return filtered
+}
+
+func filterByDangling(filterValue string, imageList []*pb.Image) []*pb.Image {
+	filtered := []*pb.Image{}
+	for _, img := range imageList {
+		if filterValue == "true" && len(img.RepoTags) == 0 {
+			filtered = append(filtered, img)
+		}
+		if filterValue == "false" && len(img.RepoTags) > 0 {
+			filtered = append(filtered, img)
+		}
+	}
+
+	return filtered
 }
 
 // ImageStatus sends an ImageStatusRequest to the server, and parses
