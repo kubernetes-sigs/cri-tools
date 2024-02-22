@@ -390,7 +390,12 @@ var removeImageCommand = &cli.Command{
 				return err
 			}
 			for _, img := range r {
-				logrus.Debugf("Adding image to be removed: %v", img.GetId())
+				// Pinned images should not be removed on prune.
+				if prune && img.Pinned {
+					logrus.Debugf("Excluding pinned container image: %v", img.GetId())
+					continue
+				}
+				logrus.Debugf("Adding container image to be removed: %v", img.GetId())
 				ids[img.GetId()] = true
 			}
 		}
