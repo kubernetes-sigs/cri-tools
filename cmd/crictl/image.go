@@ -147,7 +147,7 @@ var listImageCommand = &cli.Command{
 		&cli.StringSliceFlag{
 			Name:    "filter",
 			Aliases: []string{"f"},
-			Usage:   "The filtering flag format is of 'dangling=(true/false)', 'reference=regex', '(before|since)=<image-name>[:<tag>]|<image id>|<image@digest>'",
+			Usage:   "Filter output based on provided conditions.\nAvailable filters: \n* dangling=(boolean - true or false)\n* reference=/regular expression/\n* before=<image-name>[:<tag>]|<image id>|<image@digest>\n* since=<image-name>[:<tag>]|<image id>|<image@digest>\nMultiple filters can be combined together.",
 		},
 		&cli.StringFlag{
 			Name:    "output",
@@ -678,11 +678,14 @@ func filterImagesList(imageList []*pb.Image, filters []string) ([]*pb.Image, err
 		case strings.HasPrefix(filter, "dangling="):
 			filtered = filterByDangling(strings.TrimPrefix(filter, "dangling="), filtered)
 		case strings.HasPrefix(filter, "reference="):
-			filtered = filterByReference(strings.TrimPrefix(filter, "reference="), filtered)
+			var err error
+			if filtered, err = filterByReference(strings.TrimPrefix(filter, "reference="), filtered); err != nil {
+				return []*pb.Image{}, err
+			}
 		case strings.HasPrefix(filter, "since="):
 			filtered = filterByBeforeSince(strings.TrimPrefix(filter, "since="), filtered)
 		default:
-			return []*pb.Image{}, fmt.Errorf("Unknown filter flag: %v", filter)
+			return []*pb.Image{}, fmt.Errorf("unknown filter flag: %s", filter)
 		}
 	}
 	return filtered, nil
@@ -717,12 +720,16 @@ func filterByBeforeSince(filterValue string, imageList []*pb.Image) []*pb.Image 
 			}
 		}
 	}
+
 	return filtered
 }
 
-func filterByReference(filterValue string, imageList []*pb.Image) []*pb.Image {
+func filterByReference(filterValue string, imageList []*pb.Image) ([]*pb.Image, error) {
 	filtered := []*pb.Image{}
-	re, _ := regexp.Compile(filterValue)
+	re, err := regexp.Compile(filterValue)
+	if err != nil {
+		return filtered, err
+	}
 	for _, img := range imageList {
 		imgName, _ := normalizeRepoDigest(img.RepoDigests)
 		if re.MatchString(imgName) || imgName == filterValue {
@@ -730,7 +737,7 @@ func filterByReference(filterValue string, imageList []*pb.Image) []*pb.Image {
 		}
 	}
 
-	return filtered
+	return filtered, nil
 }
 
 func filterByDangling(filterValue string, imageList []*pb.Image) []*pb.Image {

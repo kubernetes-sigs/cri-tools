@@ -461,7 +461,7 @@ k8s.gcr.io/pause    3.1                 da86e6ba6ca19       742kB
 
 .SS Filter images
 .PP
-The following filters are available \fB\fC\-\-filter\fR, \fB\fC\-f\fR, filters are chainable and processed in the declared order:
+The following filters are available \fB\fC\-\-filter\fR, \fB\fC\-f\fR:
 
 .RS
 .IP "  1." 5
@@ -474,6 +474,9 @@ The following filters are available \fB\fC\-\-filter\fR, \fB\fC\-f\fR, filters a
 \fB\fCsince=<image\-name>[:<tag>]|<image id>|<image@digest>\fR
 
 .RE
+
+.PP
+Filters can be combined and are applied in the order provided.
 
 .PP
 List all images:
@@ -518,7 +521,7 @@ registry.k8s.io/pause                                      3.9                 e
 .RE
 
 .PP
-List images by \fB\fCreference\fR with regex:
+List images by \fB\fCreference\fR using a regular expression:
 
 .PP
 .RS
@@ -538,7 +541,7 @@ registry.k8s.io/e2e\-test\-images/nginx   1.14\-2              02e45a31af51c    
 .RE
 
 .PP
-Chain \fB\fC\-\-filter\fR:
+Combine multiple \fB\fC\-\-filter\fR arguments together:
 
 .PP
 .RS
