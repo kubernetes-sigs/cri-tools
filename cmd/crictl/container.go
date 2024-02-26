@@ -22,6 +22,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	goruntime "runtime"
 	"sort"
 	"strings"
@@ -327,6 +329,11 @@ var removeContainerCommand = &cli.Command{
 			Usage:   "Force removal of the container, disregarding if running",
 		},
 		&cli.BoolFlag{
+			Name:    "deletelog",
+			Aliases: []string{"dl"},
+			Usage:   "Delete the container log file and its rotations as well",
+		},
+		&cli.BoolFlag{
 			Name:    "all",
 			Aliases: []string{"a"},
 			Usage:   "Remove all containers",
@@ -385,6 +392,21 @@ var removeContainerCommand = &cli.Command{
 				logrus.Errorf("removing container %q failed: %v", id, err)
 				errored = true
 				continue
+			} else if ctx.Bool("deletelog") {
+				logFileName := resp.GetStatus().GetLogPath()
+				if logFileName != "" {
+					logRotations, err := filepath.Glob(logFileName + "*")
+					if err != nil {
+						logRotations = []string{logFileName}
+					}
+
+					for _, logFile := range logRotations {
+						err = os.Remove(logFile)
+						if err != nil {
+							logrus.Errorf("removing log file %s for container %q failed: %v", logFile, id, err)
+						}
+					}
+				}
 			}
 		}
 
