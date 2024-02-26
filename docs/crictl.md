@@ -264,12 +264,14 @@ k8s.gcr.io/pause    3.1                 da86e6ba6ca19       742kB
 
 ### Filter images
 
-The following filters are available `--filter`, `-f`, filters are chainable and processed in the declared order:
+The following filters are available `--filter`, `-f`:
 
 1. `before=<image-name>[:<tag>]|<image id>|<image@digest>`
 1. `dangling=(true/false)`
 1. `reference=/regex/`
 1. `since=<image-name>[:<tag>]|<image id>|<image@digest>`
+
+Filters can be combined and are applied in the order provided.
 
 List all images:
 
@@ -301,7 +303,7 @@ registry.k8s.io/e2e-test-images/nonewprivs                 1.3                 3
 registry.k8s.io/pause                                      3.9                 e6f1816883972       750kB
 ```
 
-List images by `reference` with regex:
+List images by `reference` using a regular expression:
 
 ```sh
 $ crictl images --filter 'reference=nginx'
@@ -315,7 +317,7 @@ docker.io/library/nginx                 latest              e4720093a3c13       
 registry.k8s.io/e2e-test-images/nginx   1.14-2              02e45a31af51c       17.2MB
 ```
 
-Chain `--filter`:
+Combine multiple `--filter` arguments together:
 
 ```sh
 $ crictl images --filter 'reference=nginx' --filter 'reference=\.k8s\.'
