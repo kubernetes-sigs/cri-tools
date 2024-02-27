@@ -330,7 +330,7 @@ var removeContainerCommand = &cli.Command{
 		},
 		&cli.BoolFlag{
 			Name:    "keep-logs",
-			Aliases: []string{"kl"},
+			Aliases: []string{"k"},
 			Usage:   "Preserve the container log file and its rotations",
 		},
 		&cli.BoolFlag{
