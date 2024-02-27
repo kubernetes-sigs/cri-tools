@@ -395,7 +395,7 @@ var removeContainerCommand = &cli.Command{
 			} else if !ctx.Bool("keep-logs") {
 				logPath := resp.GetStatus().GetLogPath()
 				if logPath != "" {
-					logRotations, err := filepath.Glob(logPath + "*")
+					logRotations, err := filepath.Glob(logPath + ".*")
 					if err != nil {
 						logRotations = []string{logPath}
 					}
