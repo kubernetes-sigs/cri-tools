@@ -397,8 +397,9 @@ var removeContainerCommand = &cli.Command{
 				if logPath != "" {
 					logRotations, err := filepath.Glob(logPath + ".*")
 					if err != nil {
-						logRotations = []string{logPath}
+						logRotations = []string{}
 					}
+					logRotations = append(logRotations, logPath)
 
 					for _, logFile := range logRotations {
 						err = os.Remove(logFile)
