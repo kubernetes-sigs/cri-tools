@@ -842,12 +842,137 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			matchContainerOutput(podConfig, containerName, "Effective uid: 0\n")
 		})
 	})
+
+	Context("UserNamespaces", func() {
+		var (
+			podName        string
+			runtimeHandler string
+			defaultMapping = []*runtimeapi.IDMapping{{
+				ContainerId: 0,
+				HostId:      1000,
+				Length:      100000,
+			}}
+		)
+
+		BeforeEach(func() {
+			podName = "user-namespaces-pod-" + framework.NewUUID()
+
+			// Find a working runtime handler if none provided
+			if framework.TestContext.RuntimeHandler == "" {
+				By("searching for runtime handler which supports user namespaces")
+				ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+				defer cancel()
+				resp, err := rc.Status(ctx, false)
+				framework.ExpectNoError(err, "failed to get runtime config: %v", err)
+
+				for _, rh := range resp.GetRuntimeHandlers() {
+					if rh.GetFeatures().GetUserNamespaces() {
+						runtimeHandler = rh.GetName()
+						break
+					}
+				}
+			} else {
+				runtimeHandler = framework.TestContext.RuntimeHandler
+			}
+
+			if runtimeHandler == "" {
+				Skip("no runtime handler found which supports user namespaces")
+			}
+
+			By(fmt.Sprintf("using runtime handler: %s", runtimeHandler))
+		})
+
+		It("runtime should support NamespaceMode_POD", func() {
+			namespaceOption := &runtimeapi.NamespaceOption{
+				UsernsOptions: &runtimeapi.UserNamespace{
+					Mode: runtimeapi.NamespaceMode_POD,
+					Uids: defaultMapping,
+					Gids: defaultMapping,
+				},
+			}
+
+			hostLogPath, podLogPath := createLogTempDir(podName)
+			defer os.RemoveAll(hostLogPath)
+			podID, podConfig = createNamespacePodSandboxWithRuntimeHandler(rc, namespaceOption, podName, podLogPath, runtimeHandler)
+			containerName := runUserNamespaceContainer(rc, ic, podID, podConfig)
+
+			matchContainerOutputRe(podConfig, containerName, `\s+0\s+1000\s+100000\n`)
+		})
+
+		It("runtime should support NamespaceMode_NODE", func() {
+			namespaceOption := &runtimeapi.NamespaceOption{
+				UsernsOptions: &runtimeapi.UserNamespace{
+					Mode: runtimeapi.NamespaceMode_NODE,
+				},
+			}
+
+			hostLogPath, podLogPath := createLogTempDir(podName)
+			defer os.RemoveAll(hostLogPath)
+			podID, podConfig = createNamespacePodSandboxWithRuntimeHandler(rc, namespaceOption, podName, podLogPath, runtimeHandler)
+			containerName := runUserNamespaceContainer(rc, ic, podID, podConfig)
+
+			// 4294967295 means that the entire range is available
+			matchContainerOutputRe(podConfig, containerName, `\s+0\s+0\s+4294967295\n`)
+		})
+
+		It("runtime should fail if more than one mapping provided", func() {
+			wrongMapping := []*runtimeapi.IDMapping{{
+				ContainerId: 0,
+				HostId:      1000,
+				Length:      100000,
+			}, {
+				ContainerId: 0,
+				HostId:      2000,
+				Length:      100000,
+			}}
+			usernsOptions := &runtimeapi.UserNamespace{
+				Mode: runtimeapi.NamespaceMode_POD,
+				Uids: wrongMapping,
+				Gids: wrongMapping,
+			}
+
+			runUserNamespacePodWithError(rc, podName, usernsOptions, runtimeHandler)
+		})
+
+		It("runtime should fail if container ID 0 is not mapped", func() {
+			mapping := []*runtimeapi.IDMapping{{
+				ContainerId: 1,
+				HostId:      1000,
+				Length:      100000,
+			}}
+			usernsOptions := &runtimeapi.UserNamespace{
+				Mode: runtimeapi.NamespaceMode_POD,
+				Uids: mapping,
+				Gids: mapping,
+			}
+
+			runUserNamespacePodWithError(rc, podName, usernsOptions, runtimeHandler)
+		})
+
+		It("runtime should fail with NamespaceMode_CONTAINER", func() {
+			usernsOptions := &runtimeapi.UserNamespace{Mode: runtimeapi.NamespaceMode_CONTAINER}
+
+			runUserNamespacePodWithError(rc, podName, usernsOptions, runtimeHandler)
+		})
+
+		It("runtime should fail with NamespaceMode_TARGET", func() {
+			usernsOptions := &runtimeapi.UserNamespace{Mode: runtimeapi.NamespaceMode_TARGET}
+
+			runUserNamespacePodWithError(rc, podName, usernsOptions, runtimeHandler)
+		})
+	})
 })
 
 // matchContainerOutput matches log line in container logs.
 func matchContainerOutput(podConfig *runtimeapi.PodSandboxConfig, name, output string) {
 	By("check container output")
 	verifyLogContents(podConfig, fmt.Sprintf("%s.log", name), output, stdoutType)
+}
+
+// matchContainerOutputRe matches log line in container logs using the provided regular expression pattern.
+func matchContainerOutputRe(podConfig *runtimeapi.PodSandboxConfig, name, pattern string) {
+	By("check container output")
+	verifyLogContentsRe(podConfig, fmt.Sprintf("%s.log", name), pattern, stdoutType)
 }
 
 // createRunAsUserContainer creates the container with specified RunAsUser in ContainerConfig.
@@ -942,11 +1067,23 @@ func createInvalidRunAsGroupContainer(rc internalapi.RuntimeService, ic internal
 
 // createNamespacePodSandbox creates a PodSandbox with different NamespaceOption config for creating containers.
 func createNamespacePodSandbox(rc internalapi.RuntimeService, podSandboxNamespace *runtimeapi.NamespaceOption, podSandboxName string, podLogPath string) (string, *runtimeapi.PodSandboxConfig) {
+	return createNamespacePodSandboxWithRuntimeHandler(rc, podSandboxNamespace, podSandboxName, podLogPath, framework.TestContext.RuntimeHandler)
+}
+
+// createNamespacePodSandboxWithRuntimeHandler creates a PodSandbox with
+// different NamespaceOption config for creating containers by using a custom
+// runtime handler.
+func createNamespacePodSandboxWithRuntimeHandler(
+	rc internalapi.RuntimeService,
+	podSandboxNamespace *runtimeapi.NamespaceOption,
+	podSandboxName, podLogPath, runtimeHandler string,
+) (string, *runtimeapi.PodSandboxConfig) {
 	By("create NamespaceOption podSandbox")
 	uid := framework.DefaultUIDPrefix + framework.NewUUID()
 	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
 	config := &runtimeapi.PodSandboxConfig{
-		Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
+		Metadata:  framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
+		DnsConfig: &runtimeapi.DNSConfig{},
 		Linux: &runtimeapi.LinuxPodSandboxConfig{
 			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
 				NamespaceOptions: podSandboxNamespace,
@@ -957,7 +1094,7 @@ func createNamespacePodSandbox(rc internalapi.RuntimeService, podSandboxNamespac
 		Labels:       framework.DefaultPodLabels,
 	}
 
-	return framework.RunPodSandbox(rc, config), config
+	return framework.RunPodSandboxWithRuntimeHandler(rc, config, runtimeHandler), config
 }
 
 // createNamespaceContainer creates container with different NamespaceOption config.
@@ -1280,4 +1417,60 @@ func checkSetHostname(rc internalapi.RuntimeService, containerID string, setable
 	} else {
 		Expect(err).To(HaveOccurred(), msg)
 	}
+}
+
+func runUserNamespaceContainer(
+	rc internalapi.RuntimeService,
+	ic internalapi.ImageManagerService,
+	podID string,
+	podConfig *runtimeapi.PodSandboxConfig,
+) string {
+	By("create user namespaces container")
+	containerName := "user-namespaces-container-" + framework.NewUUID()
+	containerConfig := &runtimeapi.ContainerConfig{
+		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+		Image: &runtimeapi.ImageSpec{
+			Image:              framework.TestContext.TestImageList.DefaultTestContainerImage,
+			UserSpecifiedImage: framework.TestContext.TestImageList.DefaultTestContainerImage,
+		},
+		Command: []string{"cat", "/proc/self/uid_map"},
+		LogPath: fmt.Sprintf("%s.log", containerName),
+		Linux: &runtimeapi.LinuxContainerConfig{
+			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
+				NamespaceOptions: podConfig.Linux.SecurityContext.NamespaceOptions,
+			},
+		},
+	}
+
+	containerID := createContainerWithExpectation(rc, ic, containerConfig, podID, podConfig, true)
+	startContainer(rc, containerID)
+
+	Eventually(func() runtimeapi.ContainerState {
+		return getContainerStatus(rc, containerID).State
+	}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
+
+	return containerName
+}
+
+func runUserNamespacePodWithError(
+	rc internalapi.RuntimeService,
+	podName string,
+	usernsOptions *runtimeapi.UserNamespace,
+	runtimeHandler string,
+) {
+	uid := framework.DefaultUIDPrefix + framework.NewUUID()
+	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
+	config := &runtimeapi.PodSandboxConfig{
+		Metadata: framework.BuildPodSandboxMetadata(podName, uid, namespace, framework.DefaultAttempt),
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
+				NamespaceOptions: &runtimeapi.NamespaceOption{
+					UsernsOptions: usernsOptions,
+				},
+			},
+		},
+		Labels: framework.DefaultPodLabels,
+	}
+
+	framework.RunPodSandboxErrorWithRuntimeHandler(rc, config, runtimeHandler)
 }
