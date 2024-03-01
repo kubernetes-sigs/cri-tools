@@ -220,16 +220,9 @@ func RunPodSandbox(c internalapi.RuntimeService, config *runtimeapi.PodSandboxCo
 	return podID
 }
 
-// RunPodSandboxWithRuntimeHandler runs a PodSandbox with a custom runtime handler.
-func RunPodSandboxWithRuntimeHandler(c internalapi.RuntimeService, config *runtimeapi.PodSandboxConfig, runtimeHandler string) string {
-	podID, err := c.RunPodSandbox(context.TODO(), config, runtimeHandler)
-	ExpectNoError(err, "failed to create PodSandbox: %v", err)
-	return podID
-}
-
-// RunPodSandboxErrorWithRuntimeHandler runs a PodSandbox with a custom runtime handler and expects an error.
-func RunPodSandboxErrorWithRuntimeHandler(c internalapi.RuntimeService, config *runtimeapi.PodSandboxConfig, runtimeHandler string) string {
-	podID, err := c.RunPodSandbox(context.TODO(), config, runtimeHandler)
+// RunPodSandboxError runs a PodSandbox and expects an error.
+func RunPodSandboxError(c internalapi.RuntimeService, config *runtimeapi.PodSandboxConfig) string {
+	podID, err := c.RunPodSandbox(context.TODO(), config, TestContext.RuntimeHandler)
 	Expect(err).To(HaveOccurred())
 	return podID
 }
