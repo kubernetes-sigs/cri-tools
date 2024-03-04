@@ -404,7 +404,7 @@ func PodSandboxStatus(client internalapi.RuntimeService, id, output string, quie
 	}
 	switch output {
 	case "json", "yaml", "go-template":
-		return outputStatusInfo(status, r.Info, output, tmplStr)
+		return outputStatusInfo(status, "", r.Info, output, tmplStr)
 	case "table": // table output is after this switch block
 	default:
 		return fmt.Errorf("output option cannot be %s", output)
