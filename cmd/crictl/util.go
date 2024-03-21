@@ -114,6 +114,8 @@ type execOptions struct {
 	stdin bool
 	// Command to exec
 	cmd []string
+	// transport to be used
+	transport string
 }
 type attachOptions struct {
 	// id of container
@@ -122,6 +124,8 @@ type attachOptions struct {
 	tty bool
 	// Whether pass Stdin to container
 	stdin bool
+	// transport to be used
+	transport string
 }
 
 type portforwardOptions struct {

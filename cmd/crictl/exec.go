@@ -26,7 +26,7 @@ import (
 	mobyterm "github.com/moby/term"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	restclient "k8s.io/client-go/rest"
+	"k8s.io/client-go/rest"
 	remoteclient "k8s.io/client-go/tools/remotecommand"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -37,6 +37,10 @@ const (
 	// TODO: make this configurable in kubelet.
 	kubeletURLSchema = "http"
 	kubeletURLHost   = "http://127.0.0.1:10250"
+
+	transportFlag      = "transport"
+	transportWebsocket = "websocket"
+	transportSpdy      = "spdy"
 )
 
 const detachSequence = "ctrl-p,ctrl-q"
@@ -67,6 +71,12 @@ var runtimeExecCommand = &cli.Command{
 			Aliases: []string{"i"},
 			Usage:   "Keep STDIN open",
 		},
+		&cli.StringFlag{
+			Name:    transportFlag,
+			Aliases: []string{"r"},
+			Value:   transportSpdy,
+			Usage:   fmt.Sprintf("Transport protocol to be used, must be one of: %s, %s", transportSpdy, transportWebsocket),
+		},
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() < 2 {
@@ -79,11 +89,12 @@ var runtimeExecCommand = &cli.Command{
 		}
 
 		var opts = execOptions{
-			id:      c.Args().First(),
-			timeout: c.Int64("timeout"),
-			tty:     c.Bool("tty"),
-			stdin:   c.Bool("interactive"),
-			cmd:     c.Args().Slice()[1:],
+			id:        c.Args().First(),
+			timeout:   c.Int64("timeout"),
+			tty:       c.Bool("tty"),
+			stdin:     c.Bool("interactive"),
+			cmd:       c.Args().Slice()[1:],
+			transport: c.String(transportFlag),
 		}
 		if c.Bool("sync") {
 			exitCode, err := ExecSync(runtimeClient, opts)
@@ -160,13 +171,13 @@ func Exec(ctx context.Context, client internalapi.RuntimeService, opts execOptio
 	}
 
 	logrus.Debugf("Exec URL: %v", URL)
-	return stream(ctx, opts.stdin, opts.tty, URL)
+	return stream(ctx, opts.stdin, opts.tty, opts.transport, URL)
 }
 
-func stream(ctx context.Context, in, tty bool, url *url.URL) error {
-	executor, err := remoteclient.NewSPDYExecutor(&restclient.Config{TLSClientConfig: restclient.TLSClientConfig{Insecure: true}}, "POST", url)
+func stream(ctx context.Context, in, tty bool, transport string, url *url.URL) error {
+	executor, err := getExecutor(transport, url)
 	if err != nil {
-		return err
+		return fmt.Errorf("get executor: %w", err)
 	}
 
 	stdin, stdout, stderr := mobyterm.StdStreams()
@@ -203,4 +214,20 @@ func stream(ctx context.Context, in, tty bool, url *url.URL) error {
 	}
 	streamOptions.TerminalSizeQueue = t.MonitorSize(t.GetSize())
 	return t.Safe(func() error { return executor.StreamWithContext(ctx, streamOptions) })
+}
+
+func getExecutor(transport string, url *url.URL) (exec remoteclient.Executor, err error) {
+	config := &rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}
+
+	switch transport {
+	case transportSpdy:
+		return remoteclient.NewSPDYExecutor(config, "POST", url)
+
+	case transportWebsocket:
+		return remoteclient.NewWebSocketExecutor(config, "GET", url.String())
+
+	default:
+		return nil, fmt.Errorf("unknown transport: %s", transport)
+
+	}
 }
