@@ -43,6 +43,12 @@ var runtimeAttachCommand = &cli.Command{
 			Aliases: []string{"i"},
 			Usage:   "Keep STDIN open",
 		},
+		&cli.StringFlag{
+			Name:    transportFlag,
+			Aliases: []string{"r"},
+			Value:   transportSpdy,
+			Usage:   fmt.Sprintf("Transport protocol to be used, must be one of: %s, %s", transportSpdy, transportWebsocket),
+		},
 	},
 	Action: func(c *cli.Context) error {
 		id := c.Args().First()
@@ -109,5 +115,5 @@ func Attach(ctx context.Context, client internalapi.RuntimeService, opts attachO
 	}
 
 	logrus.Debugf("Attach URL: %v", URL)
-	return stream(ctx, opts.stdin, opts.tty, URL)
+	return stream(ctx, opts.stdin, opts.tty, opts.transport, URL)
 }
