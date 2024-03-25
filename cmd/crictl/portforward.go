@@ -25,7 +25,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	restclient "k8s.io/client-go/rest"
+	"k8s.io/apimachinery/pkg/util/httpstream"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
 	internalapi "k8s.io/cri-api/pkg/apis"
@@ -36,6 +37,14 @@ var runtimePortForwardCommand = &cli.Command{
 	Name:      "port-forward",
 	Usage:     "Forward local port to a pod",
 	ArgsUsage: "POD-ID [LOCAL_PORT:]REMOTE_PORT",
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:    transportFlag,
+			Aliases: []string{"r"},
+			Value:   transportSpdy,
+			Usage:   fmt.Sprintf("Transport protocol to use, one of: %s|%s", transportSpdy, transportWebsocket),
+		},
+	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() < 2 {
 			return cli.ShowSubcommandHelp(c)
@@ -47,8 +56,9 @@ var runtimePortForwardCommand = &cli.Command{
 		}
 
 		var opts = portforwardOptions{
-			id:    c.Args().Get(0),
-			ports: c.Args().Tail(),
+			id:        c.Args().Get(0),
+			ports:     c.Args().Tail(),
+			transport: c.String(transportFlag),
 		}
 		if err = PortForward(runtimeClient, opts); err != nil {
 			return fmt.Errorf("port forward: %w", err)
@@ -88,11 +98,10 @@ func PortForward(client internalapi.RuntimeService, opts portforwardOptions) err
 	}
 
 	logrus.Debugf("PortForward URL: %v", URL)
-	transport, upgrader, err := spdy.RoundTripperFor(&restclient.Config{})
+	dialer, err := getDialer(opts.transport, URL)
 	if err != nil {
-		return err
+		return fmt.Errorf("get dialer: %w", err)
 	}
-	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", URL)
 
 	readyChan := make(chan struct{})
 
@@ -102,4 +111,23 @@ func PortForward(client internalapi.RuntimeService, opts portforwardOptions) err
 		return err
 	}
 	return pf.ForwardPorts()
+}
+
+func getDialer(transport string, url *url.URL) (exec httpstream.Dialer, err error) {
+	config := &rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}
+
+	switch transport {
+	case transportSpdy:
+		tr, upgrader, err := spdy.RoundTripperFor(config)
+		if err != nil {
+			return nil, fmt.Errorf("get SPDY round tripper: %w", err)
+		}
+		return spdy.NewDialer(upgrader, &http.Client{Transport: tr}, "POST", url), nil
+
+	case transportWebsocket:
+		return portforward.NewSPDYOverWebsocketDialer(url, config)
+
+	default:
+		return nil, fmt.Errorf("unknown transport: %s", transport)
+	}
 }
