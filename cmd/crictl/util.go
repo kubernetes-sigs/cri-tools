@@ -133,6 +133,8 @@ type portforwardOptions struct {
 	id string
 	// ports to forward
 	ports []string
+	// transport to be used
+	transport string
 }
 
 func getSortedKeys(m map[string]string) []string {

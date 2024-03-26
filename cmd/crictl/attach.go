@@ -47,7 +47,7 @@ var runtimeAttachCommand = &cli.Command{
 			Name:    transportFlag,
 			Aliases: []string{"r"},
 			Value:   transportSpdy,
-			Usage:   fmt.Sprintf("Transport protocol to be used, must be one of: %s, %s", transportSpdy, transportWebsocket),
+			Usage:   fmt.Sprintf("Transport protocol to use, one of: %s|%s", transportSpdy, transportWebsocket),
 		},
 	},
 	Action: func(c *cli.Context) error {
