@@ -50,24 +50,15 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '1.22'
           cache: false
 
       - name: Set env
+        if: startsWith(matrix.os, 'windows')
         shell: bash
         run: |
           echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
           echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
-
-      - name: Cache go modules and build cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-            '%LocalAppData%\go-build' # Windows
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-go-
 
       - name: Checkout containerd/containerd ${{ format(matrix.version, '/') }}
         uses: actions/checkout@v4
@@ -87,6 +78,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: ${{github.workspace}}/src/github.com/kubernetes-sigs/cri-tools
+
+
+      - name: Cache go modules and build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            '%LocalAppData%\go-build' # Windows
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
       - name: disable ipv6
         if: startsWith(matrix.os, 'ubuntu')
@@ -279,6 +280,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         shell: bash
         run: |
+          sudo chown -R $(id -u):$(id -g) $(go env GOPATH)
           go install github.com/onsi/ginkgo/v2/ginkgo@latest
           ginkgo version
           sudo cp $(command -v ginkgo) /usr/local/bin
