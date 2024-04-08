@@ -50,6 +50,10 @@ jobs:
           sudo sysctl -w net.ipv4.ip_forward=1
           sudo iptables -t nat -I POSTROUTING -s 127.0.0.0/8 ! -d 127.0.0.0/8 -j MASQUERADE
 
+          # enable criu support
+          sudo apt-get update
+          sudo apt-get install -y criu
+
       - name: Install ginkgo
         run: |
           go install github.com/onsi/ginkgo/v2/ginkgo@latest
