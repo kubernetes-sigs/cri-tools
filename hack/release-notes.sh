@@ -18,11 +18,11 @@ set -euo pipefail
 
 BUILD_DIR=build
 BINARY=$BUILD_DIR/release-notes
-VERSION=v0.15.1
+VERSION=v0.16.8
 
 mkdir -p $BUILD_DIR
 curl -sSfL --retry 5 --retry-delay 10 -o $BINARY \
-    https://github.com/kubernetes/release/releases/download/$VERSION/release-notes-linux-amd64
+    https://storage.googleapis.com/k8s-artifacts-sig-release/kubernetes/release/$VERSION/release-notes-amd64-linux
 chmod +x $BINARY
 
 PREVOUS_TAG=$(git tag | tail -2 | head -1)
