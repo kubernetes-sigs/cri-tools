@@ -12,17 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/*
+Package otelgrpc is the instrumentation library for [google.golang.org/grpc].
+
+Use [NewClientHandler] with [grpc.WithStatsHandler] to instrument a gRPC client.
+
+Use [NewServerHandler] with [grpc.StatsHandler] to instrument a gRPC server.
+*/
 package otelgrpc // import "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-
-// Version is the current release version of the gRPC instrumentation.
-func Version() string {
-	return "0.46.0"
-	// This string is updated by the pre_release.sh script during release
-}
-
-// SemVersion is the semantic version to be supplied to tracer/meter creation.
-//
-// Deprecated: Use [Version] instead.
-func SemVersion() string {
-	return Version()
-}
