@@ -18,8 +18,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -70,7 +72,7 @@ var logsCommand = &cli.Command{
 	Action: func(c *cli.Context) (retErr error) {
 		containerID := c.Args().First()
 		if containerID == "" {
-			return fmt.Errorf("ID cannot be empty")
+			return errors.New("ID cannot be empty")
 		}
 
 		if c.NArg() > 1 {
@@ -103,14 +105,14 @@ var logsCommand = &cli.Command{
 		}
 		logPath := status.GetStatus().GetLogPath()
 		if logPath == "" {
-			return fmt.Errorf("The container has not set log path")
+			return errors.New("The container has not set log path")
 		}
 		if previous {
 			containerAttempt := status.GetStatus().GetMetadata().Attempt
 			if containerAttempt == uint32(0) {
 				return fmt.Errorf("Previous terminated container %s not found", status.GetStatus().GetMetadata().Name)
 			}
-			logPath = fmt.Sprintf("%s%s%s", logPath[:strings.LastIndex(logPath, "/")+1], fmt.Sprint(containerAttempt-1),
+			logPath = fmt.Sprintf("%s%s%s", logPath[:strings.LastIndex(logPath, "/")+1], strconv.FormatUint(uint64(containerAttempt-1), 10),
 				logPath[strings.LastIndex(logPath, "."):])
 		}
 		// build a WithCancel context based on cli.context

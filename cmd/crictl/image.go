@@ -23,6 +23,7 @@ import (
 	"regexp"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -87,7 +88,7 @@ var pullImageCommand = &cli.Command{
 	Action: func(c *cli.Context) error {
 		imageName := c.Args().First()
 		if imageName == "" {
-			return fmt.Errorf("Image name cannot be empty")
+			return errors.New("Image name cannot be empty")
 		}
 
 		if c.NArg() > 1 {
@@ -237,7 +238,7 @@ var listImageCommand = &cli.Command{
 					}
 					row = append(row, id, size)
 					if showPinned {
-						row = append(row, fmt.Sprintf("%v", image.Pinned))
+						row = append(row, strconv.FormatBool(image.Pinned))
 					}
 					display.AddRow(row)
 				}
@@ -476,7 +477,7 @@ var removeImageCommand = &cli.Command{
 		}
 
 		if errored {
-			return fmt.Errorf("unable to remove the image(s)")
+			return errors.New("unable to remove the image(s)")
 		}
 
 		return nil
@@ -779,7 +780,7 @@ func ImageStatus(client internalapi.ImageManagerService, image string, verbose b
 // the returned RemoveImageResponse.
 func RemoveImage(client internalapi.ImageManagerService, image string) error {
 	if image == "" {
-		return fmt.Errorf("ImageID cannot be empty")
+		return errors.New("ImageID cannot be empty")
 	}
 	request := &pb.RemoveImageRequest{Image: &pb.ImageSpec{Image: image}}
 	logrus.Debugf("RemoveImageRequest: %v", request)

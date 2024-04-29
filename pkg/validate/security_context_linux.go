@@ -307,7 +307,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("create container for security context SupplementalGroups")
 			supplementalGroup := int64(1234)
 			containerName := "container-with-SupplementalGroups-and-predefined-group-image-test-" + framework.NewUUID()
-			logPath := fmt.Sprintf("%s.log", containerName)
+			logPath := containerName + ".log"
 			containerConfig := &runtimeapi.ContainerConfig{
 				Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 				Image:    &runtimeapi.ImageSpec{Image: testImagePreDefinedGroup},
@@ -806,7 +806,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 		})
 
 		createContainerWithNoNewPrivs := func(name string, noNewPrivs bool, uid int64) string {
-			By(fmt.Sprintf("create container %s", name))
+			By("create container " + name)
 			containerConfig := &runtimeapi.ContainerConfig{
 				Metadata: framework.BuildContainerMetadata(name, framework.DefaultAttempt),
 				Image:    &runtimeapi.ImageSpec{Image: noNewPrivsImage},
@@ -818,7 +818,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 						},
 					},
 				},
-				LogPath: fmt.Sprintf("%s.log", name),
+				LogPath: name + ".log",
 			}
 			containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 
@@ -962,13 +962,13 @@ var _ = framework.KubeDescribe("Security Context", func() {
 // matchContainerOutput matches log line in container logs.
 func matchContainerOutput(podConfig *runtimeapi.PodSandboxConfig, name, output string) {
 	By("check container output")
-	verifyLogContents(podConfig, fmt.Sprintf("%s.log", name), output, stdoutType)
+	verifyLogContents(podConfig, name+".log", output, stdoutType)
 }
 
 // matchContainerOutputRe matches log line in container logs using the provided regular expression pattern.
 func matchContainerOutputRe(podConfig *runtimeapi.PodSandboxConfig, name, pattern string) {
 	By("check container output")
-	verifyLogContentsRe(podConfig, fmt.Sprintf("%s.log", name), pattern, stdoutType)
+	verifyLogContentsRe(podConfig, name+".log", pattern, stdoutType)
 }
 
 // createRunAsUserContainer creates the container with specified RunAsUser in ContainerConfig.
@@ -1034,7 +1034,7 @@ func createRunAsGroupContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 				RunAsGroup: &gidV,
 			},
 		},
-		LogPath: fmt.Sprintf("%s.log", containerName),
+		LogPath: containerName + ".log",
 	}
 	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig), expectedLogMessage
 }
@@ -1105,7 +1105,7 @@ func createNamespaceContainer(rc internalapi.RuntimeService, ic internalapi.Imag
 func createReadOnlyRootfsContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, readonly bool) (string, string) {
 	By("create ReadOnlyRootfs container")
 	containerName := prefix + framework.NewUUID()
-	path := fmt.Sprintf("%s.log", containerName)
+	path := containerName + ".log"
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
@@ -1224,7 +1224,7 @@ func createAndCheckHostNetwork(rc internalapi.RuntimeService, ic internalapi.Ima
 	By("create a container in the sandbox")
 	command := []string{"sh", "-c", "netstat -ln"}
 	containerName := "container-with-HostNetwork-test-" + framework.NewUUID()
-	path := fmt.Sprintf("%s.log", containerName)
+	path := containerName + ".log"
 	containerID, _, logPath := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.TestContext.TestImageList.DefaultTestContainerImage, namespaceOptions, command, path)
 
 	By("start container")
@@ -1234,7 +1234,7 @@ func createAndCheckHostNetwork(rc internalapi.RuntimeService, ic internalapi.Ima
 	Eventually(func() error {
 		log := parseLogLine(podConfig, logPath)
 		for _, msg := range log {
-			if strings.Contains(string(msg.log), fmt.Sprintf(":%s", hostNetworkPort)) {
+			if strings.Contains(string(msg.log), ":"+hostNetworkPort) {
 				if hostNetwork {
 					return nil
 				}
@@ -1419,7 +1419,7 @@ func runUserNamespaceContainer(
 			UserSpecifiedImage: framework.TestContext.TestImageList.DefaultTestContainerImage,
 		},
 		Command: []string{"cat", "/proc/self/uid_map"},
-		LogPath: fmt.Sprintf("%s.log", containerName),
+		LogPath: containerName + ".log",
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
 				NamespaceOptions: podConfig.Linux.SecurityContext.NamespaceOptions,

@@ -19,9 +19,11 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -337,7 +339,7 @@ func RunPodSandbox(client internalapi.RuntimeService, config *pb.PodSandboxConfi
 // the returned StopPodSandboxResponse.
 func StopPodSandbox(client internalapi.RuntimeService, id string) error {
 	if id == "" {
-		return fmt.Errorf("ID cannot be empty")
+		return errors.New("ID cannot be empty")
 	}
 	if err := client.StopPodSandbox(context.TODO(), id); err != nil {
 		return err
@@ -351,7 +353,7 @@ func StopPodSandbox(client internalapi.RuntimeService, id string) error {
 // the returned RemovePodSandboxResponse.
 func RemovePodSandbox(client internalapi.RuntimeService, id string) error {
 	if id == "" {
-		return fmt.Errorf("ID cannot be empty")
+		return errors.New("ID cannot be empty")
 	}
 	if err := client.RemovePodSandbox(context.TODO(), id); err != nil {
 		return err
@@ -384,7 +386,7 @@ func PodSandboxStatus(client internalapi.RuntimeService, id, output string, quie
 		output = "json"
 	}
 	if id == "" {
-		return fmt.Errorf("ID cannot be empty")
+		return errors.New("ID cannot be empty")
 	}
 
 	request := &pb.PodSandboxStatusRequest{
@@ -530,7 +532,7 @@ func ListPodSandboxes(client internalapi.RuntimeService, opts listOptions) error
 				convertPodState(pod.State),
 				pod.Metadata.Name,
 				pod.Metadata.Namespace,
-				fmt.Sprintf("%d", pod.Metadata.Attempt),
+				strconv.FormatUint(uint64(pod.Metadata.Attempt), 10),
 				getSandboxesRuntimeHandler(pod),
 			})
 			continue

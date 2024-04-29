@@ -202,7 +202,7 @@ func stream(ctx context.Context, in, tty bool, transport string, url *url.URL) e
 		streamOptions.Stdin = pr
 	}
 	if !in {
-		return fmt.Errorf("tty=true must be specified with interactive=true")
+		return errors.New("tty=true must be specified with interactive=true")
 	}
 	t := term.TTY{
 		In:  stdin,
@@ -210,7 +210,7 @@ func stream(ctx context.Context, in, tty bool, transport string, url *url.URL) e
 		Raw: true,
 	}
 	if !t.IsTerminalIn() {
-		return fmt.Errorf("input is not a terminal")
+		return errors.New("input is not a terminal")
 	}
 	streamOptions.TerminalSizeQueue = t.MonitorSize(t.GetSize())
 	return t.Safe(func() error { return executor.StreamWithContext(ctx, streamOptions) })
