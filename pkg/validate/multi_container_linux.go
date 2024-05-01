@@ -18,7 +18,7 @@ package validate
 
 import (
 	"context"
-	"fmt"
+
 	"os"
 	"strings"
 	"time"
@@ -138,7 +138,7 @@ func createMultiContainerTestHttpdContainer(rc internalapi.RuntimeService, ic in
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: httpdImage},
 		Linux:    &runtimeapi.LinuxContainerConfig{},
-		LogPath:  fmt.Sprintf("%s.log", containerName),
+		LogPath:  containerName + ".log",
 	}
 	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }
@@ -151,7 +151,7 @@ func createMultiContainerTestBusyboxContainer(rc internalapi.RuntimeService, ic 
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
 		Command:  []string{"sh", "-c", "echo " + defaultLog + "; sleep 1000"},
-		LogPath:  fmt.Sprintf("%s.log", containerName),
+		LogPath:  containerName + ".log",
 	}
 	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }

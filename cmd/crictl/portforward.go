@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -70,7 +71,7 @@ var runtimePortForwardCommand = &cli.Command{
 // PortForward sends an PortForwardRequest to server, and parses the returned PortForwardResponse
 func PortForward(client internalapi.RuntimeService, opts portforwardOptions) error {
 	if opts.id == "" {
-		return fmt.Errorf("ID cannot be empty")
+		return errors.New("ID cannot be empty")
 
 	}
 	request := &pb.PortForwardRequest{

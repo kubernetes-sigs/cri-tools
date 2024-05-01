@@ -20,7 +20,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
-	"fmt"
+
 	"os"
 	"path/filepath"
 	"regexp"
@@ -532,7 +532,7 @@ func createVolumeContainer(rc internalapi.RuntimeService, ic internalapi.ImageMa
 func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix string, podID string, podConfig *runtimeapi.PodSandboxConfig) (string, string) {
 	By("create a container with log and name")
 	containerName := prefix + framework.NewUUID()
-	path := fmt.Sprintf("%s.log", containerName)
+	path := containerName + ".log"
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
@@ -546,7 +546,7 @@ func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManag
 func createKeepLoggingContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix string, podID string, podConfig *runtimeapi.PodSandboxConfig) (string, string) {
 	By("create a container with log and name")
 	containerName := prefix + framework.NewUUID()
-	path := fmt.Sprintf("%s.log", containerName)
+	path := containerName + ".log"
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},

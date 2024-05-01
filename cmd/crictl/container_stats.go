@@ -18,8 +18,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/docker/go-units"
@@ -207,12 +209,12 @@ func (d containerStatsDisplayer) displayStats(ctx context.Context, client intern
 			// Only generate cpuPerc for running container
 			duration := s.GetCpu().GetTimestamp() - old.GetCpu().GetTimestamp()
 			if duration == 0 {
-				return fmt.Errorf("cpu stat is not updated during sample")
+				return errors.New("cpu stat is not updated during sample")
 			}
 			cpuPerc = float64(cpu-old.GetCpu().GetUsageCoreNanoSeconds().GetValue()) / float64(duration) * 100
 		}
 		d.display.AddRow([]string{id, name, fmt.Sprintf("%.2f", cpuPerc), units.HumanSize(float64(mem)),
-			units.HumanSize(float64(disk)), fmt.Sprintf("%d", inodes)})
+			units.HumanSize(float64(disk)), strconv.FormatUint(inodes, 10)})
 
 	}
 	d.display.ClearScreen()

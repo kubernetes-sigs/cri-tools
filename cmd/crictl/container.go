@@ -26,6 +26,7 @@ import (
 	"path/filepath"
 	goruntime "runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -201,7 +202,7 @@ var startContainerCommand = &cli.Command{
 	ArgsUsage: "CONTAINER-ID [CONTAINER-ID...]",
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
-			return fmt.Errorf("ID cannot be empty")
+			return errors.New("ID cannot be empty")
 		}
 		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
@@ -258,7 +259,7 @@ var updateContainerCommand = &cli.Command{
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
-			return fmt.Errorf("ID cannot be empty")
+			return errors.New("ID cannot be empty")
 		}
 		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
@@ -300,7 +301,7 @@ var stopContainerCommand = &cli.Command{
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
-			return fmt.Errorf("ID cannot be empty")
+			return errors.New("ID cannot be empty")
 		}
 		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
@@ -412,7 +413,7 @@ var removeContainerCommand = &cli.Command{
 		}
 
 		if errored {
-			return fmt.Errorf("unable to remove container(s)")
+			return errors.New("unable to remove container(s)")
 		}
 		return nil
 	},
@@ -440,7 +441,7 @@ var containerStatusCommand = &cli.Command{
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
-			return fmt.Errorf("ID cannot be empty")
+			return errors.New("ID cannot be empty")
 		}
 		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
@@ -646,10 +647,10 @@ var checkpointContainerCommand = &cli.Command{
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
-			return fmt.Errorf("ID cannot be empty")
+			return errors.New("ID cannot be empty")
 		}
 		if c.String("export") == "" {
-			return fmt.Errorf(
+			return errors.New(
 				"Cannot checkpoint a container without specifying the checkpoint destination. " +
 					"Use --export=/path/to/checkpoint.tar",
 			)
@@ -769,7 +770,7 @@ func CreateContainer(
 // the returned StartContainerResponse.
 func StartContainer(client internalapi.RuntimeService, id string) error {
 	if id == "" {
-		return fmt.Errorf("ID cannot be empty")
+		return errors.New("ID cannot be empty")
 	}
 	if err := client.StartContainer(context.TODO(), id); err != nil {
 		return err
@@ -803,7 +804,7 @@ type updateOptions struct {
 // the returned UpdateContainerResourcesResponse.
 func UpdateContainerResources(client internalapi.RuntimeService, id string, opts updateOptions) error {
 	if id == "" {
-		return fmt.Errorf("ID cannot be empty")
+		return errors.New("ID cannot be empty")
 	}
 	request := &pb.UpdateContainerResourcesRequest{
 		ContainerId: id,
@@ -839,7 +840,7 @@ func UpdateContainerResources(client internalapi.RuntimeService, id string, opts
 // the returned StopContainerResponse.
 func StopContainer(client internalapi.RuntimeService, id string, timeout int64) error {
 	if id == "" {
-		return fmt.Errorf("ID cannot be empty")
+		return errors.New("ID cannot be empty")
 	}
 	if err := client.StopContainer(context.TODO(), id, timeout); err != nil {
 		return err
@@ -874,7 +875,7 @@ func CheckpointContainer(
 // the returned RemoveContainerResponse.
 func RemoveContainer(client internalapi.RuntimeService, id string) error {
 	if id == "" {
-		return fmt.Errorf("ID cannot be empty")
+		return errors.New("ID cannot be empty")
 	}
 	if err := client.RemoveContainer(context.TODO(), id); err != nil {
 		return err
@@ -922,7 +923,7 @@ func ContainerStatus(client internalapi.RuntimeService, id, output string, tmplS
 		output = "json"
 	}
 	if id == "" {
-		return fmt.Errorf("ID cannot be empty")
+		return errors.New("ID cannot be empty")
 	}
 	request := &pb.ContainerStatusRequest{
 		ContainerId: id,
@@ -1088,7 +1089,7 @@ func ListContainers(runtimeClient internalapi.RuntimeService, imageClient intern
 			}
 			podName := getPodNameFromLabels(c.Labels)
 			display.AddRow([]string{id, image, ctm, convertContainerState(c.State), c.Metadata.Name,
-				fmt.Sprintf("%d", c.Metadata.Attempt), podID, podName})
+				strconv.FormatUint(uint64(c.Metadata.Attempt), 10), podID, podName})
 			continue
 		}
 

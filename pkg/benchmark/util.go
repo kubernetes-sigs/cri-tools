@@ -18,6 +18,7 @@ package benchmark
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -160,7 +161,7 @@ func (lbrm *LifecycleBenchmarksResultsManager) AwaitAllResults(timeoutSeconds in
 // Saves the results gathered so far as JSON under the given filepath.
 func (lbrm *LifecycleBenchmarksResultsManager) WriteResultsFile(filepath string) error {
 	if lbrm.resultsConsumerRunning {
-		return fmt.Errorf("Results consumer is still running and expecting results.")
+		return errors.New("Results consumer is still running and expecting results.")
 	}
 
 	data, err := json.MarshalIndent(lbrm.resultsSet, "", " ")

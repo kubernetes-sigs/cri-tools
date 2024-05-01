@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -136,7 +137,7 @@ Examples:
 		case "zsh":
 			return zshCompletion(c)
 		default:
-			return fmt.Errorf("only bash, zsh or fish are supported")
+			return errors.New("only bash, zsh or fish are supported")
 		}
 	},
 }

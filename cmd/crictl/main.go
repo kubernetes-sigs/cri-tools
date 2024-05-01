@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"runtime"
@@ -64,7 +65,7 @@ var (
 
 func getRuntimeService(_ *cli.Context, timeout time.Duration) (res internalapi.RuntimeService, err error) {
 	if RuntimeEndpointIsSet && RuntimeEndpoint == "" {
-		return nil, fmt.Errorf("--runtime-endpoint is not set")
+		return nil, errors.New("--runtime-endpoint is not set")
 	}
 	logrus.Debug("get runtime connection")
 
@@ -110,7 +111,7 @@ func getRuntimeService(_ *cli.Context, timeout time.Duration) (res internalapi.R
 func getImageService(*cli.Context) (res internalapi.ImageManagerService, err error) {
 	if ImageEndpoint == "" {
 		if RuntimeEndpointIsSet && RuntimeEndpoint == "" {
-			return nil, fmt.Errorf("--image-endpoint is not set")
+			return nil, errors.New("--image-endpoint is not set")
 		}
 		ImageEndpoint = RuntimeEndpoint
 		ImageEndpointIsSet = RuntimeEndpointIsSet

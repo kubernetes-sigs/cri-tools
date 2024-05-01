@@ -35,6 +35,7 @@ linters:
     - nakedret
     - nilerr
     - nosprintfhostport
+    - perfsprint
     - prealloc
     - predeclared
     - promlinter
@@ -94,7 +95,6 @@ linters:
     # - nolintlint
     # - nonamedreturns
     # - paralleltest
-    # - perfsprint
     # - revive
     # - rowserrcheck
     # - sqlclosecheck
