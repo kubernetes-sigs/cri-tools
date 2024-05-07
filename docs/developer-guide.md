@@ -13,7 +13,7 @@ Start with the following guide to setup pre-requisites:
 - [Go](https://golang.org/doc/install)
 - [Build tools](https://github.com/containerd/cri#install-dependencies)
 
-_**Important Note**: `Go` dependencies tend to follow the GitHub project URL path structure, i.e. when installing and trying to use `cri-tools` locally, it should be installed under a folder structure as follows `go/src/github.com/kubernetes-sigs/cri-tools`. Kubernetes is the only exception which does not follow this structure for legacy reasons._
+_**Important Note**: `Go` dependencies tend to follow the GitHub project URL path structure, i.e. when installing and trying to use `cri-tools` locally, it should be installed under a folder structure as follows `go/src/sigs.k8s.io/cri-tools`. Kubernetes is the only exception which does not follow this structure for legacy reasons._
 
 Ensure the following after following the setup:
 

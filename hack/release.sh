@@ -46,7 +46,7 @@ CRI_TEST_PLATFORMS=(
 )
 
 # Create releases output directory.
-PROJECT="github.com/kubernetes-sigs/cri-tools"
+PROJECT="sigs.k8s.io/cri-tools"
 CRI_TOOLS_ROOT="$GOPATH/src/$PROJECT"
 OUTPUTDIR=$CRI_TOOLS_ROOT/_output/releases
 mkdir -p "$OUTPUTDIR"

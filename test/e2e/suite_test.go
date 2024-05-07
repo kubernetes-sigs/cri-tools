@@ -19,9 +19,9 @@ package e2e
 import (
 	"testing"
 
-	. "github.com/kubernetes-sigs/cri-tools/test/framework"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	. "sigs.k8s.io/cri-tools/test/framework"
 )
 
 // TestE2E runs the created specs

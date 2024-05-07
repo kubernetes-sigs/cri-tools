@@ -30,11 +30,11 @@ import (
 	ginkgotypes "github.com/onsi/ginkgo/v2/types"
 	"github.com/onsi/gomega"
 
-	_ "github.com/kubernetes-sigs/cri-tools/pkg/benchmark"
-	"github.com/kubernetes-sigs/cri-tools/pkg/common"
-	"github.com/kubernetes-sigs/cri-tools/pkg/framework"
-	_ "github.com/kubernetes-sigs/cri-tools/pkg/validate"
-	versionconst "github.com/kubernetes-sigs/cri-tools/pkg/version"
+	_ "sigs.k8s.io/cri-tools/pkg/benchmark"
+	"sigs.k8s.io/cri-tools/pkg/common"
+	"sigs.k8s.io/cri-tools/pkg/framework"
+	_ "sigs.k8s.io/cri-tools/pkg/validate"
+	versionconst "sigs.k8s.io/cri-tools/pkg/version"
 )
 
 const (

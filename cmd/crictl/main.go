@@ -34,9 +34,9 @@ import (
 	internalapi "k8s.io/cri-api/pkg/apis"
 	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 
-	"github.com/kubernetes-sigs/cri-tools/pkg/common"
-	"github.com/kubernetes-sigs/cri-tools/pkg/tracing"
-	"github.com/kubernetes-sigs/cri-tools/pkg/version"
+	"sigs.k8s.io/cri-tools/pkg/common"
+	"sigs.k8s.io/cri-tools/pkg/tracing"
+	"sigs.k8s.io/cri-tools/pkg/version"
 )
 
 const defaultTimeout = 2 * time.Second
