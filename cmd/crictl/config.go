@@ -24,7 +24,7 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	"github.com/kubernetes-sigs/cri-tools/pkg/common"
+	"sigs.k8s.io/cri-tools/pkg/common"
 )
 
 var configCommand = &cli.Command{

@@ -26,11 +26,11 @@ import (
 
 	"github.com/distribution/reference"
 	"github.com/google/uuid"
-	"github.com/kubernetes-sigs/cri-tools/pkg/common"
 	"gopkg.in/yaml.v3"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
+	"sigs.k8s.io/cri-tools/pkg/common"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

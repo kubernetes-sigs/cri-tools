@@ -1,4 +1,4 @@
-module github.com/kubernetes-sigs/cri-tools
+module sigs.k8s.io/cri-tools
 
 go 1.22.0
 

@@ -30,7 +30,7 @@ export GO_BUILD=GOARCH=$(GOARCH) GOOS=$(GOOS) $(GO) build
 export GO_TEST=GOARCH=$(GOARCH) GOOS=$(GOOS) $(GO) test
 endif
 
-PROJECT := github.com/kubernetes-sigs/cri-tools
+PROJECT := sigs.k8s.io/cri-tools
 BINDIR ?= /usr/local/bin
 
 VERSION ?= $(shell git describe --tags --dirty --always | sed 's/^v//')
