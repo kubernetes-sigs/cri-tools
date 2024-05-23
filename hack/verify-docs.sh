@@ -18,7 +18,8 @@ set -euo pipefail
 
 if ! command -v go-md2man >/dev/null; then
     echo "Installing go-md2man"
-    go install -mod=mod github.com/cpuguy83/go-md2man@latest
+    HACK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+    go install -C ${HACK_DIR}/tools github.com/cpuguy83/go-md2man
 fi
 
 go-md2man -in docs/crictl.md -out docs/crictl.1

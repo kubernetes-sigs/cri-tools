@@ -18,10 +18,8 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# Build cri-dockerd
+# Build cri-dockerd 
+HACK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+go install -C ${HACK_DIR}/tools github.com/Mirantis/cri-dockerd
 
-git clone https://github.com/Mirantis/cri-dockerd $GOPATH/src/github.com/Mirantis/cri-dockerd
-cd $GOPATH/src/github.com/Mirantis/cri-dockerd
-
-go install .
 sudo mv $GOPATH/bin/cri-dockerd /usr/local/bin
