@@ -29,7 +29,7 @@ import (
 	"gopkg.in/yaml.v3"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
+	remote "k8s.io/cri-client/pkg"
 	"sigs.k8s.io/cri-tools/pkg/common"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -134,6 +134,7 @@ func LoadCRIClient() (*InternalAPIClient, error) {
 		TestContext.RuntimeServiceAddr,
 		TestContext.RuntimeServiceTimeout,
 		nil,
+		nil,
 	)
 	if err != nil {
 		return nil, err
@@ -144,7 +145,7 @@ func LoadCRIClient() (*InternalAPIClient, error) {
 		// Fallback to runtime service endpoint
 		imageServiceAddr = TestContext.RuntimeServiceAddr
 	}
-	iService, err := remote.NewRemoteImageService(imageServiceAddr, TestContext.ImageServiceTimeout, nil)
+	iService, err := remote.NewRemoteImageService(imageServiceAddr, TestContext.ImageServiceTimeout, nil, nil)
 	if err != nil {
 		return nil, err
 	}

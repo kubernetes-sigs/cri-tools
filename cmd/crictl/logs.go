@@ -29,7 +29,8 @@ import (
 	"github.com/urfave/cli/v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/kubernetes/pkg/kubelet/kuberuntime/logs"
+	"k8s.io/cri-client/pkg/logs"
+	"k8s.io/klog/v2"
 )
 
 var logsCommand = &cli.Command{
@@ -134,7 +135,8 @@ var logsCommand = &cli.Command{
 			// Ensure no context leak
 			cancelFn()
 		}()
-		return logs.ReadLogs(readLogCtx, logPath, status.GetStatus().GetId(), logOptions, runtimeService, os.Stdout, os.Stderr)
+		logger := klog.Background()
+		return logs.ReadLogs(readLogCtx, &logger, logPath, status.GetStatus().GetId(), logOptions, runtimeService, os.Stdout, os.Stderr)
 	},
 }
 
