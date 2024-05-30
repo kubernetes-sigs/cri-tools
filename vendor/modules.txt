@@ -552,7 +552,7 @@ k8s.io/component-base/metrics/prometheusextension
 k8s.io/component-base/tracing
 k8s.io/component-base/tracing/api/v1
 k8s.io/component-base/version
-# k8s.io/cri-api v0.31.0-beta.0
+# k8s.io/cri-api v0.31.0-beta.0.0.20240716205706-865479a3e1b3
 ## explicit; go 1.22.0
 k8s.io/cri-api/pkg/apis
 k8s.io/cri-api/pkg/apis/runtime/v1
