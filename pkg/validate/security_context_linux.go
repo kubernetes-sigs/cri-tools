@@ -32,6 +32,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gstruct"
 	"golang.org/x/sys/unix"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -304,57 +305,6 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			groups := strings.Split(strings.TrimSpace(o), " ")
 			Expect(groups).To(ContainElement("1234"))
 			Expect(groups).To(ContainElement("5678"))
-		})
-
-		It("if the container's primary UID belongs to some groups in the image, runtime should add SupplementalGroups to them", func() {
-			By("create pod")
-			podID, podConfig, podLogDir = createPodSandboxWithLogDirectory(rc)
-
-			By("create container for security context SupplementalGroups")
-			supplementalGroup := int64(1234)
-			containerName := "container-with-SupplementalGroups-and-predefined-group-image-test-" + framework.NewUUID()
-			logPath := containerName + ".log"
-			containerConfig := &runtimeapi.ContainerConfig{
-				Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-				Image:    &runtimeapi.ImageSpec{Image: testImagePreDefinedGroup},
-				Command:  []string{"sh", "-c", "id -G; while :; do sleep 1; done"},
-				Linux: &runtimeapi.LinuxContainerConfig{
-					SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
-						RunAsUser:          &runtimeapi.Int64Value{Value: imagePredefinedGroupUID},
-						SupplementalGroups: []int64{supplementalGroup},
-					},
-				},
-				LogPath: logPath,
-			}
-			containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
-
-			By("start container")
-			startContainer(rc, containerID)
-			Eventually(func(g Gomega) {
-				g.Expect(getContainerStatus(rc, containerID).State).To(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
-				g.Expect(parseLogLine(podConfig, logPath)).NotTo(BeEmpty())
-			}, time.Minute, time.Second*4).Should(Succeed())
-
-			// In testImagePreDefinedGroup,
-			// - its default user is default-user(uid=1000)
-			// - default-user belongs to group-defined-in-image(gid=50000)
-			//
-			// thus, supplementary group of the container processes should be
-			// - 1000: self
-			// - 1234: SupplementalGroups
-			// - 50000: groups define in the container image
-			//
-			// $ id -G
-			// 1000 1234 5678 50000
-			expectedOutput := fmt.Sprintf("%d %d %d\n", imagePredefinedGroupUID, supplementalGroup, imagePredefinedGroupGID)
-
-			By("verify groups for the first process of the container")
-			verifyLogContents(podConfig, logPath, expectedOutput, stdoutType)
-
-			By("verify groups for 'exec'-ed process of container")
-			command := []string{"id", "-G"}
-			o := execSyncContainer(rc, containerID, command)
-			Expect(o).To(BeEquivalentTo(expectedOutput))
 		})
 
 		It("runtime should support RunAsUser", func() {
@@ -636,6 +586,151 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			_, stderr, err := rc.ExecSync(context.TODO(), containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 			Expect(err).To(HaveOccurred())
 			Expect(string(stderr)).To(Equal("touch: /tmp/test: Read-only file system\n"))
+		})
+	})
+
+	Context("SupplementalGroupsPolicy", func() {
+		BeforeEach(func(ctx context.Context) {
+			By("skip if the runtime does not support SupplementalGroupsPolicy")
+			statusResponse, err := rc.Status(ctx, false)
+			Expect(err).NotTo(HaveOccurred())
+			if !(statusResponse.Features != nil && statusResponse.Features.SupplementalGroupsPolicy) {
+				Skip("The runtime does not support SupplementalGroupsPolicy feature")
+			}
+		})
+
+		When("SupplementalGroupsPolicy=Merge (Default)", func() {
+			It("if the container's primary UID belongs to some groups in the image, runtime should add SupplementalGroups to them", func() {
+				By("create pod")
+				podID, podConfig, podLogDir = createPodSandboxWithLogDirectory(rc)
+
+				By("create container for security context SupplementalGroups")
+				supplementalGroup := int64(1234)
+				containerName := "container-with-SupplementalGroupsPolicyMerge-" + framework.NewUUID()
+				logPath := containerName + ".log"
+				containerConfig := &runtimeapi.ContainerConfig{
+					Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+					Image:    &runtimeapi.ImageSpec{Image: testImagePreDefinedGroup},
+					Command:  []string{"sh", "-c", "id -G; while :; do sleep 1; done"},
+					Linux: &runtimeapi.LinuxContainerConfig{
+						SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
+							RunAsUser:          &runtimeapi.Int64Value{Value: imagePredefinedGroupUID},
+							SupplementalGroups: []int64{supplementalGroup},
+							// SupplementalGroupsPolicy_Merge is default(0)
+							// SupplementalGroupsPolicy: runtimeapi.SupplementalGroupsPolicy_Merge,
+						},
+					},
+					LogPath: logPath,
+				}
+				containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
+
+				By("start container")
+				startContainer(rc, containerID)
+
+				Eventually(func(g Gomega) {
+					containerStatus := getContainerStatus(rc, containerID)
+					g.Expect(containerStatus.State).To(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+					// In testImagePreDefinedGroup,
+					// - its default user is default-user(uid=1000)
+					// - default-user belongs to group-defined-in-image(gid=50000) in /etc/group
+					// And, SupplementalGroupsPolicy is Merge(default)
+					//
+					// Thus, firstly attached process identity of the first container processes should be
+					// - uid: 1000 (RunAsUser)
+					// - gid: 1000 (default group for uid=1000)
+					// - supplementary groups
+					//   - 1000: self
+					//   - 1234: SupplementalGroups
+					//   - 50000: groups defined in the container image (/etc/group)
+					g.Expect(containerStatus.User).To(PointTo(MatchFields(IgnoreExtras, Fields{
+						"Linux": PointTo(MatchFields(IgnoreExtras, Fields{
+							"Uid": Equal(imagePredefinedGroupUID),
+							"Gid": Equal(imagePredefinedGroupUID),
+							// we can not assume the order of gids
+							"SupplementalGroups": And(ContainElements(imagePredefinedGroupUID, supplementalGroup, imagePredefinedGroupGID), HaveLen(3)),
+						})),
+					})))
+					g.Expect(parseLogLine(podConfig, logPath)).NotTo(BeEmpty())
+				}, time.Minute, time.Second*4).Should(Succeed())
+
+				// $ id -G
+				// 1000 1234 50000
+				expectedOutput := fmt.Sprintf("%d %d %d\n", imagePredefinedGroupUID, supplementalGroup, imagePredefinedGroupGID)
+
+				By("verify groups for the first process of the container")
+				verifyLogContents(podConfig, logPath, expectedOutput, stdoutType)
+
+				By("verify groups for 'exec'-ed process of container")
+				command := []string{"id", "-G"}
+				o := execSyncContainer(rc, containerID, command)
+				Expect(o).To(BeEquivalentTo(expectedOutput))
+			})
+		})
+		When("SupplementalGroupsPolicy=Strict", func() {
+			It("even if the container's primary UID belongs to some groups in the image, runtime should not add SupplementalGroups to them", func() {
+				By("create pod")
+				podID, podConfig, podLogDir = createPodSandboxWithLogDirectory(rc)
+
+				By("create container for security context SupplementalGroups")
+				supplementalGroup := int64(1234)
+				containerName := "container-with-SupplementalGroupsPolicyMerge-" + framework.NewUUID()
+				logPath := containerName + ".log"
+				containerConfig := &runtimeapi.ContainerConfig{
+					Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+					Image:    &runtimeapi.ImageSpec{Image: testImagePreDefinedGroup},
+					Command:  []string{"sh", "-c", "id -G; while :; do sleep 1; done"},
+					Linux: &runtimeapi.LinuxContainerConfig{
+						SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
+							RunAsUser:                &runtimeapi.Int64Value{Value: imagePredefinedGroupUID},
+							SupplementalGroups:       []int64{supplementalGroup},
+							SupplementalGroupsPolicy: runtimeapi.SupplementalGroupsPolicy_Strict,
+						},
+					},
+					LogPath: logPath,
+				}
+				containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
+
+				By("start container")
+				startContainer(rc, containerID)
+
+				Eventually(func(g Gomega) {
+					containerStatus := getContainerStatus(rc, containerID)
+					g.Expect(containerStatus.State).To(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+					// In testImagePreDefinedGroup,
+					// - its default user is default-user(uid=1000)
+					// - default-user belongs to group-defined-in-image(gid=50000) in /etc/group
+					// And, SupplementalGroupsPolicy is Strict
+					//
+					// Thus, firstly attached process identity of the first container processes should be
+					// (5000(defined in /etc/group) is not appended to supplementary groups)
+					// - uid: 1000 (RunAsUser)
+					// - gid: 1000 (default group for uid=1000)
+					// - supplementary groups
+					//   - 1000: self
+					//   - 1234: SupplementalGroups
+					g.Expect(containerStatus.User).To(PointTo(MatchFields(IgnoreExtras, Fields{
+						"Linux": PointTo(MatchFields(IgnoreExtras, Fields{
+							"Uid": Equal(imagePredefinedGroupUID),
+							"Gid": Equal(imagePredefinedGroupUID),
+							// we can not assume the order of gids
+							"SupplementalGroups": And(ContainElements(imagePredefinedGroupUID, supplementalGroup), HaveLen(2)),
+						})),
+					})))
+					g.Expect(parseLogLine(podConfig, logPath)).NotTo(BeEmpty())
+				}, time.Minute, time.Second*4).Should(Succeed())
+
+				// $ id -G
+				// 1000 1234
+				expectedOutput := fmt.Sprintf("%d %d\n", imagePredefinedGroupUID, supplementalGroup)
+
+				By("verify groups for the first process of the container")
+				verifyLogContents(podConfig, logPath, expectedOutput, stdoutType)
+
+				By("verify groups for 'exec'-ed process of container")
+				command := []string{"id", "-G"}
+				o := execSyncContainer(rc, containerID, command)
+				Expect(o).To(BeEquivalentTo(expectedOutput))
+			})
 		})
 	})
 
