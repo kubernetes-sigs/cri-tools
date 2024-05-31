@@ -24,7 +24,7 @@ import (
 	"github.com/urfave/cli/v2"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
+	remote "k8s.io/cri-client/pkg"
 )
 
 var runtimeVersionCommand = &cli.Command{
