@@ -253,14 +253,20 @@ func BuildContainerMetadata(containerName string, attempt uint32) *runtimeapi.Co
 	}
 }
 
-// CreateDefaultContainer creates a  default container with default options.
+// CreateDefaultContainer creates a default container with default options.
 func CreateDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
+	return CreateDefaultContainerWithLabels(rc, ic, podID, podConfig, prefix, nil)
+}
+
+// CreateDefaultContainerWithLabels creates a default container with default options
+func CreateDefaultContainerWithLabels(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, labels map[string]string) string {
 	containerName := prefix + NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: BuildContainerMetadata(containerName, DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: TestContext.TestImageList.DefaultTestContainerImage},
 		Command:  DefaultContainerCommand,
 		Linux:    &runtimeapi.LinuxContainerConfig{},
+		Labels:   labels,
 	}
 
 	return CreateContainer(rc, ic, containerConfig, podID, podConfig)
