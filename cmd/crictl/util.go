@@ -245,37 +245,48 @@ func outputStatusInfo(status, handlers string, info map[string]string, format st
 	}
 	sort.Strings(keys)
 
-	jsonInfo := "{" + "\"status\":" + status + ","
-	if handlers != "" {
-		jsonInfo += "\"runtimeHandlers\":" + handlers + ","
+	infoMap := map[string]interface{}{}
+
+	var statusVal map[string]interface{}
+	err := json.Unmarshal([]byte(status), &statusVal)
+	if err != nil {
+		return err
 	}
+	infoMap["status"] = statusVal
+
+	var handlersVal map[string]interface{}
+	err = json.Unmarshal([]byte(handlers), &handlersVal)
+	if err != nil {
+		return err
+	}
+	if handlersVal != nil {
+		infoMap["runtimeHandlers"] = handlersVal
+	}
+
 	for _, k := range keys {
-		var res interface{}
-		// We attempt to convert key into JSON if possible else use it directly
-		if err := json.Unmarshal([]byte(info[k]), &res); err != nil {
-			jsonInfo += "\"" + k + "\"" + ":" + "\"" + info[k] + "\","
-		} else {
-			jsonInfo += "\"" + k + "\"" + ":" + info[k] + ","
-		}
+		infoMap[k] = strings.Trim(info[k], "\"")
 	}
-	jsonInfo = jsonInfo[:len(jsonInfo)-1]
-	jsonInfo += "}"
+
+	jsonInfo, err := json.Marshal(infoMap)
+	if err != nil {
+		return err
+	}
 
 	switch format {
 	case "yaml":
-		yamlInfo, err := yaml.JSONToYAML([]byte(jsonInfo))
+		yamlInfo, err := yaml.JSONToYAML(jsonInfo)
 		if err != nil {
 			return err
 		}
 		fmt.Println(string(yamlInfo))
 	case "json":
 		var output bytes.Buffer
-		if err := json.Indent(&output, []byte(jsonInfo), "", "  "); err != nil {
+		if err := json.Indent(&output, jsonInfo, "", "  "); err != nil {
 			return err
 		}
 		fmt.Println(output.String())
 	case "go-template":
-		output, err := tmplExecuteRawJSON(tmplStr, jsonInfo)
+		output, err := tmplExecuteRawJSON(tmplStr, string(jsonInfo))
 		if err != nil {
 			return err
 		}
