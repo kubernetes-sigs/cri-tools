@@ -32,14 +32,9 @@ func TestE2E(t *testing.T) {
 
 var t *TestFramework
 
-var _ = SynchronizedBeforeSuite(func() []byte {
-	// Setup only once
-	dir := SetupCrio()
-	return []byte(dir)
-
-}, func(dir []byte) {
+var _ = BeforeSuite(func() {
 	t = NewTestFramework()
-	t.Setup(string(dir))
+	t.Setup()
 })
 
 var _ = AfterSuite(func() {

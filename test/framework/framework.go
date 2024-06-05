@@ -17,11 +17,9 @@ limitations under the License.
 package framework
 
 import (
-	"errors"
+	"flag"
 	"fmt"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -32,25 +30,30 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const timeout = 10 * time.Minute
+var (
+	crictlBinaryPath      string
+	crictlRuntimeEndpoint string
+)
+
+func init() {
+	flag.StringVar(&crictlBinaryPath, "crictl-binary-path", "", "`crictl` binary path to be used")
+	flag.StringVar(&crictlRuntimeEndpoint, "crictl-runtime-endpoint", "", "`crictl --runtime-endpoint` to be used")
+}
 
 // TestFramework is used to support commonly used test features
-type TestFramework struct {
-	crioDir string
-}
+type TestFramework struct{}
 
 // NewTestFramework creates a new test framework instance
 func NewTestFramework() *TestFramework {
-	return &TestFramework{""}
+	return &TestFramework{}
 }
 
 // Setup is the global initialization function which runs before each test
 // suite
-func (t *TestFramework) Setup(dir string) {
+func (t *TestFramework) Setup() {
 	// Global initialization for the whole framework goes in here
 	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetOutput(GinkgoWriter)
-	t.crioDir = dir
 }
 
 // Teardown is the global deinitialization function which runs after each test
@@ -77,27 +80,41 @@ func cmd(workDir, format string, args ...interface{}) *Session {
 	return session
 }
 
+func crictlBinaryPathFlag() (path string) {
+	if crictlBinaryPath != "" {
+		return crictlBinaryPath
+	}
+	return "crictl"
+}
+
+func crictlRuntimeEndpointFlag() string {
+	if crictlRuntimeEndpoint != "" {
+		return " --runtime-endpoint=" + crictlRuntimeEndpoint
+	}
+	return ""
+}
+
 // Convenience method for command creation in the current working directory
 func lcmd(format string, args ...interface{}) *Session {
 	return cmd("", format, args...)
 }
 
 // Run crictl on the specified endpoint and return the resulting session
-func (t *TestFramework) CrictlWithEndpoint(endpoint, args string) *Session {
-	return lcmd("crictl --runtime-endpoint=%s %s", endpoint, args).Wait(time.Minute)
+func (t *TestFramework) Crictl(args string) *Session {
+	return lcmd("%s%s %s", crictlBinaryPathFlag(), crictlRuntimeEndpointFlag(), args).Wait(time.Minute)
 }
 
 // Run crictl on the specified endpoint and return the resulting session without wait
-func (t *TestFramework) CrictlWithEndpointNoWait(endpoint, args string) *Session {
-	return lcmd("crictl --runtime-endpoint=%s %s", endpoint, args)
+func (t *TestFramework) CrictlNoWait(args string) *Session {
+	return lcmd("%s%s %s", crictlBinaryPathFlag(), crictlRuntimeEndpointFlag(), args)
 }
 
 // Run crictl and expect exit, expectedOut, expectedErr
 func (t *TestFramework) CrictlExpect(
-	endpoint, args string, exit int, expectedOut, expectedErr string,
+	args string, exit int, expectedOut, expectedErr string,
 ) {
 	// When
-	res := t.CrictlWithEndpoint(endpoint, args)
+	res := t.Crictl(args)
 
 	// Then
 	Expect(res).To(Exit(exit))
@@ -115,128 +132,12 @@ func (t *TestFramework) CrictlExpect(
 
 // Run crictl and expect success containing the specified output
 func (t *TestFramework) CrictlExpectSuccess(args, expectedOut string) {
-	t.CrictlExpect("", args, 0, expectedOut, "")
-}
-
-// Run crictl and expect success containing the specified output
-func (t *TestFramework) CrictlExpectSuccessWithEndpoint(endpoint, args, expectedOut string) {
-	t.CrictlExpect(endpoint, args, 0, expectedOut, "")
+	t.CrictlExpect(args, 0, expectedOut, "")
 }
 
 // Run crictl and expect error containing the specified outputs
 func (t *TestFramework) CrictlExpectFailure(
 	args string, expectedOut, expectedErr string,
 ) {
-	t.CrictlExpect("", args, 1, expectedOut, expectedErr)
-}
-
-// Run crictl and expect failure containing the specified output
-func (t *TestFramework) CrictlExpectFailureWithEndpoint(
-	endpoint, args, expectedOut, expectedErr string,
-) {
-	t.CrictlExpect(endpoint, args, 1, expectedOut, expectedErr)
-}
-
-func SetupCrio() string {
-	const (
-		crioURL       = "https://github.com/cri-o/cri-o"
-		crioVersion   = "v1.26.4"
-		conmonURL     = "https://github.com/containers/conmon"
-		conmonVersion = "v2.1.7"
-	)
-	tmpDir := filepath.Join(os.TempDir(), "crio-tmp")
-
-	if _, err := os.Stat(tmpDir); errors.Is(err, os.ErrNotExist) {
-		logrus.Info("cloning and building CRI-O")
-
-		Expect(checkoutAndBuild(tmpDir, crioURL, crioVersion)).To(BeNil())
-
-		conmonTmp := filepath.Join(tmpDir, "conmon")
-		checkoutAndBuild(conmonTmp, conmonURL, conmonVersion)
-	}
-
-	return tmpDir
-}
-
-func checkoutAndBuild(dir, url, rev string) error {
-	// A much faster approach than just cloning the whole repository
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
-	}
-	cmd(dir, "git init").Wait(timeout)
-	cmd(dir, "git remote add origin %s", url).Wait(timeout)
-	cmd(dir, "git fetch --depth=1 origin %s", rev).Wait(timeout)
-	cmd(dir, "git checkout -f FETCH_HEAD").Wait(timeout)
-	cmd(dir, "make").Wait(timeout)
-	return nil
-}
-
-// Start the container runtime process
-func (t *TestFramework) StartCrio() (string, string, *Session) {
-	// Create a new sandbox directory
-	tmpDir, err := os.MkdirTemp("", "crictl-e2e-")
-	Expect(err).To(BeNil())
-
-	// Copy everything together
-	lcmd("cp -R %s %s", filepath.Join(t.crioDir, "bin"), tmpDir).Wait()
-
-	lcmd("cp %s %s", filepath.Join(t.crioDir, "test", "policy.json"),
-		tmpDir).Wait()
-
-	for _, d := range []string{
-		"cni-config", "root", "runroot", "log", "exits", "attach",
-	} {
-		Expect(os.MkdirAll(filepath.Join(tmpDir, d), 0755)).To(BeNil())
-	}
-
-	lcmd("cp %s %s", filepath.Join(t.crioDir, "contrib", "cni",
-		"10-crio-bridge.conf"),
-		filepath.Join(tmpDir, "cni-config")).Wait()
-
-	endpoint := filepath.Join(tmpDir, "crio.sock")
-
-	session := cmd(tmpDir, "%s"+
-		" --config=%s"+
-		" --listen=%s"+
-		" --conmon=%s"+
-		" --container-exits-dir=%s"+
-		" --container-attach-socket-dir=%s"+
-		" --log-dir=%s"+
-		" --signature-policy=%s"+
-		" --cni-config-dir=%s"+
-		" --root=%s"+
-		" --runroot=%s"+
-		" --pinns-path=%s"+
-		" --enable-pod-events",
-		filepath.Join(tmpDir, "bin", "crio"),
-		filepath.Join(t.crioDir, "crio.conf"),
-		endpoint,
-		filepath.Join(t.crioDir, "conmon", "bin", "conmon"),
-		filepath.Join(tmpDir, "exits"),
-		filepath.Join(tmpDir, "attach"),
-		filepath.Join(tmpDir, "log"),
-		filepath.Join(tmpDir, "policy.json"),
-		filepath.Join(tmpDir, "cni-config"),
-		filepath.Join(tmpDir, "root"),
-		filepath.Join(tmpDir, "runroot"),
-		filepath.Join(tmpDir, "bin", "pinns"),
-	)
-
-	endpoint = "unix://" + endpoint
-
-	// Wait for the connection to be available
-	for i := 0; i < 100; i++ {
-		res := t.CrictlWithEndpoint(endpoint, "--timeout=200ms info")
-		if res.ExitCode() == 0 {
-			break
-		}
-		logrus.Info("Waiting for CRI-O to become ready")
-		time.Sleep(3 * time.Second)
-	}
-	return endpoint, tmpDir, session
-}
-
-// Stop the container runtime process
-func (t *TestFramework) StopCrio(testDir string, session *Session) {
-	Expect(session.Interrupt().Wait()).To(Exit(0))
+	t.CrictlExpect(args, 1, expectedOut, expectedErr)
 }

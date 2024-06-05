@@ -1,4 +1,4 @@
-name: critest CRI-O
+name: CRI-O
 on:
   push:
     tags:
@@ -7,14 +7,13 @@ on:
       - master
   pull_request:
 jobs:
-  #
-  # Run CRI tests against CRI-O
-  #
-  linux-build-and-critest-cri-o:
+  test:
     strategy:
       matrix:
-        version: [main]
-    name: ${{matrix.version}} / linux amd64
+        suite:
+          - e2e
+          - critest
+    name: ${{matrix.suite}}
     runs-on: ubuntu-22.04
     steps:
       - name: Install go
@@ -50,21 +49,13 @@ jobs:
           sudo sysctl -w net.ipv4.ip_forward=1
           sudo iptables -t nat -I POSTROUTING -s 127.0.0.0/8 ! -d 127.0.0.0/8 -j MASQUERADE
 
-          # enable criu support
-          sudo apt-get update
-          sudo apt-get install -y criu
-
       - name: Install ginkgo
         run: |
           go install github.com/onsi/ginkgo/v2/ginkgo@latest
           ginkgo version
           sudo cp $(command -v ginkgo) /usr/local/bin
 
-      - name: Setup GCloud
-        uses: google-github-actions/setup-gcloud@v2
-
       - name: Install CRI-O latest main
-        if: ${{matrix.version == 'main'}}
         run: |
           curl https://raw.githubusercontent.com/cri-o/packaging/main/get | sudo bash
 
@@ -88,12 +79,20 @@ jobs:
         working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
 
       - name: Run critest
+        if: ${{matrix.suite == 'critest'}}
         run: |
           sudo -E PATH=$PATH critest \
             --runtime-endpoint=unix:///var/run/crio/crio.sock \
             --ginkgo.flakeAttempts=3 \
             --parallel=$(nproc)
           sudo journalctl -u crio > cri-o.log
+
+      - name: Run crictl e2e tests
+        if: ${{matrix.suite == 'e2e'}}
+        run: |
+          sudo -E PATH=$PATH make test-e2e \
+            TESTFLAGS="-crictl-runtime-endpoint=unix://var/run/crio/crio.sock"
+        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
 
       - name: Upload CRI-O logs
         uses: actions/upload-artifact@v4

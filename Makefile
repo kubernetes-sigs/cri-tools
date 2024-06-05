@@ -130,12 +130,14 @@ release-notes:
 
 # needs to run as root to work
 test-e2e: $(GINKGO)
-	$(GINKGO) $(TESTFLAGS) \
-		-r -p \
-		--randomizeAllSpecs \
-		--randomizeSuites \
-		--slowSpecThreshold 60 \
-		test
+	$(GINKGO) \
+		-r \
+		--randomize-all \
+		--randomize-suites \
+		--slow-spec-threshold 60s \
+		test \
+		-- \
+		$(TESTFLAGS)
 
 test-crictl: $(GINKGO)
 	# Run go test for templates_test.go and util_test.go
