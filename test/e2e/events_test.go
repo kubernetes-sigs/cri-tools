@@ -20,7 +20,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gbytes"
-	. "github.com/onsi/gomega/gexec"
 )
 
 // The actual test suite
@@ -40,20 +39,8 @@ var _ = t.Describe("events options validation", func() {
 
 // The actual test suite
 var _ = t.Describe("events", func() {
-	var (
-		endpoint, testDir string
-		crio              *Session
-	)
-	BeforeEach(func() {
-		endpoint, testDir, crio = t.StartCrio()
-	})
-
-	AfterEach(func() {
-		t.StopCrio(testDir, crio)
-	})
-
 	It("should succeed", func() {
-		session := t.CrictlWithEndpointNoWait(endpoint, "events")
+		session := t.CrictlNoWait("events")
 		defer session.Terminate()
 		Expect(session.Out).ToNot(Say("unknown method GetContainerEvents")) // no errors
 	})

@@ -18,42 +18,35 @@ package e2e
 
 import (
 	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gexec"
 )
 
 // The actual test suite
 var _ = t.Describe("pull", func() {
-	var (
-		endpoint, testDir string
-		crio              *Session
-	)
-	BeforeEach(func() {
-		endpoint, testDir, crio = t.StartCrio()
-	})
-
-	AfterEach(func() {
-		t.StopCrio(testDir, crio)
-	})
-
 	const (
 		imageSuccessText = "Image is up to date"
 		registry         = "gcr.io/k8s-staging-cri-tools/"
 	)
 
+	AfterEach(func() {
+		Expect(t.Crictl("rmi -a")).To(Exit(0))
+	})
+
 	It("should succeed without tag or digest", func() {
-		t.CrictlExpectSuccessWithEndpoint(endpoint,
+		t.CrictlExpectSuccess(
 			"pull "+registry+"test-image-1",
 			imageSuccessText)
 	})
 
 	It("should succeed with tag", func() {
-		t.CrictlExpectSuccessWithEndpoint(endpoint,
+		t.CrictlExpectSuccess(
 			"pull "+registry+"test-image-1:latest",
 			imageSuccessText)
 	})
 
 	It("should succeed with digest", func() {
-		t.CrictlExpectSuccessWithEndpoint(endpoint,
+		t.CrictlExpectSuccess(
 			"pull "+registry+"test-image-digest"+
 				"@sha256:9700f9a2f5bf2c45f2f605a0bd3bce7cf37420ec9d3ed50ac2758413308766bf",
 			imageSuccessText)
@@ -64,7 +57,6 @@ var _ = t.Describe("pull", func() {
 	})
 
 	It("should fail on not existing image", func() {
-		t.CrictlExpectFailureWithEndpoint(endpoint, "pull localhost/wrong",
-			"", "pulling image")
+		t.CrictlExpectFailure("pull localhost/wrong", "", "pulling image")
 	})
 })

@@ -18,7 +18,6 @@ package e2e
 
 import (
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega/gexec"
 )
 
 // The actual test suite
@@ -46,40 +45,27 @@ var _ = t.Describe("help", func() {
 
 // The actual test suite
 var _ = t.Describe("help subcommand", func() {
-
-	var (
-		endpoint, testDir string
-		crio              *Session
-	)
-	BeforeEach(func() {
-		endpoint, testDir, crio = t.StartCrio()
-	})
-
-	AfterEach(func() {
-		t.StopCrio(testDir, crio)
-	})
-
 	It("should show help running rm without params", func() {
-		t.CrictlExpectSuccessWithEndpoint(endpoint, "rm", "crictl rm command")
+		t.CrictlExpectSuccess("rm", "crictl rm command")
 	})
 
 	It("should show help running rmi without params", func() {
-		t.CrictlExpectSuccessWithEndpoint(endpoint, "rmi", "crictl rmi command")
+		t.CrictlExpectSuccess("rmi", "crictl rmi command")
 	})
 
 	It("should show help running rmp without params", func() {
-		t.CrictlExpectSuccessWithEndpoint(endpoint, "rmp", "crictl rmp command")
+		t.CrictlExpectSuccess("rmp", "crictl rmp command")
 	})
 
 	It("should not show help running rm -a", func() {
-		t.CrictlExpect(endpoint, "rm -a", 0, "", "No containers to remove")
+		t.CrictlExpect("rm -a", 0, "", "No containers to remove")
 	})
 
 	It("should not show help running rmi -a", func() {
-		t.CrictlExpect(endpoint, "rmi -a", 0, "", "No images to remove")
+		t.CrictlExpect("rmi -a", 0, "", "No images to remove")
 	})
 
 	It("should not show help running rmp -a", func() {
-		t.CrictlExpect(endpoint, "rmp -a", 0, "", "No pods to remove")
+		t.CrictlExpect("rmp -a", 0, "", "No pods to remove")
 	})
 })
