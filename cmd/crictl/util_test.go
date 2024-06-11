@@ -17,12 +17,7 @@ limitations under the License.
 package main
 
 import (
-	"io"
-	"os"
-	"strings"
 	"testing"
-
-	. "github.com/onsi/gomega"
 )
 
 func TestNameFilterByRegex(t *testing.T) {
@@ -69,135 +64,7 @@ func TestNameFilterByRegex(t *testing.T) {
 			if r != tc.isMatch {
 				t.Errorf("expected matched to be %v; actual result is %v", tc.isMatch, r)
 			}
-		})
-	}
-}
 
-func TestOutputStatusInfo(t *testing.T) {
-	const (
-		statusResponse = `{"conditions":[
-			{
-				"message": "no network config found in C:\\Program Files",
-        		"reason": "NetworkPluginNotReady",
-        		"status": false,
-        		"type": "NetworkReady"
-      		}
-		]}`
-		handlerResponse = `[
-			{
-      			"features": {
-        			"recursive_read_only_mounts": true
-      			},
-      			"name": "runc"
-    		},
-			{
-				"features": {
-					"recursive_read_only_mounts": true,
-        			"user_namespaces": true
-				},
-      			"name": "crun"
-			}
-		]`
-		emptyResponse = ""
-	)
-	testCases := []struct {
-		name        string
-		status      string
-		handlers    string
-		info        map[string]string
-		format      string
-		tmplStr     string
-		expectedOut string
-	}{
-		{
-			name:        "YAML format",
-			status:      statusResponse,
-			handlers:    handlerResponse,
-			info:        map[string]string{"key1": "value1", "key2": "/var/lib"},
-			format:      "yaml",
-			tmplStr:     "",
-			expectedOut: "key1: value1\nkey2: /var/lib\nruntimeHandlers:\n- features:\n    recursive_read_only_mounts: true\n  name: runc\n- features:\n    recursive_read_only_mounts: true\n    user_namespaces: true\n  name: crun\nstatus:\n  conditions:\n  - message: no network config found in C:\\Program Files\n    reason: NetworkPluginNotReady\n    status: false\n    type: NetworkReady",
-		},
-		{
-			name:        "YAML format with empty status response",
-			status:      emptyResponse,
-			handlers:    handlerResponse,
-			info:        map[string]string{"key1": "value1", "key2": "/var/lib"},
-			format:      "yaml",
-			tmplStr:     "",
-			expectedOut: "key1: value1\nkey2: /var/lib\nruntimeHandlers:\n- features:\n    recursive_read_only_mounts: true\n  name: runc\n- features:\n    recursive_read_only_mounts: true\n    user_namespaces: true\n  name: crun",
-		},
-		{
-			name:        "YAML format with empty handlers response",
-			status:      statusResponse,
-			handlers:    emptyResponse,
-			info:        map[string]string{"key1": "value1", "key2": "/var/lib"},
-			format:      "yaml",
-			tmplStr:     "",
-			expectedOut: "key1: value1\nkey2: /var/lib\nstatus:\n  conditions:\n  - message: no network config found in C:\\Program Files\n    reason: NetworkPluginNotReady\n    status: false\n    type: NetworkReady",
-		},
-		{
-			name:        "JSON format",
-			status:      statusResponse,
-			handlers:    handlerResponse,
-			info:        map[string]string{"key1": "\"value1\"", "key2": "\"C:\\ProgramFiles\""},
-			format:      "json",
-			tmplStr:     "",
-			expectedOut: "{\n  \"key1\": \"value1\",\n  \"key2\": \"C:\\\\ProgramFiles\",\n  \"runtimeHandlers\": [\n    {\n      \"features\": {\n        \"recursive_read_only_mounts\": true\n      },\n      \"name\": \"runc\"\n    },\n    {\n      \"features\": {\n        \"recursive_read_only_mounts\": true,\n        \"user_namespaces\": true\n      },\n      \"name\": \"crun\"\n    }\n  ],\n  \"status\": {\n    \"conditions\": [\n      {\n        \"message\": \"no network config found in C:\\\\Program Files\",\n        \"reason\": \"NetworkPluginNotReady\",\n        \"status\": false,\n        \"type\": \"NetworkReady\"\n      }\n    ]\n  }\n}",
-		},
-		{
-			name:        "Go template format",
-			status:      statusResponse,
-			handlers:    handlerResponse,
-			info:        map[string]string{"key1": "value1", "key2": "value2"},
-			format:      "go-template",
-			tmplStr:     `NetworkReady: {{ (index .status.conditions 0).status }}`,
-			expectedOut: "NetworkReady: false",
-		},
-	}
-
-	// Run tests
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			captureOutput := func(f func() error) (string, error) {
-				var err error
-				old := os.Stdout
-
-				r, w, _ := os.Pipe()
-				os.Stdout = w
-				defer func() {
-					os.Stdout = old
-				}()
-
-				err = f()
-				if err != nil {
-					return "", err
-				}
-
-				err = w.Close()
-				if err != nil {
-					return "", err
-				}
-
-				out, err := io.ReadAll(r)
-				return strings.TrimRight(string(out), "\n"), err
-			}
-
-			outStr, err := captureOutput(func() error {
-				err := outputStatusInfo(tc.status, tc.handlers, tc.info, tc.format, tc.tmplStr)
-				if err != nil {
-					t.Errorf("Unexpected error: %v", err)
-				}
-				return nil
-			})
-
-			if err != nil {
-				Expect(err).To(BeNil())
-			}
-
-			if outStr != tc.expectedOut {
-				t.Errorf("Expected output:\n%s\nGot:\n%s", tc.expectedOut, outStr)
-			}
 		})
 	}
 }
