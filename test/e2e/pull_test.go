@@ -56,6 +56,10 @@ var _ = t.Describe("pull", func() {
 		t.CrictlExpectSuccess("pull -h", "Pull an image")
 	})
 
+	It("should succeed to generate the JSON schema", func() {
+		t.CrictlExpectSuccess("pull jsonschema", "PodSandboxConfig")
+	})
+
 	It("should fail on not existing image", func() {
 		t.CrictlExpectFailure("pull localhost/wrong", "", "pulling image")
 	})
