@@ -181,10 +181,22 @@ func (r *remoteImageService) PullImage(ctx context.Context, image *runtimeapi.Im
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	resp, err := r.pullImageV1(ctx, image, auth, podSandboxConfig)
+	if err != nil {
+		return "", err
+	}
+	return resp.ImageRef, nil
+}
+
+// PullImageFullResponse pulls an image with the authentication config and returns the full PullImageResponse instead of just the reference.
+func (r *remoteImageService) PullImageFullResponse(ctx context.Context, image *runtimeapi.ImageSpec, auth *runtimeapi.AuthConfig, podSandboxConfig *runtimeapi.PodSandboxConfig) (*runtimeapi.PullImageResponse, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	return r.pullImageV1(ctx, image, auth, podSandboxConfig)
 }
 
-func (r *remoteImageService) pullImageV1(ctx context.Context, image *runtimeapi.ImageSpec, auth *runtimeapi.AuthConfig, podSandboxConfig *runtimeapi.PodSandboxConfig) (string, error) {
+func (r *remoteImageService) pullImageV1(ctx context.Context, image *runtimeapi.ImageSpec, auth *runtimeapi.AuthConfig, podSandboxConfig *runtimeapi.PodSandboxConfig) (*runtimeapi.PullImageResponse, error) {
 	resp, err := r.imageClient.PullImage(ctx, &runtimeapi.PullImageRequest{
 		Image:         image,
 		Auth:          auth,
@@ -200,19 +212,19 @@ func (r *remoteImageService) pullImageV1(ctx context.Context, image *runtimeapi.
 		// works in `imageManager.EnsureImageExists` (pkg/kubelet/images/image_manager.go).
 		statusErr, ok := status.FromError(err)
 		if ok && statusErr.Code() == codes.Unknown {
-			return "", errors.New(statusErr.Message())
+			return nil, errors.New(statusErr.Message())
 		}
 
-		return "", err
+		return nil, err
 	}
 
 	if resp.ImageRef == "" {
 		r.logErr(errors.New("PullImage failed"), "ImageRef of image is not set", "image", image.Image)
 		errorMessage := fmt.Sprintf("imageRef of image %q is not set", image.Image)
-		return "", errors.New(errorMessage)
+		return nil, errors.New(errorMessage)
 	}
 
-	return resp.ImageRef, nil
+	return resp, nil
 }
 
 // RemoveImage removes the image.
