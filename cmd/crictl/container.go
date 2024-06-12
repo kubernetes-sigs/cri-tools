@@ -812,9 +812,21 @@ func CreateContainer(
 		}
 
 		// Try to pull the image before container creation
-		ann := config.GetImage().GetAnnotations()
-		if _, err := PullImageWithSandbox(iClient, image, auth, podConfig, ann, opts.pullOptions.timeout); err != nil {
-			return "", err
+		images := []string{image}
+		logrus.Infof("Pulling container image: %s", image)
+
+		// Add possible OCI volume mounts
+		for _, m := range config.Mounts {
+			if m.Image != nil && m.Image.Image != "" {
+				logrus.Infof("Pulling image %s to be mounted to container path: %s", image, m.ContainerPath)
+				images = append(images, m.Image.Image)
+			}
+		}
+
+		for _, image := range images {
+			if _, err := PullImageWithSandbox(iClient, image, auth, podConfig, config.GetImage().GetAnnotations(), opts.pullOptions.timeout); err != nil {
+				return "", err
+			}
 		}
 	}
 
