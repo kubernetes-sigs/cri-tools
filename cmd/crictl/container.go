@@ -85,6 +85,9 @@ type pullOptions struct {
 	// Username to use for accessing the registry
 	// password will be requested on the command line
 	username string
+
+	// timeout is the maximum time used for the image pull
+	timeout time.Duration
 }
 
 var createPullFlags = []cli.Flag{
@@ -110,6 +113,17 @@ var createPullFlags = []cli.Flag{
 		Name:  "username",
 		Value: "",
 		Usage: "Use `USERNAME` for accessing the registry. The password will be requested on the command line",
+	},
+	&cli.DurationFlag{
+		Name:    "cancel-timeout",
+		Aliases: []string{"T"},
+		Usage:   "Seconds to wait for a container create request to complete before cancelling the request",
+	},
+	&cli.DurationFlag{
+		Name:    "pull-timeout",
+		Aliases: []string{"pt"},
+		Usage:   "Maximum time to be used for pulling the image, disabled if set to 0s",
+		EnvVars: []string{"CRICTL_PULL_TIMEOUT"},
 	},
 }
 
@@ -137,17 +151,29 @@ var runPullFlags = []cli.Flag{
 		Value: "",
 		Usage: "Use `USERNAME` for accessing the registry. password will be requested",
 	},
+	&cli.StringFlag{
+		Name:    "runtime",
+		Aliases: []string{"r"},
+		Usage:   "Runtime handler to use. Available options are defined by the container runtime.",
+	},
+	&cli.DurationFlag{
+		Name:    "timeout",
+		Aliases: []string{"t"},
+		Usage:   "Seconds to wait for a container create request before cancelling the request",
+	},
+	&cli.DurationFlag{
+		Name:    "pull-timeout",
+		Aliases: []string{"pt"},
+		Usage:   "Maximum time to be used for pulling the image, disabled if set to 0s",
+		EnvVars: []string{"CRICTL_PULL_TIMEOUT"},
+	},
 }
 
 var createContainerCommand = &cli.Command{
 	Name:      "create",
 	Usage:     "Create a new container",
 	ArgsUsage: "POD container-config.[json|yaml] pod-config.[json|yaml]",
-	Flags: append(createPullFlags, &cli.DurationFlag{
-		Name:    "cancel-timeout",
-		Aliases: []string{"T"},
-		Usage:   "Seconds to wait for a container create request to complete before cancelling the request",
-	}),
+	Flags:     createPullFlags,
 
 	Action: func(c *cli.Context) (err error) {
 		if c.Args().Len() != 3 {
@@ -177,6 +203,7 @@ var createContainerCommand = &cli.Command{
 					creds:    c.String("creds"),
 					auth:     c.String("auth"),
 					username: c.String("username"),
+					timeout:  c.Duration("pull-timeout"),
 				},
 				timeout: c.Duration("cancel-timeout"),
 			},
@@ -581,15 +608,7 @@ var runContainerCommand = &cli.Command{
 	Name:      "run",
 	Usage:     "Run a new container inside a sandbox",
 	ArgsUsage: "container-config.[json|yaml] pod-config.[json|yaml]",
-	Flags: append(runPullFlags, &cli.StringFlag{
-		Name:    "runtime",
-		Aliases: []string{"r"},
-		Usage:   "Runtime handler to use. Available options are defined by the container runtime.",
-	}, &cli.DurationFlag{
-		Name:    "timeout",
-		Aliases: []string{"t"},
-		Usage:   "Seconds to wait for a container create request before cancelling the request",
-	}),
+	Flags:     runPullFlags,
 
 	Action: func(c *cli.Context) (err error) {
 		if c.Args().Len() != 2 {
@@ -617,6 +636,7 @@ var runContainerCommand = &cli.Command{
 				creds:    c.String("creds"),
 				auth:     c.String("auth"),
 				username: c.String("username"),
+				timeout:  c.Duration("pull-timeout"),
 			},
 			timeout: c.Duration("timeout"),
 		}
@@ -747,7 +767,7 @@ func CreateContainer(
 
 		// Try to pull the image before container creation
 		ann := config.GetImage().GetAnnotations()
-		if _, err := PullImageWithSandbox(iClient, image, auth, podConfig, ann); err != nil {
+		if _, err := PullImageWithSandbox(iClient, image, auth, podConfig, ann, opts.pullOptions.timeout); err != nil {
 			return "", err
 		}
 	}

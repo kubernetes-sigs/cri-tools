@@ -328,9 +328,8 @@ func ListImage(c internalapi.ImageManagerService, filter *runtimeapi.ImageFilter
 	return images
 }
 
-// PullPublicImage pulls the public image named imageName.
-func PullPublicImage(c internalapi.ImageManagerService, imageName string, podConfig *runtimeapi.PodSandboxConfig) string {
-
+// PrepareImageName builds a pullable image name for the provided one.
+func PrepareImageName(imageName string) string {
 	ref, err := reference.ParseNamed(imageName)
 	if err == nil {
 		// Modify the image if it's a fully qualified image name
@@ -351,6 +350,13 @@ func PullPublicImage(c internalapi.ImageManagerService, imageName string, podCon
 	} else {
 		Failf("Unable to parse imageName: %v", err)
 	}
+
+	return imageName
+}
+
+// PullPublicImage pulls the public image named imageName.
+func PullPublicImage(c internalapi.ImageManagerService, imageName string, podConfig *runtimeapi.PodSandboxConfig) string {
+	imageName = PrepareImageName(imageName)
 
 	By("Pull image : " + imageName)
 	imageSpec := &runtimeapi.ImageSpec{

@@ -26,6 +26,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/docker/go-units"
 	"github.com/sirupsen/logrus"
@@ -83,6 +84,12 @@ var pullImageCommand = &cli.Command{
 			Aliases: []string{"a"},
 			Usage:   "Annotation to be set on the pulled image",
 		},
+		&cli.DurationFlag{
+			Name:    "pull-timeout",
+			Aliases: []string{"pt"},
+			Usage:   "Maximum time to be used for pulling the image, disabled if set to 0s",
+			EnvVars: []string{"CRICTL_PULL_TIMEOUT"},
+		},
 	},
 	ArgsUsage: "NAME[:TAG|@DIGEST]",
 	Action: func(c *cli.Context) error {
@@ -119,7 +126,8 @@ var pullImageCommand = &cli.Command{
 				return err
 			}
 		}
-		r, err := PullImageWithSandbox(imageClient, imageName, auth, sandbox, ann)
+		timeout := c.Duration("timeout")
+		r, err := PullImageWithSandbox(imageClient, imageName, auth, sandbox, ann, timeout)
 		if err != nil {
 			return fmt.Errorf("pulling image: %w", err)
 		}
@@ -633,7 +641,7 @@ func normalizeRepoDigest(repoDigests []string) (string, string) {
 
 // PullImageWithSandbox sends a PullImageRequest to the server, and parses
 // the returned PullImageResponse.
-func PullImageWithSandbox(client internalapi.ImageManagerService, image string, auth *pb.AuthConfig, sandbox *pb.PodSandboxConfig, ann map[string]string) (*pb.PullImageResponse, error) {
+func PullImageWithSandbox(client internalapi.ImageManagerService, image string, auth *pb.AuthConfig, sandbox *pb.PodSandboxConfig, ann map[string]string, timeout time.Duration) (*pb.PullImageResponse, error) {
 	request := &pb.PullImageRequest{
 		Image: &pb.ImageSpec{
 			Image:       image,
@@ -647,7 +655,21 @@ func PullImageWithSandbox(client internalapi.ImageManagerService, image string, 
 		request.SandboxConfig = sandbox
 	}
 	logrus.Debugf("PullImageRequest: %v", request)
-	res, err := client.PullImage(context.TODO(), request.Image, request.Auth, request.SandboxConfig)
+
+	if timeout < 0 {
+		return nil, errors.New("timeout should be bigger than 0")
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if timeout > 0 {
+		logrus.Debugf("Using context with timeout of %s", timeout)
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+
+	res, err := client.PullImage(ctx, request.Image, request.Auth, request.SandboxConfig)
 	if err != nil {
 		return nil, err
 	}

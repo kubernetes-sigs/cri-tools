@@ -21,7 +21,10 @@ import (
 	"fmt"
 	"runtime"
 	"sort"
+	"time"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"sigs.k8s.io/cri-tools/pkg/framework"
@@ -43,6 +46,21 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 		testPullPublicImage(c, testImageWithTag, testImagePodSandbox, func(s *runtimeapi.Image) {
 			Expect(s.RepoTags).To(Equal([]string{testImageWithTag}))
 		})
+	})
+
+	It("public image should timeout if requested [Conformance]", func() {
+		imageName := framework.PrepareImageName(testImageWithTag)
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond)
+		defer cancel()
+		res, err := c.PullImage(ctx, &runtimeapi.ImageSpec{Image: imageName}, nil, nil)
+
+		Expect(res).To(BeEmpty())
+		Expect(err).To(HaveOccurred())
+
+		statusErr, ok := status.FromError(err)
+		Expect(ok).To(BeTrue())
+		Expect(statusErr.Code()).To(Equal(codes.DeadlineExceeded))
 	})
 
 	It("public image without tag should be pulled and removed [Conformance]", func() {
