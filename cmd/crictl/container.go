@@ -157,8 +157,8 @@ var runPullFlags = []cli.Flag{
 		Usage:   "Runtime handler to use. Available options are defined by the container runtime.",
 	},
 	&cli.DurationFlag{
-		Name:    "timeout",
-		Aliases: []string{"t"},
+		Name:    "cancel-timeout",
+		Aliases: []string{"T"},
 		Usage:   "Seconds to wait for a container create request before cancelling the request",
 	},
 	&cli.DurationFlag{
@@ -638,7 +638,7 @@ var runContainerCommand = &cli.Command{
 				username: c.String("username"),
 				timeout:  c.Duration("pull-timeout"),
 			},
-			timeout: c.Duration("timeout"),
+			timeout: c.Duration("cancel-timeout"),
 		}
 
 		runtimeClient, err := getRuntimeService(c, opts.timeout)
