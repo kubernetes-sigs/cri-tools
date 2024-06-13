@@ -28,9 +28,9 @@ require (
 	golang.org/x/text v0.16.0
 	google.golang.org/grpc v1.64.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/api v0.30.1
-	k8s.io/apimachinery v0.30.1
-	k8s.io/client-go v0.30.1
+	k8s.io/api v0.30.2
+	k8s.io/apimachinery v0.30.2
+	k8s.io/client-go v0.30.2
 	k8s.io/cri-api v0.31.0-alpha.0.0.20240528091733-69e407966029
 	k8s.io/cri-client v0.31.0-alpha.0.0.20240530211015-c9749ee02fc0
 	k8s.io/klog/v2 v2.120.1
