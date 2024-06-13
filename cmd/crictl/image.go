@@ -126,7 +126,7 @@ var pullImageCommand = &cli.Command{
 				return err
 			}
 		}
-		timeout := c.Duration("timeout")
+		timeout := c.Duration("pull-timeout")
 		r, err := PullImageWithSandbox(imageClient, imageName, auth, sandbox, ann, timeout)
 		if err != nil {
 			return fmt.Errorf("pulling image: %w", err)
@@ -664,7 +664,7 @@ func PullImageWithSandbox(client internalapi.ImageManagerService, image string, 
 	defer cancel()
 
 	if timeout > 0 {
-		logrus.Debugf("Using context with timeout of %s", timeout)
+		logrus.Debugf("Using pull context with timeout of %s", timeout)
 		ctx, cancel = context.WithTimeout(ctx, timeout)
 		defer cancel()
 	}
