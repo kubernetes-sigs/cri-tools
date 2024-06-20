@@ -242,8 +242,8 @@ k8s.io/cri-api v0.31.0-alpha.0.0.20240528091733-69e407966029 h1:P+TWC7iOMWA2mWiN
 k8s.io/cri-api v0.31.0-alpha.0.0.20240528091733-69e407966029/go.mod h1:bUzKm5FAhhVPHj344pvpKRIdGJMJ79mBHGrubR3TqZY=
 k8s.io/cri-client v0.31.0-alpha.0.0.20240530211015-c9749ee02fc0 h1:A/qaNv8usB/HEZeWRcFe117POP0Sheqc9xnuYrBxYu8=
 k8s.io/cri-client v0.31.0-alpha.0.0.20240530211015-c9749ee02fc0/go.mod h1:TarJVY/GTbu+Ht1IqT6eh5QXXxKwMfb2+7TpY/XlAhs=
-k8s.io/klog/v2 v2.130.0 h1:5nB3+3HpqKqXJIXNtJdtxcDCfaa9KL8StJgMzGJkUkM=
-k8s.io/klog/v2 v2.130.0/go.mod h1:3Jpz1GvMt720eyJH1ckRHK1EDfpxISzJ7I9OYgaDtPE=
+k8s.io/klog/v2 v2.130.1 h1:n9Xl7H1Xvksem4KFG4PYbdQCQxqc/tTUyrgXaOhHSzk=
+k8s.io/klog/v2 v2.130.1/go.mod h1:3Jpz1GvMt720eyJH1ckRHK1EDfpxISzJ7I9OYgaDtPE=
 k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 h1:BZqlfIlq5YbRMFko6/PM7FjZpUb45WallggurYhKGag=
 k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340/go.mod h1:yD4MZYeKMBwQKVht279WycxKyM84kkAx2DPrTXaeb98=
 k8s.io/kubectl v0.30.2 h1:cgKNIvsOiufgcs4yjvgkK0+aPCfa8pUwzXdJtkbhsH8=
