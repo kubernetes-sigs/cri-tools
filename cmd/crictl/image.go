@@ -417,7 +417,9 @@ var removeImageCommand = &cli.Command{
 			}
 
 			// Container images
-			containers, err := runtimeClient.ListContainers(context.TODO(), nil)
+			containers, err := InterruptableRPC(nil, func(ctx context.Context) ([]*pb.Container, error) {
+				return runtimeClient.ListContainers(ctx, nil)
+			})
 			if err != nil {
 				return err
 			}
@@ -669,7 +671,9 @@ func PullImageWithSandbox(client internalapi.ImageManagerService, image string, 
 		defer cancel()
 	}
 
-	res, err := client.PullImage(ctx, request.Image, request.Auth, request.SandboxConfig)
+	res, err := InterruptableRPC(ctx, func(ctx context.Context) (string, error) {
+		return client.PullImage(ctx, request.Image, request.Auth, request.SandboxConfig)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -683,7 +687,9 @@ func PullImageWithSandbox(client internalapi.ImageManagerService, image string, 
 func ListImages(client internalapi.ImageManagerService, image string) (*pb.ListImagesResponse, error) {
 	request := &pb.ListImagesRequest{Filter: &pb.ImageFilter{Image: &pb.ImageSpec{Image: image}}}
 	logrus.Debugf("ListImagesRequest: %v", request)
-	res, err := client.ListImages(context.TODO(), request.Filter)
+	res, err := InterruptableRPC(nil, func(ctx context.Context) ([]*pb.Image, error) {
+		return client.ListImages(ctx, request.Filter)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -790,7 +796,9 @@ func ImageStatus(client internalapi.ImageManagerService, image string, verbose b
 		Verbose: verbose,
 	}
 	logrus.Debugf("ImageStatusRequest: %v", request)
-	res, err := client.ImageStatus(context.TODO(), request.Image, request.Verbose)
+	res, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.ImageStatusResponse, error) {
+		return client.ImageStatus(ctx, request.Image, request.Verbose)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -806,16 +814,18 @@ func RemoveImage(client internalapi.ImageManagerService, image string) error {
 	}
 	request := &pb.RemoveImageRequest{Image: &pb.ImageSpec{Image: image}}
 	logrus.Debugf("RemoveImageRequest: %v", request)
-	if err := client.RemoveImage(context.TODO(), request.Image); err != nil {
-		return err
-	}
-	return nil
+	_, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.RemoveImageResponse, error) {
+		return nil, client.RemoveImage(ctx, request.Image)
+	})
+	return err
 }
 
 // ImageFsInfo sends an ImageStatusRequest to the server, and parses
 // the returned ImageFsInfoResponse.
 func ImageFsInfo(client internalapi.ImageManagerService) (*pb.ImageFsInfoResponse, error) {
-	res, err := client.ImageFsInfo(context.TODO())
+	res, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.ImageFsInfoResponse, error) {
+		return client.ImageFsInfo(ctx)
+	})
 	if err != nil {
 		return nil, err
 	}
