@@ -70,6 +70,39 @@ func SetupInterruptSignalHandler() <-chan struct{} {
 	return signalIntStopCh
 }
 
+func InterruptableRPC[T any](
+	ctx context.Context,
+	rpcFunc func(context.Context) (T, error),
+) (res T, err error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	resCh := make(chan T, 1)
+	errCh := make(chan error, 1)
+
+	go func() {
+		res, err := rpcFunc(ctx)
+		if err != nil {
+			errCh <- err
+			return
+		}
+		resCh <- res
+	}()
+
+	select {
+	case <-SetupInterruptSignalHandler():
+		cancel()
+		return res, fmt.Errorf("interrupted: %w", ctx.Err())
+	case err := <-errCh:
+		return res, err
+	case res := <-resCh:
+		return res, nil
+	}
+}
+
 type listOptions struct {
 	// id of container or sandbox
 	id string
