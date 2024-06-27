@@ -28,11 +28,11 @@ require (
 	golang.org/x/text v0.16.0
 	google.golang.org/grpc v1.64.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/api v0.30.2
-	k8s.io/apimachinery v0.30.2
-	k8s.io/client-go v0.30.2
-	k8s.io/cri-api v0.31.0-alpha.0.0.20240528091733-69e407966029
-	k8s.io/cri-client v0.31.0-alpha.0.0.20240530211015-c9749ee02fc0
+	k8s.io/api v0.31.0-alpha.2
+	k8s.io/apimachinery v0.31.0-alpha.2
+	k8s.io/client-go v0.31.0-alpha.2
+	k8s.io/cri-api v0.31.0-alpha.2
+	k8s.io/cri-client v0.31.0-alpha.2
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kubectl v0.30.2
 	k8s.io/kubelet v0.30.2
@@ -51,6 +51,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/fxamacker/cbor/v2 v2.7.0-beta // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
@@ -73,6 +74,7 @@ require (
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xrash/smetrics v0.0.0-20240312152122-5f08fbb34913 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.44.0 // indirect
@@ -90,7 +92,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/cli-runtime v0.30.2 // indirect
-	k8s.io/component-base v0.30.2 // indirect
+	k8s.io/component-base v0.31.0-alpha.2 // indirect
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
