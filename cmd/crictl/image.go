@@ -394,7 +394,9 @@ var removeImageCommand = &cli.Command{
 
 		// Add all available images to the ID selector
 		if all || prune {
-			r, err := imageClient.ListImages(context.TODO(), nil)
+			r, err := InterruptableRPC(nil, func(ctx context.Context) ([]*pb.Image, error) {
+				return imageClient.ListImages(ctx, nil)
+			})
 			if err != nil {
 				return err
 			}

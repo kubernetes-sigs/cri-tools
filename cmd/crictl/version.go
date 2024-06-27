@@ -50,7 +50,9 @@ var runtimeVersionCommand = &cli.Command{
 func Version(client internalapi.RuntimeService, version string) error {
 	request := &pb.VersionRequest{Version: version}
 	logrus.Debugf("VersionRequest: %v", request)
-	r, err := client.Version(context.TODO(), version)
+	r, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.VersionResponse, error) {
+		return client.Version(ctx, version)
+	})
 	logrus.Debugf("VersionResponse: %v", r)
 	if err != nil {
 		return err

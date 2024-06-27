@@ -29,6 +29,7 @@ import (
 	"github.com/urfave/cli/v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/cri-client/pkg/logs"
 	"k8s.io/klog/v2"
 )
@@ -100,7 +101,9 @@ var logsCommand = &cli.Command{
 			SinceTime:  since,
 			Timestamps: timestamp,
 		}, time.Now())
-		status, err := runtimeService.ContainerStatus(context.TODO(), containerID, false)
+		status, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
+			return runtimeService.ContainerStatus(ctx, containerID, false)
+		})
 		if err != nil {
 			return err
 		}

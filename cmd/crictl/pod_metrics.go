@@ -112,7 +112,9 @@ func (p *podMetricsDisplayer) displayPodMetrics(
 }
 
 func podSandboxMetrics(client cri.RuntimeService) ([]*pb.PodSandboxMetrics, error) {
-	metrics, err := client.ListPodSandboxMetrics(context.TODO())
+	metrics, err := InterruptableRPC(nil, func(ctx context.Context) ([]*pb.PodSandboxMetrics, error) {
+		return client.ListPodSandboxMetrics(ctx)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("list pod sandbox metrics: %w", err)
 	}

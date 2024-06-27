@@ -375,7 +375,9 @@ var removeContainerCommand = &cli.Command{
 
 		ids := ctx.Args().Slice()
 		if ctx.Bool("all") {
-			r, err := runtimeClient.ListContainers(context.TODO(), nil)
+			r, err := InterruptableRPC(nil, func(ctx context.Context) ([]*pb.Container, error) {
+				return runtimeClient.ListContainers(ctx, nil)
+			})
 			if err != nil {
 				return err
 			}
@@ -395,7 +397,9 @@ var removeContainerCommand = &cli.Command{
 
 		errored := false
 		for _, id := range ids {
-			resp, err := runtimeClient.ContainerStatus(context.TODO(), id, false)
+			resp, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
+				return runtimeClient.ContainerStatus(ctx, id, false)
+			})
 			if err != nil {
 				logrus.Error(err)
 				errored = true
@@ -778,7 +782,9 @@ func CreateContainer(
 		SandboxConfig: podConfig,
 	}
 	logrus.Debugf("CreateContainerRequest: %v", request)
-	r, err := rClient.CreateContainer(context.TODO(), opts.podID, config, podConfig)
+	r, err := InterruptableRPC(nil, func(ctx context.Context) (string, error) {
+		return rClient.CreateContainer(ctx, opts.podID, config, podConfig)
+	})
 	logrus.Debugf("CreateContainerResponse: %v", r)
 	if err != nil {
 		return "", err
@@ -792,7 +798,9 @@ func StartContainer(client internalapi.RuntimeService, id string) error {
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
-	if err := client.StartContainer(context.TODO(), id); err != nil {
+	if _, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
+		return nil, client.StartContainer(ctx, id)
+	}); err != nil {
 		return err
 	}
 	fmt.Println(id)
@@ -849,7 +857,9 @@ func UpdateContainerResources(client internalapi.RuntimeService, id string, opts
 	}
 	logrus.Debugf("UpdateContainerResourcesRequest: %v", request)
 	resources := &pb.ContainerResources{Linux: request.Linux}
-	if err := client.UpdateContainerResources(context.TODO(), id, resources); err != nil {
+	if _, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
+		return nil, client.UpdateContainerResources(ctx, id, resources)
+	}); err != nil {
 		return err
 	}
 	fmt.Println(id)
@@ -862,7 +872,9 @@ func StopContainer(client internalapi.RuntimeService, id string, timeout int64) 
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
-	if err := client.StopContainer(context.TODO(), id, timeout); err != nil {
+	if _, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
+		return nil, client.StopContainer(ctx, id, timeout)
+	}); err != nil {
 		return err
 	}
 	fmt.Println(id)
@@ -883,7 +895,9 @@ func CheckpointContainer(
 		Location:    export,
 	}
 	logrus.Debugf("CheckpointContainerRequest: %v", request)
-	err := rClient.CheckpointContainer(context.TODO(), request)
+	_, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.ImageFsInfoResponse, error) {
+		return nil, rClient.CheckpointContainer(ctx, request)
+	})
 	if err != nil {
 		return err
 	}
@@ -897,7 +911,9 @@ func RemoveContainer(client internalapi.RuntimeService, id string) error {
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
-	if err := client.RemoveContainer(context.TODO(), id); err != nil {
+	if _, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
+		return nil, client.RemoveContainer(ctx, id)
+	}); err != nil {
 		return err
 	}
 	fmt.Println(id)
@@ -950,7 +966,9 @@ func ContainerStatus(client internalapi.RuntimeService, id, output string, tmplS
 		Verbose:     verbose,
 	}
 	logrus.Debugf("ContainerStatusRequest: %v", request)
-	r, err := client.ContainerStatus(context.TODO(), id, verbose)
+	r, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
+		return client.ContainerStatus(ctx, id, verbose)
+	})
 	logrus.Debugf("ContainerStatusResponse: %v", r)
 	if err != nil {
 		return err
@@ -1053,7 +1071,9 @@ func ListContainers(runtimeClient internalapi.RuntimeService, imageClient intern
 	if opts.labels != nil {
 		filter.LabelSelector = opts.labels
 	}
-	r, err := runtimeClient.ListContainers(context.TODO(), filter)
+	r, err := InterruptableRPC(nil, func(ctx context.Context) ([]*pb.Container, error) {
+		return runtimeClient.ListContainers(ctx, filter)
+	})
 	logrus.Debugf("ListContainerResponse: %v", r)
 	if err != nil {
 		return err

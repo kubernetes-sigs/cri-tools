@@ -225,7 +225,9 @@ func (d containerStatsDisplayer) displayStats(ctx context.Context, client intern
 
 func getContainerStats(ctx context.Context, client internalapi.RuntimeService, request *pb.ListContainerStatsRequest) (*pb.ListContainerStatsResponse, error) {
 	logrus.Debugf("ListContainerStatsRequest: %v", request)
-	r, err := client.ListContainerStats(context.TODO(), request.Filter)
+	r, err := InterruptableRPC(ctx, func(ctx context.Context) ([]*pb.ContainerStats, error) {
+		return client.ListContainerStats(ctx, request.Filter)
+	})
 	logrus.Debugf("ListContainerResponse: %v", r)
 	if err != nil {
 		return nil, err
