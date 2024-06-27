@@ -26,6 +26,7 @@ import (
 	"time"
 
 	timetypes "github.com/docker/docker/api/types/time"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,6 +49,11 @@ var logsCommand = &cli.Command{
 			Name:    "previous",
 			Aliases: []string{"p"},
 			Usage:   "Print the logs for the previous instance of the container in a pod if it exists",
+		},
+		&cli.BoolFlag{
+			Name:    "reopen",
+			Aliases: []string{"r"},
+			Usage:   "Reopen the container logs for the provided container",
 		},
 		&cli.Int64Flag{
 			Name:  "tail",
@@ -83,6 +89,15 @@ var logsCommand = &cli.Command{
 		runtimeService, err := getRuntimeService(c, 0)
 		if err != nil {
 			return err
+		}
+
+		if c.Bool("reopen") {
+			if _, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
+				return nil, runtimeService.ReopenContainerLog(ctx, containerID)
+			}); err != nil {
+				return fmt.Errorf("reopen container logs: %w", err)
+			}
+			logrus.Info("Container logs reopened")
 		}
 
 		tailLines := c.Int64("tail")
