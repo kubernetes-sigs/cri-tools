@@ -22,6 +22,7 @@ import (
 
 	"github.com/urfave/cli/v2"
 	internalapi "k8s.io/cri-api/pkg/apis"
+	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 var runtimeConfigCommand = &cli.Command{
@@ -44,7 +45,9 @@ var runtimeConfigCommand = &cli.Command{
 
 // Attach sends an AttachRequest to server, and parses the returned AttachResponse
 func runtimeConfig(client internalapi.RuntimeService) error {
-	resp, err := client.RuntimeConfig(context.TODO())
+	resp, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.RuntimeConfigResponse, error) {
+		return client.RuntimeConfig(ctx)
+	})
 	if err != nil {
 		return fmt.Errorf("call RuntimeConfig RPC: %w", err)
 	}

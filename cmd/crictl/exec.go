@@ -129,12 +129,21 @@ func ExecSync(client internalapi.RuntimeService, opts execOptions) (int, error) 
 	}
 	logrus.Debugf("ExecSyncRequest: %v", request)
 	timeoutDuration := time.Duration(opts.timeout) * time.Second
-	stdout, stderr, err := client.ExecSync(context.TODO(), opts.id, opts.cmd, timeoutDuration)
+	type stdio struct {
+		stdout, stderr []byte
+	}
+	io, err := InterruptableRPC(nil, func(ctx context.Context) (*stdio, error) {
+		stdout, stderr, err := client.ExecSync(ctx, opts.id, opts.cmd, timeoutDuration)
+		if err != nil {
+			return nil, err
+		}
+		return &stdio{stdout, stderr}, nil
+	})
 	if err != nil {
 		return 1, err
 	}
-	fmt.Println(string(stdout))
-	fmt.Println(string(stderr))
+	fmt.Println(string(io.stdout))
+	fmt.Println(string(io.stderr))
 	return 0, nil
 }
 
@@ -150,7 +159,9 @@ func Exec(ctx context.Context, client internalapi.RuntimeService, opts execOptio
 	}
 
 	logrus.Debugf("ExecRequest: %v", request)
-	r, err := client.Exec(ctx, request)
+	r, err := InterruptableRPC(ctx, func(ctx context.Context) (*pb.ExecResponse, error) {
+		return client.Exec(ctx, request)
+	})
 	logrus.Debugf("ExecResponse: %v", r)
 	if err != nil {
 		return err

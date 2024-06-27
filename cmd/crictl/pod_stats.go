@@ -258,7 +258,9 @@ func getPodSandboxStats(
 ) ([]*pb.PodSandboxStats, error) {
 	logrus.Debugf("PodSandboxStatsFilter: %v", filter)
 
-	stats, err := client.ListPodSandboxStats(context.TODO(), filter)
+	stats, err := InterruptableRPC(nil, func(ctx context.Context) ([]*pb.PodSandboxStats, error) {
+		return client.ListPodSandboxStats(ctx, filter)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("list pod sandbox stats: %w", err)
 	}

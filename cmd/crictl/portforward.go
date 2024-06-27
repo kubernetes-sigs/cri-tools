@@ -78,7 +78,9 @@ func PortForward(client internalapi.RuntimeService, opts portforwardOptions) err
 		PodSandboxId: opts.id,
 	}
 	logrus.Debugf("PortForwardRequest: %v", request)
-	r, err := client.PortForward(context.TODO(), request)
+	r, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.PortForwardResponse, error) {
+		return client.PortForward(ctx, request)
+	})
 	logrus.Debugf("PortForwardResponse; %v", r)
 	if err != nil {
 		return err

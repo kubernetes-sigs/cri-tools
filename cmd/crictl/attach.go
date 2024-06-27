@@ -96,7 +96,9 @@ func Attach(ctx context.Context, client internalapi.RuntimeService, opts attachO
 		Stderr:      !opts.tty,
 	}
 	logrus.Debugf("AttachRequest: %v", request)
-	r, err := client.Attach(ctx, request)
+	r, err := InterruptableRPC(ctx, func(ctx context.Context) (*pb.AttachResponse, error) {
+		return client.Attach(ctx, request)
+	})
 	logrus.Debugf("AttachResponse: %v", r)
 	if err != nil {
 		return err
