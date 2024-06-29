@@ -169,12 +169,50 @@ var runPullFlags = []cli.Flag{
 	},
 }
 
-var createContainerCommand = &cli.Command{
-	Name:      "create",
-	Usage:     "Create a new container",
-	ArgsUsage: "POD container-config.[json|yaml] pod-config.[json|yaml]",
-	Flags:     createPullFlags,
+var subcommands = []*cli.Command{{
+	Name:    "jsonschema",
+	Aliases: []string{"js"},
+	Usage:   "Display the JSON schema for the pod or container config",
+	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:    "pod",
+			Aliases: []string{"p"},
+			Usage:   "Print the pod JSON schema, which will be generated from the PodSandboxConfig of the CRI API compiled with this version of crictl",
+		},
+		&cli.BoolFlag{
+			Name:    "container",
+			Aliases: []string{"c"},
+			Usage:   "Print the container JSON schema, which will be generated from the ContainerConfig of the CRI API compiled with this version of crictl",
+		},
+	},
+	UseShortOptionHandling: true,
+	Action: func(c *cli.Context) error {
+		if !c.IsSet("pod") && !c.IsSet("container") {
+			return cli.ShowSubcommandHelp(c)
+		}
 
+		if c.IsSet("pod") {
+			if err := printJSONSchema(&pb.PodSandboxConfig{}); err != nil {
+				return fmt.Errorf("print pod sandbox config JSON schema: %w", err)
+			}
+		}
+
+		if c.IsSet("container") {
+			if err := printJSONSchema(&pb.ContainerConfig{}); err != nil {
+				return fmt.Errorf("print container config JSON schema: %w", err)
+			}
+		}
+
+		return nil
+	},
+}}
+
+var createContainerCommand = &cli.Command{
+	Name:        "create",
+	Usage:       "Create a new container",
+	ArgsUsage:   "POD container-config.[json|yaml] pod-config.[json|yaml]",
+	Flags:       createPullFlags,
+	Subcommands: subcommands,
 	Action: func(c *cli.Context) (err error) {
 		if c.Args().Len() != 3 {
 			return cli.ShowSubcommandHelp(c)
@@ -609,11 +647,11 @@ var listContainersCommand = &cli.Command{
 }
 
 var runContainerCommand = &cli.Command{
-	Name:      "run",
-	Usage:     "Run a new container inside a sandbox",
-	ArgsUsage: "container-config.[json|yaml] pod-config.[json|yaml]",
-	Flags:     runPullFlags,
-
+	Name:        "run",
+	Usage:       "Run a new container inside a sandbox",
+	ArgsUsage:   "container-config.[json|yaml] pod-config.[json|yaml]",
+	Flags:       runPullFlags,
+	Subcommands: subcommands,
 	Action: func(c *cli.Context) (err error) {
 		if c.Args().Len() != 2 {
 			return cli.ShowSubcommandHelp(c)

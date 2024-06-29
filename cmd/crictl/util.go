@@ -33,6 +33,7 @@ import (
 
 	"github.com/golang/protobuf/jsonpb" //nolint:staticcheck
 	"github.com/golang/protobuf/proto"  //nolint:staticcheck
+	"github.com/invopop/jsonschema"
 	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -201,6 +202,16 @@ func loadContainerConfig(path string) (*pb.ContainerConfig, error) {
 	}
 
 	return &config, nil
+}
+
+func printJSONSchema(value any) error {
+	schema := jsonschema.Reflect(value)
+	data, err := json.MarshalIndent(schema, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal JSON schema: %w", err)
+	}
+	fmt.Println(string(data))
+	return nil
 }
 
 func loadPodSandboxConfig(path string) (*pb.PodSandboxConfig, error) {

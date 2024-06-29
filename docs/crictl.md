@@ -4,6 +4,9 @@
 
 `crictl` has been GA since `v1.11.0` and is currently under active development. It is hosted at the [cri-tools](https://github.com/kubernetes-sigs/cri-tools) repository. We encourage the CRI developers to report bugs or help extend the coverage by adding more functionalities.
 
+The tool expects JSON or YAML encoded files as input and passes them to the
+corresponding container runtime using the [CRI API protocol](/vendor/k8s.io/cri-api/pkg/apis/runtime/v1/api.proto).
+
 ## Install crictl
 
 > **NOTE:** The below steps are based on linux-amd64, however you can get downloads for all other platforms (Windows, ARM, etc) in the [releases page](https://github.com/kubernetes-sigs/cri-tools/releases).
@@ -13,7 +16,7 @@
 - using `wget`:
 
 ```sh
-VERSION="v1.26.0" # check latest version in /releases page
+VERSION="v1.30.0" # check latest version in /releases page
 wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux-amd64.tar.gz
 sudo tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f crictl-$VERSION-linux-amd64.tar.gz
@@ -22,7 +25,7 @@ rm -f crictl-$VERSION-linux-amd64.tar.gz
 - using `curl`:
 
 ```sh
-VERSION="v1.26.0" # check latest version in /releases page
+VERSION="v1.30.0" # check latest version in /releases page
 curl -L https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-${VERSION}-linux-amd64.tar.gz --output crictl-${VERSION}-linux-amd64.tar.gz
 sudo tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f crictl-$VERSION-linux-amd64.tar.gz

@@ -50,6 +50,15 @@ var runPodCommand = &cli.Command{
 	Name:      "runp",
 	Usage:     "Run a new pod",
 	ArgsUsage: "pod-config.[json|yaml]",
+	Subcommands: []*cli.Command{{
+		Name:      "jsonschema",
+		Aliases:   []string{"js"},
+		Usage:     "Display the JSON schema for the pod-config.json",
+		UsageText: "The schema will be generated from the PodSandboxConfig of the CRI API compiled with this version of crictl",
+		Action: func(c *cli.Context) error {
+			return printJSONSchema(&pb.PodSandboxConfig{})
+		},
+	}},
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:    "runtime",
