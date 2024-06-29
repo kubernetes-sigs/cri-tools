@@ -239,6 +239,22 @@ var _ = framework.KubeDescribe("Container", func() {
 			Expect(statFound(stats, secondContainerID)).To(BeTrue(), "Stats should be found")
 			Expect(statFound(stats, thirdContainerID)).To(BeTrue(), "Stats should be found")
 		})
+
+		It("runtime should support listing stats for containers filtered by labels [Conformance]", func() {
+			By("create container")
+			labels := map[string]string{"foo": "bar"}
+			containerID := framework.CreateDefaultContainerWithLabels(rc, ic, podID, podConfig, "container-for-stats-with-labels-", labels)
+
+			By("start container")
+			startContainer(rc, containerID)
+
+			By("test container stats")
+			stats := listContainerStats(rc, &runtimeapi.ContainerStatsFilter{LabelSelector: labels})
+			Expect(statFound(stats, containerID)).To(BeTrue(), "Container should be found")
+
+			stats = listContainerStats(rc, &runtimeapi.ContainerStatsFilter{LabelSelector: map[string]string{"foo": "baz"}})
+			Expect(statFound(stats, containerID)).To(BeFalse(), "Container should be filtered")
+		})
 	})
 
 	Context("runtime should support adding volume and device", func() {
