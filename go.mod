@@ -40,6 +40,12 @@ require (
 	sigs.k8s.io/yaml v1.4.0
 )
 
+// TODO: Remove when https://github.com/kubernetes/kubernetes/pull/125659 got merged
+replace (
+	k8s.io/cri-api => github.com/saschagrunert/cri-api v0.0.0-20240628080857-37ecf591d47e
+	k8s.io/cri-client => github.com/saschagrunert/cri-client v0.0.0-20240624095412-86c24439265a
+)
+
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect

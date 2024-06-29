@@ -244,6 +244,15 @@ message Mount {
     // - when set to true, readonly must be explicitly set to true, and propagation must be PRIVATE (0).
     // - (readonly == false && recursive_read_only == false) does not make the mount read-only.
     bool recursive_read_only = 8;
+    // Mount an image reference (image ID or digest), which is a special use
+    // case for OCI volume mounts. If this field is set, then host_path should be unset.
+    // The kubelet does an PullImage RPC and evaluates the returned OCIVolumeMountSource value:
+    // - If the source is UNSUPPORTED, then the kubelet will error and throw an event
+    // - If the source is HOSTPATH, then the kubelet will set the host_path field above
+    // - If the source is IMAGEREF, then the kubelet will set the image_ref field
+    // Both fields should not be set at the same time.
+    // Introduced in the OCI Volume Source KEP: https://kep.k8s.io/4639
+    string image_ref = 9;
 }
 
 // IDMapping describes host to container ID mappings for a pod sandbox.
@@ -810,6 +819,13 @@ message ImageSpec {
     // If the runtime handler is unknown, the request should be rejected.
     // An empty string would select the default runtime handler.
     string runtime_handler = 19;
+    // Mount indicates that the OCI object (image or artifact) should be mounted.
+    // This can be done either as local host path or image ref (id or digest).
+    // Introduced in the OCI Volume Source KEP: https://kep.k8s.io/4639
+    bool mount = 20;
+    // MountLabel is the SELinux label to be used if mount is set to true.
+    // Introduced in the OCI Volume Source KEP: https://kep.k8s.io/4639
+    string mount_label = 21;
 }
 
 message KeyValue {
@@ -1481,6 +1497,18 @@ message Image {
     // It must only be treated as a recommendation -- the client can still request that the image be deleted,
     // and the runtime must oblige.
     bool pinned = 8;
+    // Reference to a mount of the image if mounted as local host path.
+    // It should carry the same value as returned by the PullImage RPC
+    // (mount_ref) to early identify if images got already mounted or not.
+    // Introduced in the OCI Volume Source KEP: https://kep.k8s.io/4639
+    // Should not be set if image_ref is set below.
+    string mount_ref = 9;
+    // Reference to a mount of the image if mounted as image ID or digest.
+    // It should carry the same value as returned by the PullImage RPC
+    // (image_ref) to early identify if images got already mounted or not.
+    // Should not be set if mount_ref is set above.
+    // Introduced in the OCI Volume Source KEP: https://kep.k8s.io/4639
+    string image_ref = 10;
 }
 
 message ListImagesResponse {
@@ -1531,6 +1559,27 @@ message PullImageResponse {
     // Reference to the image in use. For most runtimes, this should be an
     // image ID or digest.
     string image_ref = 1;
+    // Reference to a local path on disk if mounted.
+    // Introduced in the OCI Volume Source KEP: https://kep.k8s.io/4639
+    string mount_ref = 2;
+    // The supported source type if the image got mounted as OCI volume.
+    // The kubelet uses this field to check for availability of the feature.
+    // Introduced in the OCI Volume Source KEP: https://kep.k8s.io/4639
+    OCIVolumeMountSource source = 3;
+}
+
+// OCIVolumeMountSource describes the supported source types for an OCI volume mount.
+// Introduced in the OCI Volume Source KEP: https://kep.k8s.io/4639
+enum OCIVolumeMountSource {
+    // Unsupported is the default source mount type and indicates that the
+    // feature is not available by the runtime.
+    UNSUPPORTED = 0;
+    // HostPath is the source mount type for a volume and specifies an absolute
+    // local path.
+    HOSTPATH = 1;
+    // ImageRef (image id or image digest) specifies a reference to an OCI
+    // object.
+    IMAGEREF = 2;
 }
 
 message RemoveImageRequest {

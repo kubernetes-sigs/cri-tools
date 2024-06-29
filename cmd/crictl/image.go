@@ -90,6 +90,16 @@ var pullImageCommand = &cli.Command{
 			Usage:   "Maximum time to be used for pulling the image, disabled if set to 0s",
 			EnvVars: []string{"CRICTL_PULL_TIMEOUT"},
 		},
+		&cli.BoolFlag{
+			Name:    "mount",
+			Aliases: []string{"m"},
+			Usage:   "Mount the OCI object",
+		},
+		&cli.StringFlag{
+			Name:    "mount-label",
+			Aliases: []string{"l"},
+			Usage:   "Mount label for the OCI object",
+		},
 	},
 	Subcommands: []*cli.Command{{
 		Name:      "jsonschema",
@@ -136,11 +146,28 @@ var pullImageCommand = &cli.Command{
 			}
 		}
 		timeout := c.Duration("pull-timeout")
-		r, err := PullImageWithSandbox(imageClient, imageName, auth, sandbox, ann, timeout)
+		mount := c.Bool("mount")
+		r, err := PullImageWithSandbox(imageClient, imageName, auth, sandbox, ann, timeout, mount, c.String("mount-label"))
 		if err != nil {
 			return fmt.Errorf("pulling image: %w", err)
 		}
 		fmt.Printf("Image is up to date for %s\n", r.ImageRef)
+
+		switch r.Source {
+		case pb.OCIVolumeMountSource_UNSUPPORTED:
+			if mount {
+				return errors.New("mount is not supported by runtime")
+			}
+		case pb.OCIVolumeMountSource_IMAGEREF:
+			fmt.Printf("OCI object mounted as image ref to: %s\n", r.ImageRef)
+
+		case pb.OCIVolumeMountSource_HOSTPATH:
+			fmt.Printf("OCI object mounted as host path to: %s\n", r.MountRef)
+
+		default:
+			return fmt.Errorf("unsupported source type: %s", r.Source)
+		}
+
 		return nil
 	},
 }
@@ -654,11 +681,13 @@ func normalizeRepoDigest(repoDigests []string) (string, string) {
 
 // PullImageWithSandbox sends a PullImageRequest to the server, and parses
 // the returned PullImageResponse.
-func PullImageWithSandbox(client internalapi.ImageManagerService, image string, auth *pb.AuthConfig, sandbox *pb.PodSandboxConfig, ann map[string]string, timeout time.Duration) (*pb.PullImageResponse, error) {
+func PullImageWithSandbox(client internalapi.ImageManagerService, image string, auth *pb.AuthConfig, sandbox *pb.PodSandboxConfig, ann map[string]string, timeout time.Duration, mount bool, mountLabel string) (*pb.PullImageResponse, error) {
 	request := &pb.PullImageRequest{
 		Image: &pb.ImageSpec{
 			Image:       image,
 			Annotations: ann,
+			Mount:       mount,
+			MountLabel:  mountLabel,
 		},
 	}
 	if auth != nil {
@@ -682,13 +711,12 @@ func PullImageWithSandbox(client internalapi.ImageManagerService, image string, 
 		defer cancel()
 	}
 
-	res, err := InterruptableRPC(ctx, func(ctx context.Context) (string, error) {
-		return client.PullImage(ctx, request.Image, request.Auth, request.SandboxConfig)
+	resp, err := InterruptableRPC(ctx, func(ctx context.Context) (*pb.PullImageResponse, error) {
+		return client.PullImageFullResponse(ctx, request.Image, request.Auth, request.SandboxConfig)
 	})
 	if err != nil {
 		return nil, err
 	}
-	resp := &pb.PullImageResponse{ImageRef: res}
 	logrus.Debugf("PullImageResponse: %v", resp)
 	return resp, nil
 }

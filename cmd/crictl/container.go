@@ -809,7 +809,7 @@ func CreateContainer(
 
 		// Try to pull the image before container creation
 		ann := config.GetImage().GetAnnotations()
-		if _, err := PullImageWithSandbox(iClient, image, auth, podConfig, ann, opts.pullOptions.timeout); err != nil {
+		if _, err := PullImageWithSandbox(iClient, image, auth, podConfig, ann, opts.pullOptions.timeout, false, ""); err != nil {
 			return "", err
 		}
 	}
