@@ -69,10 +69,10 @@ func TestGetRuntimeStatus(c internalapi.RuntimeService) {
 
 	for _, condition := range status.Status.Conditions {
 		if condition.Type == "RuntimeReady" && condition.Status == true {
-			count = count + 1
+			count += 1
 		}
 		if condition.Type == "NetworkReady" && condition.Status == true {
-			count = count + 1
+			count += 1
 		}
 	}
 	Expect(count >= 2).To(BeTrue(), "should return all the required runtime conditions")
