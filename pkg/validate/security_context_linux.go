@@ -1370,7 +1370,7 @@ func createContainerWithExpectation(rc internalapi.RuntimeService,
 	// Pull the image if it does not exist. (don't fail for inability to pull image)
 	imageName := config.Image.Image
 	if !strings.Contains(imageName, ":") {
-		imageName = imageName + ":latest"
+		imageName += ":latest"
 	}
 	status := framework.ImageStatus(ic, imageName)
 	if status == nil {

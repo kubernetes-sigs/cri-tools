@@ -34,7 +34,7 @@ type Config struct {
 	Debug             bool
 	PullImageOnCreate bool
 	DisablePullOnRun  bool
-	yamlData          *yaml.Node //YAML representation of config
+	yamlData          *yaml.Node // YAML representation of config
 }
 
 // ReadConfig reads from a file with the given name and returns a config or

@@ -7,16 +7,19 @@ linters:
   enable:
     - asasalint
     - bidichk
+    - canonicalheader
     - containedctx
+    - copyloopvar
     - decorder
     - dupl
     - dupword
     - durationcheck
     - errname
-    - execinquery
+    - fatcontext
     - forcetypeassert
     - gocheckcompilerdirectives
     - gochecksumtype
+    - gocritic
     - gofmt
     - goimports
     - gosmopolitan
@@ -26,6 +29,7 @@ linters:
     - inamedparam
     - ineffassign
     - interfacebloat
+    - intrange
     - loggercheck
     - maintidx
     - makezero
@@ -42,6 +46,7 @@ linters:
     - protogetter
     - reassign
     - sloglint
+    - spancheck
     - staticcheck
     - tagalign
     - tagliatelle
@@ -59,6 +64,7 @@ linters:
     # - cyclop
     # - depguard
     # - dogsled
+    # - err113
     # - errcheck
     # - errchkjson
     # - errorlint
@@ -73,14 +79,11 @@ linters:
     # - gochecknoinits
     # - gocognit
     # - goconst
-    # - gocritic
     # - gocyclo
     # - godot
     # - godox
-    # - goerr113
     # - gofumpt
     # - goheader
-    # - gomnd
     # - gomoddirectives
     # - gomodguard
     # - goprintffuncname
@@ -88,6 +91,7 @@ linters:
     # - gosimple
     # - ireturn
     # - lll
+    # - mnd
     # - nestif
     # - nilnil
     # - nlreturn
@@ -113,62 +117,35 @@ linters-settings:
     checks: ["SA1019"]
   gocritic:
     enabled-checks:
-      - appendAssign
       - appendCombine
-      - argOrder
-      - assignOp
-      - badCall
-      - badCond
       - badLock
       - badRegexp
       - badSorting
+      - badSyncOnceFunc
       - boolExprSimplify
       - builtinShadow
       - builtinShadowDecl
-      - captLocal
-      - caseOrder
-      - codegenComment
-      - commentFormatting
       - commentedOutCode
       - commentedOutImport
-      - defaultCaseOrder
       - deferInLoop
       - deferUnlambda
-      - deprecatedComment
       - docStub
-      - dupArg
-      - dupBranchBody
-      - dupCase
       - dupImport
-      - dupSubExpr
       - dynamicFmtString
-      - elseif
       - emptyDecl
       - emptyFallthrough
-      - emptyStringTest
       - equalFold
       - evalOrder
-      - exitAfterDefer
       - exposedSyncMutex
       - externalErrorReassign
       - filepathJoin
-      - flagDeref
-      - flagName
       - hexLiteral
       - httpNoBody
-      - hugeParam
-      - ifElseChain
-      - importShadow
       - indexAlloc
       - initClause
-      - mapKey
       - methodExprCall
       - nestingReduce
-      - newDeref
       - nilValReturn
-      - octalLiteral
-      - offBy1
-      - paramTypeCombine
       - preferDecodeRune
       - preferFilepathJoin
       - preferFprint
@@ -178,44 +155,36 @@ linters-settings:
       - rangeExprCopy
       - rangeValCopy
       - redundantSprint
-      - regexpMust
       - regexpPattern
       - regexpSimplify
       - returnAfterHttpError
       - ruleguard
-      - singleCaseSwitch
       - sliceClear
-      - sloppyLen
       - sloppyReassign
-      - sloppyTestFuncName
-      - sloppyTypeAssert
       - sortSlice
       - sprintfQuotedString
       - sqlQuery
       - stringConcatSimplify
       - stringXbytes
       - stringsCompare
-      - switchTrue
       - syncMapLoadAndDelete
-      - timeCmpSimplify
       - timeExprSimplify
       - todoCommentWithoutDetail
       - tooManyResultsChecker
       - truncateCmp
       - typeAssertChain
       - typeDefFirst
-      - typeSwitchVar
       - typeUnparen
       - uncheckedInlineErr
-      - underef
       - unlabelStmt
-      - unlambda
-      - unnamedResult
       - unnecessaryBlock
       - unnecessaryDefer
-      - unslice
-      - valSwap
       - weakCond
-      - whyNoLint
-      - wrapperFunc
       - yodaStyleExpr
+      # - emptyStringTest
+      # - hugeParam
+      # - importShadow
+      # - octalLiteral
+      # - paramTypeCombine
+      # - unnamedResult
+      # - whyNoLint

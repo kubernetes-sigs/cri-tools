@@ -274,7 +274,7 @@ var startContainerCommand = &cli.Command{
 			return err
 		}
 
-		for i := 0; i < c.NArg(); i++ {
+		for i := range c.NArg() {
 			containerID := c.Args().Get(i)
 			if err := StartContainer(runtimeClient, containerID); err != nil {
 				return fmt.Errorf("starting the container %q: %w", containerID, err)
@@ -342,7 +342,7 @@ var updateContainerCommand = &cli.Command{
 			MemoryLimitInBytes: c.Int64("memory"),
 		}
 
-		for i := 0; i < c.NArg(); i++ {
+		for i := range c.NArg() {
 			containerID := c.Args().Get(i)
 			if err := UpdateContainerResources(runtimeClient, containerID, options); err != nil {
 				return fmt.Errorf("updating container resources for %q: %w", containerID, err)
@@ -373,7 +373,7 @@ var stopContainerCommand = &cli.Command{
 			return err
 		}
 
-		for i := 0; i < c.NArg(); i++ {
+		for i := range c.NArg() {
 			containerID := c.Args().Get(i)
 			if err := StopContainer(runtimeClient, containerID, c.Int64("timeout")); err != nil {
 				return fmt.Errorf("stopping the container %q: %w", containerID, err)
@@ -517,7 +517,7 @@ var containerStatusCommand = &cli.Command{
 			return err
 		}
 
-		for i := 0; i < c.NArg(); i++ {
+		for i := range c.NArg() {
 			containerID := c.Args().Get(i)
 			if err := ContainerStatus(runtimeClient, containerID, c.String("output"), c.String("template"), c.Bool("quiet")); err != nil {
 				return fmt.Errorf("getting the status of the container %q: %w", containerID, err)
@@ -722,7 +722,7 @@ var checkpointContainerCommand = &cli.Command{
 			return err
 		}
 
-		for i := 0; i < c.NArg(); i++ {
+		for i := range c.NArg() {
 			containerID := c.Args().Get(i)
 			err := CheckpointContainer(
 				runtimeClient,
@@ -922,14 +922,14 @@ func StopContainer(client internalapi.RuntimeService, id string, timeout int64) 
 // CheckpointContainer sends a CheckpointContainerRequest to the server
 func CheckpointContainer(
 	rClient internalapi.RuntimeService,
-	ID string,
+	id string,
 	export string,
 ) error {
-	if ID == "" {
+	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
 	request := &pb.CheckpointContainerRequest{
-		ContainerId: ID,
+		ContainerId: id,
 		Location:    export,
 	}
 	logrus.Debugf("CheckpointContainerRequest: %v", request)
@@ -939,7 +939,7 @@ func CheckpointContainer(
 	if err != nil {
 		return err
 	}
-	fmt.Println(ID)
+	fmt.Println(id)
 	return nil
 }
 

@@ -14,7 +14,7 @@ jobs:
       - run: images/build -d
 
   linters:
-    name: lint and vendor check/ on ${{ matrix.os }}
+    name: lint and vendor check / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
 

@@ -375,7 +375,7 @@ func parseLabelStringSlice(ss []string) (map[string]string, error) {
 func marshalMapInOrder(m map[string]interface{}, t interface{}) (string, error) {
 	s := "{"
 	v := reflect.ValueOf(t)
-	for i := 0; i < v.Type().NumField(); i++ {
+	for i := range v.Type().NumField() {
 		field := jsonFieldFromTag(v.Type().Field(i).Tag)
 		if field == "" || field == "-" {
 			continue
