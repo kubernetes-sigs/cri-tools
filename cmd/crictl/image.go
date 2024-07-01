@@ -323,7 +323,7 @@ var imageStatusCommand = &cli.Command{
 			output = "json"
 		}
 		tmplStr := c.String("template")
-		for i := 0; i < c.NArg(); i++ {
+		for i := range c.NArg() {
 			id := c.Args().Get(i)
 
 			r, err := ImageStatus(imageClient, id, verbose)

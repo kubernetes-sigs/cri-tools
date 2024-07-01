@@ -111,7 +111,7 @@ var stopPodCommand = &cli.Command{
 		if err != nil {
 			return err
 		}
-		for i := 0; i < c.NArg(); i++ {
+		for i := range c.NArg() {
 			id := c.Args().Get(i)
 			err := StopPodSandbox(runtimeClient, id)
 			if err != nil {
@@ -229,7 +229,7 @@ var podStatusCommand = &cli.Command{
 		if err != nil {
 			return err
 		}
-		for i := 0; i < c.NArg(); i++ {
+		for i := range c.NArg() {
 			id := c.Args().Get(i)
 
 			err := PodSandboxStatus(runtimeClient, id, c.String("output"), c.Bool("quiet"), c.String("template"))
