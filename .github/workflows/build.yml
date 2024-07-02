@@ -71,7 +71,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-22.04, macos-11]  # TODO: make releases on 'linux-ppc64le' 'windows-2019'
+        os: [ubuntu-22.04, macos-12]  # TODO: make releases on 'linux-ppc64le' 'windows-2019'
                                          # Ref: https://github.com/uraimo/run-on-arch-action
     steps:
       - name: Install Go
