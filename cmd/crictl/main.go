@@ -22,7 +22,9 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"slices"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -209,6 +211,8 @@ func main() {
 		runtimeConfigCommand,
 		eventsCommand,
 	}
+
+	slices.SortFunc(app.Commands, func(a, b *cli.Command) int { return strings.Compare(a.Name, b.Name) })
 
 	runtimeEndpointUsage := fmt.Sprintf("Endpoint of CRI container runtime "+
 		"service (default: uses in order the first successful one of %v). "+
