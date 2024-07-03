@@ -49,7 +49,7 @@ github.com/felixge/httpsnoop
 # github.com/fsnotify/fsnotify v1.7.0
 ## explicit; go 1.17
 github.com/fsnotify/fsnotify
-# github.com/fxamacker/cbor/v2 v2.7.0-beta
+# github.com/fxamacker/cbor/v2 v2.7.0
 ## explicit; go 1.17
 github.com/fxamacker/cbor/v2
 # github.com/go-logr/logr v1.4.2
@@ -113,7 +113,7 @@ github.com/mailru/easyjson/jwriter
 # github.com/mitchellh/go-wordwrap v1.0.1
 ## explicit; go 1.14
 github.com/mitchellh/go-wordwrap
-# github.com/moby/spdystream v0.2.0
+# github.com/moby/spdystream v0.4.0
 ## explicit; go 1.13
 github.com/moby/spdystream
 github.com/moby/spdystream/spdy
@@ -292,7 +292,7 @@ golang.org/x/net/internal/timeseries
 golang.org/x/net/proxy
 golang.org/x/net/trace
 golang.org/x/net/websocket
-# golang.org/x/oauth2 v0.20.0
+# golang.org/x/oauth2 v0.21.0
 ## explicit; go 1.18
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
@@ -470,10 +470,10 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
-# k8s.io/api v0.31.0-alpha.2
+# k8s.io/api v0.31.0-alpha.3
 ## explicit; go 1.22.0
 k8s.io/api/core/v1
-# k8s.io/apimachinery v0.31.0-alpha.2
+# k8s.io/apimachinery v0.31.0-alpha.3
 ## explicit; go 1.22.0
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
@@ -524,7 +524,7 @@ k8s.io/apimachinery/third_party/forked/golang/reflect
 # k8s.io/cli-runtime v0.30.2
 ## explicit; go 1.22.0
 k8s.io/cli-runtime/pkg/printers
-# k8s.io/client-go v0.31.0-alpha.2
+# k8s.io/client-go v0.31.0-alpha.3
 ## explicit; go 1.22.0
 k8s.io/client-go/features
 k8s.io/client-go/pkg/apis/clientauthentication
