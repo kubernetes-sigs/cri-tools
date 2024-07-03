@@ -30,7 +30,7 @@ require (
 	google.golang.org/grpc v1.65.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.31.0-alpha.2
-	k8s.io/apimachinery v0.31.0-alpha.2
+	k8s.io/apimachinery v0.31.0-alpha.3
 	k8s.io/client-go v0.31.0-alpha.2
 	k8s.io/cri-api v0.31.0-alpha.3
 	k8s.io/cri-client v0.31.0-alpha.2
@@ -54,7 +54,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
-	github.com/fxamacker/cbor/v2 v2.7.0-beta // indirect
+	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
@@ -68,7 +68,7 @@ require (
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
-	github.com/moby/spdystream v0.2.0 // indirect
+	github.com/moby/spdystream v0.4.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
