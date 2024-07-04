@@ -33,7 +33,7 @@ require (
 	k8s.io/apimachinery v0.31.0-alpha.3
 	k8s.io/client-go v0.31.0-alpha.3
 	k8s.io/cri-api v0.31.0-alpha.3
-	k8s.io/cri-client v0.31.0-alpha.2
+	k8s.io/cri-client v0.31.0-alpha.3
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kubectl v0.30.2
 	k8s.io/kubelet v0.30.2
@@ -71,11 +71,12 @@ require (
 	github.com/moby/spdystream v0.4.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
-	github.com/prometheus/client_golang v1.19.0 // indirect
-	github.com/prometheus/client_model v0.6.0 // indirect
-	github.com/prometheus/common v0.48.0 // indirect
-	github.com/prometheus/procfs v0.12.0 // indirect
+	github.com/prometheus/client_golang v1.19.1 // indirect
+	github.com/prometheus/client_model v0.6.1 // indirect
+	github.com/prometheus/common v0.55.0 // indirect
+	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
@@ -97,7 +98,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/cli-runtime v0.30.2 // indirect
-	k8s.io/component-base v0.31.0-alpha.2 // indirect
+	k8s.io/component-base v0.31.0-alpha.3 // indirect
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
