@@ -18,14 +18,17 @@ package validate
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
+	"golang.org/x/sys/unix"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"sigs.k8s.io/cri-tools/pkg/common"
@@ -38,6 +41,8 @@ import (
 const (
 	nginxContainerImage string = framework.DefaultRegistryE2ETestImagesPrefix + "nginx:1.14-2"
 	noNewPrivsImage     string = framework.DefaultRegistryE2ETestImagesPrefix + "nonewprivs:1.3"
+	usernsSize          int    = 65536
+	usernsHostID        int    = 65536
 )
 
 var _ = framework.KubeDescribe("Security Context", func() {
@@ -860,7 +865,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("searching for runtime handler which supports user namespaces")
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 			defer cancel()
-			resp, err := rc.Status(ctx, false)
+			resp, err := rc.Status(ctx, true) // Set verbose to true so the info field is populated.
 			framework.ExpectNoError(err, "failed to get runtime config: %v", err)
 
 			supportsUserNamespaces := false
@@ -875,6 +880,11 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			if !supportsUserNamespaces {
 				Skip("no runtime handler found which supports user namespaces")
+			}
+
+			pathIDMap := rootfsPath(resp.GetInfo())
+			if err := supportsIDMap(pathIDMap); err != nil {
+				Skip("ID mapping is not supported" + " with path: " + pathIDMap + ": " + err.Error())
 			}
 		})
 
@@ -1457,4 +1467,75 @@ func runUserNamespacePodWithError(
 	}
 
 	framework.RunPodSandboxError(rc, config)
+}
+
+func supportsIDMap(path string) error {
+	treeFD, err := unix.OpenTree(-1, path, uint(unix.OPEN_TREE_CLONE|unix.OPEN_TREE_CLOEXEC))
+	if err != nil {
+		return err
+	}
+	defer unix.Close(treeFD)
+
+	// We want to test if idmap mounts are supported.
+	// So we use just some random mapping, it doesn't really matter which one.
+	// For the helper command, we just need something that is alive while we
+	// test this, a sleep 5 will do it.
+	cmd := exec.Command("sleep", "5")
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Cloneflags:  syscall.CLONE_NEWUSER,
+		UidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: usernsHostID, Size: usernsSize}},
+		GidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: usernsHostID, Size: usernsSize}},
+	}
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	defer func() {
+		_ = cmd.Process.Kill()
+		_ = cmd.Wait()
+	}()
+
+	usernsPath := fmt.Sprintf("/proc/%d/ns/user", cmd.Process.Pid)
+	var usernsFile *os.File
+	if usernsFile, err = os.Open(usernsPath); err != nil {
+		return err
+	}
+	defer usernsFile.Close()
+
+	attr := unix.MountAttr{
+		Attr_set:  unix.MOUNT_ATTR_IDMAP,
+		Userns_fd: uint64(usernsFile.Fd()),
+	}
+	if err := unix.MountSetattr(treeFD, "", unix.AT_EMPTY_PATH, &attr); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// rootfsPath returns the parent path used for containerd stateDir (the container rootfs lives
+// inside there). If the object can't be parsed, it returns the "/var/lib".
+// Usually the rootfs is inside /var/lib and it's the same filesystem. In the end, to see if a path
+// supports idmap, we only care about its fs so this is a good fallback.
+func rootfsPath(info map[string]string) string {
+	defaultPath := "/var/lib"
+	jsonCfg, ok := info["config"]
+	if !ok {
+		return defaultPath
+	}
+
+	// Get only the StateDir from the json.
+	type containerdConfig struct {
+		StateDir string `json:"stateDir"`
+	}
+	cfg := containerdConfig{}
+	if err := json.Unmarshal([]byte(jsonCfg), &cfg); err != nil {
+		return defaultPath
+	}
+	if cfg.StateDir == "" {
+		return defaultPath
+	}
+
+	// The stateDir might have not been created yet. Let's use the parent directory that should
+	// always exist.
+	return filepath.Join(cfg.StateDir, "../")
 }
