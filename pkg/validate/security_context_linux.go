@@ -24,6 +24,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"syscall"
@@ -936,13 +937,29 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podName, podLogPath)
 				containerName := runUserNamespaceContainer(rc, ic, podID, podConfig)
 
-				// 4294967295 means that the entire range is available
+				// If this test is run inside a userns, we need to check the
+				// container userns is the same as the one we see outside.
 				expectedOutput := hostUsernsContent()
 				if expectedOutput == "" {
 					Fail("failed to get host userns content")
 				}
-				// 4294967295 means that the entire range is available
-				matchContainerOutputRe(podConfig, containerName, `\s+0\s+0\s+4294967295\n`)
+				// The userns mapping can have several lines, we match each of them.
+				for _, line := range strings.Split(expectedOutput, "\n") {
+					if line == "" {
+						continue
+					}
+					mapping := parseUsernsMappingLine(line)
+					if len(mapping) != 3 {
+						msg := fmt.Sprintf("slice: %#v, len: %v", mapping, len(mapping))
+						Fail("Unexpected host mapping line: " + msg)
+					}
+
+					// The container outputs the content of its /proc/self/uid_map.
+					// That output should match the regex of the host userns content.
+					containerId, hostId, length := mapping[0], mapping[1], mapping[2]
+					regex := fmt.Sprintf(`\s+%v\s+%v\s+%v`, containerId, hostId, length)
+					matchContainerOutputRe(podConfig, containerName, regex)
+				}
 			})
 
 			It("runtime should fail if more than one mapping provided", func() {
@@ -1563,4 +1580,25 @@ func rootfsPath(info map[string]string) string {
 	// The stateDir might have not been created yet. Let's use the parent directory that should
 	// always exist.
 	return filepath.Join(cfg.StateDir, "../")
+}
+
+func hostUsernsContent() string {
+	uidMapPath := "/proc/self/uid_map"
+	uidMapContent, err := os.ReadFile(uidMapPath)
+	if err != nil {
+		return ""
+	}
+	return string(uidMapContent)
+}
+
+func parseUsernsMappingLine(line string) []string {
+	// The line format is:
+	// <container-id> <host-id> <length>
+	// But there could be a lot of spaces between the fields.
+	line = strings.TrimSpace(line)
+	m := strings.Split(line, " ")
+	m = slices.DeleteFunc(m, func(s string) bool {
+		return s == ""
+	})
+	return m
 }
