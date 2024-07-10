@@ -18,14 +18,19 @@ package validate
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
+	"sync"
+	"syscall"
 	"time"
 
+	"golang.org/x/sys/unix"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"sigs.k8s.io/cri-tools/pkg/common"
@@ -38,6 +43,8 @@ import (
 const (
 	nginxContainerImage string = framework.DefaultRegistryE2ETestImagesPrefix + "nginx:1.14-2"
 	noNewPrivsImage     string = framework.DefaultRegistryE2ETestImagesPrefix + "nonewprivs:1.3"
+	usernsSize          int    = 65536
+	usernsHostID        int    = 65536
 )
 
 var _ = framework.KubeDescribe("Security Context", func() {
@@ -845,7 +852,12 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 	Context("UserNamespaces", func() {
 		var (
-			podName        string
+			podName string
+
+			// We call rc.Status() once and save the result in statusResp.
+			statusOnce sync.Once
+			statusResp *runtimeapi.StatusResponse
+
 			defaultMapping = []*runtimeapi.IDMapping{{
 				ContainerId: 0,
 				HostId:      1000,
@@ -858,13 +870,21 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			// Find a working runtime handler if none provided
 			By("searching for runtime handler which supports user namespaces")
-			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-			defer cancel()
-			resp, err := rc.Status(ctx, false)
-			framework.ExpectNoError(err, "failed to get runtime config: %v", err)
+			statusOnce.Do(func() {
+				ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+				defer cancel()
+				// Set verbose to true, other BeforeEachs calls need the info field
+				// populated.
+				// XXX: Do NOT use ":=" here, it breaks the closure reference to
+				// statusResp.
+				var err error
+				statusResp, err = rc.Status(ctx, true)
+				framework.ExpectNoError(err, "failed to get runtime config: %v", err)
+				_ = statusResp // Avoid unused variable error
+			})
 
-			supportsUserNamespaces := false
-			for _, rh := range resp.GetRuntimeHandlers() {
+			var supportsUserNamespaces bool
+			for _, rh := range statusResp.GetRuntimeHandlers() {
 				if rh.GetName() == framework.TestContext.RuntimeHandler {
 					if rh.GetFeatures().GetUserNamespaces() {
 						supportsUserNamespaces = true
@@ -872,89 +892,121 @@ var _ = framework.KubeDescribe("Security Context", func() {
 					}
 				}
 			}
-
 			if !supportsUserNamespaces {
 				Skip("no runtime handler found which supports user namespaces")
 			}
 		})
 
-		It("runtime should support NamespaceMode_POD", func() {
-			namespaceOption := &runtimeapi.NamespaceOption{
-				UsernsOptions: &runtimeapi.UserNamespace{
+		When("Host idmap mount support is needed", func() {
+			BeforeEach(func() {
+				pathIDMap := rootfsPath(statusResp.GetInfo())
+				if err := supportsIDMap(pathIDMap); err != nil {
+					Skip("ID mapping is not supported" + " with path: " + pathIDMap + ": " + err.Error())
+				}
+			})
+
+			It("runtime should support NamespaceMode_POD", func() {
+				namespaceOption := &runtimeapi.NamespaceOption{
+					UsernsOptions: &runtimeapi.UserNamespace{
+						Mode: runtimeapi.NamespaceMode_POD,
+						Uids: defaultMapping,
+						Gids: defaultMapping,
+					},
+				}
+
+				hostLogPath, podLogPath := createLogTempDir(podName)
+				defer os.RemoveAll(hostLogPath)
+				podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podName, podLogPath)
+				containerName := runUserNamespaceContainer(rc, ic, podID, podConfig)
+
+				matchContainerOutputRe(podConfig, containerName, `\s+0\s+1000\s+100000\n`)
+			})
+
+		})
+
+		When("Host idmap mount support is not needed", func() {
+			It("runtime should support NamespaceMode_NODE", func() {
+				namespaceOption := &runtimeapi.NamespaceOption{
+					UsernsOptions: &runtimeapi.UserNamespace{
+						Mode: runtimeapi.NamespaceMode_NODE,
+					},
+				}
+
+				hostLogPath, podLogPath := createLogTempDir(podName)
+				defer os.RemoveAll(hostLogPath)
+				podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podName, podLogPath)
+				containerName := runUserNamespaceContainer(rc, ic, podID, podConfig)
+
+				// If this test is run inside a userns, we need to check the
+				// container userns is the same as the one we see outside.
+				expectedOutput := hostUsernsContent()
+				if expectedOutput == "" {
+					Fail("failed to get host userns content")
+				}
+				// The userns mapping can have several lines, we match each of them.
+				for _, line := range strings.Split(expectedOutput, "\n") {
+					if line == "" {
+						continue
+					}
+					mapping := parseUsernsMappingLine(line)
+					if len(mapping) != 3 {
+						msg := fmt.Sprintf("slice: %#v, len: %v", mapping, len(mapping))
+						Fail("Unexpected host mapping line: " + msg)
+					}
+
+					// The container outputs the content of its /proc/self/uid_map.
+					// That output should match the regex of the host userns content.
+					containerId, hostId, length := mapping[0], mapping[1], mapping[2]
+					regex := fmt.Sprintf(`\s+%v\s+%v\s+%v`, containerId, hostId, length)
+					matchContainerOutputRe(podConfig, containerName, regex)
+				}
+			})
+
+			It("runtime should fail if more than one mapping provided", func() {
+				wrongMapping := []*runtimeapi.IDMapping{{
+					ContainerId: 0,
+					HostId:      1000,
+					Length:      100000,
+				}, {
+					ContainerId: 0,
+					HostId:      2000,
+					Length:      100000,
+				}}
+				usernsOptions := &runtimeapi.UserNamespace{
 					Mode: runtimeapi.NamespaceMode_POD,
-					Uids: defaultMapping,
-					Gids: defaultMapping,
-				},
-			}
+					Uids: wrongMapping,
+					Gids: wrongMapping,
+				}
 
-			hostLogPath, podLogPath := createLogTempDir(podName)
-			defer os.RemoveAll(hostLogPath)
-			podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podName, podLogPath)
-			containerName := runUserNamespaceContainer(rc, ic, podID, podConfig)
+				runUserNamespacePodWithError(rc, podName, usernsOptions)
+			})
 
-			matchContainerOutputRe(podConfig, containerName, `\s+0\s+1000\s+100000\n`)
-		})
+			It("runtime should fail if container ID 0 is not mapped", func() {
+				mapping := []*runtimeapi.IDMapping{{
+					ContainerId: 1,
+					HostId:      1000,
+					Length:      100000,
+				}}
+				usernsOptions := &runtimeapi.UserNamespace{
+					Mode: runtimeapi.NamespaceMode_POD,
+					Uids: mapping,
+					Gids: mapping,
+				}
 
-		It("runtime should support NamespaceMode_NODE", func() {
-			namespaceOption := &runtimeapi.NamespaceOption{
-				UsernsOptions: &runtimeapi.UserNamespace{
-					Mode: runtimeapi.NamespaceMode_NODE,
-				},
-			}
+				runUserNamespacePodWithError(rc, podName, usernsOptions)
+			})
 
-			hostLogPath, podLogPath := createLogTempDir(podName)
-			defer os.RemoveAll(hostLogPath)
-			podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podName, podLogPath)
-			containerName := runUserNamespaceContainer(rc, ic, podID, podConfig)
+			It("runtime should fail with NamespaceMode_CONTAINER", func() {
+				usernsOptions := &runtimeapi.UserNamespace{Mode: runtimeapi.NamespaceMode_CONTAINER}
 
-			// 4294967295 means that the entire range is available
-			matchContainerOutputRe(podConfig, containerName, `\s+0\s+0\s+4294967295\n`)
-		})
+				runUserNamespacePodWithError(rc, podName, usernsOptions)
+			})
 
-		It("runtime should fail if more than one mapping provided", func() {
-			wrongMapping := []*runtimeapi.IDMapping{{
-				ContainerId: 0,
-				HostId:      1000,
-				Length:      100000,
-			}, {
-				ContainerId: 0,
-				HostId:      2000,
-				Length:      100000,
-			}}
-			usernsOptions := &runtimeapi.UserNamespace{
-				Mode: runtimeapi.NamespaceMode_POD,
-				Uids: wrongMapping,
-				Gids: wrongMapping,
-			}
+			It("runtime should fail with NamespaceMode_TARGET", func() {
+				usernsOptions := &runtimeapi.UserNamespace{Mode: runtimeapi.NamespaceMode_TARGET}
 
-			runUserNamespacePodWithError(rc, podName, usernsOptions)
-		})
-
-		It("runtime should fail if container ID 0 is not mapped", func() {
-			mapping := []*runtimeapi.IDMapping{{
-				ContainerId: 1,
-				HostId:      1000,
-				Length:      100000,
-			}}
-			usernsOptions := &runtimeapi.UserNamespace{
-				Mode: runtimeapi.NamespaceMode_POD,
-				Uids: mapping,
-				Gids: mapping,
-			}
-
-			runUserNamespacePodWithError(rc, podName, usernsOptions)
-		})
-
-		It("runtime should fail with NamespaceMode_CONTAINER", func() {
-			usernsOptions := &runtimeapi.UserNamespace{Mode: runtimeapi.NamespaceMode_CONTAINER}
-
-			runUserNamespacePodWithError(rc, podName, usernsOptions)
-		})
-
-		It("runtime should fail with NamespaceMode_TARGET", func() {
-			usernsOptions := &runtimeapi.UserNamespace{Mode: runtimeapi.NamespaceMode_TARGET}
-
-			runUserNamespacePodWithError(rc, podName, usernsOptions)
+				runUserNamespacePodWithError(rc, podName, usernsOptions)
+			})
 		})
 	})
 })
@@ -1457,4 +1509,96 @@ func runUserNamespacePodWithError(
 	}
 
 	framework.RunPodSandboxError(rc, config)
+}
+
+func supportsIDMap(path string) error {
+	treeFD, err := unix.OpenTree(-1, path, uint(unix.OPEN_TREE_CLONE|unix.OPEN_TREE_CLOEXEC))
+	if err != nil {
+		return err
+	}
+	defer unix.Close(treeFD)
+
+	// We want to test if idmap mounts are supported.
+	// So we use just some random mapping, it doesn't really matter which one.
+	// For the helper command, we just need something that is alive while we
+	// test this, a sleep 5 will do it.
+	cmd := exec.Command("sleep", "5")
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Cloneflags:  syscall.CLONE_NEWUSER,
+		UidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: usernsHostID, Size: usernsSize}},
+		GidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: usernsHostID, Size: usernsSize}},
+	}
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	defer func() {
+		_ = cmd.Process.Kill()
+		_ = cmd.Wait()
+	}()
+
+	usernsPath := fmt.Sprintf("/proc/%d/ns/user", cmd.Process.Pid)
+	var usernsFile *os.File
+	if usernsFile, err = os.Open(usernsPath); err != nil {
+		return err
+	}
+	defer usernsFile.Close()
+
+	attr := unix.MountAttr{
+		Attr_set:  unix.MOUNT_ATTR_IDMAP,
+		Userns_fd: uint64(usernsFile.Fd()),
+	}
+	if err := unix.MountSetattr(treeFD, "", unix.AT_EMPTY_PATH, &attr); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// rootfsPath returns the parent path used for containerd stateDir (the container rootfs lives
+// inside there). If the object can't be parsed, it returns the "/var/lib".
+// Usually the rootfs is inside /var/lib and it's the same filesystem. In the end, to see if a path
+// supports idmap, we only care about its fs so this is a good fallback.
+func rootfsPath(info map[string]string) string {
+	defaultPath := "/var/lib"
+	jsonCfg, ok := info["config"]
+	if !ok {
+		return defaultPath
+	}
+
+	// Get only the StateDir from the json.
+	type containerdConfig struct {
+		StateDir string `json:"stateDir"`
+	}
+	cfg := containerdConfig{}
+	if err := json.Unmarshal([]byte(jsonCfg), &cfg); err != nil {
+		return defaultPath
+	}
+	if cfg.StateDir == "" {
+		return defaultPath
+	}
+
+	// The stateDir might have not been created yet. Let's use the parent directory that should
+	// always exist.
+	return filepath.Join(cfg.StateDir, "../")
+}
+
+func hostUsernsContent() string {
+	uidMapPath := "/proc/self/uid_map"
+	uidMapContent, err := os.ReadFile(uidMapPath)
+	if err != nil {
+		return ""
+	}
+	return string(uidMapContent)
+}
+
+func parseUsernsMappingLine(line string) []string {
+	// The line format is:
+	// <container-id> <host-id> <length>
+	// But there could be a lot of spaces between the fields.
+	line = strings.TrimSpace(line)
+	m := strings.Split(line, " ")
+	m = slices.DeleteFunc(m, func(s string) bool {
+		return s == ""
+	})
+	return m
 }
