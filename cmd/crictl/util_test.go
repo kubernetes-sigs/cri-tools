@@ -73,7 +73,7 @@ func TestNameFilterByRegex(t *testing.T) {
 	}
 }
 
-func TestOutputStatusInfo(t *testing.T) {
+func TestOutputStatusData(t *testing.T) {
 	const (
 		statusResponse = `{"conditions":[
 			{
@@ -180,7 +180,8 @@ func TestOutputStatusInfo(t *testing.T) {
 			}
 
 			outStr, err := captureOutput(func() error {
-				err := outputStatusInfo(tc.status, tc.handlers, tc.info, tc.format, tc.tmplStr)
+				data := []statusData{{json: tc.status, runtimeHandlers: tc.handlers, info: tc.info}}
+				err := outputStatusData(data, tc.format, tc.tmplStr)
 				if err != nil {
 					t.Errorf("Unexpected error: %v", err)
 				}

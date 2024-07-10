@@ -281,69 +281,91 @@ func outputProtobufObjAsYAML(obj proto.Message) error {
 	return nil
 }
 
-func outputStatusInfo(status, handlers string, info map[string]string, format string, tmplStr string) error {
-	// Sort all keys
-	keys := []string{}
-	for k := range info {
-		keys = append(keys, k)
+type statusData struct {
+	json            string
+	runtimeHandlers string
+	info            map[string]string
+}
+
+func outputStatusData(statuses []statusData, format string, tmplStr string) (err error) {
+	if len(statuses) == 0 {
+		return nil
 	}
-	sort.Strings(keys)
 
-	infoMap := map[string]any{}
-
-	if status != "" {
-		var statusVal map[string]any
-		err := json.Unmarshal([]byte(status), &statusVal)
-		if err != nil {
-			return err
+	result := []map[string]any{}
+	for _, status := range statuses {
+		// Sort all keys
+		keys := []string{}
+		for k := range status.info {
+			keys = append(keys, k)
 		}
-		infoMap["status"] = statusVal
-	}
+		sort.Strings(keys)
+		infoMap := map[string]any{}
 
-	if handlers != "" {
-		var handlersVal []*any
-		err := json.Unmarshal([]byte(handlers), &handlersVal)
-		if err != nil {
-			return err
+		if status.json != "" {
+			var statusVal map[string]any
+			err := json.Unmarshal([]byte(status.json), &statusVal)
+			if err != nil {
+				return fmt.Errorf("unmarshal status JSON: %w", err)
+			}
+			infoMap["status"] = statusVal
 		}
-		if handlersVal != nil {
-			infoMap["runtimeHandlers"] = handlersVal
+
+		if status.runtimeHandlers != "" {
+			var handlersVal []*any
+			err := json.Unmarshal([]byte(status.runtimeHandlers), &handlersVal)
+			if err != nil {
+				return fmt.Errorf("unmarshal runtime handlers: %w", err)
+			}
+			if handlersVal != nil {
+				infoMap["runtimeHandlers"] = handlersVal
+			}
 		}
+
+		for _, k := range keys {
+			var genericVal map[string]any
+			json.Unmarshal([]byte(status.info[k]), &genericVal)
+			infoMap[k] = genericVal
+		}
+
+		result = append(result, infoMap)
 	}
 
-	for _, k := range keys {
-		var genericVal map[string]any
-		json.Unmarshal([]byte(info[k]), &genericVal)
-		infoMap[k] = genericVal
+	// Old behavior: single entries are not encapsulated within an array
+	var jsonResult []byte
+	if len(result) == 1 {
+		jsonResult, err = json.Marshal(result[0])
+	} else {
+		jsonResult, err = json.Marshal(result)
 	}
 
-	jsonInfo, err := json.Marshal(infoMap)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal result: %w", err)
 	}
 
 	switch format {
 	case "yaml":
-		yamlInfo, err := yaml.JSONToYAML(jsonInfo)
+		yamlInfo, err := yaml.JSONToYAML(jsonResult)
 		if err != nil {
-			return err
+			return fmt.Errorf("JSON result to YAML: %w", err)
 		}
 		fmt.Println(string(yamlInfo))
 	case "json":
 		var output bytes.Buffer
-		if err := json.Indent(&output, jsonInfo, "", "  "); err != nil {
-			return err
+		if err := json.Indent(&output, jsonResult, "", "  "); err != nil {
+			return fmt.Errorf("indent JSON result: %w", err)
 		}
 		fmt.Println(output.String())
 	case "go-template":
-		output, err := tmplExecuteRawJSON(tmplStr, string(jsonInfo))
+		output, err := tmplExecuteRawJSON(tmplStr, string(jsonResult))
 		if err != nil {
-			return err
+			return fmt.Errorf("execute template: %w", err)
 		}
 		fmt.Println(output)
 	default:
-		fmt.Printf("Don't support %q format\n", format)
+		return fmt.Errorf("unsupported format: %q", format)
 	}
+
 	return nil
 }
 

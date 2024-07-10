@@ -517,12 +517,16 @@ var containerStatusCommand = &cli.Command{
 			return err
 		}
 
-		for i := range c.NArg() {
-			containerID := c.Args().Get(i)
-			if err := ContainerStatus(runtimeClient, containerID, c.String("output"), c.String("template"), c.Bool("quiet")); err != nil {
-				return fmt.Errorf("getting the status of the container %q: %w", containerID, err)
-			}
+		if err := containerStatus(
+			runtimeClient,
+			c.Args().Slice(),
+			c.String("output"),
+			c.String("template"),
+			c.Bool("quiet"),
+		); err != nil {
+			return fmt.Errorf("get the status of containers: %w", err)
 		}
+
 		return nil
 	},
 }
@@ -989,43 +993,49 @@ func marshalContainerStatus(cs *pb.ContainerStatus) (string, error) {
 	return marshalMapInOrder(jsonMap, *cs)
 }
 
-// ContainerStatus sends a ContainerStatusRequest to the server, and parses
+// containerStatus sends a ContainerStatusRequest to the server, and parses
 // the returned ContainerStatusResponse.
-func ContainerStatus(client internalapi.RuntimeService, id, output string, tmplStr string, quiet bool) error {
+// nolint:dupl // pods and containers are similar, but still different
+func containerStatus(client internalapi.RuntimeService, ids []string, output string, tmplStr string, quiet bool) error {
 	verbose := !(quiet)
 	if output == "" { // default to json output
 		output = "json"
 	}
-	if id == "" {
+	if len(ids) == 0 {
 		return errors.New("ID cannot be empty")
 	}
-	request := &pb.ContainerStatusRequest{
-		ContainerId: id,
-		Verbose:     verbose,
-	}
-	logrus.Debugf("ContainerStatusRequest: %v", request)
-	r, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
-		return client.ContainerStatus(ctx, id, verbose)
-	})
-	logrus.Debugf("ContainerStatusResponse: %v", r)
-	if err != nil {
-		return err
+
+	statuses := []statusData{}
+	for _, id := range ids {
+		request := &pb.ContainerStatusRequest{
+			ContainerId: id,
+			Verbose:     verbose,
+		}
+		logrus.Debugf("ContainerStatusRequest: %v", request)
+		r, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
+			return client.ContainerStatus(ctx, id, verbose)
+		})
+		logrus.Debugf("ContainerStatusResponse: %v", r)
+		if err != nil {
+			return fmt.Errorf("get container status: %w", err)
+		}
+
+		statusJSON, err := marshalContainerStatus(r.Status)
+		if err != nil {
+			return fmt.Errorf("marshal container status: %w", err)
+		}
+
+		if output == "table" {
+			outputContainerStatusTable(r, verbose)
+		} else {
+			statuses = append(statuses, statusData{json: statusJSON, info: r.Info})
+		}
 	}
 
-	status, err := marshalContainerStatus(r.Status)
-	if err != nil {
-		return err
-	}
+	return outputStatusData(statuses, output, tmplStr)
+}
 
-	switch output {
-	case "json", "yaml", "go-template":
-		return outputStatusInfo(status, "", r.Info, output, tmplStr)
-	case "table": // table output is after this switch block
-	default:
-		return fmt.Errorf("output option cannot be %s", output)
-	}
-
-	// output in table format
+func outputContainerStatusTable(r *pb.ContainerStatusResponse, verbose bool) {
 	fmt.Printf("ID: %s\n", r.Status.Id)
 	if r.Status.Metadata != nil {
 		if r.Status.Metadata.Name != "" {
@@ -1064,8 +1074,6 @@ func ContainerStatus(client internalapi.RuntimeService, id, output string, tmplS
 	if verbose {
 		fmt.Printf("Info: %v\n", r.GetInfo())
 	}
-
-	return nil
 }
 
 // ListContainers sends a ListContainerRequest to the server, and parses

@@ -323,6 +323,8 @@ var imageStatusCommand = &cli.Command{
 			output = "json"
 		}
 		tmplStr := c.String("template")
+
+		statuses := []statusData{}
 		for i := range c.NArg() {
 			id := c.Args().Get(i)
 
@@ -330,43 +332,41 @@ var imageStatusCommand = &cli.Command{
 			if err != nil {
 				return fmt.Errorf("image status for %q request: %w", id, err)
 			}
-			image := r.Image
-			if image == nil {
+
+			if r.Image == nil {
 				return fmt.Errorf("no such image %q present", id)
 			}
 
-			status, err := protobufObjectToJSON(r.Image)
+			statusJSON, err := protobufObjectToJSON(r.Image)
 			if err != nil {
-				return fmt.Errorf("marshal status to json for %q: %w", id, err)
-			}
-			switch output {
-			case "json", "yaml", "go-template":
-				if err := outputStatusInfo(status, "", r.Info, output, tmplStr); err != nil {
-					return fmt.Errorf("output status for %q: %w", id, err)
-				}
-				continue
-			case "table": // table output is after this switch block
-			default:
-				return fmt.Errorf("output option cannot be %s", output)
+				return fmt.Errorf("marshal status to JSON for %q: %w", id, err)
 			}
 
-			// otherwise output in table format
-			fmt.Printf("ID: %s\n", image.Id)
-			for _, tag := range image.RepoTags {
-				fmt.Printf("Tag: %s\n", tag)
-			}
-			for _, digest := range image.RepoDigests {
-				fmt.Printf("Digest: %s\n", digest)
-			}
-			size := units.HumanSizeWithPrecision(float64(image.GetSize_()), 3)
-			fmt.Printf("Size: %s\n", size)
-			if verbose {
-				fmt.Printf("Info: %v\n", r.GetInfo())
+			if output == "table" {
+				outputImageStatusTable(r, verbose)
+			} else {
+				statuses = append(statuses, statusData{json: statusJSON, info: r.Info})
 			}
 		}
 
-		return nil
+		return outputStatusData(statuses, output, tmplStr)
 	},
+}
+
+func outputImageStatusTable(r *pb.ImageStatusResponse, verbose bool) {
+	// otherwise output in table format
+	fmt.Printf("ID: %s\n", r.Image.Id)
+	for _, tag := range r.Image.RepoTags {
+		fmt.Printf("Tag: %s\n", tag)
+	}
+	for _, digest := range r.Image.RepoDigests {
+		fmt.Printf("Digest: %s\n", digest)
+	}
+	size := units.HumanSizeWithPrecision(float64(r.Image.GetSize_()), 3)
+	fmt.Printf("Size: %s\n", size)
+	if verbose {
+		fmt.Printf("Info: %v\n", r.GetInfo())
+	}
 }
 
 var removeImageCommand = &cli.Command{
@@ -541,32 +541,29 @@ var imageFsInfoCommand = &cli.Command{
 			return fmt.Errorf("marshal filesystem info to json: %w", err)
 		}
 
-		switch output {
-		case "json", "yaml", "go-template":
-			if err := outputStatusInfo(status, "", nil, output, tmplStr); err != nil {
-				return fmt.Errorf("output filesystem info: %w", err)
-			}
-			return nil
-		case "table": // table output is after this switch block
-		default:
-			return fmt.Errorf("output option cannot be %s", output)
+		if output == "table" {
+			ouputImageFsInfoTable(r)
+		} else {
+			return outputStatusData([]statusData{{json: status}}, output, tmplStr)
 		}
-
-		tablePrintFileSystem := func(fileLabel string, filesystem []*pb.FilesystemUsage) {
-			fmt.Printf("%s Filesystem \n", fileLabel)
-			for i, val := range filesystem {
-				fmt.Printf("TimeStamp[%d]: %d\n", i, val.Timestamp)
-				fmt.Printf("Disk[%d]: %s\n", i, units.HumanSize(float64(val.UsedBytes.GetValue())))
-				fmt.Printf("Inodes[%d]: %d\n", i, val.InodesUsed.GetValue())
-				fmt.Printf("Mountpoint[%d]: %s\n", i, val.FsId.Mountpoint)
-			}
-		}
-		// otherwise output in table format
-		tablePrintFileSystem("Container", r.ContainerFilesystems)
-		tablePrintFileSystem("Image", r.ImageFilesystems)
 
 		return nil
 	},
+}
+
+func ouputImageFsInfoTable(r *pb.ImageFsInfoResponse) {
+	tablePrintFileSystem := func(fileLabel string, filesystem []*pb.FilesystemUsage) {
+		fmt.Printf("%s Filesystem \n", fileLabel)
+		for i, val := range filesystem {
+			fmt.Printf("TimeStamp[%d]: %d\n", i, val.Timestamp)
+			fmt.Printf("Disk[%d]: %s\n", i, units.HumanSize(float64(val.UsedBytes.GetValue())))
+			fmt.Printf("Inodes[%d]: %d\n", i, val.InodesUsed.GetValue())
+			fmt.Printf("Mountpoint[%d]: %s\n", i, val.FsId.Mountpoint)
+		}
+	}
+	// otherwise output in table format
+	tablePrintFileSystem("Container", r.ContainerFilesystems)
+	tablePrintFileSystem("Image", r.ImageFilesystems)
 }
 
 func parseCreds(creds string) (string, string, error) {

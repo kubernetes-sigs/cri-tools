@@ -78,13 +78,14 @@ func Info(cliContext *cli.Context, client internalapi.RuntimeService) error {
 		return err
 	}
 
-	status, err := protobufObjectToJSON(r.Status)
+	statusJSON, err := protobufObjectToJSON(r.Status)
 	if err != nil {
-		return err
+		return fmt.Errorf("create status JSON: %w", err)
 	}
 	handlers, err := json.Marshal(r.RuntimeHandlers) // protobufObjectToJSON cannot be used
 	if err != nil {
 		return err
 	}
-	return outputStatusInfo(status, string(handlers), r.Info, cliContext.String("output"), cliContext.String("template"))
+	data := []statusData{{json: statusJSON, runtimeHandlers: string(handlers), info: r.Info}}
+	return outputStatusData(data, cliContext.String("output"), cliContext.String("template"))
 }
