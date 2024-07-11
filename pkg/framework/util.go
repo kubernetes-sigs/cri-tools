@@ -284,7 +284,7 @@ func CreateContainerWithError(rc internalapi.RuntimeService, ic internalapi.Imag
 	// Pull the image if it does not exist.
 	imageName := config.Image.Image
 	if !strings.Contains(imageName, ":") {
-		imageName = imageName + ":latest"
+		imageName += ":latest"
 		Logf("Use latest as default image tag.")
 	}
 
@@ -331,7 +331,9 @@ func ListImage(c internalapi.ImageManagerService, filter *runtimeapi.ImageFilter
 // PrepareImageName builds a pullable image name for the provided one.
 func PrepareImageName(imageName string) string {
 	ref, err := reference.ParseNamed(imageName)
-	if err == nil {
+
+	switch err {
+	case nil:
 		// Modify the image if it's a fully qualified image name
 		if TestContext.RegistryPrefix != DefaultRegistryPrefix {
 			r := fmt.Sprintf("%s/%s", TestContext.RegistryPrefix, reference.Path(ref))
@@ -341,14 +343,17 @@ func PrepareImageName(imageName string) string {
 		imageName = ref.String()
 
 		if !strings.Contains(imageName, ":") {
-			imageName = imageName + ":latest"
+			imageName += ":latest"
 			Logf("Use latest as default image tag.")
 		}
-	} else if err == reference.ErrNameNotCanonical {
+
+	case reference.ErrNameNotCanonical:
 		// Non canonical images can simply be prefixed
 		imageName = fmt.Sprintf("%s/%s", TestContext.RegistryPrefix, imageName)
-	} else {
+
+	default:
 		Failf("Unable to parse imageName: %v", err)
+
 	}
 
 	return imageName

@@ -299,7 +299,7 @@ func main() {
 			DisablePullOnRun = false
 		} else {
 			// Command line flags overrides config file.
-			if context.IsSet("runtime-endpoint") {
+			if context.IsSet("runtime-endpoint") { //nolint:gocritic
 				RuntimeEndpoint = context.String("runtime-endpoint")
 				RuntimeEndpointIsSet = true
 			} else if config.RuntimeEndpoint != "" {
@@ -308,7 +308,7 @@ func main() {
 			} else {
 				RuntimeEndpoint = context.String("runtime-endpoint")
 			}
-			if context.IsSet("image-endpoint") {
+			if context.IsSet("image-endpoint") { //nolint:gocritic
 				ImageEndpoint = context.String("image-endpoint")
 				ImageEndpointIsSet = true
 			} else if config.ImageEndpoint != "" {
@@ -317,7 +317,7 @@ func main() {
 			} else {
 				ImageEndpoint = context.String("image-endpoint")
 			}
-			if context.IsSet("timeout") {
+			if context.IsSet("timeout") { //nolint:gocritic
 				Timeout = getTimeout(context.Duration("timeout"))
 			} else if config.Timeout > 0 { // 0/neg value set to default timeout
 				Timeout = config.Timeout
