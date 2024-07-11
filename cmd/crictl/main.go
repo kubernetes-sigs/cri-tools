@@ -210,6 +210,7 @@ func main() {
 		checkpointContainerCommand,
 		runtimeConfigCommand,
 		eventsCommand,
+		updateRuntimeConfigCommand,
 	}
 
 	slices.SortFunc(app.Commands, func(a, b *cli.Command) int { return strings.Compare(a.Name, b.Name) })
