@@ -1579,7 +1579,7 @@ func rootfsPath(info map[string]string) string {
 
 	// The stateDir might have not been created yet. Let's use the parent directory that should
 	// always exist.
-	return filepath.Join(cfg.StateDir, "../")
+	return filepath.Dir(cfg.StateDir)
 }
 
 func hostUsernsContent() string {
