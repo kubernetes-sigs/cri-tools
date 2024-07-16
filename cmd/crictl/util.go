@@ -31,9 +31,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/protobuf/jsonpb" //nolint:staticcheck
-	"github.com/golang/protobuf/proto"  //nolint:staticcheck
 	"github.com/invopop/jsonschema"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/protoadapt"
+	"google.golang.org/protobuf/runtime/protoiface"
 	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -248,16 +249,16 @@ func openFile(path string) (*os.File, error) {
 	return f, nil
 }
 
-func protobufObjectToJSON(obj proto.Message) (string, error) {
-	jsonpbMarshaler := jsonpb.Marshaler{EmitDefaults: true, Indent: "  "}
-	marshaledJSON, err := jsonpbMarshaler.MarshalToString(obj)
+func protobufObjectToJSON(obj protoiface.MessageV1) (string, error) {
+	msg := protoadapt.MessageV2Of(obj)
+	marshaledJSON, err := protojson.MarshalOptions{EmitDefaultValues: true, Indent: "  "}.Marshal(msg)
 	if err != nil {
 		return "", err
 	}
-	return marshaledJSON, nil
+	return string(marshaledJSON), nil
 }
 
-func outputProtobufObjAsJSON(obj proto.Message) error {
+func outputProtobufObjAsJSON(obj protoiface.MessageV1) error {
 	marshaledJSON, err := protobufObjectToJSON(obj)
 	if err != nil {
 		return err
@@ -267,7 +268,7 @@ func outputProtobufObjAsJSON(obj proto.Message) error {
 	return nil
 }
 
-func outputProtobufObjAsYAML(obj proto.Message) error {
+func outputProtobufObjAsYAML(obj protoiface.MessageV1) error {
 	marshaledJSON, err := protobufObjectToJSON(obj)
 	if err != nil {
 		return err
@@ -369,7 +370,7 @@ func outputStatusData(statuses []statusData, format string, tmplStr string) (err
 	return nil
 }
 
-func outputEvent(event proto.Message, format string, tmplStr string) error {
+func outputEvent(event protoiface.MessageV1, format string, tmplStr string) error {
 	switch format {
 	case "yaml":
 		err := outputProtobufObjAsYAML(event)
