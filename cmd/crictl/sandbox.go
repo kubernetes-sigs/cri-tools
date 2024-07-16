@@ -229,14 +229,17 @@ var podStatusCommand = &cli.Command{
 		if err != nil {
 			return err
 		}
-		for i := range c.NArg() {
-			id := c.Args().Get(i)
 
-			err := PodSandboxStatus(runtimeClient, id, c.String("output"), c.Bool("quiet"), c.String("template"))
-			if err != nil {
-				return fmt.Errorf("getting the pod sandbox status for %q: %w", id, err)
-			}
+		if err := podSandboxStatus(
+			runtimeClient,
+			c.Args().Slice(),
+			c.String("output"),
+			c.Bool("quiet"),
+			c.String("template"),
+		); err != nil {
+			return fmt.Errorf("get the status of pod sandboxes: %w", err)
 		}
+
 		return nil
 	},
 }
@@ -397,42 +400,51 @@ func marshalPodSandboxStatus(ps *pb.PodSandboxStatus) (string, error) {
 	return marshalMapInOrder(jsonMap, *ps)
 }
 
-// PodSandboxStatus sends a PodSandboxStatusRequest to the server, and parses
+// podSandboxStatus sends a PodSandboxStatusRequest to the server, and parses
 // the returned PodSandboxStatusResponse.
-func PodSandboxStatus(client internalapi.RuntimeService, id, output string, quiet bool, tmplStr string) error {
+// nolint:dupl // pods and containers are similar, but still different
+func podSandboxStatus(client internalapi.RuntimeService, ids []string, output string, quiet bool, tmplStr string) error {
 	verbose := !(quiet)
 	if output == "" { // default to json output
 		output = "json"
 	}
-	if id == "" {
+	if len(ids) == 0 {
 		return errors.New("ID cannot be empty")
 	}
 
-	request := &pb.PodSandboxStatusRequest{
-		PodSandboxId: id,
-		Verbose:      verbose,
-	}
-	logrus.Debugf("PodSandboxStatusRequest: %v", request)
-	r, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.PodSandboxStatusResponse, error) {
-		return client.PodSandboxStatus(ctx, id, verbose)
-	})
-	logrus.Debugf("PodSandboxStatusResponse: %v", r)
-	if err != nil {
-		return err
+	statuses := []statusData{}
+	for _, id := range ids {
+		request := &pb.PodSandboxStatusRequest{
+			PodSandboxId: id,
+			Verbose:      verbose,
+		}
+		logrus.Debugf("PodSandboxStatusRequest: %v", request)
+		r, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.PodSandboxStatusResponse, error) {
+			return client.PodSandboxStatus(ctx, id, verbose)
+		})
+
+		logrus.Debugf("PodSandboxStatusResponse: %v", r)
+		if err != nil {
+			return fmt.Errorf("get pod sandbox status: %w", err)
+		}
+
+		statusJSON, err := marshalPodSandboxStatus(r.Status)
+		if err != nil {
+			return fmt.Errorf("marshal pod sandbox status: %w", err)
+		}
+
+		if output == "table" {
+			outputPodSandboxStatusTable(r, verbose)
+		} else {
+			statuses = append(statuses, statusData{json: statusJSON, info: r.Info})
+		}
+
 	}
 
-	status, err := marshalPodSandboxStatus(r.Status)
-	if err != nil {
-		return err
-	}
-	switch output {
-	case "json", "yaml", "go-template":
-		return outputStatusInfo(status, "", r.Info, output, tmplStr)
-	case "table": // table output is after this switch block
-	default:
-		return fmt.Errorf("output option cannot be %s", output)
-	}
+	return outputStatusData(statuses, output, tmplStr)
+}
 
+func outputPodSandboxStatusTable(r *pb.PodSandboxStatusResponse, verbose bool) {
 	// output in table format by default.
 	fmt.Printf("ID: %s\n", r.Status.Id)
 	if r.Status.Metadata != nil {
@@ -472,8 +484,6 @@ func PodSandboxStatus(client internalapi.RuntimeService, id, output string, quie
 	if verbose {
 		fmt.Printf("Info: %v\n", r.GetInfo())
 	}
-
-	return nil
 }
 
 // ListPodSandboxes sends a ListPodSandboxRequest to the server, and parses
