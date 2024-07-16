@@ -26,7 +26,7 @@ import (
 )
 
 // Config is the internal representation of the yaml that defines
-// server configuration
+// server configuration.
 type Config struct {
 	RuntimeEndpoint   string
 	ImageEndpoint     string
@@ -77,7 +77,7 @@ func WriteConfig(c *Config, filepath string) error {
 	return os.WriteFile(filepath, data, 0o644)
 }
 
-// Extracts config options from the yaml data which is loaded from file
+// Extracts config options from the yaml data which is loaded from file.
 func getConfigOptions(yamlData yaml.Node) (*Config, error) {
 	config := Config{}
 	config.yamlData = &yamlData
@@ -131,7 +131,7 @@ func getConfigOptions(yamlData yaml.Node) (*Config, error) {
 	return &config, nil
 }
 
-// Set config options on yaml data for persistece to file
+// Set config options on yaml data for persistece to file.
 func setConfigOptions(config *Config) {
 	setConfigOption("runtime-endpoint", config.RuntimeEndpoint, config.yamlData)
 	setConfigOption("image-endpoint", config.ImageEndpoint, config.yamlData)
@@ -141,7 +141,7 @@ func setConfigOptions(config *Config) {
 	setConfigOption("disable-pull-on-run", strconv.FormatBool(config.DisablePullOnRun), config.yamlData)
 }
 
-// Set config option on yaml
+// Set config option on yaml.
 func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
 	if yamlData.Content == nil || len(yamlData.Content) == 0 {
 		yamlData.Kind = yaml.DocumentNode
@@ -151,8 +151,8 @@ func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
 			Tag:  "!!map",
 		}
 	}
-	var contentLen = 0
-	var foundOption = false
+	contentLen := 0
+	foundOption := false
 	if yamlData.Content[0].Content != nil {
 		contentLen = len(yamlData.Content[0].Content)
 	}

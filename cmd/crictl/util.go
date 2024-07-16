@@ -42,7 +42,7 @@ import (
 )
 
 const (
-	// truncatedImageIDLen is the truncated length of imageID
+	// truncatedImageIDLen is the truncated length of imageID.
 	truncatedIDLen = 13
 )
 
@@ -50,7 +50,7 @@ var (
 	// The global stopCh for monitoring Interrupt signal.
 	// DO NOT use it directly. Use SetupInterruptSignalHandler() to get it.
 	signalIntStopCh chan struct{}
-	// only setup stopCh once
+	// only setup stopCh once.
 	signalIntSetupOnce = &sync.Once{}
 )
 
@@ -77,6 +77,7 @@ func InterruptableRPC[T any](
 	rpcFunc func(context.Context) (T, error),
 ) (res T, err error) {
 	if ctx == nil {
+		//nolint:contextcheck // We inherit the parent in case of a nil context
 		ctx = context.Background()
 	}
 	ctx, cancel := context.WithCancel(ctx)

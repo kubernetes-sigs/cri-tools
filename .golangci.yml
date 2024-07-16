@@ -6,22 +6,39 @@ linters:
   disable-all: true
   enable:
     - asasalint
+    - asciicheck
     - bidichk
+    - bodyclose
     - canonicalheader
     - containedctx
+    - contextcheck
     - copyloopvar
     - decorder
+    - dogsled
     - dupl
     - dupword
     - durationcheck
+    - errchkjson
     - errname
+    - errorlint
+    - exhaustive
+    - exportloopref
     - fatcontext
     - forcetypeassert
+    - gci
+    - ginkgolinter
     - gocheckcompilerdirectives
     - gochecksumtype
     - gocritic
+    - godot
     - gofmt
+    - gofumpt
+    - goheader
     - goimports
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    - gosimple
     - gosmopolitan
     - govet
     - grouper
@@ -38,6 +55,8 @@ linters:
     - musttag
     - nakedret
     - nilerr
+    - noctx
+    - nolintlint
     - nosprintfhostport
     - perfsprint
     - prealloc
@@ -45,74 +64,60 @@ linters:
     - promlinter
     - protogetter
     - reassign
+    - rowserrcheck
     - sloglint
     - spancheck
+    - sqlclosecheck
     - staticcheck
     - tagalign
     - tagliatelle
     - tenv
     - testableexamples
     - testifylint
+    - tparallel
     - typecheck
+    - unconvert
+    - unparam
     - unused
     - usestdlibvars
     - wastedassign
+    - whitespace
     - zerologlint
-    # - asciicheck
-    # - bodyclose
-    # - contextcheck
     # - cyclop
     # - depguard
-    # - dogsled
     # - err113
     # - errcheck
-    # - errchkjson
-    # - errorlint
-    # - exhaustive
     # - exhaustruct
-    # - exportloopref
     # - forbidigo
     # - funlen
-    # - gci
-    # - ginkgolinter
     # - gochecknoglobals
     # - gochecknoinits
     # - gocognit
     # - goconst
     # - gocyclo
-    # - godot
     # - godox
-    # - gofumpt
-    # - goheader
-    # - gomoddirectives
-    # - gomodguard
-    # - goprintffuncname
     # - gosec
-    # - gosimple
     # - ireturn
     # - lll
     # - mnd
     # - nestif
     # - nilnil
     # - nlreturn
-    # - noctx
-    # - nolintlint
     # - nonamedreturns
     # - paralleltest
     # - revive
-    # - rowserrcheck
-    # - sqlclosecheck
     # - stylecheck
     # - testpackage
     # - thelper
-    # - tparallel
-    # - unconvert
-    # - unparam
     # - varnamelen
-    # - whitespace
     # - wrapcheck
     # - wsl
 linters-settings:
+  gci:
+    sections:
+      - standard
+      - default
+      - localmodule
   staticcheck:
     checks: ["SA1019"]
   gocritic:
@@ -134,6 +139,7 @@ linters-settings:
       - dynamicFmtString
       - emptyDecl
       - emptyFallthrough
+      - emptyStringTest
       - equalFold
       - evalOrder
       - exposedSyncMutex
@@ -141,11 +147,13 @@ linters-settings:
       - filepathJoin
       - hexLiteral
       - httpNoBody
+      - importShadow
       - indexAlloc
       - initClause
       - methodExprCall
       - nestingReduce
       - nilValReturn
+      - octalLiteral
       - preferDecodeRune
       - preferFilepathJoin
       - preferFprint
@@ -180,11 +188,8 @@ linters-settings:
       - unnecessaryBlock
       - unnecessaryDefer
       - weakCond
+      - whyNoLint
       - yodaStyleExpr
-      # - emptyStringTest
       # - hugeParam
-      # - importShadow
-      # - octalLiteral
       # - paramTypeCombine
       # - unnamedResult
-      # - whyNoLint

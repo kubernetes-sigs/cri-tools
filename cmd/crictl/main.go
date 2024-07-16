@@ -32,7 +32,6 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
-
 	internalapi "k8s.io/cri-api/pkg/apis"
 	remote "k8s.io/cri-client/pkg"
 	"k8s.io/klog/v2"
@@ -42,25 +41,27 @@ import (
 	"sigs.k8s.io/cri-tools/pkg/version"
 )
 
-const defaultTimeout = 2 * time.Second
-const defaultTimeoutWindows = 200 * time.Second
+const (
+	defaultTimeout        = 2 * time.Second
+	defaultTimeoutWindows = 200 * time.Second
+)
 
 var (
-	// RuntimeEndpoint is CRI server runtime endpoint
+	// RuntimeEndpoint is CRI server runtime endpoint.
 	RuntimeEndpoint string
-	// RuntimeEndpointIsSet is true when RuntimeEndpoint is configured
+	// RuntimeEndpointIsSet is true when RuntimeEndpoint is configured.
 	RuntimeEndpointIsSet bool
-	// ImageEndpoint is CRI server image endpoint, default same as runtime endpoint
+	// ImageEndpoint is CRI server image endpoint, default same as runtime endpoint.
 	ImageEndpoint string
-	// ImageEndpointIsSet is true when ImageEndpoint is configured
+	// ImageEndpointIsSet is true when ImageEndpoint is configured.
 	ImageEndpointIsSet bool
-	// Timeout  of connecting to server (default: 2s on Linux, 200s on Windows)
+	// Timeout  of connecting to server (default: 2s on Linux, 200s on Windows).
 	Timeout time.Duration
-	// Debug enable debug output
+	// Debug enable debug output.
 	Debug bool
-	// PullImageOnCreate enables pulling image on create requests
+	// PullImageOnCreate enables pulling image on create requests.
 	PullImageOnCreate bool
-	// DisablePullOnRun disable pulling image on run requests
+	// DisablePullOnRun disable pulling image on run requests.
 	DisablePullOnRun bool
 	// tracerProvider is the global OpenTelemetry tracing instance.
 	tracerProvider *sdktrace.TracerProvider

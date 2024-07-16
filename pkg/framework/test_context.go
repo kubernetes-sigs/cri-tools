@@ -175,7 +175,7 @@ func (tc TestContextType) LoadYamlConfigFiles() error {
 	if testImagesFilePath != "" {
 		err := LoadYamlFile(testImagesFilePath, &TestContext.TestImageList)
 		if err != nil {
-			return fmt.Errorf("Error loading custom test images file: %v", err)
+			return fmt.Errorf("Error loading custom test images file: %w", err)
 		}
 	}
 	Logf("Testing context container image list: %+v", TestContext.TestImageList)

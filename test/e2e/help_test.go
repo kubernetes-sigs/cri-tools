@@ -20,9 +20,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 )
 
-// The actual test suite
+// The actual test suite.
 var _ = t.Describe("help", func() {
-
 	const helpMessageIdentifier = "crictl - client for CRI"
 
 	It("should succeed with `help` subcommand", func() {
@@ -43,7 +42,7 @@ var _ = t.Describe("help", func() {
 	})
 })
 
-// The actual test suite
+// The actual test suite.
 var _ = t.Describe("help subcommand", func() {
 	It("should show help running rm without params", func() {
 		t.CrictlExpectSuccess("rm", "crictl rm command")
