@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -80,7 +81,7 @@ func Events(cliContext *cli.Context, client internalapi.RuntimeService) error {
 	containerEventsCh := make(chan *pb.ContainerEventResponse)
 	go func() {
 		logrus.Debug("getting container events")
-		err := client.GetContainerEvents(containerEventsCh, nil)
+		err := client.GetContainerEvents(context.Background(), containerEventsCh, nil)
 		if err == io.EOF {
 			errCh <- nil
 			return
