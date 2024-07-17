@@ -81,7 +81,9 @@ func Events(cliContext *cli.Context, client internalapi.RuntimeService) error {
 	containerEventsCh := make(chan *pb.ContainerEventResponse)
 	go func() {
 		logrus.Debug("getting container events")
-		err := client.GetContainerEvents(context.Background(), containerEventsCh, nil)
+		_, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
+			return nil, client.GetContainerEvents(ctx, containerEventsCh, nil)
+		})
 		if err == io.EOF {
 			errCh <- nil
 			return
