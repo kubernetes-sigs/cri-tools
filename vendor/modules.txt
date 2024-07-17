@@ -467,7 +467,7 @@ gopkg.in/yaml.v3
 # k8s.io/api v0.31.0-alpha.3
 ## explicit; go 1.22.0
 k8s.io/api/core/v1
-# k8s.io/apimachinery v0.31.0-alpha.3
+# k8s.io/apimachinery v0.31.0-beta.0
 ## explicit; go 1.22.0
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
@@ -581,7 +581,7 @@ k8s.io/kubectl/pkg/util/term
 # k8s.io/kubelet v0.30.2
 ## explicit; go 1.22.0
 k8s.io/kubelet/pkg/types
-# k8s.io/utils v0.0.0-20230726121419-3b25d923346b
+# k8s.io/utils v0.0.0-20240711033017-18e509b52bc8
 ## explicit; go 1.18
 k8s.io/utils/clock
 k8s.io/utils/clock/testing
