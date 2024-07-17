@@ -28,9 +28,6 @@ github.com/cespare/xxhash/v2
 # github.com/cpuguy83/go-md2man/v2 v2.0.4
 ## explicit; go 1.11
 github.com/cpuguy83/go-md2man/v2/md2man
-# github.com/cyphar/filepath-securejoin v0.2.4
-## explicit; go 1.13
-github.com/cyphar/filepath-securejoin
 # github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 ## explicit
 github.com/davecgh/go-spew/spew
@@ -170,10 +167,6 @@ github.com/onsi/gomega/types
 # github.com/opencontainers/go-digest v1.0.0
 ## explicit; go 1.13
 github.com/opencontainers/go-digest
-# github.com/opencontainers/runc v1.1.13
-## explicit; go 1.18
-github.com/opencontainers/runc/libcontainer/apparmor
-github.com/opencontainers/runc/libcontainer/utils
 # github.com/opencontainers/selinux v1.11.0
 ## explicit; go 1.19
 github.com/opencontainers/selinux/go-selinux

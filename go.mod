@@ -14,7 +14,6 @@ require (
 	github.com/onsi/ginkgo/v2 v2.19.0
 	github.com/onsi/gomega v1.33.1
 	github.com/opencontainers/go-digest v1.0.0
-	github.com/opencontainers/runc v1.1.13
 	github.com/opencontainers/selinux v1.11.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/urfave/cli/v2 v2.27.2
@@ -50,7 +49,6 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
-	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
