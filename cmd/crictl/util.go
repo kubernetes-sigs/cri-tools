@@ -289,7 +289,7 @@ type statusData struct {
 	info            map[string]string
 }
 
-func outputStatusData(statuses []statusData, format string, tmplStr string) (err error) {
+func outputStatusData(statuses []statusData, format, tmplStr string) (err error) {
 	if len(statuses) == 0 {
 		return nil
 	}
@@ -371,7 +371,7 @@ func outputStatusData(statuses []statusData, format string, tmplStr string) (err
 	return nil
 }
 
-func outputEvent(event protoiface.MessageV1, format string, tmplStr string) error {
+func outputEvent(event protoiface.MessageV1, format, tmplStr string) error {
 	switch format {
 	case "yaml":
 		err := outputProtobufObjAsYAML(event)
@@ -468,7 +468,7 @@ func matchesRegex(pattern, target string) bool {
 	return matched
 }
 
-func matchesImage(imageClient internalapi.ImageManagerService, image string, containerImage string) (bool, error) {
+func matchesImage(imageClient internalapi.ImageManagerService, image, containerImage string) (bool, error) {
 	if image == "" {
 		return true, nil
 	}

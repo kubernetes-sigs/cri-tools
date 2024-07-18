@@ -168,7 +168,7 @@ var _ = framework.KubeDescribe("Container OOM", func() {
 })
 
 // createHostPath creates the hostPath for mount propagation test.
-func createHostPathForMountPropagation(podID string, propagationOpt runtimeapi.MountPropagation) (string, string, string, func()) {
+func createHostPathForMountPropagation(podID string, propagationOpt runtimeapi.MountPropagation) (mountSource, propagationSourceDir, propagationMountPoint string, clearHostPath func()) {
 	hostPath, err := os.MkdirTemp("", "test"+podID)
 	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
 
@@ -203,7 +203,7 @@ func createHostPathForMountPropagation(podID string, propagationOpt runtimeapi.M
 		framework.ExpectNoError(err, "failed to set \"mntSource\" to \"rprivate\": %v", err)
 	}
 
-	clearHostPath := func() {
+	clearHostPath = func() {
 		By("clean up the TempDir")
 		err := unix.Unmount(propagationMntPoint, unix.MNT_DETACH)
 		framework.ExpectNoError(err, "failed to unmount \"propagationMntPoint\": %v", err)
@@ -429,7 +429,7 @@ func runtimeSupportsRRO(rc internalapi.RuntimeService, runtimeHandlerName string
 // createHostPathForRROMount creates the hostPath for RRO mount test.
 //
 // hostPath contains a "tmpfs" directory with tmpfs mounted on it.
-func createHostPathForRROMount(podID string) (string, func()) {
+func createHostPathForRROMount(podID string) (hostPath string, clearHostPath func()) {
 	hostPath, err := os.MkdirTemp("", "test"+podID)
 	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
 
@@ -440,7 +440,7 @@ func createHostPathForRROMount(podID string) (string, func()) {
 	err = unix.Mount("none", tmpfsMntPoint, "tmpfs", 0, "")
 	framework.ExpectNoError(err, "failed to mount tmpfs on dir %q: %v", tmpfsMntPoint, err)
 
-	clearHostPath := func() {
+	clearHostPath = func() {
 		By("clean up the TempDir")
 		err := unix.Unmount(tmpfsMntPoint, unix.MNT_DETACH)
 		framework.ExpectNoError(err, "failed to unmount \"tmpfsMntPoint\": %v", err)
