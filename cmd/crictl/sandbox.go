@@ -32,7 +32,6 @@ import (
 	"github.com/urfave/cli/v2"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-
 	errorUtils "k8s.io/apimachinery/pkg/util/errors"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -402,7 +401,8 @@ func marshalPodSandboxStatus(ps *pb.PodSandboxStatus) (string, error) {
 
 // podSandboxStatus sends a PodSandboxStatusRequest to the server, and parses
 // the returned PodSandboxStatusResponse.
-// nolint:dupl // pods and containers are similar, but still different
+//
+//nolint:dupl // pods and containers are similar, but still different
 func podSandboxStatus(client internalapi.RuntimeService, ids []string, output string, quiet bool, tmplStr string) error {
 	verbose := !(quiet)
 	if output == "" { // default to json output
@@ -438,7 +438,6 @@ func podSandboxStatus(client internalapi.RuntimeService, ids []string, output st
 		} else {
 			statuses = append(statuses, statusData{json: statusJSON, info: r.Info})
 		}
-
 	}
 
 	return outputStatusData(statuses, output, tmplStr)
@@ -534,7 +533,7 @@ func ListPodSandboxes(client internalapi.RuntimeService, opts listOptions) error
 		return fmt.Errorf("unsupported output format %q", opts.output)
 	}
 
-	display := newTableDisplay(20, 1, 3, ' ', 0)
+	display := newDefaultTableDisplay()
 	if !opts.verbose && !opts.quiet {
 		display.AddRow([]string{
 			columnPodID,

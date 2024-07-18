@@ -22,14 +22,14 @@ import (
 	"path"
 	"time"
 
+	. "github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega/gmeasure"
 	"github.com/sirupsen/logrus"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+
 	"sigs.k8s.io/cri-tools/pkg/common"
 	"sigs.k8s.io/cri-tools/pkg/framework"
-
-	. "github.com/onsi/ginkgo/v2"
-	"github.com/onsi/gomega/gmeasure"
 )
 
 const (
@@ -131,7 +131,6 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 					MetaInfo:              map[string]string{"podId": podID, "podSandboxName": podSandboxName},
 				}
 				resultsChannel <- &res
-
 			}, samplingConfig)
 
 			// Send nil and give the manager a minute to process any already-queued results:

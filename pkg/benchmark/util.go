@@ -29,7 +29,7 @@ import (
 // LifecycleBenchmarkDatapoint encodes a single benchmark for a lifecycle operation.
 // Contains a slice of int64s which represent the duration in nanoseconds of the
 // operations which comprise a lifecycle being benchmarked.
-// (e.g. the individual CRUD operations which are cycled through during the benchmark)
+// (e.g. the individual CRUD operations which are cycled through during the benchmark).
 type LifecycleBenchmarkDatapoint struct {
 	// int64 index of the sample.
 	SampleIndex int `json:"sampleIndex"`
@@ -166,12 +166,11 @@ func (lbrm *LifecycleBenchmarksResultsManager) WriteResultsFile(filepath string)
 
 	data, err := json.MarshalIndent(lbrm.resultsSet, "", " ")
 	if err == nil {
-		err = os.WriteFile(filepath, data, 0644)
-		if err != nil {
+		if err := os.WriteFile(filepath, data, 0o644); err != nil {
 			return fmt.Errorf("Failed to write benchmarks results to file: %v", filepath)
 		}
 	} else {
-		return fmt.Errorf("Failed to serialize benchmark data: %v", err)
+		return fmt.Errorf("Failed to serialize benchmark data: %w", err)
 	}
 
 	return nil

@@ -30,14 +30,13 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/kubelet/pkg/types"
-
 	"github.com/docker/go-units"
 	godigest "github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
+	"k8s.io/kubelet/pkg/types"
 )
 
 type containerByCreated []*pb.Container
@@ -217,7 +216,7 @@ var createContainerCommand = &cli.Command{
 		if c.Args().Len() != 3 {
 			return cli.ShowSubcommandHelp(c)
 		}
-		if c.Bool("no-pull") == true && c.Bool("with-pull") == true {
+		if c.Bool("no-pull") && c.Bool("with-pull") {
 			return errors.New("confict: no-pull and with-pull are both set")
 		}
 
@@ -660,7 +659,7 @@ var runContainerCommand = &cli.Command{
 		if c.Args().Len() != 2 {
 			return cli.ShowSubcommandHelp(c)
 		}
-		if c.Bool("no-pull") == true && c.Bool("with-pull") == true {
+		if c.Bool("no-pull") && c.Bool("with-pull") {
 			return errors.New("confict: no-pull and with-pull are both set")
 		}
 
@@ -741,7 +740,7 @@ var checkpointContainerCommand = &cli.Command{
 	},
 }
 
-// RunContainer starts a container in the provided sandbox
+// RunContainer starts a container in the provided sandbox.
 func RunContainer(
 	iClient internalapi.ImageManagerService,
 	rClient internalapi.RuntimeService,
@@ -782,7 +781,6 @@ func CreateContainer(
 	rClient internalapi.RuntimeService,
 	opts createOptions,
 ) (string, error) {
-
 	config, err := loadContainerConfig(opts.configPath)
 	if err != nil {
 		return "", err
@@ -935,7 +933,7 @@ func StopContainer(client internalapi.RuntimeService, id string, timeout int64) 
 	return nil
 }
 
-// CheckpointContainer sends a CheckpointContainerRequest to the server
+// CheckpointContainer sends a CheckpointContainerRequest to the server.
 func CheckpointContainer(
 	rClient internalapi.RuntimeService,
 	id string,
@@ -1007,7 +1005,8 @@ func marshalContainerStatus(cs *pb.ContainerStatus) (string, error) {
 
 // containerStatus sends a ContainerStatusRequest to the server, and parses
 // the returned ContainerStatusResponse.
-// nolint:dupl // pods and containers are similar, but still different
+//
+//nolint:dupl // pods and containers are similar, but still different
 func containerStatus(client internalapi.RuntimeService, ids []string, output string, tmplStr string, quiet bool) error {
 	verbose := !(quiet)
 	if output == "" { // default to json output
@@ -1149,7 +1148,7 @@ func ListContainers(runtimeClient internalapi.RuntimeService, imageClient intern
 		return fmt.Errorf("unsupported output format %q", opts.output)
 	}
 
-	display := newTableDisplay(20, 1, 3, ' ', 0)
+	display := newDefaultTableDisplay()
 	if !opts.verbose && !opts.quiet {
 		display.AddRow([]string{columnContainer, columnImage, columnCreated, columnState, columnName, columnAttempt, columnPodID, columnPodname})
 	}
@@ -1181,13 +1180,15 @@ func ListContainers(runtimeClient internalapi.RuntimeService, imageClient intern
 			if opts.resolveImagePath {
 				orig, err := getRepoImage(imageClient, image)
 				if err != nil {
-					return fmt.Errorf("failed to fetch repo image %v", err)
+					return fmt.Errorf("failed to fetch repo image %w", err)
 				}
 				image = orig
 			}
 			podName := getPodNameFromLabels(c.Labels)
-			display.AddRow([]string{id, image, ctm, convertContainerState(c.State), c.Metadata.Name,
-				strconv.FormatUint(uint64(c.Metadata.Attempt), 10), podID, podName})
+			display.AddRow([]string{
+				id, image, ctm, convertContainerState(c.State), c.Metadata.Name,
+				strconv.FormatUint(uint64(c.Metadata.Attempt), 10), podID, podName,
+			})
 			continue
 		}
 

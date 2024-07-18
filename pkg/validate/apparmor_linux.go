@@ -25,13 +25,13 @@ import (
 	"sync"
 	"time"
 
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	"github.com/sirupsen/logrus"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"sigs.k8s.io/cri-tools/pkg/framework"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"sigs.k8s.io/cri-tools/pkg/framework"
 )
 
 const (
@@ -239,7 +239,7 @@ func createContainerWithAppArmor(rc internalapi.RuntimeService, ic internalapi.I
 
 	containerID, err := framework.CreateContainerWithError(rc, ic, containerConfig, sandboxID, sandboxConfig)
 	if shouldSucceed {
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		By("start container with apparmor")
 		err := rc.StartContainer(context.TODO(), containerID)
 		Expect(err).NotTo(HaveOccurred())

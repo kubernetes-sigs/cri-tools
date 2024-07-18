@@ -23,13 +23,13 @@ import (
 	"strings"
 	"time"
 
-	internalapi "k8s.io/cri-api/pkg/apis"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"sigs.k8s.io/cri-tools/pkg/common"
-	"sigs.k8s.io/cri-tools/pkg/framework"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	internalapi "k8s.io/cri-api/pkg/apis"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+
+	"sigs.k8s.io/cri-tools/pkg/common"
+	"sigs.k8s.io/cri-tools/pkg/framework"
 )
 
 var _ = framework.KubeDescribe("Networking", func() {
@@ -215,7 +215,7 @@ func checkDNSConfig(c internalapi.RuntimeService, containerID string, expectedCo
 	framework.Logf("check DNS config succeed")
 }
 
-// createWebServerContainer creates a container running a web server
+// createWebServerContainer creates a container running a web server.
 func createWebServerContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
@@ -240,8 +240,6 @@ func createHostNetWebServerContainer(rc internalapi.RuntimeService, ic internala
 // checkMainPage check if the we can get the main page of the pod via given IP:port.
 func checkMainPage(c internalapi.RuntimeService, podID string, hostPort int32, containerPort int32) {
 	By("get the IP:port needed to be checked")
-	var err error
-	var resp *http.Response
 
 	url := "http://"
 	if hostPort != 0 {
@@ -256,11 +254,28 @@ func checkMainPage(c internalapi.RuntimeService, podID string, hostPort int32, c
 
 	By("check the content of " + url)
 
+	respChan := make(chan *http.Response, 1)
+	defer close(respChan)
+
 	Eventually(func() error {
-		resp, err = http.Get(url)
-		return err
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
+		if err != nil {
+			return err
+		}
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+		respChan <- resp
+		return nil
 	}, time.Minute, time.Second).Should(BeNil())
 
+	resp := <-respChan
 	Expect(resp.StatusCode).To(Equal(200), "The status code of response should be 200.")
 	framework.Logf("check port mapping succeed")
 }

@@ -19,12 +19,12 @@ package validate
 import (
 	"context"
 
-	internalapi "k8s.io/cri-api/pkg/apis"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"sigs.k8s.io/cri-tools/pkg/framework"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	internalapi "k8s.io/cri-api/pkg/apis"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
+
+	"sigs.k8s.io/cri-tools/pkg/framework"
 )
 
 const (
@@ -68,14 +68,14 @@ func TestGetRuntimeStatus(c internalapi.RuntimeService) {
 	framework.ExpectNoError(err, "failed to get runtime conditions: %v", err)
 
 	for _, condition := range status.Status.Conditions {
-		if condition.Type == "RuntimeReady" && condition.Status == true {
+		if condition.Type == "RuntimeReady" && condition.Status {
 			count += 1
 		}
-		if condition.Type == "NetworkReady" && condition.Status == true {
+		if condition.Type == "NetworkReady" && condition.Status {
 			count += 1
 		}
 	}
-	Expect(count >= 2).To(BeTrue(), "should return all the required runtime conditions")
+	Expect(count).To(BeNumerically(">=", 2), "should return all the required runtime conditions")
 }
 
 // getVersion gets runtime version info.
