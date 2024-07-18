@@ -90,8 +90,8 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			By("create nginx container")
 			prefix := "nginx-container-"
-			containerName := prefix + framework.NewUUID()
-			containerID, nginxContainerName, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, nginxContainerImage, namespaceOption, nil, "")
+			nginxContainerName := prefix + framework.NewUUID()
+			containerID, _ := createNamespaceContainer(rc, ic, podID, podConfig, nginxContainerName, nginxContainerImage, namespaceOption, nil, "")
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -108,8 +108,8 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("create busybox container with hostPID")
 			command = []string{"sh", "-c", "sleep 1000"}
 			prefix = "container-with-HostPID-test-"
-			containerName = prefix + framework.NewUUID()
-			containerID, _, _ = createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.TestContext.TestImageList.DefaultTestContainerImage, namespaceOption, command, "")
+			containerName := prefix + framework.NewUUID()
+			containerID, _ = createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.TestContext.TestImageList.DefaultTestContainerImage, namespaceOption, command, "")
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -150,7 +150,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("create a default container with namespace")
 			prefix := "namespace-container-"
 			containerName := prefix + framework.NewUUID()
-			containerID, _, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.TestContext.TestImageList.DefaultTestContainerImage, namespaceOption, pauseCmd, "")
+			containerID, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.TestContext.TestImageList.DefaultTestContainerImage, namespaceOption, pauseCmd, "")
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -192,7 +192,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("create nginx container")
 			prefix := "nginx-container-"
 			containerName := prefix + framework.NewUUID()
-			containerID, _, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, nginxContainerImage, namespaceOption, nil, "")
+			containerID, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, nginxContainerImage, namespaceOption, nil, "")
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -218,7 +218,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("create nginx container")
 			prefix := "nginx-container-"
 			containerName := prefix + framework.NewUUID()
-			containerID, _, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, nginxContainerImage, namespaceOption, nil, "")
+			containerID, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, nginxContainerImage, namespaceOption, nil, "")
 
 			By("start container")
 			startContainer(rc, containerID)
@@ -1024,11 +1024,11 @@ func matchContainerOutputRe(podConfig *runtimeapi.PodSandboxConfig, name, patter
 }
 
 // createRunAsUserContainer creates the container with specified RunAsUser in ContainerConfig.
-func createRunAsUserContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) (string, string) {
+func createRunAsUserContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) (containerID, expectedLogMessage string) {
 	By("create RunAsUser container")
 	var uidV runtimeapi.Int64Value
 	uidV.Value = 1001
-	expectedLogMessage := "1001\n"
+	expectedLogMessage = "1001\n"
 
 	By("create a container with RunAsUser")
 	containerName := prefix + framework.NewUUID()
@@ -1047,10 +1047,10 @@ func createRunAsUserContainer(rc internalapi.RuntimeService, ic internalapi.Imag
 }
 
 // createRunAsUserNameContainer creates the container with specified RunAsUserName in ContainerConfig.
-func createRunAsUserNameContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) (string, string) {
+func createRunAsUserNameContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) (containerID, expectedLogMessage string) {
 	By("create RunAsUserName container")
 	userName := "nobody"
-	expectedLogMessage := userName + "\n"
+	expectedLogMessage = userName + "\n"
 
 	By("create a container with RunAsUserName")
 	containerName := prefix + framework.NewUUID()
@@ -1068,12 +1068,12 @@ func createRunAsUserNameContainer(rc internalapi.RuntimeService, ic internalapi.
 }
 
 // createRunAsGroupContainer creates the container with specified RunAsGroup in ContainerConfig.
-func createRunAsGroupContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, containerName string) (string, string) {
+func createRunAsGroupContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, containerName string) (containerID, expectedLogMessage string) {
 	By("create RunAsGroup container")
 	var uidV, gidV runtimeapi.Int64Value
 	uidV.Value = 1001
 	gidV.Value = 1002
-	expectedLogMessage := "1001:1002\n"
+	expectedLogMessage = "1001:1002\n"
 
 	By("create a container with RunAsUser and RunAsGroup")
 	containerConfig := &runtimeapi.ContainerConfig{
@@ -1114,7 +1114,7 @@ func createInvalidRunAsGroupContainer(rc internalapi.RuntimeService, ic internal
 }
 
 // createNamespacePodSandbox creates a PodSandbox with different NamespaceOption config for creating containers.
-func createNamespacePodSandbox(rc internalapi.RuntimeService, podSandboxNamespace *runtimeapi.NamespaceOption, podSandboxName string, podLogPath string) (string, *runtimeapi.PodSandboxConfig) {
+func createNamespacePodSandbox(rc internalapi.RuntimeService, podSandboxNamespace *runtimeapi.NamespaceOption, podSandboxName, podLogPath string) (string, *runtimeapi.PodSandboxConfig) {
 	By("create NamespaceOption podSandbox")
 	uid := framework.DefaultUIDPrefix + framework.NewUUID()
 	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
@@ -1135,7 +1135,7 @@ func createNamespacePodSandbox(rc internalapi.RuntimeService, podSandboxNamespac
 }
 
 // createNamespaceContainer creates container with different NamespaceOption config.
-func createNamespaceContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, containerName string, image string, containerNamespace *runtimeapi.NamespaceOption, command []string, path string) (string, string, string) {
+func createNamespaceContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, containerName, image string, containerNamespace *runtimeapi.NamespaceOption, command []string, path string) (containerID, logPath string) {
 	By("create NamespaceOption container")
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
@@ -1149,11 +1149,11 @@ func createNamespaceContainer(rc internalapi.RuntimeService, ic internalapi.Imag
 		LogPath: path,
 	}
 
-	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig), containerName, containerConfig.LogPath
+	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig), containerConfig.LogPath
 }
 
 // createReadOnlyRootfsContainer creates the container with specified ReadOnlyRootfs in ContainerConfig.
-func createReadOnlyRootfsContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, readonly bool) (string, string) {
+func createReadOnlyRootfsContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, readonly bool) (logPath, containerID string) {
 	By("create ReadOnlyRootfs container")
 	containerName := prefix + framework.NewUUID()
 	path := containerName + ".log"
@@ -1238,7 +1238,7 @@ func checkNetworkManagement(rc internalapi.RuntimeService, containerID string, m
 }
 
 // createCapabilityContainer creates container with specified Capability in ContainerConfig.
-func createCapabilityContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, add []string, drop []string) string {
+func createCapabilityContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, add, drop []string) string {
 	By("create Capability container")
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
@@ -1276,7 +1276,7 @@ func createAndCheckHostNetwork(rc internalapi.RuntimeService, ic internalapi.Ima
 	command := []string{"sh", "-c", "netstat -ln"}
 	containerName := "container-with-HostNetwork-test-" + framework.NewUUID()
 	path := containerName + ".log"
-	containerID, _, logPath := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.TestContext.TestImageList.DefaultTestContainerImage, namespaceOptions, command, path)
+	containerID, logPath := createNamespaceContainer(rc, ic, podID, podConfig, containerName, framework.TestContext.TestImageList.DefaultTestContainerImage, namespaceOptions, command, path)
 
 	By("start container")
 	startContainer(rc, containerID)
@@ -1313,7 +1313,7 @@ func createSeccompProfileDir() (string, error) {
 }
 
 // createSeccompProfile creates a seccomp test profile with profileContents.
-func createSeccompProfile(profileContents string, profileName string, hostPath string) (string, error) {
+func createSeccompProfile(profileContents, profileName, hostPath string) (string, error) {
 	profilePath := filepath.Join(hostPath, profileName)
 	err := os.WriteFile(profilePath, []byte(profileContents), 0o644)
 	if err != nil {
@@ -1323,7 +1323,7 @@ func createSeccompProfile(profileContents string, profileName string, hostPath s
 }
 
 // seccompTestContainer creates and starts a seccomp sandbox and a container.
-func seccompTestContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, profile *runtimeapi.SecurityProfile) (string, string) {
+func seccompTestContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, profile *runtimeapi.SecurityProfile) (podID, containerID string) {
 	By("create seccomp sandbox")
 	podSandboxName := "seccomp-sandbox-" + framework.NewUUID()
 	uid := framework.DefaultUIDPrefix + framework.NewUUID()
@@ -1338,7 +1338,7 @@ func seccompTestContainer(rc internalapi.RuntimeService, ic internalapi.ImageMan
 		},
 		Labels: framework.DefaultPodLabels,
 	}
-	podID := framework.RunPodSandbox(rc, podConfig)
+	podID = framework.RunPodSandbox(rc, podConfig)
 
 	By("create container")
 	containerNamePrefix := "seccomp-container-" + framework.NewUUID()
@@ -1353,7 +1353,7 @@ func seccompTestContainer(rc internalapi.RuntimeService, ic internalapi.ImageMan
 			},
 		},
 	}
-	containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
+	containerID = framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 
 	By("start container")
 	startContainer(rc, containerID)

@@ -170,7 +170,7 @@ func RegisterFlags() {
 }
 
 // Loads any external file-based parameters into the TestContextType.
-func (tc TestContextType) LoadYamlConfigFiles() error {
+func (tc *TestContextType) LoadYamlConfigFiles() error {
 	// Attempt to load custom images file:
 	if testImagesFilePath != "" {
 		err := LoadYamlFile(testImagesFilePath, &TestContext.TestImageList)

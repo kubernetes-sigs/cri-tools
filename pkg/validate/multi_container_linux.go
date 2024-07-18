@@ -108,12 +108,12 @@ var _ = framework.KubeDescribe("Multiple Containers [Conformance]", func() {
 })
 
 // createMultiContainerTestPodSandbox creates a sandbox with log directory and a container port for httpd container.
-func createMultiContainerTestPodSandbox(c internalapi.RuntimeService) (string, *runtimeapi.PodSandboxConfig, string) {
+func createMultiContainerTestPodSandbox(c internalapi.RuntimeService) (sandboxID string, podConfig *runtimeapi.PodSandboxConfig, logDir string) {
 	podSandboxName := "PodSandbox-for-multi-container-test-" + framework.NewUUID()
 	uid := framework.DefaultUIDPrefix + framework.NewUUID()
 	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
 	logDir, podLogPath := createLogTempDir(podSandboxName)
-	podConfig := &runtimeapi.PodSandboxConfig{
+	podConfig = &runtimeapi.PodSandboxConfig{
 		Metadata:     framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 		LogDirectory: podLogPath,
 		PortMappings: []*runtimeapi.PortMapping{

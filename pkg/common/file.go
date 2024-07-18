@@ -44,7 +44,7 @@ func ReadConfig(filepath string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	yamlConfig := yaml.Node{}
+	yamlConfig := &yaml.Node{}
 	err = yaml.Unmarshal(data, &yamlConfig)
 	if err != nil {
 		return nil, err
@@ -78,9 +78,9 @@ func WriteConfig(c *Config, filepath string) error {
 }
 
 // Extracts config options from the yaml data which is loaded from file.
-func getConfigOptions(yamlData yaml.Node) (*Config, error) {
+func getConfigOptions(yamlData *yaml.Node) (*Config, error) {
 	config := Config{}
-	config.yamlData = &yamlData
+	config.yamlData = yamlData
 
 	if yamlData.Content == nil || len(yamlData.Content) == 0 ||
 		yamlData.Content[0].Content == nil {
