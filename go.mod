@@ -35,7 +35,7 @@ require (
 	k8s.io/cri-client v0.31.0-beta.0
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kubectl v0.30.3
-	k8s.io/kubelet v0.30.2
+	k8s.io/kubelet v0.30.3
 	sigs.k8s.io/yaml v1.4.0
 )
 
