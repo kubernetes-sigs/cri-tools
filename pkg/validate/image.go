@@ -23,14 +23,14 @@ import (
 	"sort"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-
 	"sigs.k8s.io/cri-tools/pkg/framework"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 var _ = framework.KubeDescribe("Image Manager", func() {
@@ -147,7 +147,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 		removeImageList(c, testDifferentTagDifferentImageList)
 		ids := pullImageList(c, testDifferentTagDifferentImageList, testImagePodSandbox)
 		ids = removeDuplicates(ids)
-		Expect(ids).To(HaveLen(3), "3 image ids should be returned")
+		Expect(len(ids)).To(Equal(3), "3 image ids should be returned")
 
 		defer removeImageList(c, testDifferentTagDifferentImageList)
 
@@ -156,7 +156,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 		for i, id := range ids {
 			for _, img := range images {
 				if img.Id == id {
-					Expect(img.RepoTags).To(HaveLen(1), "Should only have 1 repo tag")
+					Expect(len(img.RepoTags)).To(Equal(1), "Should only have 1 repo tag")
 					Expect(img.RepoTags[0]).To(Equal(testDifferentTagDifferentImageList[i]), "Repo tag should be correct")
 					break
 				}
@@ -169,7 +169,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 		removeImageList(c, testDifferentTagSameImageList)
 		ids := pullImageList(c, testDifferentTagSameImageList, testImagePodSandbox)
 		ids = removeDuplicates(ids)
-		Expect(ids).To(HaveLen(1), "Only 1 image id should be returned")
+		Expect(len(ids)).To(Equal(1), "Only 1 image id should be returned")
 
 		defer removeImageList(c, testDifferentTagSameImageList)
 
@@ -192,8 +192,8 @@ func testRemoveImage(c internalapi.ImageManagerService, imageName string) {
 	removeImage(c, imageName)
 
 	By("Check image list empty")
-	imageStatus := framework.ImageStatus(c, imageName)
-	Expect(imageStatus).To(BeNil(), "Should have none image in list")
+	status := framework.ImageStatus(c, imageName)
+	Expect(status).To(BeNil(), "Should have none image in list")
 }
 
 // testPullPublicImage pulls the image named imageName, make sure it success and remove the image.
@@ -204,12 +204,12 @@ func testPullPublicImage(c internalapi.ImageManagerService, imageName string, po
 	framework.PullPublicImage(c, imageName, podConfig)
 
 	By("Check image list to make sure pulling image success : " + imageName)
-	imageStatus := framework.ImageStatus(c, imageName)
-	Expect(imageStatus).NotTo(BeNil(), "Should have one image in list")
-	Expect(imageStatus.Id).NotTo(BeNil(), "Image Id should not be nil")
-	Expect(imageStatus.Size_).NotTo(BeNil(), "Image Size should not be nil")
+	status := framework.ImageStatus(c, imageName)
+	Expect(status).NotTo(BeNil(), "Should have one image in list")
+	Expect(status.Id).NotTo(BeNil(), "Image Id should not be nil")
+	Expect(status.Size_).NotTo(BeNil(), "Image Size should not be nil")
 	if statusCheck != nil {
-		statusCheck(imageStatus)
+		statusCheck(status)
 	}
 
 	testRemoveImage(c, imageName)
@@ -244,12 +244,12 @@ func removeImage(c internalapi.ImageManagerService, imageName string) {
 	}
 }
 
-// removeDuplicates remove duplicates strings from a list.
+// removeDuplicates remove duplicates strings from a list
 func removeDuplicates(ss []string) []string {
 	encountered := map[string]bool{}
 	result := []string{}
 	for _, s := range ss {
-		if encountered[s] {
+		if encountered[s] == true {
 			continue
 		}
 		encountered[s] = true

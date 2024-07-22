@@ -21,13 +21,13 @@ import (
 	"os"
 	"path/filepath"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-
 	"sigs.k8s.io/cri-tools/pkg/common"
 	"sigs.k8s.io/cri-tools/pkg/framework"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 var _ = framework.KubeDescribe("PodSandbox", func() {
@@ -162,7 +162,7 @@ func createLogTempDir(podSandboxName string) (string, string) {
 	hostPath, err := os.MkdirTemp("", "podLogTest")
 	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
 	podLogPath := filepath.Join(hostPath, podSandboxName)
-	err = os.MkdirAll(podLogPath, 0o777)
+	err = os.MkdirAll(podLogPath, 0777)
 	framework.ExpectNoError(err, "failed to create host path %s: %v", podLogPath, err)
 
 	return hostPath, podLogPath

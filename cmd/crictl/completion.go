@@ -41,7 +41,9 @@ func bashCompletion(c *cli.Context) error {
 		if command.Hidden {
 			continue
 		}
-		subcommands = append(subcommands, command.Names()...)
+		for _, name := range command.Names() {
+			subcommands = append(subcommands, name)
+		}
 	}
 
 	for _, flag := range c.App.Flags {
@@ -88,6 +90,7 @@ func zshCompletion(c *cli.Context) error {
 
 	fmt.Fprintln(c.App.Writer, fmt.Sprintf(zshCompletionTemplate, strings.Join(subcommands, "' '"), strings.Join(opts, "' '")))
 	return nil
+
 }
 
 func fishCompletion(c *cli.Context) error {

@@ -217,7 +217,7 @@ var listImageCommand = &cli.Command{
 		}
 
 		// output in table format by default.
-		display := newDefaultTableDisplay()
+		display := newTableDisplay(20, 1, 3, ' ', 0)
 		verbose := c.Bool("verbose")
 		showDigest := c.Bool("digests")
 		showPinned := c.Bool("pinned")
@@ -583,7 +583,7 @@ func parseCreds(creds string) (string, string, error) {
 func getAuth(creds string, auth string, username string) (*pb.AuthConfig, error) {
 	if username != "" {
 		fmt.Print("Enter Password:")
-		bytePassword, err := term.ReadPassword(int(syscall.Stdin)) //nolint:unconvert // required for windows
+		bytePassword, err := term.ReadPassword(int(syscall.Stdin))
 		fmt.Print("\n")
 		if err != nil {
 			return nil, err
@@ -706,7 +706,7 @@ func ListImages(client internalapi.ImageManagerService, image string) (*pb.ListI
 	return resp, nil
 }
 
-// filterImagesList filter images based on --filter flag.
+// filterImagesList filter images based on --filter flag
 func filterImagesList(imageList []*pb.Image, filters []string) ([]*pb.Image, error) {
 	filtered := []*pb.Image{}
 	filtered = append(filtered, imageList...)

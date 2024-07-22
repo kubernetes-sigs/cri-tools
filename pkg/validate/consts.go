@@ -20,7 +20,6 @@ import (
 	"runtime"
 
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-
 	"sigs.k8s.io/cri-tools/pkg/framework"
 )
 
@@ -37,7 +36,7 @@ var (
 	echoHelloOutput   string
 	checkPathCmd      func(string) []string
 
-	// Linux defaults.
+	// Linux defaults
 	echoHelloLinuxCmd      = []string{"echo", "-n", "hello"}
 	sleepLinuxCmd          = []string{"sleep", "4321"}
 	checkSleepLinuxCmd     = []string{"sh", "-c", "pgrep sleep || true"}
@@ -48,7 +47,7 @@ var (
 	echoHelloLinuxOutput   = "hello"
 	checkPathLinuxCmd      = func(path string) []string { return []string{"ls", "-A", path} }
 
-	// Windows defaults.
+	// Windows defaults
 	echoHelloWindowsCmd      = []string{"powershell", "-c", "echo hello"}
 	sleepWindowsCmd          = []string{"powershell", "-c", "start-sleep 4321"}
 	checkSleepWindowsCmd     = []string{"powershell", "-c", "get-process | findstr sleep; exit 0"}
@@ -101,13 +100,13 @@ const (
 	imagePredefinedGroupUID    = int64(1000)
 	imagePredefinedGroupGID    = int64(50000)
 
-	// Linux defaults.
+	// Linux defaults
 	testLinuxImageWithoutTag        = registry + "test-image-latest"
 	testLinuxImageWithTag           = registry + "test-image-tag:test"
 	testLinuxImageWithDigest        = registry + "test-image-digest@sha256:9700f9a2f5bf2c45f2f605a0bd3bce7cf37420ec9d3ed50ac2758413308766bf"
 	testLinuxImageWithAllReferences = registry + "test-image-tag:all"
 
-	// Windows defaults.
+	// Windows defaults
 	testWindowsImageWithoutTag        = registry + "win-test-image-latest"
 	testWindowsImageWithTag           = registry + "win-test-image-tag:test"
 	testWindowsImageWithDigest        = registry + "win-test-image-digest@sha256:0e8cc62aee4ed03eb85150eb86e5d1fd7bda705511b8951fe6507835cbd34be3"
@@ -115,28 +114,28 @@ const (
 )
 
 var (
-	// image reference without tag.
+	// image reference without tag
 	testImageWithoutTag string
 
-	// name-tagged reference for test image.
+	// name-tagged reference for test image
 	testImageWithTag string
 
-	// digested reference for test image.
+	// digested reference for test image
 	testImageWithDigest string
 
 	// image used to test all kinds of references.
 	testImageWithAllReferences string
 
-	// image list where different tags refer to different images.
+	// image list where different tags refer to different images
 	testDifferentTagDifferentImageList []string
 
-	// image list where different tags refer to the same image.
+	// image list where different tags refer to the same image
 	testDifferentTagSameImageList []string
 
-	// pod sandbox to use when pulling images.
+	// pod sandbox to use when pulling images
 	testImagePodSandbox *runtimeapi.PodSandboxConfig
 
-	// Linux defaults.
+	// Linux defaults
 	testLinuxDifferentTagDifferentImageList = []string{
 		registry + "test-image-1:latest",
 		registry + "test-image-2:latest",
@@ -148,7 +147,7 @@ var (
 		registry + "test-image-tags:3",
 	}
 
-	// Windows defaults.
+	// Windows defaults
 	testWindowsDifferentTagDifferentImageList = []string{
 		registry + "win-test-image-1:latest",
 		registry + "win-test-image-2:latest",
@@ -194,14 +193,14 @@ const (
 	webServerHostPortForPortMapping        int32 = 12000
 	webServerHostPortForPortForward        int32 = 12001
 	webServerHostPortForHostNetPortFroward int32 = 12002
-	// The port used in hostNetNginxImage (See images/hostnet-nginx/).
+	// The port used in hostNetNginxImage (See images/hostnet-nginx/)
 	webServerHostNetContainerPort int32 = 12003
 
-	// Linux defaults.
+	// Linux defaults
 	webServerLinuxImage        = framework.DefaultRegistryE2ETestImagesPrefix + "nginx:1.14-2"
 	hostNetWebServerLinuxImage = registry + "hostnet-nginx-" + runtime.GOARCH
 
-	// Windows defaults.
+	// Windows defaults
 	webServerWindowsImage        = webServerLinuxImage
 	hostNetWebServerWindowsImage = webServerLinuxImage
 )
@@ -213,7 +212,7 @@ var (
 	getDNSConfigContent   []string
 	getHostnameCmd        []string
 
-	// Linux defaults.
+	// Linux defaults
 	getDNSConfigLinuxCmd     = []string{"cat", resolvConfigPath}
 	getDNSConfigLinuxContent = []string{
 		"nameserver " + defaultDNSServer,
@@ -260,14 +259,16 @@ const (
 	defaultStreamServerAddress string = "127.0.0.1:10250"
 	defaultStreamServerScheme  string = "http"
 
-	// Linux defaults.
+	// Linux defaults
 	attachEchoHelloLinuxOutput = "hello"
 
-	// Windows defaults.
+	// Windows defaults
 	attachEchoHelloWindowsOutput = "hello\r\n\r\nC:\\>"
 )
 
-var attachEchoHelloOutput string
+var (
+	attachEchoHelloOutput string
+)
 
 var _ = framework.AddBeforeSuiteCallback(func() {
 	if runtime.GOOS != "windows" || framework.TestContext.IsLcow {

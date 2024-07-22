@@ -19,11 +19,11 @@ package validate
 import (
 	"context"
 
-	. "github.com/onsi/ginkgo/v2"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-
 	"sigs.k8s.io/cri-tools/pkg/framework"
+
+	. "github.com/onsi/ginkgo/v2"
 )
 
 var _ = framework.KubeDescribe("Streaming", func() {
@@ -71,5 +71,6 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			By("check the output of portforward")
 			checkPortForward(rc, req, webServerHostPortForHostNetPortFroward, webServerHostNetContainerPort)
 		})
+
 	})
 })

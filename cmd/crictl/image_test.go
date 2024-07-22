@@ -17,9 +17,10 @@ limitations under the License.
 package main
 
 import (
+	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 func fakeImage(id string, digest []string, tags []string) *pb.Image {

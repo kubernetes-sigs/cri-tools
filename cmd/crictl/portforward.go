@@ -56,7 +56,7 @@ var runtimePortForwardCommand = &cli.Command{
 			return err
 		}
 
-		opts := portforwardOptions{
+		var opts = portforwardOptions{
 			id:        c.Args().Get(0),
 			ports:     c.Args().Tail(),
 			transport: c.String(transportFlag),
@@ -68,10 +68,11 @@ var runtimePortForwardCommand = &cli.Command{
 	},
 }
 
-// PortForward sends an PortForwardRequest to server, and parses the returned PortForwardResponse.
+// PortForward sends an PortForwardRequest to server, and parses the returned PortForwardResponse
 func PortForward(client internalapi.RuntimeService, opts portforwardOptions) error {
 	if opts.id == "" {
 		return errors.New("ID cannot be empty")
+
 	}
 	request := &pb.PortForwardRequest{
 		PodSandboxId: opts.id,
@@ -86,21 +87,21 @@ func PortForward(client internalapi.RuntimeService, opts portforwardOptions) err
 	}
 	portforwardURL := r.Url
 
-	parsedURL, err := url.Parse(portforwardURL)
+	URL, err := url.Parse(portforwardURL)
 	if err != nil {
 		return err
 	}
 
-	if parsedURL.Host == "" {
-		parsedURL.Host = kubeletURLHost
+	if URL.Host == "" {
+		URL.Host = kubeletURLHost
 	}
 
-	if parsedURL.Scheme == "" {
-		parsedURL.Scheme = kubeletURLSchema
+	if URL.Scheme == "" {
+		URL.Scheme = kubeletURLSchema
 	}
 
-	logrus.Debugf("PortForward URL: %v", parsedURL)
-	dialer, err := getDialer(opts.transport, parsedURL)
+	logrus.Debugf("PortForward URL: %v", URL)
+	dialer, err := getDialer(opts.transport, URL)
 	if err != nil {
 		return fmt.Errorf("get dialer: %w", err)
 	}
@@ -115,7 +116,7 @@ func PortForward(client internalapi.RuntimeService, opts portforwardOptions) err
 	return pf.ForwardPorts()
 }
 
-func getDialer(transport string, u *url.URL) (exec httpstream.Dialer, err error) {
+func getDialer(transport string, url *url.URL) (exec httpstream.Dialer, err error) {
 	config := &rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}
 
 	switch transport {
@@ -124,10 +125,10 @@ func getDialer(transport string, u *url.URL) (exec httpstream.Dialer, err error)
 		if err != nil {
 			return nil, fmt.Errorf("get SPDY round tripper: %w", err)
 		}
-		return spdy.NewDialer(upgrader, &http.Client{Transport: tr}, "POST", u), nil
+		return spdy.NewDialer(upgrader, &http.Client{Transport: tr}, "POST", url), nil
 
 	case transportWebsocket:
-		return portforward.NewSPDYOverWebsocketDialer(u, config)
+		return portforward.NewSPDYOverWebsocketDialer(url, config)
 
 	default:
 		return nil, fmt.Errorf("unknown transport: %s", transport)

@@ -23,13 +23,13 @@ import (
 	"path/filepath"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"golang.org/x/sys/unix"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-
 	"sigs.k8s.io/cri-tools/pkg/framework"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 var _ = framework.KubeDescribe("Container Mount Propagation", func() {
@@ -78,9 +78,9 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 
 			switch propagation {
 			case runtimeapi.MountPropagation_PROPAGATION_PRIVATE:
-				Expect(output).To(BeEmpty(), "len(output) should be zero.")
+				Expect(len(output)).To(BeZero(), "len(output) should be zero.")
 			case runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL, runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER:
-				Expect(output).NotTo(BeEmpty(), "len(output) should not be zero.")
+				Expect(len(output)).NotTo(BeZero(), "len(output) should not be zero.")
 			}
 
 			By("create a directory named containerMntPoint as a mount point in container")
@@ -98,9 +98,9 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 
 			switch propagation {
 			case runtimeapi.MountPropagation_PROPAGATION_PRIVATE, runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER:
-				Expect(fileInfo).To(BeEmpty(), "len(fileInfo) should be zero.")
+				Expect(len(fileInfo)).To(BeZero(), "len(fileInfo) should be zero.")
 			case runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL:
-				Expect(fileInfo).NotTo(BeEmpty(), "len(fileInfo) should not be zero.")
+				Expect(len(fileInfo)).NotTo(BeZero(), "len(fileInfo) should not be zero.")
 			}
 		}
 
@@ -159,10 +159,10 @@ var _ = framework.KubeDescribe("Container OOM", func() {
 			state := getContainerStatus(rc, containerID)
 
 			By("exit code is 137")
-			Expect(state.ExitCode).To(Equal(int32(137)))
+			Expect(state.ExitCode, int32(137))
 
 			By("reason is OOMKilled")
-			Expect(state.Reason).To(Equal("OOMKilled"))
+			Expect(state.Reason, "OOMKilled")
 		})
 	})
 })
@@ -174,11 +174,11 @@ func createHostPathForMountPropagation(podID string, propagationOpt runtimeapi.M
 
 	mntSource := filepath.Join(hostPath, "mnt")
 	propagationMntPoint := filepath.Join(mntSource, "propagationMnt")
-	err = os.MkdirAll(propagationMntPoint, 0o700)
+	err = os.MkdirAll(propagationMntPoint, 0700)
 	framework.ExpectNoError(err, "failed to create volume dir %q: %v", propagationMntPoint, err)
 
 	propagationSrcDir := filepath.Join(hostPath, "propagationSrcDir")
-	err = os.MkdirAll(propagationSrcDir, 0o700)
+	err = os.MkdirAll(propagationSrcDir, 0700)
 	framework.ExpectNoError(err, "failed to create volume dir %q: %v", propagationSrcDir, err)
 
 	_, err = os.Create(filepath.Join(propagationSrcDir, "flagFile"))
@@ -255,7 +255,7 @@ func createMountPropagationContainer(
 	By("verifying container status")
 	resp, err := rc.ContainerStatus(context.TODO(), containerID, true)
 	framework.ExpectNoError(err, "unable to get container status")
-	Expect(resp.Status.Mounts).To(HaveLen(1))
+	Expect(len(resp.Status.Mounts), 1)
 	Expect(resp.Status.Mounts[0].ContainerPath).To(Equal(hostPath))
 	Expect(resp.Status.Mounts[0].HostPath).To(Equal(hostPath))
 	Expect(resp.Status.Mounts[0].Readonly).To(BeFalse())
@@ -434,7 +434,7 @@ func createHostPathForRROMount(podID string) (string, func()) {
 	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
 
 	tmpfsMntPoint := filepath.Join(hostPath, "tmpfs")
-	err = os.MkdirAll(tmpfsMntPoint, 0o700)
+	err = os.MkdirAll(tmpfsMntPoint, 0700)
 	framework.ExpectNoError(err, "failed to create tmpfs dir %q: %v", tmpfsMntPoint, err)
 
 	err = unix.Mount("none", tmpfsMntPoint, "tmpfs", 0, "")
@@ -499,7 +499,7 @@ func createMountContainer(
 	By("verifying container status")
 	resp, err := rc.ContainerStatus(context.TODO(), containerID, true)
 	framework.ExpectNoError(err, "unable to get container status")
-	Expect(resp.Status.Mounts).To(HaveLen(len(mounts)))
+	Expect(len(resp.Status.Mounts), len(mounts))
 
 	return containerID
 }

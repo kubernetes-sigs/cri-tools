@@ -25,7 +25,7 @@ import (
 	. "github.com/onsi/gomega/gexec"
 )
 
-// The actual test suite.
+// The actual test suite
 var _ = t.Describe("inspecti", func() {
 	const (
 		imageSuccessText = "Image is up to date"

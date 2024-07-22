@@ -23,19 +23,19 @@ import (
 	"runtime"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	"github.com/onsi/gomega/gmeasure"
 	"github.com/sirupsen/logrus"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-
 	"sigs.k8s.io/cri-tools/pkg/framework"
+
+	. "github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega/gmeasure"
 )
 
 const (
 	defaultImageBenchmarkTimeoutSeconds = 10
 
-	// defaultImageListingPrefix is for avoiding Docker Hub's rate limit.
+	// defaultImageListingPrefix is for avoiding Docker Hub's rate limit
 	defaultImageListingPrefix = "public.ecr.aws/docker/library/"
 )
 
@@ -46,7 +46,6 @@ var defaultImageListingBenchmarkImagesAmd64 = []string{
 	defaultImageListingPrefix + "busybox:1-glibc",
 	defaultImageListingPrefix + "busybox:1-musl",
 }
-
 var defaultImageListingBenchmarkImages = []string{
 	defaultImageListingPrefix + "busybox:1",
 	defaultImageListingPrefix + "busybox:1-glibc",
@@ -159,6 +158,7 @@ var _ = framework.KubeDescribe("Image", func() {
 					MetaInfo:              map[string]string{"imageId": imageId},
 				}
 				lifecycleResultsChannel <- &res
+
 			}, samplingConfig)
 
 			// Send nil and give the manager a minute to process any already-queued results:
@@ -232,6 +232,7 @@ var _ = framework.KubeDescribe("Image", func() {
 					MetaInfo:              nil,
 				}
 				imagesResultsChannel <- &res
+
 			}, samplingConfig)
 
 			// Send nil and give the manager a minute to process any already-queued results:

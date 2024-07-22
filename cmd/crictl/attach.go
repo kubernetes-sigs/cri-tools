@@ -69,22 +69,24 @@ var runtimeAttachCommand = &cli.Command{
 		ctx, cancel := context.WithCancel(c.Context)
 		defer cancel()
 
-		opts := attachOptions{
+		var opts = attachOptions{
 			id:    id,
 			tty:   c.Bool("tty"),
 			stdin: c.Bool("stdin"),
 		}
 		if err = Attach(ctx, runtimeClient, opts); err != nil {
 			return fmt.Errorf("attaching running container failed: %w", err)
+
 		}
 		return nil
 	},
 }
 
-// Attach sends an AttachRequest to server, and parses the returned AttachResponse.
+// Attach sends an AttachRequest to server, and parses the returned AttachResponse
 func Attach(ctx context.Context, client internalapi.RuntimeService, opts attachOptions) error {
 	if opts.id == "" {
 		return errors.New("ID cannot be empty")
+
 	}
 	request := &pb.AttachRequest{
 		ContainerId: opts.id,

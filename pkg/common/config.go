@@ -24,7 +24,7 @@ import (
 	"time"
 )
 
-// ServerConfiguration is the config for connecting to and using a CRI server.
+// ServerConfiguration is the config for connecting to and using a CRI server
 type ServerConfiguration struct {
 	// RuntimeEndpoint is CRI server runtime endpoint
 	RuntimeEndpoint string
@@ -40,7 +40,7 @@ type ServerConfiguration struct {
 	DisablePullOnRun bool
 }
 
-// GetServerConfigFromFile returns the CRI server configuration from file.
+// GetServerConfigFromFile returns the CRI server configuration from file
 func GetServerConfigFromFile(configFileName, currentDir string) (*ServerConfiguration, error) {
 	serverConfig := ServerConfiguration{}
 	if _, err := os.Stat(configFileName); err != nil {
