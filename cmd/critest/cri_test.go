@@ -57,7 +57,7 @@ func init() {
 }
 
 // Load server configuration from file and use each config settings if that
-// option is not set in the CLI
+// option is not set in the CLI.
 func getConfigFromFile() {
 	var configFromFile *common.ServerConfiguration
 

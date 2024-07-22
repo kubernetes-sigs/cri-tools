@@ -20,7 +20,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 )
 
-// The actual test suite
+// The actual test suite.
 var _ = t.Describe("info", func() {
 	It("should succeed", func() {
 		t.CrictlExpectSuccess("info", "NetworkReady")

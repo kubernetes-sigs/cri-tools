@@ -82,7 +82,7 @@ var runtimeAttachCommand = &cli.Command{
 	},
 }
 
-// Attach sends an AttachRequest to server, and parses the returned AttachResponse
+// Attach sends an AttachRequest to server, and parses the returned AttachResponse.
 func Attach(ctx context.Context, client internalapi.RuntimeService, opts attachOptions) error {
 	if opts.id == "" {
 		return errors.New("ID cannot be empty")

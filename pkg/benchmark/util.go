@@ -29,7 +29,7 @@ import (
 // LifecycleBenchmarkDatapoint encodes a single benchmark for a lifecycle operation.
 // Contains a slice of int64s which represent the duration in nanoseconds of the
 // operations which comprise a lifecycle being benchmarked.
-// (e.g. the individual CRUD operations which are cycled through during the benchmark)
+// (e.g. the individual CRUD operations which are cycled through during the benchmark).
 type LifecycleBenchmarkDatapoint struct {
 	// int64 index of the sample.
 	SampleIndex int `json:"sampleIndex"`

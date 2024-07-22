@@ -249,7 +249,7 @@ func createDefaultAttach(c internalapi.RuntimeService, containerID string) strin
 	return resp.Url
 }
 
-// safeBuffer is a goroutine safe bytes.Buffer
+// safeBuffer is a goroutine safe bytes.Buffer.
 type safeBuffer struct {
 	mu     sync.Mutex
 	buffer bytes.Buffer

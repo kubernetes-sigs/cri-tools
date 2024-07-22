@@ -244,7 +244,7 @@ func removeImage(c internalapi.ImageManagerService, imageName string) {
 	}
 }
 
-// removeDuplicates remove duplicates strings from a list
+// removeDuplicates remove duplicates strings from a list.
 func removeDuplicates(ss []string) []string {
 	encountered := map[string]bool{}
 	result := []string{}

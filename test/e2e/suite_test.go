@@ -24,7 +24,7 @@ import (
 	. "sigs.k8s.io/cri-tools/test/framework"
 )
 
-// TestE2E runs the created specs
+// TestE2E runs the created specs.
 func TestE2E(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "e2e")

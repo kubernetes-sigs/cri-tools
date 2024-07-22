@@ -35,7 +35,7 @@ import (
 const (
 	defaultImageBenchmarkTimeoutSeconds = 10
 
-	// defaultImageListingPrefix is for avoiding Docker Hub's rate limit
+	// defaultImageListingPrefix is for avoiding Docker Hub's rate limit.
 	defaultImageListingPrefix = "public.ecr.aws/docker/library/"
 )
 

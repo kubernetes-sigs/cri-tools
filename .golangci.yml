@@ -20,6 +20,7 @@ linters:
     - gocheckcompilerdirectives
     - gochecksumtype
     - gocritic
+    - godot
     - gofmt
     - goimports
     - gosmopolitan
@@ -80,7 +81,6 @@ linters:
     # - gocognit
     # - goconst
     # - gocyclo
-    # - godot
     # - godox
     # - gofumpt
     # - goheader
