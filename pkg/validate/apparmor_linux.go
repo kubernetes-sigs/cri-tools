@@ -297,6 +297,5 @@ func loadTestProfiles() error {
 		return fmt.Errorf("load profiles: %w", err)
 	}
 
-	logrus.Infof("Loaded profiles: %v", out)
 	return nil
 }
