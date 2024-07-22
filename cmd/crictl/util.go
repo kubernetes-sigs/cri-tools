@@ -42,7 +42,7 @@ import (
 )
 
 const (
-	// truncatedImageIDLen is the truncated length of imageID.
+	// truncatedImageIDLen is the truncated length of imageID
 	truncatedIDLen = 13
 )
 
@@ -50,7 +50,7 @@ var (
 	// The global stopCh for monitoring Interrupt signal.
 	// DO NOT use it directly. Use SetupInterruptSignalHandler() to get it.
 	signalIntStopCh chan struct{}
-	// only setup stopCh once.
+	// only setup stopCh once
 	signalIntSetupOnce = &sync.Once{}
 )
 
@@ -77,7 +77,6 @@ func InterruptableRPC[T any](
 	rpcFunc func(context.Context) (T, error),
 ) (res T, err error) {
 	if ctx == nil {
-		//nolint:contextcheck // We inherit the parent in case of a nil context
 		ctx = context.Background()
 	}
 	ctx, cancel := context.WithCancel(ctx)
@@ -289,7 +288,7 @@ type statusData struct {
 	info            map[string]string
 }
 
-func outputStatusData(statuses []statusData, format, tmplStr string) (err error) {
+func outputStatusData(statuses []statusData, format string, tmplStr string) (err error) {
 	if len(statuses) == 0 {
 		return nil
 	}
@@ -371,7 +370,7 @@ func outputStatusData(statuses []statusData, format, tmplStr string) (err error)
 	return nil
 }
 
-func outputEvent(event protoiface.MessageV1, format, tmplStr string) error {
+func outputEvent(event protoiface.MessageV1, format string, tmplStr string) error {
 	switch format {
 	case "yaml":
 		err := outputProtobufObjAsYAML(event)
@@ -468,7 +467,7 @@ func matchesRegex(pattern, target string) bool {
 	return matched
 }
 
-func matchesImage(imageClient internalapi.ImageManagerService, image, containerImage string) (bool, error) {
+func matchesImage(imageClient internalapi.ImageManagerService, image string, containerImage string) (bool, error) {
 	if image == "" {
 		return true, nil
 	}

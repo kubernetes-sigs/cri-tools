@@ -17,9 +17,10 @@ limitations under the License.
 package framework
 
 import (
+	internalapi "k8s.io/cri-api/pkg/apis"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	internalapi "k8s.io/cri-api/pkg/apis"
 )
 
 // Framework will keep a client for you.
@@ -52,7 +53,7 @@ func NewCRIFramework(client *InternalAPIClient) *Framework {
 	return f
 }
 
-// BeforeEach gets a client.
+// BeforeEach gets a client
 func (f *Framework) BeforeEach() {
 	if f.CRIClient == nil {
 		c, err := LoadCRIClient()
@@ -61,7 +62,7 @@ func (f *Framework) BeforeEach() {
 	}
 }
 
-// AfterEach clean resources.
+// AfterEach clean resources
 func (f *Framework) AfterEach() {
 	f.CRIClient = nil
 }

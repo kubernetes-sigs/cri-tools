@@ -23,13 +23,13 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-
 	"sigs.k8s.io/cri-tools/pkg/common"
 	"sigs.k8s.io/cri-tools/pkg/framework"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 var _ = framework.KubeDescribe("Networking", func() {
@@ -194,7 +194,7 @@ func createPodSandboxWithPortMapping(c internalapi.RuntimeService, portMappings 
 }
 
 // checkHostname checks the container hostname.
-func checkHostname(c internalapi.RuntimeService, containerID, hostname string) {
+func checkHostname(c internalapi.RuntimeService, containerID string, hostname string) {
 	By("get the current hostname via execSync")
 	stdout, stderr, err := c.ExecSync(context.TODO(), containerID, getHostnameCmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	framework.ExpectNoError(err, "failed to execSync in container %q", containerID)
@@ -215,7 +215,7 @@ func checkDNSConfig(c internalapi.RuntimeService, containerID string, expectedCo
 	framework.Logf("check DNS config succeed")
 }
 
-// createWebServerContainer creates a container running a web server.
+// createWebServerContainer creates a container running a web server
 func createWebServerContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
@@ -238,8 +238,10 @@ func createHostNetWebServerContainer(rc internalapi.RuntimeService, ic internala
 }
 
 // checkMainPage check if the we can get the main page of the pod via given IP:port.
-func checkMainPage(c internalapi.RuntimeService, podID string, hostPort, containerPort int32) {
+func checkMainPage(c internalapi.RuntimeService, podID string, hostPort int32, containerPort int32) {
 	By("get the IP:port needed to be checked")
+	var err error
+	var resp *http.Response
 
 	url := "http://"
 	if hostPort != 0 {
@@ -254,28 +256,11 @@ func checkMainPage(c internalapi.RuntimeService, podID string, hostPort, contain
 
 	By("check the content of " + url)
 
-	respChan := make(chan *http.Response, 1)
-	defer close(respChan)
-
 	Eventually(func() error {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-		defer cancel()
-
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
-		if err != nil {
-			return err
-		}
-
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return err
-		}
-		defer resp.Body.Close()
-		respChan <- resp
-		return nil
+		resp, err = http.Get(url)
+		return err
 	}, time.Minute, time.Second).Should(BeNil())
 
-	resp := <-respChan
 	Expect(resp.StatusCode).To(Equal(200), "The status code of response should be 200.")
 	framework.Logf("check port mapping succeed")
 }

@@ -18,7 +18,6 @@ package framework
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"runtime"
@@ -27,74 +26,74 @@ import (
 
 	"github.com/distribution/reference"
 	"github.com/google/uuid"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"gopkg.in/yaml.v3"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	remote "k8s.io/cri-client/pkg"
-
 	"sigs.k8s.io/cri-tools/pkg/common"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 var (
-	// the callbacks to run during BeforeSuite.
+	// the callbacks to run during BeforeSuite
 	beforeSuiteCallbacks []func()
 
-	// DefaultPodLabels are labels used by default in pods.
+	// DefaultPodLabels are labels used by default in pods
 	DefaultPodLabels map[string]string
 
-	// DefaultContainerCommand is the default command used for containers.
+	// DefaultContainerCommand is the default command used for containers
 	DefaultContainerCommand []string
 
-	// DefaultPauseCommand is the default command used for containers.
+	// DefaultPauseCommand is the default command used for containers
 	DefaultPauseCommand []string
 
-	// DefaultLinuxPodLabels default pod labels for Linux.
+	// DefaultLinuxPodLabels default pod labels for Linux
 	DefaultLinuxPodLabels = map[string]string{}
 
-	// DefaultLinuxContainerCommand default container command for Linux.
+	// DefaultLinuxContainerCommand default container command for Linux
 	DefaultLinuxContainerCommand = []string{"top"}
 
-	// DefaultLinuxPauseCommand default container command for Linux pause.
+	// DefaultLinuxPauseCommand default container command for Linux pause
 	DefaultLinuxPauseCommand = []string{"sh", "-c", "top"}
 
-	// DefaultLcowPodLabels default pod labels for Linux containers on Windows.
+	// DefaultLcowPodLabels default pod labels for Linux containers on Windows
 	DefaultLcowPodLabels = map[string]string{
 		"sandbox-platform": "linux/amd64",
 	}
 
-	// DefaultWindowsPodLabels default pod labels for Windows.
+	// DefaultWindowsPodLabels default pod labels for Windows
 	DefaultWindowsPodLabels = map[string]string{}
 
-	// DefaultWindowsContainerCommand default container command for Windows.
+	// DefaultWindowsContainerCommand default container command for Windows
 	DefaultWindowsContainerCommand = []string{"cmd", "/c", "ping -t localhost"}
 
-	// DefaultWindowsPauseCommand default container pause command for Windows.
+	// DefaultWindowsPauseCommand default container pause command for Windows
 	DefaultWindowsPauseCommand = []string{"powershell", "-c", "ping -t localhost"}
 )
 
 const (
-	// DefaultUIDPrefix is a default UID prefix of PodSandbox.
+	// DefaultUIDPrefix is a default UID prefix of PodSandbox
 	DefaultUIDPrefix string = "cri-test-uid"
 
-	// DefaultNamespacePrefix is a default namespace prefix of PodSandbox.
+	// DefaultNamespacePrefix is a default namespace prefix of PodSandbox
 	DefaultNamespacePrefix string = "cri-test-namespace"
 
-	// DefaultAttempt is a default attempt prefix of PodSandbox or container.
+	// DefaultAttempt is a default attempt prefix of PodSandbox or container
 	DefaultAttempt uint32 = 2
 
-	// DefaultStopContainerTimeout is the default timeout for stopping container.
+	// DefaultStopContainerTimeout is the default timeout for stopping container
 	DefaultStopContainerTimeout int64 = 60
 
-	// DefaultLinuxContainerImage default container image for Linux.
+	// DefaultLinuxContainerImage default container image for Linux
 	DefaultLinuxContainerImage string = DefaultRegistryE2ETestImagesPrefix + "busybox:1.29-2"
 
-	// DefaultWindowsContainerImage default container image for Windows.
+	// DefaultWindowsContainerImage default container image for Windows
 	DefaultWindowsContainerImage string = DefaultLinuxContainerImage
 )
 
-// Set the constants based on operating system and flags.
+// Set the constants based on operating system and flags
 var _ = BeforeSuite(func() {
 	if runtime.GOOS != "windows" || TestContext.IsLcow {
 		DefaultPodLabels = DefaultLinuxPodLabels
@@ -123,7 +122,7 @@ var _ = BeforeSuite(func() {
 	}
 })
 
-// AddBeforeSuiteCallback adds a callback to run during BeforeSuite.
+// AddBeforeSuiteCallback adds a callback to run during BeforeSuite
 func AddBeforeSuiteCallback(callback func()) bool {
 	beforeSuiteCallbacks = append(beforeSuiteCallbacks, callback)
 	return true
@@ -141,7 +140,7 @@ func LoadCRIClient() (*InternalAPIClient, error) {
 		return nil, err
 	}
 
-	imageServiceAddr := TestContext.ImageServiceAddr
+	var imageServiceAddr = TestContext.ImageServiceAddr
 	if imageServiceAddr == "" {
 		// Fallback to runtime service endpoint
 		imageServiceAddr = TestContext.RuntimeServiceAddr
@@ -161,19 +160,19 @@ func nowStamp() string {
 	return time.Now().Format(time.StampMilli)
 }
 
-func logf(level, format string, args ...interface{}) {
+func log(level string, format string, args ...interface{}) {
 	fmt.Fprintf(GinkgoWriter, nowStamp()+": "+level+": "+format+"\n", args...)
 }
 
 // Logf prints a info message.
 func Logf(format string, args ...interface{}) {
-	logf("INFO", format, args...)
+	log("INFO", format, args...)
 }
 
 // Failf prints an error message.
 func Failf(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
-	logf("INFO", msg)
+	log("INFO", msg)
 	Fail(nowStamp()+": "+msg, 1)
 }
 
@@ -259,7 +258,7 @@ func CreateDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageM
 	return CreateDefaultContainerWithLabels(rc, ic, podID, podConfig, prefix, nil)
 }
 
-// CreateDefaultContainerWithLabels creates a default container with default options.
+// CreateDefaultContainerWithLabels creates a default container with default options
 func CreateDefaultContainerWithLabels(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, labels map[string]string) string {
 	containerName := prefix + NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
@@ -286,7 +285,7 @@ func CreatePauseContainer(rc internalapi.RuntimeService, ic internalapi.ImageMan
 	return CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }
 
-// CreateContainerWithError creates a container but leave error check to caller.
+// CreateContainerWithError creates a container but leave error check to caller
 func CreateContainerWithError(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, config *runtimeapi.ContainerConfig, podID string, podConfig *runtimeapi.PodSandboxConfig) (string, error) {
 	// Pull the image if it does not exist.
 	imageName := config.Image.Image
@@ -338,26 +337,29 @@ func ListImage(c internalapi.ImageManagerService, filter *runtimeapi.ImageFilter
 // PrepareImageName builds a pullable image name for the provided one.
 func PrepareImageName(imageName string) string {
 	ref, err := reference.ParseNamed(imageName)
-	if err != nil {
-		if errors.Is(err, reference.ErrNameNotCanonical) {
-			// Non canonical images can simply be prefixed
-			return fmt.Sprintf("%s/%s", TestContext.RegistryPrefix, imageName)
+
+	switch err {
+	case nil:
+		// Modify the image if it's a fully qualified image name
+		if TestContext.RegistryPrefix != DefaultRegistryPrefix {
+			r := fmt.Sprintf("%s/%s", TestContext.RegistryPrefix, reference.Path(ref))
+			ref, err = reference.ParseNamed(r)
+			ExpectNoError(err, "failed to parse new image name: %v", err)
+		}
+		imageName = ref.String()
+
+		if !strings.Contains(imageName, ":") {
+			imageName += ":latest"
+			Logf("Use latest as default image tag.")
 		}
 
+	case reference.ErrNameNotCanonical:
+		// Non canonical images can simply be prefixed
+		imageName = fmt.Sprintf("%s/%s", TestContext.RegistryPrefix, imageName)
+
+	default:
 		Failf("Unable to parse imageName: %v", err)
-	}
 
-	// Modify the image if it's a fully qualified image name
-	if TestContext.RegistryPrefix != DefaultRegistryPrefix {
-		r := fmt.Sprintf("%s/%s", TestContext.RegistryPrefix, reference.Path(ref))
-		ref, err = reference.ParseNamed(r)
-		ExpectNoError(err, "failed to parse new image name: %v", err)
-	}
-	imageName = ref.String()
-
-	if !strings.Contains(imageName, ":") {
-		imageName += ":latest"
-		Logf("Use latest as default image tag.")
 	}
 
 	return imageName
@@ -381,12 +383,12 @@ func LoadYamlFile(filepath string, obj interface{}) error {
 	Logf("Attempting to load YAML file %q into %+v", filepath, obj)
 	fileContent, err := os.ReadFile(filepath)
 	if err != nil {
-		return fmt.Errorf("error reading %q file contents: %w", filepath, err)
+		return fmt.Errorf("error reading %q file contents: %v", filepath, err)
 	}
 
 	err = yaml.Unmarshal(fileContent, obj)
 	if err != nil {
-		return fmt.Errorf("error unmarshalling %q YAML file: %w", filepath, err)
+		return fmt.Errorf("error unmarshalling %q YAML file: %v", filepath, err)
 	}
 
 	Logf("Successfully loaded YAML file %q into %+v", filepath, obj)

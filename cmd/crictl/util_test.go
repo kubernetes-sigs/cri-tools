@@ -187,8 +187,9 @@ func TestOutputStatusData(t *testing.T) {
 				}
 				return nil
 			})
+
 			if err != nil {
-				Expect(err).ToNot(HaveOccurred())
+				Expect(err).To(BeNil())
 			}
 
 			if outStr != tc.expectedOut {

@@ -17,16 +17,17 @@ limitations under the License.
 package main
 
 import (
+	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
-func fakeImage(id string, digest, tags []string) *pb.Image {
+func fakeImage(id string, digest []string, tags []string) *pb.Image {
 	return &pb.Image{Id: id, RepoDigests: digest, RepoTags: tags}
 }
 
-func assert(input []*pb.Image, options, images []string) {
+func assert(input []*pb.Image, options []string, images []string) {
 	actual, _ := filterImagesList(input, options)
 	expected := []string{}
 	for _, img := range actual {

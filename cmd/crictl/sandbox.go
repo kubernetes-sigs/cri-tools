@@ -32,6 +32,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+
 	errorUtils "k8s.io/apimachinery/pkg/util/errors"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -311,7 +312,7 @@ var listPodCommand = &cli.Command{
 			return err
 		}
 
-		opts := &listOptions{
+		opts := listOptions{
 			id:                 c.String("id"),
 			state:              c.String("state"),
 			verbose:            c.Bool("verbose"),
@@ -401,8 +402,7 @@ func marshalPodSandboxStatus(ps *pb.PodSandboxStatus) (string, error) {
 
 // podSandboxStatus sends a PodSandboxStatusRequest to the server, and parses
 // the returned PodSandboxStatusResponse.
-//
-//nolint:dupl // pods and containers are similar, but still different
+// nolint:dupl // pods and containers are similar, but still different
 func podSandboxStatus(client internalapi.RuntimeService, ids []string, output string, quiet bool, tmplStr string) error {
 	verbose := !(quiet)
 	if output == "" { // default to json output
@@ -438,6 +438,7 @@ func podSandboxStatus(client internalapi.RuntimeService, ids []string, output st
 		} else {
 			statuses = append(statuses, statusData{json: statusJSON, info: r.Info})
 		}
+
 	}
 
 	return outputStatusData(statuses, output, tmplStr)
@@ -487,7 +488,7 @@ func outputPodSandboxStatusTable(r *pb.PodSandboxStatusResponse, verbose bool) {
 
 // ListPodSandboxes sends a ListPodSandboxRequest to the server, and parses
 // the returned ListPodSandboxResponse.
-func ListPodSandboxes(client internalapi.RuntimeService, opts *listOptions) error {
+func ListPodSandboxes(client internalapi.RuntimeService, opts listOptions) error {
 	filter := &pb.PodSandboxFilter{}
 	if opts.id != "" {
 		filter.Id = opts.id
@@ -533,7 +534,7 @@ func ListPodSandboxes(client internalapi.RuntimeService, opts *listOptions) erro
 		return fmt.Errorf("unsupported output format %q", opts.output)
 	}
 
-	display := newDefaultTableDisplay()
+	display := newTableDisplay(20, 1, 3, ' ', 0)
 	if !opts.verbose && !opts.quiet {
 		display.AddRow([]string{
 			columnPodID,
@@ -630,7 +631,7 @@ func getSandboxesRuntimeHandler(sandbox *pb.PodSandbox) string {
 	return sandbox.RuntimeHandler
 }
 
-func getSandboxesList(sandboxesList []*pb.PodSandbox, opts *listOptions) []*pb.PodSandbox {
+func getSandboxesList(sandboxesList []*pb.PodSandbox, opts listOptions) []*pb.PodSandbox {
 	filtered := []*pb.PodSandbox{}
 	for _, p := range sandboxesList {
 		// Filter by pod name/namespace regular expressions.

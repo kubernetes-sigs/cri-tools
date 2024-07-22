@@ -21,13 +21,13 @@ import (
 	"os"
 	"path/filepath"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-
 	"sigs.k8s.io/cri-tools/pkg/common"
 	"sigs.k8s.io/cri-tools/pkg/framework"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 var _ = framework.KubeDescribe("PodSandbox", func() {
@@ -158,25 +158,25 @@ func listPodSandbox(c internalapi.RuntimeService, filter *runtimeapi.PodSandboxF
 }
 
 // createLogTempDir creates the log temp directory for podSandbox.
-func createLogTempDir(podSandboxName string) (hostPath, podLogPath string) {
+func createLogTempDir(podSandboxName string) (string, string) {
 	hostPath, err := os.MkdirTemp("", "podLogTest")
 	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
-	podLogPath = filepath.Join(hostPath, podSandboxName)
-	err = os.MkdirAll(podLogPath, 0o777)
+	podLogPath := filepath.Join(hostPath, podSandboxName)
+	err = os.MkdirAll(podLogPath, 0777)
 	framework.ExpectNoError(err, "failed to create host path %s: %v", podLogPath, err)
 
 	return hostPath, podLogPath
 }
 
 // createPodSandboxWithLogDirectory creates a PodSandbox with log directory.
-func createPodSandboxWithLogDirectory(c internalapi.RuntimeService) (sandboxID string, podConfig *runtimeapi.PodSandboxConfig, hostPath string) {
+func createPodSandboxWithLogDirectory(c internalapi.RuntimeService) (string, *runtimeapi.PodSandboxConfig, string) {
 	By("create a PodSandbox with log directory")
 	podSandboxName := "PodSandbox-with-log-directory-" + framework.NewUUID()
 	uid := framework.DefaultUIDPrefix + framework.NewUUID()
 	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
 
 	hostPath, podLogPath := createLogTempDir(podSandboxName)
-	podConfig = &runtimeapi.PodSandboxConfig{
+	podConfig := &runtimeapi.PodSandboxConfig{
 		Metadata:     framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 		LogDirectory: podLogPath,
 		Linux: &runtimeapi.LinuxPodSandboxConfig{

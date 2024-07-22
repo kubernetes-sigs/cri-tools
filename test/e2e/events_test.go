@@ -22,7 +22,7 @@ import (
 	. "github.com/onsi/gomega/gbytes"
 )
 
-// The actual test suite.
+// The actual test suite
 var _ = t.Describe("events options validation", func() {
 	It("should fail with not supported output format", func() {
 		t.CrictlExpectFailure("events --output=ini", "", "don't support .* format")
@@ -37,7 +37,7 @@ var _ = t.Describe("events options validation", func() {
 	})
 })
 
-// The actual test suite.
+// The actual test suite
 var _ = t.Describe("events", func() {
 	It("should succeed", func() {
 		session := t.CrictlNoWait("events")

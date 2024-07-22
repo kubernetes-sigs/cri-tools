@@ -18,7 +18,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 
@@ -52,7 +51,7 @@ var eventsCommand = &cli.Command{
 
 		switch format := c.String("output"); format {
 		case "json", "yaml":
-			if c.String("template") != "" {
+			if len(c.String("template")) > 0 {
 				return fmt.Errorf("template can't be used with %q format", format)
 			}
 		case "go-template":
@@ -85,7 +84,7 @@ func Events(cliContext *cli.Context, client internalapi.RuntimeService) error {
 		_, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
 			return nil, client.GetContainerEvents(ctx, containerEventsCh, nil)
 		})
-		if errors.Is(err, io.EOF) {
+		if err == io.EOF {
 			errCh <- nil
 			return
 		}

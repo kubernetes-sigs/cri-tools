@@ -22,13 +22,13 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	selinux "github.com/opencontainers/selinux/go-selinux"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-
 	"sigs.k8s.io/cri-tools/pkg/framework"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 var _ = framework.KubeDescribe("SELinux", func() {
@@ -47,7 +47,7 @@ var _ = framework.KubeDescribe("SELinux", func() {
 			var sandboxID string
 			var sandboxConfig *runtimeapi.PodSandboxConfig
 
-			sandboxTests := func(privileged bool) {
+			var sandboxTests = func(privileged bool) {
 				It("should work with just selinux level set", func() {
 					options := &runtimeapi.SELinuxOption{
 						Level: "s0",
@@ -157,7 +157,7 @@ var _ = framework.KubeDescribe("SELinux", func() {
 	}
 })
 
-func createContainerWithSelinux(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, sandboxID string, sandboxConfig *runtimeapi.PodSandboxConfig, options *runtimeapi.SELinuxOption, privileged, shouldStart, shouldCreate bool) string {
+func createContainerWithSelinux(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, sandboxID string, sandboxConfig *runtimeapi.PodSandboxConfig, options *runtimeapi.SELinuxOption, privileged bool, shouldStart, shouldCreate bool) string {
 	By("create a container with selinux")
 	containerName := "selinux-test-" + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{

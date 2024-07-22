@@ -106,7 +106,7 @@ var statsCommand = &cli.Command{
 			id = c.Args().First()
 		}
 
-		opts := &statsOptions{
+		opts := statsOptions{
 			all:    c.Bool("all"),
 			id:     id,
 			podID:  c.String("pod"),
@@ -135,14 +135,14 @@ func (c containerStatsByID) Less(i, j int) bool {
 }
 
 type containerStatsDisplayer struct {
-	opts    *statsOptions
+	opts    statsOptions
 	request *pb.ListContainerStatsRequest
 	*display
 }
 
 // ContainerStats sends a ListContainerStatsRequest to the server, and
 // parses the returned ListContainerStatsResponse.
-func ContainerStats(client internalapi.RuntimeService, opts *statsOptions) error {
+func ContainerStats(client internalapi.RuntimeService, opts statsOptions) error {
 	d := containerStatsDisplayer{
 		opts: opts,
 		request: &pb.ListContainerStatsRequest{
@@ -152,7 +152,7 @@ func ContainerStats(client internalapi.RuntimeService, opts *statsOptions) error
 				LabelSelector: opts.labels,
 			},
 		},
-		display: newDefaultTableDisplay(),
+		display: newTableDisplay(20, 1, 3, ' ', 0),
 	}
 
 	return handleDisplay(context.TODO(), client, opts.watch, d.displayStats)
@@ -213,10 +213,9 @@ func (d containerStatsDisplayer) displayStats(ctx context.Context, client intern
 			}
 			cpuPerc = float64(cpu-old.GetCpu().GetUsageCoreNanoSeconds().GetValue()) / float64(duration) * 100
 		}
-		d.display.AddRow([]string{
-			id, name, fmt.Sprintf("%.2f", cpuPerc), units.HumanSize(float64(mem)),
-			units.HumanSize(float64(disk)), strconv.FormatUint(inodes, 10),
-		})
+		d.display.AddRow([]string{id, name, fmt.Sprintf("%.2f", cpuPerc), units.HumanSize(float64(mem)),
+			units.HumanSize(float64(disk)), strconv.FormatUint(inodes, 10)})
+
 	}
 	d.display.ClearScreen()
 	d.display.Flush()

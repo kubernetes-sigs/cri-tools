@@ -88,7 +88,7 @@ var runtimeExecCommand = &cli.Command{
 			return err
 		}
 
-		opts := execOptions{
+		var opts = execOptions{
 			id:        c.Args().First(),
 			timeout:   c.Int64("timeout"),
 			tty:       c.Bool("tty"),
@@ -147,7 +147,7 @@ func ExecSync(client internalapi.RuntimeService, opts execOptions) (int, error) 
 	return 0, nil
 }
 
-// Exec sends an ExecRequest to server, and parses the returned ExecResponse.
+// Exec sends an ExecRequest to server, and parses the returned ExecResponse
 func Exec(ctx context.Context, client internalapi.RuntimeService, opts execOptions) error {
 	request := &pb.ExecRequest{
 		ContainerId: opts.id,
@@ -168,25 +168,25 @@ func Exec(ctx context.Context, client internalapi.RuntimeService, opts execOptio
 	}
 	execURL := r.Url
 
-	parsedURL, err := url.Parse(execURL)
+	URL, err := url.Parse(execURL)
 	if err != nil {
 		return err
 	}
 
-	if parsedURL.Host == "" {
-		parsedURL.Host = kubeletURLHost
+	if URL.Host == "" {
+		URL.Host = kubeletURLHost
 	}
 
-	if parsedURL.Scheme == "" {
-		parsedURL.Scheme = kubeletURLSchema
+	if URL.Scheme == "" {
+		URL.Scheme = kubeletURLSchema
 	}
 
-	logrus.Debugf("Exec URL: %v", parsedURL)
-	return stream(ctx, opts.stdin, opts.tty, opts.transport, parsedURL)
+	logrus.Debugf("Exec URL: %v", URL)
+	return stream(ctx, opts.stdin, opts.tty, opts.transport, URL)
 }
 
-func stream(ctx context.Context, in, tty bool, transport string, u *url.URL) error {
-	executor, err := getExecutor(transport, u)
+func stream(ctx context.Context, in, tty bool, transport string, url *url.URL) error {
+	executor, err := getExecutor(transport, url)
 	if err != nil {
 		return fmt.Errorf("get executor: %w", err)
 	}
@@ -227,17 +227,18 @@ func stream(ctx context.Context, in, tty bool, transport string, u *url.URL) err
 	return t.Safe(func() error { return executor.StreamWithContext(ctx, streamOptions) })
 }
 
-func getExecutor(transport string, u *url.URL) (exec remoteclient.Executor, err error) {
+func getExecutor(transport string, url *url.URL) (exec remoteclient.Executor, err error) {
 	config := &rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}
 
 	switch transport {
 	case transportSpdy:
-		return remoteclient.NewSPDYExecutor(config, "POST", u)
+		return remoteclient.NewSPDYExecutor(config, "POST", url)
 
 	case transportWebsocket:
-		return remoteclient.NewWebSocketExecutor(config, "GET", u.String())
+		return remoteclient.NewWebSocketExecutor(config, "GET", url.String())
 
 	default:
 		return nil, fmt.Errorf("unknown transport: %s", transport)
+
 	}
 }

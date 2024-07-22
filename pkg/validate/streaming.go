@@ -28,16 +28,16 @@ import (
 	"sync"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
 	remoteclient "k8s.io/client-go/tools/remotecommand"
 	"k8s.io/client-go/transport/spdy"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-
 	"sigs.k8s.io/cri-tools/pkg/framework"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 const defaultExecStdinCloseTimeout = 20 * time.Second
@@ -146,6 +146,7 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			By("check the output of portforward")
 			checkPortForward(rc, req, webServerHostPortForPortForward, webServerContainerPort)
 		})
+
 	})
 })
 
@@ -157,7 +158,7 @@ func createExec(c internalapi.RuntimeService, execReq *runtimeapi.ExecRequest) s
 	return resp.Url
 }
 
-func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, stdoutExactMatch, isTty bool) {
+func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, stdoutExactMatch bool, isTty bool) {
 	var (
 		localOut                  = &safeBuffer{buffer: bytes.Buffer{}}
 		localErr                  = &safeBuffer{buffer: bytes.Buffer{}}
@@ -184,8 +185,8 @@ func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, stdou
 
 	// Only http is supported now.
 	// TODO: support streaming APIs via tls.
-	parsedURL := parseURL(c, execServerURL)
-	e, err := remoteclient.NewSPDYExecutor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}, "POST", parsedURL)
+	url := parseURL(c, execServerURL)
+	e, err := remoteclient.NewSPDYExecutor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}, "POST", url)
 	framework.ExpectNoError(err, "failed to create executor for %q", execServerURL)
 
 	streamOptions := remoteclient.StreamOptions{
@@ -214,22 +215,22 @@ func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, stdou
 }
 
 func parseURL(c internalapi.RuntimeService, serverURL string) *url.URL {
-	parsedURL, err := url.Parse(serverURL)
+	url, err := url.Parse(serverURL)
 	framework.ExpectNoError(err, "failed to parse url:  %q", serverURL)
 
 	version := getVersion(c)
 	if version.RuntimeName == "docker" {
-		if parsedURL.Host == "" {
-			parsedURL.Host = defaultStreamServerAddress
+		if url.Host == "" {
+			url.Host = defaultStreamServerAddress
 		}
-		if parsedURL.Scheme == "" {
-			parsedURL.Scheme = defaultStreamServerScheme
+		if url.Scheme == "" {
+			url.Scheme = defaultStreamServerScheme
 		}
 	}
 
-	Expect(parsedURL.Host).NotTo(BeEmpty(), "The host of url should not be empty")
+	Expect(url.Host).NotTo(BeEmpty(), "The host of url should not be empty")
 	framework.Logf("Parse url %q succeed", serverURL)
-	return parsedURL
+	return url
 }
 
 func createDefaultAttach(c internalapi.RuntimeService, containerID string) string {
@@ -248,7 +249,7 @@ func createDefaultAttach(c internalapi.RuntimeService, containerID string) strin
 	return resp.Url
 }
 
-// safeBuffer is a goroutine safe bytes.Buffer.
+// safeBuffer is a goroutine safe bytes.Buffer
 type safeBuffer struct {
 	mu     sync.Mutex
 	buffer bytes.Buffer
@@ -295,8 +296,8 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 
 	// Only http is supported now.
 	// TODO: support streaming APIs via tls.
-	parsedURL := parseURL(c, attachServerURL)
-	e, err := remoteclient.NewSPDYExecutor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}, "POST", parsedURL)
+	url := parseURL(c, attachServerURL)
+	e, err := remoteclient.NewSPDYExecutor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}, "POST", url)
 	framework.ExpectNoError(err, "failed to create executor for %q", attachServerURL)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -333,8 +334,8 @@ func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string, 
 
 	transport, upgrader, err := spdy.RoundTripperFor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}})
 	framework.ExpectNoError(err, "failed to create spdy round tripper")
-	parsedURL := parseURL(c, portForwardSeverURL)
-	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", parsedURL)
+	url := parseURL(c, portForwardSeverURL)
+	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", url)
 	pf, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", hostPort, containerPort)}, stopChan, readyChan, os.Stdout, os.Stderr)
 	framework.ExpectNoError(err, "failed to create port forward for %q", portForwardSeverURL)
 

@@ -18,17 +18,18 @@ package validate
 
 import (
 	"context"
+
 	"os"
 	"strings"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-
 	"sigs.k8s.io/cri-tools/pkg/common"
 	"sigs.k8s.io/cri-tools/pkg/framework"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 const (
@@ -108,12 +109,12 @@ var _ = framework.KubeDescribe("Multiple Containers [Conformance]", func() {
 })
 
 // createMultiContainerTestPodSandbox creates a sandbox with log directory and a container port for httpd container.
-func createMultiContainerTestPodSandbox(c internalapi.RuntimeService) (sandboxID string, podConfig *runtimeapi.PodSandboxConfig, logDir string) {
+func createMultiContainerTestPodSandbox(c internalapi.RuntimeService) (string, *runtimeapi.PodSandboxConfig, string) {
 	podSandboxName := "PodSandbox-for-multi-container-test-" + framework.NewUUID()
 	uid := framework.DefaultUIDPrefix + framework.NewUUID()
 	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
 	logDir, podLogPath := createLogTempDir(podSandboxName)
-	podConfig = &runtimeapi.PodSandboxConfig{
+	podConfig := &runtimeapi.PodSandboxConfig{
 		Metadata:     framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 		LogDirectory: podLogPath,
 		PortMappings: []*runtimeapi.PortMapping{
@@ -131,8 +132,7 @@ func createMultiContainerTestPodSandbox(c internalapi.RuntimeService) (sandboxID
 
 // createMultiContainerTestHttpdContainer creates an httpd container.
 func createMultiContainerTestHttpdContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix string,
-	podID string, podConfig *runtimeapi.PodSandboxConfig,
-) string {
+	podID string, podConfig *runtimeapi.PodSandboxConfig) string {
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
@@ -145,8 +145,7 @@ func createMultiContainerTestHttpdContainer(rc internalapi.RuntimeService, ic in
 
 // createMultiContainerTestBusyboxContainer creates a busybox container.
 func createMultiContainerTestBusyboxContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService,
-	prefix string, podID string, podConfig *runtimeapi.PodSandboxConfig,
-) string {
+	prefix string, podID string, podConfig *runtimeapi.PodSandboxConfig) string {
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),

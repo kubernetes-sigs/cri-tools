@@ -40,16 +40,16 @@ func init() {
 	flag.StringVar(&crictlRuntimeEndpoint, "crictl-runtime-endpoint", "", "`crictl --runtime-endpoint` to be used")
 }
 
-// TestFramework is used to support commonly used test features.
+// TestFramework is used to support commonly used test features
 type TestFramework struct{}
 
-// NewTestFramework creates a new test framework instance.
+// NewTestFramework creates a new test framework instance
 func NewTestFramework() *TestFramework {
 	return &TestFramework{}
 }
 
 // Setup is the global initialization function which runs before each test
-// suite.
+// suite
 func (t *TestFramework) Setup() {
 	// Global initialization for the whole framework goes in here
 	logrus.SetLevel(logrus.DebugLevel)
@@ -57,16 +57,16 @@ func (t *TestFramework) Setup() {
 }
 
 // Teardown is the global deinitialization function which runs after each test
-// suite.
+// suite
 func (t *TestFramework) Teardown() {
 }
 
-// Describe is a convenience wrapper around the `ginkgo.Describe` function.
+// Describe is a convenience wrapper around the `ginkgo.Describe` function
 func (t *TestFramework) Describe(text string, body func()) bool {
 	return Describe("crictl: "+text, body)
 }
 
-// Convenience method for command creation.
+// Convenience method for command creation
 func cmd(workDir, format string, args ...interface{}) *Session {
 	c := strings.Split(fmt.Sprintf(format, args...), " ")
 	command := exec.Command(c[0], c[1:]...)
@@ -75,7 +75,7 @@ func cmd(workDir, format string, args ...interface{}) *Session {
 	}
 
 	session, err := Start(command, GinkgoWriter, GinkgoWriter)
-	Expect(err).ToNot(HaveOccurred())
+	Expect(err).To(BeNil())
 
 	return session
 }
@@ -94,22 +94,22 @@ func crictlRuntimeEndpointFlag() string {
 	return ""
 }
 
-// Convenience method for command creation in the current working directory.
+// Convenience method for command creation in the current working directory
 func lcmd(format string, args ...interface{}) *Session {
 	return cmd("", format, args...)
 }
 
-// Run crictl on the specified endpoint and return the resulting session.
+// Run crictl on the specified endpoint and return the resulting session
 func (t *TestFramework) Crictl(args string) *Session {
 	return lcmd("%s%s %s", crictlBinaryPathFlag(), crictlRuntimeEndpointFlag(), args).Wait(time.Minute)
 }
 
-// Run crictl on the specified endpoint and return the resulting session without wait.
+// Run crictl on the specified endpoint and return the resulting session without wait
 func (t *TestFramework) CrictlNoWait(args string) *Session {
 	return lcmd("%s%s %s", crictlBinaryPathFlag(), crictlRuntimeEndpointFlag(), args)
 }
 
-// Run crictl and expect exit, expectedOut, expectedErr.
+// Run crictl and expect exit, expectedOut, expectedErr
 func (t *TestFramework) CrictlExpect(
 	args string, exit int, expectedOut, expectedErr string,
 ) {
@@ -130,12 +130,12 @@ func (t *TestFramework) CrictlExpect(
 	}
 }
 
-// Run crictl and expect success containing the specified output.
+// Run crictl and expect success containing the specified output
 func (t *TestFramework) CrictlExpectSuccess(args, expectedOut string) {
 	t.CrictlExpect(args, 0, expectedOut, "")
 }
 
-// Run crictl and expect error containing the specified outputs.
+// Run crictl and expect error containing the specified outputs
 func (t *TestFramework) CrictlExpectFailure(
 	args string, expectedOut, expectedErr string,
 ) {

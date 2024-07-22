@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -43,15 +42,14 @@ func builtinTmplFuncs() template.FuncMap {
 func jsonBuiltinTmplFunc(v interface{}) string {
 	o := new(bytes.Buffer)
 	enc := json.NewEncoder(o)
-	if err := enc.Encode(v); err != nil {
-		logrus.Fatalf("Unable to encode JSON: %v", err)
-	}
+	// FIXME(fuweid): should we panic?
+	enc.Encode(v)
 	return o.String()
 }
 
 // tmplExecuteRawJSON executes the template with interface{} with decoded by
 // rawJSON string.
-func tmplExecuteRawJSON(tmplStr, rawJSON string) (string, error) {
+func tmplExecuteRawJSON(tmplStr string, rawJSON string) (string, error) {
 	dec := json.NewDecoder(
 		bytes.NewReader([]byte(rawJSON)),
 	)
@@ -62,7 +60,7 @@ func tmplExecuteRawJSON(tmplStr, rawJSON string) (string, error) {
 		return "", fmt.Errorf("failed to decode json: %w", err)
 	}
 
-	o := new(bytes.Buffer)
+	var o = new(bytes.Buffer)
 	tmpl, err := template.New("tmplExecuteRawJSON").Funcs(builtinTmplFuncs()).Parse(tmplStr)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate go-template: %w", err)

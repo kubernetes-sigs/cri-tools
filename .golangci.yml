@@ -1,44 +1,27 @@
 ---
 run:
   concurrency: 6
-  timeout: 5m
+  deadline: 5m
 linters:
   disable-all: true
   enable:
     - asasalint
-    - asciicheck
     - bidichk
-    - bodyclose
     - canonicalheader
     - containedctx
-    - contextcheck
     - copyloopvar
     - decorder
-    - dogsled
     - dupl
     - dupword
     - durationcheck
-    - errchkjson
     - errname
-    - errorlint
-    - exhaustive
-    - exportloopref
     - fatcontext
     - forcetypeassert
-    - gci
-    - ginkgolinter
     - gocheckcompilerdirectives
     - gochecksumtype
     - gocritic
-    - godot
     - gofmt
-    - gofumpt
-    - goheader
     - goimports
-    - gomoddirectives
-    - gomodguard
-    - goprintffuncname
-    - gosimple
     - gosmopolitan
     - govet
     - grouper
@@ -55,8 +38,6 @@ linters:
     - musttag
     - nakedret
     - nilerr
-    - noctx
-    - nolintlint
     - nosprintfhostport
     - perfsprint
     - prealloc
@@ -64,61 +45,146 @@ linters:
     - promlinter
     - protogetter
     - reassign
-    - rowserrcheck
     - sloglint
     - spancheck
-    - sqlclosecheck
     - staticcheck
     - tagalign
     - tagliatelle
     - tenv
     - testableexamples
     - testifylint
-    - tparallel
     - typecheck
-    - unconvert
-    - unparam
     - unused
     - usestdlibvars
     - wastedassign
-    - whitespace
     - zerologlint
+    # - asciicheck
+    # - bodyclose
+    # - contextcheck
     # - cyclop
     # - depguard
+    # - dogsled
     # - err113
     # - errcheck
+    # - errchkjson
+    # - errorlint
+    # - exhaustive
     # - exhaustruct
+    # - exportloopref
     # - forbidigo
     # - funlen
+    # - gci
+    # - ginkgolinter
     # - gochecknoglobals
     # - gochecknoinits
     # - gocognit
     # - goconst
     # - gocyclo
+    # - godot
     # - godox
+    # - gofumpt
+    # - goheader
+    # - gomoddirectives
+    # - gomodguard
+    # - goprintffuncname
     # - gosec
+    # - gosimple
     # - ireturn
     # - lll
     # - mnd
     # - nestif
     # - nilnil
     # - nlreturn
+    # - noctx
+    # - nolintlint
     # - nonamedreturns
     # - paralleltest
     # - revive
+    # - rowserrcheck
+    # - sqlclosecheck
     # - stylecheck
     # - testpackage
     # - thelper
+    # - tparallel
+    # - unconvert
+    # - unparam
     # - varnamelen
+    # - whitespace
     # - wrapcheck
     # - wsl
 linters-settings:
-  gci:
-    sections:
-      - standard
-      - default
-      - localmodule
   staticcheck:
     checks: ["SA1019"]
   gocritic:
-    enable-all: true
+    enabled-checks:
+      - appendCombine
+      - badLock
+      - badRegexp
+      - badSorting
+      - badSyncOnceFunc
+      - boolExprSimplify
+      - builtinShadow
+      - builtinShadowDecl
+      - commentedOutCode
+      - commentedOutImport
+      - deferInLoop
+      - deferUnlambda
+      - docStub
+      - dupImport
+      - dynamicFmtString
+      - emptyDecl
+      - emptyFallthrough
+      - equalFold
+      - evalOrder
+      - exposedSyncMutex
+      - externalErrorReassign
+      - filepathJoin
+      - hexLiteral
+      - httpNoBody
+      - indexAlloc
+      - initClause
+      - methodExprCall
+      - nestingReduce
+      - nilValReturn
+      - preferDecodeRune
+      - preferFilepathJoin
+      - preferFprint
+      - preferStringWriter
+      - preferWriteByte
+      - ptrToRefParam
+      - rangeExprCopy
+      - rangeValCopy
+      - redundantSprint
+      - regexpPattern
+      - regexpSimplify
+      - returnAfterHttpError
+      - ruleguard
+      - sliceClear
+      - sloppyReassign
+      - sortSlice
+      - sprintfQuotedString
+      - sqlQuery
+      - stringConcatSimplify
+      - stringXbytes
+      - stringsCompare
+      - syncMapLoadAndDelete
+      - timeExprSimplify
+      - todoCommentWithoutDetail
+      - tooManyResultsChecker
+      - truncateCmp
+      - typeAssertChain
+      - typeDefFirst
+      - typeUnparen
+      - uncheckedInlineErr
+      - unlabelStmt
+      - unnecessaryBlock
+      - unnecessaryDefer
+      - weakCond
+      - yodaStyleExpr
+      # - emptyStringTest
+      # - hugeParam
+      # - importShadow
+      # - octalLiteral
+      # - paramTypeCombine
+      # - unnamedResult
+      # - whyNoLint

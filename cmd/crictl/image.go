@@ -217,7 +217,7 @@ var listImageCommand = &cli.Command{
 		}
 
 		// output in table format by default.
-		display := newDefaultTableDisplay()
+		display := newTableDisplay(20, 1, 3, ' ', 0)
 		verbose := c.Bool("verbose")
 		showDigest := c.Bool("digests")
 		showPinned := c.Bool("pinned")
@@ -566,7 +566,7 @@ func ouputImageFsInfoTable(r *pb.ImageFsInfoResponse) {
 	tablePrintFileSystem("Image", r.ImageFilesystems)
 }
 
-func parseCreds(creds string) (username, password string, err error) {
+func parseCreds(creds string) (string, string, error) {
 	if creds == "" {
 		return "", "", errors.New("credentials can't be empty")
 	}
@@ -580,10 +580,10 @@ func parseCreds(creds string) (username, password string, err error) {
 	return up[0], up[1], nil
 }
 
-func getAuth(creds, auth, username string) (*pb.AuthConfig, error) {
+func getAuth(creds string, auth string, username string) (*pb.AuthConfig, error) {
 	if username != "" {
 		fmt.Print("Enter Password:")
-		bytePassword, err := term.ReadPassword(int(syscall.Stdin)) //nolint:unconvert // required for windows
+		bytePassword, err := term.ReadPassword(int(syscall.Stdin))
 		fmt.Print("\n")
 		if err != nil {
 			return nil, err
@@ -638,7 +638,7 @@ func normalizeRepoTagPair(repoTags []string, imageName string) (repoTagPairs [][
 	return
 }
 
-func normalizeRepoDigest(repoDigests []string) (repo, digest string) {
+func normalizeRepoDigest(repoDigests []string) (string, string) {
 	if len(repoDigests) == 0 {
 		return "<none>", "<none>"
 	}
@@ -706,7 +706,7 @@ func ListImages(client internalapi.ImageManagerService, image string) (*pb.ListI
 	return resp, nil
 }
 
-// filterImagesList filter images based on --filter flag.
+// filterImagesList filter images based on --filter flag
 func filterImagesList(imageList []*pb.Image, filters []string) ([]*pb.Image, error) {
 	filtered := []*pb.Image{}
 	filtered = append(filtered, imageList...)

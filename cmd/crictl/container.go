@@ -30,13 +30,14 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/kubelet/pkg/types"
+
 	"github.com/docker/go-units"
 	godigest "github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"k8s.io/kubelet/pkg/types"
 )
 
 type containerByCreated []*pb.Container
@@ -216,7 +217,7 @@ var createContainerCommand = &cli.Command{
 		if c.Args().Len() != 3 {
 			return cli.ShowSubcommandHelp(c)
 		}
-		if c.Bool("no-pull") && c.Bool("with-pull") {
+		if c.Bool("no-pull") == true && c.Bool("with-pull") == true {
 			return errors.New("confict: no-pull and with-pull are both set")
 		}
 
@@ -330,7 +331,7 @@ var updateContainerCommand = &cli.Command{
 			return err
 		}
 
-		options := &updateOptions{
+		options := updateOptions{
 			CPUCount:           c.Int64("cpu-count"),
 			CPUMaximum:         c.Int64("cpu-maximum"),
 			CPUPeriod:          c.Int64("cpu-period"),
@@ -622,7 +623,7 @@ var listContainersCommand = &cli.Command{
 			return err
 		}
 
-		opts := &listOptions{
+		opts := listOptions{
 			id:               c.String("id"),
 			podID:            c.String("pod"),
 			state:            c.String("state"),
@@ -659,7 +660,7 @@ var runContainerCommand = &cli.Command{
 		if c.Args().Len() != 2 {
 			return cli.ShowSubcommandHelp(c)
 		}
-		if c.Bool("no-pull") && c.Bool("with-pull") {
+		if c.Bool("no-pull") == true && c.Bool("with-pull") == true {
 			return errors.New("confict: no-pull and with-pull are both set")
 		}
 
@@ -740,7 +741,7 @@ var checkpointContainerCommand = &cli.Command{
 	},
 }
 
-// RunContainer starts a container in the provided sandbox.
+// RunContainer starts a container in the provided sandbox
 func RunContainer(
 	iClient internalapi.ImageManagerService,
 	rClient internalapi.RuntimeService,
@@ -781,6 +782,7 @@ func CreateContainer(
 	rClient internalapi.RuntimeService,
 	opts createOptions,
 ) (string, error) {
+
 	config, err := loadContainerConfig(opts.configPath)
 	if err != nil {
 		return "", err
@@ -882,7 +884,7 @@ type updateOptions struct {
 
 // UpdateContainerResources sends an UpdateContainerResourcesRequest to the server, and parses
 // the returned UpdateContainerResourcesResponse.
-func UpdateContainerResources(client internalapi.RuntimeService, id string, opts *updateOptions) error {
+func UpdateContainerResources(client internalapi.RuntimeService, id string, opts updateOptions) error {
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
@@ -933,7 +935,7 @@ func StopContainer(client internalapi.RuntimeService, id string, timeout int64) 
 	return nil
 }
 
-// CheckpointContainer sends a CheckpointContainerRequest to the server.
+// CheckpointContainer sends a CheckpointContainerRequest to the server
 func CheckpointContainer(
 	rClient internalapi.RuntimeService,
 	id string,
@@ -1005,9 +1007,8 @@ func marshalContainerStatus(cs *pb.ContainerStatus) (string, error) {
 
 // containerStatus sends a ContainerStatusRequest to the server, and parses
 // the returned ContainerStatusResponse.
-//
-//nolint:dupl // pods and containers are similar, but still different
-func containerStatus(client internalapi.RuntimeService, ids []string, output, tmplStr string, quiet bool) error {
+// nolint:dupl // pods and containers are similar, but still different
+func containerStatus(client internalapi.RuntimeService, ids []string, output string, tmplStr string, quiet bool) error {
 	verbose := !(quiet)
 	if output == "" { // default to json output
 		output = "json"
@@ -1089,7 +1090,7 @@ func outputContainerStatusTable(r *pb.ContainerStatusResponse, verbose bool) {
 
 // ListContainers sends a ListContainerRequest to the server, and parses
 // the returned ListContainerResponse.
-func ListContainers(runtimeClient internalapi.RuntimeService, imageClient internalapi.ImageManagerService, opts *listOptions) error {
+func ListContainers(runtimeClient internalapi.RuntimeService, imageClient internalapi.ImageManagerService, opts listOptions) error {
 	filter := &pb.ContainerFilter{}
 	if opts.id != "" {
 		filter.Id = opts.id
@@ -1148,7 +1149,7 @@ func ListContainers(runtimeClient internalapi.RuntimeService, imageClient intern
 		return fmt.Errorf("unsupported output format %q", opts.output)
 	}
 
-	display := newDefaultTableDisplay()
+	display := newTableDisplay(20, 1, 3, ' ', 0)
 	if !opts.verbose && !opts.quiet {
 		display.AddRow([]string{columnContainer, columnImage, columnCreated, columnState, columnName, columnAttempt, columnPodID, columnPodname})
 	}
@@ -1180,15 +1181,13 @@ func ListContainers(runtimeClient internalapi.RuntimeService, imageClient intern
 			if opts.resolveImagePath {
 				orig, err := getRepoImage(imageClient, image)
 				if err != nil {
-					return fmt.Errorf("failed to fetch repo image %w", err)
+					return fmt.Errorf("failed to fetch repo image %v", err)
 				}
 				image = orig
 			}
 			podName := getPodNameFromLabels(c.Labels)
-			display.AddRow([]string{
-				id, image, ctm, convertContainerState(c.State), c.Metadata.Name,
-				strconv.FormatUint(uint64(c.Metadata.Attempt), 10), podID, podName,
-			})
+			display.AddRow([]string{id, image, ctm, convertContainerState(c.State), c.Metadata.Name,
+				strconv.FormatUint(uint64(c.Metadata.Attempt), 10), podID, podName})
 			continue
 		}
 
@@ -1248,7 +1247,7 @@ func getPodNameFromLabels(label map[string]string) string {
 	return "unknown"
 }
 
-func getContainersList(containersList []*pb.Container, opts *listOptions) []*pb.Container {
+func getContainersList(containersList []*pb.Container, opts listOptions) []*pb.Container {
 	filtered := []*pb.Container{}
 	for _, c := range containersList {
 		// Filter by pod name/namespace regular expressions.

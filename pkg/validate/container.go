@@ -20,18 +20,19 @@ import (
 	"bufio"
 	"context"
 	"errors"
+
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-
 	"sigs.k8s.io/cri-tools/pkg/framework"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 // streamType is the type of the stream.
@@ -273,7 +274,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support starting container with volume [Conformance]", func() {
 			By("create host path and flag file")
-			hostPath := createHostPath(podID)
+			hostPath, _ := createHostPath(podID)
 
 			defer os.RemoveAll(hostPath) // clean up the TempDir
 
@@ -285,12 +286,12 @@ var _ = framework.KubeDescribe("Container", func() {
 
 			By("check whether 'hostPath' contains file or dir in container")
 			output := execSyncContainer(rc, containerID, checkPathCmd(hostPath))
-			Expect(output).NotTo(BeEmpty(), "len(output) should not be zero.")
+			Expect(len(output)).NotTo(BeZero(), "len(output) should not be zero.")
 		})
 
 		It("runtime should support starting container with volume when host path is a symlink [Conformance]", func() {
 			By("create host path and flag file")
-			hostPath := createHostPath(podID)
+			hostPath, _ := createHostPath(podID)
 			defer os.RemoveAll(hostPath) // clean up the TempDir
 
 			By("create symlink")
@@ -305,7 +306,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 			By("check whether 'symlink' contains file or dir in container")
 			output := execSyncContainer(rc, containerID, checkPathCmd(symlinkPath))
-			Expect(output).NotTo(BeEmpty(), "len(output) should not be zero.")
+			Expect(len(output)).NotTo(BeZero(), "len(output) should not be zero.")
 		})
 
 		// TODO(random-liu): Decide whether to add host path not exist test when https://github.com/kubernetes/kubernetes/pull/61460
@@ -504,7 +505,7 @@ func verifyExecSyncOutput(c internalapi.RuntimeService, containerID string, comm
 }
 
 // createHostPath creates the hostPath and flagFile for volume.
-func createHostPath(podID string) string {
+func createHostPath(podID string) (string, string) {
 	hostPath, err := os.MkdirTemp("", "test"+podID)
 	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
 
@@ -512,7 +513,7 @@ func createHostPath(podID string) string {
 	_, err = os.Create(filepath.Join(hostPath, flagFile))
 	framework.ExpectNoError(err, "failed to create volume file %q: %v", flagFile, err)
 
-	return hostPath
+	return hostPath, flagFile
 }
 
 // createSymlink creates a symlink of path.
@@ -523,7 +524,7 @@ func createSymlink(path string) string {
 }
 
 // createVolumeContainer creates a container with volume and the prefix of containerName and fails if it gets error.
-func createVolumeContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix, podID string, podConfig *runtimeapi.PodSandboxConfig, hostPath string) string {
+func createVolumeContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix string, podID string, podConfig *runtimeapi.PodSandboxConfig, hostPath string) string {
 	By("create a container with volume and name")
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
@@ -544,7 +545,7 @@ func createVolumeContainer(rc internalapi.RuntimeService, ic internalapi.ImageMa
 }
 
 // createLogContainer creates a container with log and the prefix of containerName.
-func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix, podID string, podConfig *runtimeapi.PodSandboxConfig) (logPath, containerID string) {
+func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix string, podID string, podConfig *runtimeapi.PodSandboxConfig) (string, string) {
 	By("create a container with log and name")
 	containerName := prefix + framework.NewUUID()
 	path := containerName + ".log"
@@ -558,7 +559,7 @@ func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManag
 }
 
 // createKeepLoggingContainer creates a container keeps logging defaultLog to output.
-func createKeepLoggingContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix, podID string, podConfig *runtimeapi.PodSandboxConfig) (logPath, containerID string) {
+func createKeepLoggingContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix string, podID string, podConfig *runtimeapi.PodSandboxConfig) (string, string) {
 	By("create a container with log and name")
 	containerName := prefix + framework.NewUUID()
 	path := containerName + ".log"
@@ -571,7 +572,7 @@ func createKeepLoggingContainer(rc internalapi.RuntimeService, ic internalapi.Im
 	return containerConfig.LogPath, framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }
 
-// pathExists check whether 'path' does exist or not.
+// pathExists check whether 'path' does exist or not
 func pathExists(path string) bool {
 	_, err := os.Stat(path)
 	if err == nil {
@@ -631,7 +632,7 @@ func parseLogLine(podConfig *runtimeapi.PodSandboxConfig, logPath string) []logM
 }
 
 // verifyLogContents verifies the contents of container log.
-func verifyLogContents(podConfig *runtimeapi.PodSandboxConfig, logPath, log string, stream streamType) {
+func verifyLogContents(podConfig *runtimeapi.PodSandboxConfig, logPath string, log string, stream streamType) {
 	By("verify log contents")
 	msgs := parseLogLine(podConfig, logPath)
 
@@ -646,7 +647,7 @@ func verifyLogContents(podConfig *runtimeapi.PodSandboxConfig, logPath, log stri
 }
 
 // verifyLogContentsRe verifies the contents of container log using the provided regular expression pattern.
-func verifyLogContentsRe(podConfig *runtimeapi.PodSandboxConfig, logPath, pattern string, stream streamType) {
+func verifyLogContentsRe(podConfig *runtimeapi.PodSandboxConfig, logPath string, pattern string, stream streamType) {
 	By("verify log contents using regex pattern")
 	msgs := parseLogLine(podConfig, logPath)
 
@@ -668,7 +669,7 @@ func listContainerStatsForID(c internalapi.RuntimeService, containerID string) *
 	return stats
 }
 
-// listContainerStats lists stats for containers based on filter.
+// listContainerStats lists stats for containers based on filter
 func listContainerStats(c internalapi.RuntimeService, filter *runtimeapi.ContainerStatsFilter) []*runtimeapi.ContainerStats {
 	By("List container stats for all containers:")
 	stats, err := c.ListContainerStats(context.TODO(), filter)
