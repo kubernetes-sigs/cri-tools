@@ -311,7 +311,7 @@ var listPodCommand = &cli.Command{
 			return err
 		}
 
-		opts := &listOptions{
+		opts := listOptions{
 			id:                 c.String("id"),
 			state:              c.String("state"),
 			verbose:            c.Bool("verbose"),
@@ -487,7 +487,7 @@ func outputPodSandboxStatusTable(r *pb.PodSandboxStatusResponse, verbose bool) {
 
 // ListPodSandboxes sends a ListPodSandboxRequest to the server, and parses
 // the returned ListPodSandboxResponse.
-func ListPodSandboxes(client internalapi.RuntimeService, opts *listOptions) error {
+func ListPodSandboxes(client internalapi.RuntimeService, opts listOptions) error {
 	filter := &pb.PodSandboxFilter{}
 	if opts.id != "" {
 		filter.Id = opts.id
@@ -630,7 +630,7 @@ func getSandboxesRuntimeHandler(sandbox *pb.PodSandbox) string {
 	return sandbox.RuntimeHandler
 }
 
-func getSandboxesList(sandboxesList []*pb.PodSandbox, opts *listOptions) []*pb.PodSandbox {
+func getSandboxesList(sandboxesList []*pb.PodSandbox, opts listOptions) []*pb.PodSandbox {
 	filtered := []*pb.PodSandbox{}
 	for _, p := range sandboxesList {
 		// Filter by pod name/namespace regular expressions.

@@ -566,7 +566,7 @@ func ouputImageFsInfoTable(r *pb.ImageFsInfoResponse) {
 	tablePrintFileSystem("Image", r.ImageFilesystems)
 }
 
-func parseCreds(creds string) (username, password string, err error) {
+func parseCreds(creds string) (string, string, error) {
 	if creds == "" {
 		return "", "", errors.New("credentials can't be empty")
 	}
@@ -580,7 +580,7 @@ func parseCreds(creds string) (username, password string, err error) {
 	return up[0], up[1], nil
 }
 
-func getAuth(creds, auth, username string) (*pb.AuthConfig, error) {
+func getAuth(creds string, auth string, username string) (*pb.AuthConfig, error) {
 	if username != "" {
 		fmt.Print("Enter Password:")
 		bytePassword, err := term.ReadPassword(int(syscall.Stdin)) //nolint:unconvert // required for windows
@@ -638,7 +638,7 @@ func normalizeRepoTagPair(repoTags []string, imageName string) (repoTagPairs [][
 	return
 }
 
-func normalizeRepoDigest(repoDigests []string) (repo, digest string) {
+func normalizeRepoDigest(repoDigests []string) (string, string) {
 	if len(repoDigests) == 0 {
 		return "<none>", "<none>"
 	}

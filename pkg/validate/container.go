@@ -523,7 +523,7 @@ func createSymlink(path string) string {
 }
 
 // createVolumeContainer creates a container with volume and the prefix of containerName and fails if it gets error.
-func createVolumeContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix, podID string, podConfig *runtimeapi.PodSandboxConfig, hostPath string) string {
+func createVolumeContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix string, podID string, podConfig *runtimeapi.PodSandboxConfig, hostPath string) string {
 	By("create a container with volume and name")
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
@@ -544,7 +544,7 @@ func createVolumeContainer(rc internalapi.RuntimeService, ic internalapi.ImageMa
 }
 
 // createLogContainer creates a container with log and the prefix of containerName.
-func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix, podID string, podConfig *runtimeapi.PodSandboxConfig) (logPath, containerID string) {
+func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix string, podID string, podConfig *runtimeapi.PodSandboxConfig) (string, string) {
 	By("create a container with log and name")
 	containerName := prefix + framework.NewUUID()
 	path := containerName + ".log"
@@ -558,7 +558,7 @@ func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManag
 }
 
 // createKeepLoggingContainer creates a container keeps logging defaultLog to output.
-func createKeepLoggingContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix, podID string, podConfig *runtimeapi.PodSandboxConfig) (logPath, containerID string) {
+func createKeepLoggingContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix string, podID string, podConfig *runtimeapi.PodSandboxConfig) (string, string) {
 	By("create a container with log and name")
 	containerName := prefix + framework.NewUUID()
 	path := containerName + ".log"
@@ -631,7 +631,7 @@ func parseLogLine(podConfig *runtimeapi.PodSandboxConfig, logPath string) []logM
 }
 
 // verifyLogContents verifies the contents of container log.
-func verifyLogContents(podConfig *runtimeapi.PodSandboxConfig, logPath, log string, stream streamType) {
+func verifyLogContents(podConfig *runtimeapi.PodSandboxConfig, logPath string, log string, stream streamType) {
 	By("verify log contents")
 	msgs := parseLogLine(podConfig, logPath)
 
@@ -646,7 +646,7 @@ func verifyLogContents(podConfig *runtimeapi.PodSandboxConfig, logPath, log stri
 }
 
 // verifyLogContentsRe verifies the contents of container log using the provided regular expression pattern.
-func verifyLogContentsRe(podConfig *runtimeapi.PodSandboxConfig, logPath, pattern string, stream streamType) {
+func verifyLogContentsRe(podConfig *runtimeapi.PodSandboxConfig, logPath string, pattern string, stream streamType) {
 	By("verify log contents using regex pattern")
 	msgs := parseLogLine(podConfig, logPath)
 

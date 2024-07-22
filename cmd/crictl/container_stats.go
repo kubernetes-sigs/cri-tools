@@ -106,7 +106,7 @@ var statsCommand = &cli.Command{
 			id = c.Args().First()
 		}
 
-		opts := &statsOptions{
+		opts := statsOptions{
 			all:    c.Bool("all"),
 			id:     id,
 			podID:  c.String("pod"),
@@ -135,14 +135,14 @@ func (c containerStatsByID) Less(i, j int) bool {
 }
 
 type containerStatsDisplayer struct {
-	opts    *statsOptions
+	opts    statsOptions
 	request *pb.ListContainerStatsRequest
 	*display
 }
 
 // ContainerStats sends a ListContainerStatsRequest to the server, and
 // parses the returned ListContainerStatsResponse.
-func ContainerStats(client internalapi.RuntimeService, opts *statsOptions) error {
+func ContainerStats(client internalapi.RuntimeService, opts statsOptions) error {
 	d := containerStatsDisplayer{
 		opts: opts,
 		request: &pb.ListContainerStatsRequest{
