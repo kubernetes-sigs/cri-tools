@@ -68,7 +68,7 @@ var runtimePortForwardCommand = &cli.Command{
 	},
 }
 
-// PortForward sends an PortForwardRequest to server, and parses the returned PortForwardResponse
+// PortForward sends an PortForwardRequest to server, and parses the returned PortForwardResponse.
 func PortForward(client internalapi.RuntimeService, opts portforwardOptions) error {
 	if opts.id == "" {
 		return errors.New("ID cannot be empty")

@@ -42,7 +42,7 @@ import (
 )
 
 const (
-	// truncatedImageIDLen is the truncated length of imageID
+	// truncatedImageIDLen is the truncated length of imageID.
 	truncatedIDLen = 13
 )
 
@@ -50,7 +50,7 @@ var (
 	// The global stopCh for monitoring Interrupt signal.
 	// DO NOT use it directly. Use SetupInterruptSignalHandler() to get it.
 	signalIntStopCh chan struct{}
-	// only setup stopCh once
+	// only setup stopCh once.
 	signalIntSetupOnce = &sync.Once{}
 )
 

@@ -572,7 +572,7 @@ func createKeepLoggingContainer(rc internalapi.RuntimeService, ic internalapi.Im
 	return containerConfig.LogPath, framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }
 
-// pathExists check whether 'path' does exist or not
+// pathExists check whether 'path' does exist or not.
 func pathExists(path string) bool {
 	_, err := os.Stat(path)
 	if err == nil {
@@ -669,7 +669,7 @@ func listContainerStatsForID(c internalapi.RuntimeService, containerID string) *
 	return stats
 }
 
-// listContainerStats lists stats for containers based on filter
+// listContainerStats lists stats for containers based on filter.
 func listContainerStats(c internalapi.RuntimeService, filter *runtimeapi.ContainerStatsFilter) []*runtimeapi.ContainerStats {
 	By("List container stats for all containers:")
 	stats, err := c.ListContainerStats(context.TODO(), filter)

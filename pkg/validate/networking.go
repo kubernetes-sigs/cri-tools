@@ -215,7 +215,7 @@ func checkDNSConfig(c internalapi.RuntimeService, containerID string, expectedCo
 	framework.Logf("check DNS config succeed")
 }
 
-// createWebServerContainer creates a container running a web server
+// createWebServerContainer creates a container running a web server.
 func createWebServerContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{

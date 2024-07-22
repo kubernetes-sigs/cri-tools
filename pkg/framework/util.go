@@ -37,63 +37,63 @@ import (
 )
 
 var (
-	// the callbacks to run during BeforeSuite
+	// the callbacks to run during BeforeSuite.
 	beforeSuiteCallbacks []func()
 
-	// DefaultPodLabels are labels used by default in pods
+	// DefaultPodLabels are labels used by default in pods.
 	DefaultPodLabels map[string]string
 
-	// DefaultContainerCommand is the default command used for containers
+	// DefaultContainerCommand is the default command used for containers.
 	DefaultContainerCommand []string
 
-	// DefaultPauseCommand is the default command used for containers
+	// DefaultPauseCommand is the default command used for containers.
 	DefaultPauseCommand []string
 
-	// DefaultLinuxPodLabels default pod labels for Linux
+	// DefaultLinuxPodLabels default pod labels for Linux.
 	DefaultLinuxPodLabels = map[string]string{}
 
-	// DefaultLinuxContainerCommand default container command for Linux
+	// DefaultLinuxContainerCommand default container command for Linux.
 	DefaultLinuxContainerCommand = []string{"top"}
 
-	// DefaultLinuxPauseCommand default container command for Linux pause
+	// DefaultLinuxPauseCommand default container command for Linux pause.
 	DefaultLinuxPauseCommand = []string{"sh", "-c", "top"}
 
-	// DefaultLcowPodLabels default pod labels for Linux containers on Windows
+	// DefaultLcowPodLabels default pod labels for Linux containers on Windows.
 	DefaultLcowPodLabels = map[string]string{
 		"sandbox-platform": "linux/amd64",
 	}
 
-	// DefaultWindowsPodLabels default pod labels for Windows
+	// DefaultWindowsPodLabels default pod labels for Windows.
 	DefaultWindowsPodLabels = map[string]string{}
 
-	// DefaultWindowsContainerCommand default container command for Windows
+	// DefaultWindowsContainerCommand default container command for Windows.
 	DefaultWindowsContainerCommand = []string{"cmd", "/c", "ping -t localhost"}
 
-	// DefaultWindowsPauseCommand default container pause command for Windows
+	// DefaultWindowsPauseCommand default container pause command for Windows.
 	DefaultWindowsPauseCommand = []string{"powershell", "-c", "ping -t localhost"}
 )
 
 const (
-	// DefaultUIDPrefix is a default UID prefix of PodSandbox
+	// DefaultUIDPrefix is a default UID prefix of PodSandbox.
 	DefaultUIDPrefix string = "cri-test-uid"
 
-	// DefaultNamespacePrefix is a default namespace prefix of PodSandbox
+	// DefaultNamespacePrefix is a default namespace prefix of PodSandbox.
 	DefaultNamespacePrefix string = "cri-test-namespace"
 
-	// DefaultAttempt is a default attempt prefix of PodSandbox or container
+	// DefaultAttempt is a default attempt prefix of PodSandbox or container.
 	DefaultAttempt uint32 = 2
 
-	// DefaultStopContainerTimeout is the default timeout for stopping container
+	// DefaultStopContainerTimeout is the default timeout for stopping container.
 	DefaultStopContainerTimeout int64 = 60
 
-	// DefaultLinuxContainerImage default container image for Linux
+	// DefaultLinuxContainerImage default container image for Linux.
 	DefaultLinuxContainerImage string = DefaultRegistryE2ETestImagesPrefix + "busybox:1.29-2"
 
-	// DefaultWindowsContainerImage default container image for Windows
+	// DefaultWindowsContainerImage default container image for Windows.
 	DefaultWindowsContainerImage string = DefaultLinuxContainerImage
 )
 
-// Set the constants based on operating system and flags
+// Set the constants based on operating system and flags.
 var _ = BeforeSuite(func() {
 	if runtime.GOOS != "windows" || TestContext.IsLcow {
 		DefaultPodLabels = DefaultLinuxPodLabels
@@ -122,7 +122,7 @@ var _ = BeforeSuite(func() {
 	}
 })
 
-// AddBeforeSuiteCallback adds a callback to run during BeforeSuite
+// AddBeforeSuiteCallback adds a callback to run during BeforeSuite.
 func AddBeforeSuiteCallback(callback func()) bool {
 	beforeSuiteCallbacks = append(beforeSuiteCallbacks, callback)
 	return true
@@ -258,7 +258,7 @@ func CreateDefaultContainer(rc internalapi.RuntimeService, ic internalapi.ImageM
 	return CreateDefaultContainerWithLabels(rc, ic, podID, podConfig, prefix, nil)
 }
 
-// CreateDefaultContainerWithLabels creates a default container with default options
+// CreateDefaultContainerWithLabels creates a default container with default options.
 func CreateDefaultContainerWithLabels(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, labels map[string]string) string {
 	containerName := prefix + NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
@@ -285,7 +285,7 @@ func CreatePauseContainer(rc internalapi.RuntimeService, ic internalapi.ImageMan
 	return CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }
 
-// CreateContainerWithError creates a container but leave error check to caller
+// CreateContainerWithError creates a container but leave error check to caller.
 func CreateContainerWithError(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, config *runtimeapi.ContainerConfig, podID string, podConfig *runtimeapi.PodSandboxConfig) (string, error) {
 	// Pull the image if it does not exist.
 	imageName := config.Image.Image

@@ -741,7 +741,7 @@ var checkpointContainerCommand = &cli.Command{
 	},
 }
 
-// RunContainer starts a container in the provided sandbox
+// RunContainer starts a container in the provided sandbox.
 func RunContainer(
 	iClient internalapi.ImageManagerService,
 	rClient internalapi.RuntimeService,
@@ -935,7 +935,7 @@ func StopContainer(client internalapi.RuntimeService, id string, timeout int64) 
 	return nil
 }
 
-// CheckpointContainer sends a CheckpointContainerRequest to the server
+// CheckpointContainer sends a CheckpointContainerRequest to the server.
 func CheckpointContainer(
 	rClient internalapi.RuntimeService,
 	id string,

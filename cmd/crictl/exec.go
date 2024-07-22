@@ -147,7 +147,7 @@ func ExecSync(client internalapi.RuntimeService, opts execOptions) (int, error) 
 	return 0, nil
 }
 
-// Exec sends an ExecRequest to server, and parses the returned ExecResponse
+// Exec sends an ExecRequest to server, and parses the returned ExecResponse.
 func Exec(ctx context.Context, client internalapi.RuntimeService, opts execOptions) error {
 	request := &pb.ExecRequest{
 		ContainerId: opts.id,

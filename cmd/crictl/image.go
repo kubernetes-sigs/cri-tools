@@ -706,7 +706,7 @@ func ListImages(client internalapi.ImageManagerService, image string) (*pb.ListI
 	return resp, nil
 }
 
-// filterImagesList filter images based on --filter flag
+// filterImagesList filter images based on --filter flag.
 func filterImagesList(imageList []*pb.Image, filters []string) ([]*pb.Image, error) {
 	filtered := []*pb.Image{}
 	filtered = append(filtered, imageList...)

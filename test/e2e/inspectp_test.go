@@ -27,7 +27,7 @@ import (
 	. "github.com/onsi/gomega/gexec"
 )
 
-// The actual test suite
+// The actual test suite.
 var _ = t.Describe("inspectp", func() {
 	const sandboxesLength = 2
 	sandboxes := []string{}
