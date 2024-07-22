@@ -6,15 +6,18 @@ linters:
   disable-all: true
   enable:
     - asasalint
+    - asciicheck
     - bidichk
     - canonicalheader
     - containedctx
     - copyloopvar
     - decorder
+    - dogsled
     - dupl
     - dupword
     - durationcheck
     - errname
+    - exportloopref
     - fatcontext
     - forcetypeassert
     - gocheckcompilerdirectives
@@ -22,7 +25,10 @@ linters:
     - gocritic
     - godot
     - gofmt
+    - goheader
     - goimports
+    - gomoddirectives
+    - gomodguard
     - gosmopolitan
     - govet
     - grouper
@@ -46,32 +52,32 @@ linters:
     - promlinter
     - protogetter
     - reassign
+    - rowserrcheck
     - sloglint
     - spancheck
+    - sqlclosecheck
     - staticcheck
     - tagalign
     - tagliatelle
     - tenv
     - testableexamples
     - testifylint
+    - tparallel
     - typecheck
     - unused
     - usestdlibvars
     - wastedassign
     - zerologlint
-    # - asciicheck
     # - bodyclose
     # - contextcheck
     # - cyclop
     # - depguard
-    # - dogsled
     # - err113
     # - errcheck
     # - errchkjson
     # - errorlint
     # - exhaustive
     # - exhaustruct
-    # - exportloopref
     # - forbidigo
     # - funlen
     # - gci
@@ -83,9 +89,6 @@ linters:
     # - gocyclo
     # - godox
     # - gofumpt
-    # - goheader
-    # - gomoddirectives
-    # - gomodguard
     # - goprintffuncname
     # - gosec
     # - gosimple
@@ -100,12 +103,9 @@ linters:
     # - nonamedreturns
     # - paralleltest
     # - revive
-    # - rowserrcheck
-    # - sqlclosecheck
     # - stylecheck
     # - testpackage
     # - thelper
-    # - tparallel
     # - unconvert
     # - unparam
     # - varnamelen
