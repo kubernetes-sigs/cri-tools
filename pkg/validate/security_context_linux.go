@@ -32,7 +32,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	. "github.com/onsi/gomega/gstruct"
 	"golang.org/x/sys/unix"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -640,14 +639,16 @@ var _ = framework.KubeDescribe("Security Context", func() {
 					//   - 1000: self
 					//   - 1234: SupplementalGroups
 					//   - 50000: groups defined in the container image (/etc/group)
-					g.Expect(containerStatus.User).To(PointTo(MatchFields(IgnoreExtras, Fields{
-						"Linux": PointTo(MatchFields(IgnoreExtras, Fields{
-							"Uid": Equal(imagePredefinedGroupUID),
-							"Gid": Equal(imagePredefinedGroupUID),
-							// we can not assume the order of gids
-							"SupplementalGroups": And(ContainElements(imagePredefinedGroupUID, supplementalGroup, imagePredefinedGroupGID), HaveLen(3)),
-						})),
-					})))
+					if containerStatus.User != nil && containerStatus.User.Linux != nil {
+						slices.Sort(containerStatus.User.Linux.SupplementalGroups)
+					}
+					g.Expect(containerStatus.User).To(BeEquivalentTo(&runtimeapi.ContainerUser{
+						Linux: &runtimeapi.LinuxContainerUser{
+							Uid:                imagePredefinedGroupUID,
+							Gid:                imagePredefinedGroupUID,
+							SupplementalGroups: []int64{imagePredefinedGroupUID, supplementalGroup, imagePredefinedGroupGID},
+						},
+					}))
 					g.Expect(parseLogLine(podConfig, logPath)).NotTo(BeEmpty())
 				}, time.Minute, time.Second*4).Should(Succeed())
 
@@ -706,14 +707,16 @@ var _ = framework.KubeDescribe("Security Context", func() {
 					// - supplementary groups
 					//   - 1000: self
 					//   - 1234: SupplementalGroups
-					g.Expect(containerStatus.User).To(PointTo(MatchFields(IgnoreExtras, Fields{
-						"Linux": PointTo(MatchFields(IgnoreExtras, Fields{
-							"Uid": Equal(imagePredefinedGroupUID),
-							"Gid": Equal(imagePredefinedGroupUID),
-							// we can not assume the order of gids
-							"SupplementalGroups": And(ContainElements(imagePredefinedGroupUID, supplementalGroup), HaveLen(2)),
-						})),
-					})))
+					if containerStatus.User != nil && containerStatus.User.Linux != nil {
+						slices.Sort(containerStatus.User.Linux.SupplementalGroups)
+					}
+					g.Expect(containerStatus.User).To(BeEquivalentTo(&runtimeapi.ContainerUser{
+						Linux: &runtimeapi.LinuxContainerUser{
+							Uid:                imagePredefinedGroupUID,
+							Gid:                imagePredefinedGroupUID,
+							SupplementalGroups: []int64{imagePredefinedGroupUID, supplementalGroup},
+						},
+					}))
 					g.Expect(parseLogLine(podConfig, logPath)).NotTo(BeEmpty())
 				}, time.Minute, time.Second*4).Should(Succeed())
 
