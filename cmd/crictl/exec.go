@@ -239,6 +239,5 @@ func getExecutor(transport string, url *url.URL) (exec remoteclient.Executor, er
 
 	default:
 		return nil, fmt.Errorf("unknown transport: %s", transport)
-
 	}
 }
