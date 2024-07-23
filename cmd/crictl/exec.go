@@ -185,8 +185,8 @@ func Exec(ctx context.Context, client internalapi.RuntimeService, opts execOptio
 	return stream(ctx, opts.stdin, opts.tty, opts.transport, URL)
 }
 
-func stream(ctx context.Context, in, tty bool, transport string, url *url.URL) error {
-	executor, err := getExecutor(transport, url)
+func stream(ctx context.Context, in, tty bool, transport string, parsedURL *url.URL) error {
+	executor, err := getExecutor(transport, parsedURL)
 	if err != nil {
 		return fmt.Errorf("get executor: %w", err)
 	}
@@ -227,15 +227,15 @@ func stream(ctx context.Context, in, tty bool, transport string, url *url.URL) e
 	return t.Safe(func() error { return executor.StreamWithContext(ctx, streamOptions) })
 }
 
-func getExecutor(transport string, url *url.URL) (exec remoteclient.Executor, err error) {
+func getExecutor(transport string, parsedURL *url.URL) (exec remoteclient.Executor, err error) {
 	config := &rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}
 
 	switch transport {
 	case transportSpdy:
-		return remoteclient.NewSPDYExecutor(config, "POST", url)
+		return remoteclient.NewSPDYExecutor(config, "POST", parsedURL)
 
 	case transportWebsocket:
-		return remoteclient.NewWebSocketExecutor(config, "GET", url.String())
+		return remoteclient.NewWebSocketExecutor(config, "GET", parsedURL.String())
 
 	default:
 		return nil, fmt.Errorf("unknown transport: %s", transport)

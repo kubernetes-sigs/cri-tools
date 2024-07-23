@@ -147,11 +147,13 @@ linters-settings:
       - filepathJoin
       - hexLiteral
       - httpNoBody
+      - importShadow
       - indexAlloc
       - initClause
       - methodExprCall
       - nestingReduce
       - nilValReturn
+      - octalLiteral
       - preferDecodeRune
       - preferFilepathJoin
       - preferFprint
@@ -188,8 +190,6 @@ linters-settings:
       - weakCond
       - yodaStyleExpr
       # - hugeParam
-      # - importShadow
-      # - octalLiteral
       # - paramTypeCombine
       # - unnamedResult
       # - whyNoLint
