@@ -153,7 +153,7 @@ func createExec(c internalapi.RuntimeService, execReq *runtimeapi.ExecRequest) s
 	By("exec given command in container: " + execReq.ContainerId)
 	resp, err := c.Exec(context.TODO(), execReq)
 	framework.ExpectNoError(err, "failed to exec in container %q", execReq.ContainerId)
-	framework.Logf("Get exec url: " + resp.Url)
+	framework.Logf("Get exec URL: " + resp.Url)
 	return resp.Url
 }
 
@@ -184,8 +184,8 @@ func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, stdou
 
 	// Only http is supported now.
 	// TODO: support streaming APIs via tls.
-	url := parseURL(c, execServerURL)
-	e, err := remoteclient.NewSPDYExecutor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}, "POST", url)
+	parsedURL := parseURL(c, execServerURL)
+	e, err := remoteclient.NewSPDYExecutor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}, "POST", parsedURL)
 	framework.ExpectNoError(err, "failed to create executor for %q", execServerURL)
 
 	streamOptions := remoteclient.StreamOptions{
@@ -210,26 +210,26 @@ func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, stdou
 		Expect(localOut.String()).To(ContainSubstring(stdout), "The stdout of exec should contain "+stdout)
 	}
 	Expect(localErr.String()).To(BeEmpty(), "The stderr of exec should be empty")
-	framework.Logf("Check exec url %q succeed", execServerURL)
+	framework.Logf("Check exec URL %q succeed", execServerURL)
 }
 
 func parseURL(c internalapi.RuntimeService, serverURL string) *url.URL {
-	url, err := url.Parse(serverURL)
-	framework.ExpectNoError(err, "failed to parse url:  %q", serverURL)
+	parsedURL, err := url.Parse(serverURL)
+	framework.ExpectNoError(err, "failed to parse URL:  %q", serverURL)
 
 	version := getVersion(c)
 	if version.RuntimeName == "docker" {
-		if url.Host == "" {
-			url.Host = defaultStreamServerAddress
+		if parsedURL.Host == "" {
+			parsedURL.Host = defaultStreamServerAddress
 		}
-		if url.Scheme == "" {
-			url.Scheme = defaultStreamServerScheme
+		if parsedURL.Scheme == "" {
+			parsedURL.Scheme = defaultStreamServerScheme
 		}
 	}
 
-	Expect(url.Host).NotTo(BeEmpty(), "The host of url should not be empty")
-	framework.Logf("Parse url %q succeed", serverURL)
-	return url
+	Expect(parsedURL.Host).NotTo(BeEmpty(), "The host of URL should not be empty")
+	framework.Logf("Parse URL %q succeed", serverURL)
+	return parsedURL
 }
 
 func createDefaultAttach(c internalapi.RuntimeService, containerID string) string {
@@ -244,7 +244,7 @@ func createDefaultAttach(c internalapi.RuntimeService, containerID string) strin
 
 	resp, err := c.Attach(context.TODO(), req)
 	framework.ExpectNoError(err, "failed to attach in container %q", containerID)
-	framework.Logf("Get attach url: " + resp.Url)
+	framework.Logf("Get attach URL: " + resp.Url)
 	return resp.Url
 }
 
@@ -295,8 +295,8 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 
 	// Only http is supported now.
 	// TODO: support streaming APIs via tls.
-	url := parseURL(c, attachServerURL)
-	e, err := remoteclient.NewSPDYExecutor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}, "POST", url)
+	parsedURL := parseURL(c, attachServerURL)
+	e, err := remoteclient.NewSPDYExecutor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}, "POST", parsedURL)
 	framework.ExpectNoError(err, "failed to create executor for %q", attachServerURL)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -311,7 +311,7 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 	framework.ExpectNoError(err, "failed to open streamer for %q", attachServerURL)
 
 	Expect(localErr.String()).To(BeEmpty(), "The stderr of attach should be empty")
-	framework.Logf("Check attach url %q succeed", attachServerURL)
+	framework.Logf("Check attach URL %q succeed", attachServerURL)
 }
 
 func createDefaultPortForward(c internalapi.RuntimeService, podID string) string {
@@ -322,7 +322,7 @@ func createDefaultPortForward(c internalapi.RuntimeService, podID string) string
 
 	resp, err := c.PortForward(context.TODO(), req)
 	framework.ExpectNoError(err, "failed to port forward PodSandbox %q", podID)
-	framework.Logf("Get port forward url: " + resp.Url)
+	framework.Logf("Get port forward URL: " + resp.Url)
 	return resp.Url
 }
 
@@ -333,8 +333,8 @@ func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string, 
 
 	transport, upgrader, err := spdy.RoundTripperFor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}})
 	framework.ExpectNoError(err, "failed to create spdy round tripper")
-	url := parseURL(c, portForwardSeverURL)
-	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", url)
+	parsedURL := parseURL(c, portForwardSeverURL)
+	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", parsedURL)
 	pf, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", hostPort, containerPort)}, stopChan, readyChan, os.Stdout, os.Stderr)
 	framework.ExpectNoError(err, "failed to create port forward for %q", portForwardSeverURL)
 
@@ -347,5 +347,5 @@ func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string, 
 
 	By(fmt.Sprintf("check if we can get nginx main page via localhost:%d", hostPort))
 	checkMainPage(c, "", hostPort, 0)
-	framework.Logf("Check port forward url %q succeed", portForwardSeverURL)
+	framework.Logf("Check port forward URL %q succeed", portForwardSeverURL)
 }

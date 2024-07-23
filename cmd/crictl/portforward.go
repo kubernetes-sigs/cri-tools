@@ -84,23 +84,22 @@ func PortForward(client internalapi.RuntimeService, opts portforwardOptions) err
 	if err != nil {
 		return err
 	}
-	portforwardURL := r.Url
 
-	URL, err := url.Parse(portforwardURL)
+	parsedURL, err := url.Parse(r.Url)
 	if err != nil {
 		return err
 	}
 
-	if URL.Host == "" {
-		URL.Host = kubeletURLHost
+	if parsedURL.Host == "" {
+		parsedURL.Host = kubeletURLHost
 	}
 
-	if URL.Scheme == "" {
-		URL.Scheme = kubeletURLSchema
+	if parsedURL.Scheme == "" {
+		parsedURL.Scheme = kubeletURLSchema
 	}
 
-	logrus.Debugf("PortForward URL: %v", URL)
-	dialer, err := getDialer(opts.transport, URL)
+	logrus.Debugf("PortForward URL: %v", parsedURL)
+	dialer, err := getDialer(opts.transport, parsedURL)
 	if err != nil {
 		return fmt.Errorf("get dialer: %w", err)
 	}
@@ -115,7 +114,7 @@ func PortForward(client internalapi.RuntimeService, opts portforwardOptions) err
 	return pf.ForwardPorts()
 }
 
-func getDialer(transport string, url *url.URL) (exec httpstream.Dialer, err error) {
+func getDialer(transport string, parsedURL *url.URL) (exec httpstream.Dialer, err error) {
 	config := &rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}
 
 	switch transport {
@@ -124,10 +123,10 @@ func getDialer(transport string, url *url.URL) (exec httpstream.Dialer, err erro
 		if err != nil {
 			return nil, fmt.Errorf("get SPDY round tripper: %w", err)
 		}
-		return spdy.NewDialer(upgrader, &http.Client{Transport: tr}, "POST", url), nil
+		return spdy.NewDialer(upgrader, &http.Client{Transport: tr}, "POST", parsedURL), nil
 
 	case transportWebsocket:
-		return portforward.NewSPDYOverWebsocketDialer(url, config)
+		return portforward.NewSPDYOverWebsocketDialer(parsedURL, config)
 
 	default:
 		return nil, fmt.Errorf("unknown transport: %s", transport)

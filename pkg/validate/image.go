@@ -192,8 +192,8 @@ func testRemoveImage(c internalapi.ImageManagerService, imageName string) {
 	removeImage(c, imageName)
 
 	By("Check image list empty")
-	status := framework.ImageStatus(c, imageName)
-	Expect(status).To(BeNil(), "Should have none image in list")
+	imageStatus := framework.ImageStatus(c, imageName)
+	Expect(imageStatus).To(BeNil(), "Should have none image in list")
 }
 
 // testPullPublicImage pulls the image named imageName, make sure it success and remove the image.
@@ -204,12 +204,12 @@ func testPullPublicImage(c internalapi.ImageManagerService, imageName string, po
 	framework.PullPublicImage(c, imageName, podConfig)
 
 	By("Check image list to make sure pulling image success : " + imageName)
-	status := framework.ImageStatus(c, imageName)
-	Expect(status).NotTo(BeNil(), "Should have one image in list")
-	Expect(status.Id).NotTo(BeNil(), "Image Id should not be nil")
-	Expect(status.Size_).NotTo(BeNil(), "Image Size should not be nil")
+	imageStatus := framework.ImageStatus(c, imageName)
+	Expect(imageStatus).NotTo(BeNil(), "Should have one image in list")
+	Expect(imageStatus.Id).NotTo(BeNil(), "Image Id should not be nil")
+	Expect(imageStatus.Size_).NotTo(BeNil(), "Image Size should not be nil")
 	if statusCheck != nil {
-		statusCheck(status)
+		statusCheck(imageStatus)
 	}
 
 	testRemoveImage(c, imageName)
