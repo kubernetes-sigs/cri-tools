@@ -31,6 +31,7 @@ linters:
     - goimports
     - gomoddirectives
     - gomodguard
+    - goprintffuncname
     - gosmopolitan
     - govet
     - grouper
@@ -89,7 +90,6 @@ linters:
     # - goconst
     # - gocyclo
     # - godox
-    # - goprintffuncname
     # - gosec
     # - gosimple
     # - ireturn
