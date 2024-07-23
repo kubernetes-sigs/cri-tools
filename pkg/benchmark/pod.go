@@ -131,7 +131,6 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 					MetaInfo:              map[string]string{"podId": podID, "podSandboxName": podSandboxName},
 				}
 				resultsChannel <- &res
-
 			}, samplingConfig)
 
 			// Send nil and give the manager a minute to process any already-queued results:

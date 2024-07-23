@@ -18,7 +18,6 @@ package validate
 
 import (
 	"context"
-
 	"os"
 	"strings"
 	"time"
@@ -132,7 +131,8 @@ func createMultiContainerTestPodSandbox(c internalapi.RuntimeService) (string, *
 
 // createMultiContainerTestHttpdContainer creates an httpd container.
 func createMultiContainerTestHttpdContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix string,
-	podID string, podConfig *runtimeapi.PodSandboxConfig) string {
+	podID string, podConfig *runtimeapi.PodSandboxConfig,
+) string {
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
@@ -145,7 +145,8 @@ func createMultiContainerTestHttpdContainer(rc internalapi.RuntimeService, ic in
 
 // createMultiContainerTestBusyboxContainer creates a busybox container.
 func createMultiContainerTestBusyboxContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService,
-	prefix string, podID string, podConfig *runtimeapi.PodSandboxConfig) string {
+	prefix string, podID string, podConfig *runtimeapi.PodSandboxConfig,
+) string {
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),

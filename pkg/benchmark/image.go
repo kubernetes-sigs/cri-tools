@@ -46,6 +46,7 @@ var defaultImageListingBenchmarkImagesAmd64 = []string{
 	defaultImageListingPrefix + "busybox:1-glibc",
 	defaultImageListingPrefix + "busybox:1-musl",
 }
+
 var defaultImageListingBenchmarkImages = []string{
 	defaultImageListingPrefix + "busybox:1",
 	defaultImageListingPrefix + "busybox:1-glibc",
@@ -158,7 +159,6 @@ var _ = framework.KubeDescribe("Image", func() {
 					MetaInfo:              map[string]string{"imageId": imageId},
 				}
 				lifecycleResultsChannel <- &res
-
 			}, samplingConfig)
 
 			// Send nil and give the manager a minute to process any already-queued results:
@@ -232,7 +232,6 @@ var _ = framework.KubeDescribe("Image", func() {
 					MetaInfo:              nil,
 				}
 				imagesResultsChannel <- &res
-
 			}, samplingConfig)
 
 			// Send nil and give the manager a minute to process any already-queued results:

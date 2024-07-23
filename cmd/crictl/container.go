@@ -782,7 +782,6 @@ func CreateContainer(
 	rClient internalapi.RuntimeService,
 	opts createOptions,
 ) (string, error) {
-
 	config, err := loadContainerConfig(opts.configPath)
 	if err != nil {
 		return "", err
@@ -1186,8 +1185,10 @@ func ListContainers(runtimeClient internalapi.RuntimeService, imageClient intern
 				image = orig
 			}
 			podName := getPodNameFromLabels(c.Labels)
-			display.AddRow([]string{id, image, ctm, convertContainerState(c.State), c.Metadata.Name,
-				strconv.FormatUint(uint64(c.Metadata.Attempt), 10), podID, podName})
+			display.AddRow([]string{
+				id, image, ctm, convertContainerState(c.State), c.Metadata.Name,
+				strconv.FormatUint(uint64(c.Metadata.Attempt), 10), podID, podName,
+			})
 			continue
 		}
 

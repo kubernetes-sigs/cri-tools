@@ -266,9 +266,7 @@ const (
 	attachEchoHelloWindowsOutput = "hello\r\n\r\nC:\\>"
 )
 
-var (
-	attachEchoHelloOutput string
-)
+var attachEchoHelloOutput string
 
 var _ = framework.AddBeforeSuiteCallback(func() {
 	if runtime.GOOS != "windows" || framework.TestContext.IsLcow {

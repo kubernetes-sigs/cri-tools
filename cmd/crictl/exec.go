@@ -88,7 +88,7 @@ var runtimeExecCommand = &cli.Command{
 			return err
 		}
 
-		var opts = execOptions{
+		opts := execOptions{
 			id:        c.Args().First(),
 			timeout:   c.Int64("timeout"),
 			tty:       c.Bool("tty"),

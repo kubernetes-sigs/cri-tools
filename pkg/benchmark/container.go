@@ -136,7 +136,6 @@ var _ = framework.KubeDescribe("Container", func() {
 				rc.StopPodSandbox(context.TODO(), podID)
 				By(fmt.Sprintf("delete PodSandbox %d", idx))
 				rc.RemovePodSandbox(context.TODO(), podID)
-
 			}, samplingConfig)
 
 			// Send nil and give the manager a minute to process any already-queued results:

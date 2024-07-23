@@ -166,7 +166,7 @@ func (lbrm *LifecycleBenchmarksResultsManager) WriteResultsFile(filepath string)
 
 	data, err := json.MarshalIndent(lbrm.resultsSet, "", " ")
 	if err == nil {
-		err = os.WriteFile(filepath, data, 0644)
+		err = os.WriteFile(filepath, data, 0o644)
 		if err != nil {
 			return fmt.Errorf("Failed to write benchmarks results to file: %v", filepath)
 		}

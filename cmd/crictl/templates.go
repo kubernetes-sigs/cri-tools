@@ -60,7 +60,7 @@ func tmplExecuteRawJSON(tmplStr string, rawJSON string) (string, error) {
 		return "", fmt.Errorf("failed to decode json: %w", err)
 	}
 
-	var o = new(bytes.Buffer)
+	o := new(bytes.Buffer)
 	tmpl, err := template.New("tmplExecuteRawJSON").Funcs(builtinTmplFuncs()).Parse(tmplStr)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate go-template: %w", err)

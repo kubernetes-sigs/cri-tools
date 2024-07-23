@@ -130,7 +130,6 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			if !strings.Contains(pids, nginxPid) {
 				framework.Failf("nginx's pid should be seen by hostpid containers")
 			}
-
 		})
 
 		testHostIPC := func(mode runtimeapi.NamespaceMode) {
@@ -921,7 +920,6 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 				matchContainerOutputRe(podConfig, containerName, `\s+0\s+1000\s+100000\n`)
 			})
-
 		})
 
 		When("Host idmap mount support is not needed", func() {
@@ -1150,7 +1148,6 @@ func createNamespaceContainer(rc internalapi.RuntimeService, ic internalapi.Imag
 	}
 
 	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig), containerName, containerConfig.LogPath
-
 }
 
 // createReadOnlyRootfsContainer creates the container with specified ReadOnlyRootfs in ContainerConfig.
@@ -1316,7 +1313,7 @@ func createSeccompProfileDir() (string, error) {
 // createSeccompProfile creates a seccomp test profile with profileContents.
 func createSeccompProfile(profileContents string, profileName string, hostPath string) (string, error) {
 	profilePath := filepath.Join(hostPath, profileName)
-	err := os.WriteFile(profilePath, []byte(profileContents), 0644)
+	err := os.WriteFile(profilePath, []byte(profileContents), 0o644)
 	if err != nil {
 		return "", fmt.Errorf("create %s: %w", profilePath, err)
 	}
@@ -1387,7 +1384,8 @@ func createSeccompContainer(rc internalapi.RuntimeService,
 	profile *runtimeapi.SecurityProfile,
 	caps []string,
 	privileged bool,
-	expectContainerCreateToPass bool) string {
+	expectContainerCreateToPass bool,
+) string {
 	By("create " + profile.GetProfileType().String() + " Seccomp container")
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
@@ -1418,7 +1416,8 @@ func createContainerWithExpectation(rc internalapi.RuntimeService,
 	config *runtimeapi.ContainerConfig,
 	podID string,
 	podConfig *runtimeapi.PodSandboxConfig,
-	expectContainerCreateToPass bool) string {
+	expectContainerCreateToPass bool,
+) string {
 	// Pull the image if it does not exist. (don't fail for inability to pull image)
 	imageName := config.Image.Image
 	if !strings.Contains(imageName, ":") {

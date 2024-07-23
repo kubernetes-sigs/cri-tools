@@ -29,7 +29,7 @@ import (
 // fakeContainersWithCreatedAtDesc creates fake containers in the least recent order of the createdAt.
 func fakeContainersWithCreatedAtDesc(names ...string) []*pb.Container {
 	containers := make([]*pb.Container, len(names), len(names))
-	creationTime := time.Date(2023, 1, 1, 12, 00, 00, 00, time.UTC)
+	creationTime := time.Date(2023, 1, 1, 12, 0o0, 0o0, 0o0, time.UTC)
 	for i, name := range names {
 		containers[i] = fakeContainer(name, creationTime.UnixNano())
 		creationTime = creationTime.Truncate(time.Hour)
@@ -57,9 +57,9 @@ var _ = DescribeTable("getContainersList",
 	},
 	Entry("returns containers in order by createdAt desc",
 		[]*pb.Container{
-			fakeContainer("test0", time.Date(2023, 1, 2, 12, 00, 00, 00, time.UTC).UnixNano()),
-			fakeContainer("test1", time.Date(2023, 1, 1, 12, 00, 00, 00, time.UTC).UnixNano()),
-			fakeContainer("test2", time.Date(2023, 1, 3, 12, 00, 00, 00, time.UTC).UnixNano()),
+			fakeContainer("test0", time.Date(2023, 1, 2, 12, 0o0, 0o0, 0o0, time.UTC).UnixNano()),
+			fakeContainer("test1", time.Date(2023, 1, 1, 12, 0o0, 0o0, 0o0, time.UTC).UnixNano()),
+			fakeContainer("test2", time.Date(2023, 1, 3, 12, 0o0, 0o0, 0o0, time.UTC).UnixNano()),
 		},
 		listOptions{},
 		[]int{2, 0, 1},
@@ -71,7 +71,7 @@ var _ = DescribeTable("getContainersList",
 					Name: "v0",
 				},
 			},
-			fakeContainer("v1", time.Date(2023, 1, 1, 12, 00, 00, 00, time.UTC).UnixNano()),
+			fakeContainer("v1", time.Date(2023, 1, 1, 12, 0o0, 0o0, 0o0, time.UTC).UnixNano()),
 		},
 		listOptions{},
 		[]int{1, 0},

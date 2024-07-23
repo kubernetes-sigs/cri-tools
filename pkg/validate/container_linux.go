@@ -174,11 +174,11 @@ func createHostPathForMountPropagation(podID string, propagationOpt runtimeapi.M
 
 	mntSource := filepath.Join(hostPath, "mnt")
 	propagationMntPoint := filepath.Join(mntSource, "propagationMnt")
-	err = os.MkdirAll(propagationMntPoint, 0700)
+	err = os.MkdirAll(propagationMntPoint, 0o700)
 	framework.ExpectNoError(err, "failed to create volume dir %q: %v", propagationMntPoint, err)
 
 	propagationSrcDir := filepath.Join(hostPath, "propagationSrcDir")
-	err = os.MkdirAll(propagationSrcDir, 0700)
+	err = os.MkdirAll(propagationSrcDir, 0o700)
 	framework.ExpectNoError(err, "failed to create volume dir %q: %v", propagationSrcDir, err)
 
 	_, err = os.Create(filepath.Join(propagationSrcDir, "flagFile"))
@@ -434,7 +434,7 @@ func createHostPathForRROMount(podID string) (string, func()) {
 	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
 
 	tmpfsMntPoint := filepath.Join(hostPath, "tmpfs")
-	err = os.MkdirAll(tmpfsMntPoint, 0700)
+	err = os.MkdirAll(tmpfsMntPoint, 0o700)
 	framework.ExpectNoError(err, "failed to create tmpfs dir %q: %v", tmpfsMntPoint, err)
 
 	err = unix.Mount("none", tmpfsMntPoint, "tmpfs", 0, "")

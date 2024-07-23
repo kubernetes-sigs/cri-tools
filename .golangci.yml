@@ -25,6 +25,7 @@ linters:
     - gocritic
     - godot
     - gofmt
+    - gofumpt
     - goheader
     - goimports
     - gomoddirectives
@@ -88,7 +89,6 @@ linters:
     # - goconst
     # - gocyclo
     # - godox
-    # - gofumpt
     # - goprintffuncname
     # - gosec
     # - gosimple

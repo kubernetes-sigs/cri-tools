@@ -22,7 +22,6 @@ import (
 
 // The actual test suite.
 var _ = t.Describe("help", func() {
-
 	const helpMessageIdentifier = "crictl - client for CRI"
 
 	It("should succeed with `help` subcommand", func() {

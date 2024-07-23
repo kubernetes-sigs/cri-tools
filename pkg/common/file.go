@@ -151,8 +151,8 @@ func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
 			Tag:  "!!map",
 		}
 	}
-	var contentLen = 0
-	var foundOption = false
+	contentLen := 0
+	foundOption := false
 	if yamlData.Content[0].Content != nil {
 		contentLen = len(yamlData.Content[0].Content)
 	}
