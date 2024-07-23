@@ -139,6 +139,7 @@ linters-settings:
       - dynamicFmtString
       - emptyDecl
       - emptyFallthrough
+      - emptyStringTest
       - equalFold
       - evalOrder
       - exposedSyncMutex
@@ -186,7 +187,6 @@ linters-settings:
       - unnecessaryDefer
       - weakCond
       - yodaStyleExpr
-      # - emptyStringTest
       # - hugeParam
       # - importShadow
       # - octalLiteral
