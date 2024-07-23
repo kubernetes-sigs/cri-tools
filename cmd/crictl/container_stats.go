@@ -217,7 +217,6 @@ func (d containerStatsDisplayer) displayStats(ctx context.Context, client intern
 			id, name, fmt.Sprintf("%.2f", cpuPerc), units.HumanSize(float64(mem)),
 			units.HumanSize(float64(disk)), strconv.FormatUint(inodes, 10),
 		})
-
 	}
 	d.display.ClearScreen()
 	d.display.Flush()

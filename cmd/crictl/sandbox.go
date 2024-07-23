@@ -437,7 +437,6 @@ func podSandboxStatus(client internalapi.RuntimeService, ids []string, output st
 		} else {
 			statuses = append(statuses, statusData{json: statusJSON, info: r.Info})
 		}
-
 	}
 
 	return outputStatusData(statuses, output, tmplStr)

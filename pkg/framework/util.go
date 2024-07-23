@@ -359,7 +359,6 @@ func PrepareImageName(imageName string) string {
 
 	default:
 		Failf("Unable to parse imageName: %v", err)
-
 	}
 
 	return imageName
