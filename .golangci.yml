@@ -47,6 +47,7 @@ linters:
     - musttag
     - nakedret
     - nilerr
+    - nolintlint
     - nosprintfhostport
     - perfsprint
     - prealloc
@@ -100,7 +101,6 @@ linters:
     # - nilnil
     # - nlreturn
     # - noctx
-    # - nolintlint
     # - nonamedreturns
     # - paralleltest
     # - revive

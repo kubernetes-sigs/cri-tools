@@ -1005,7 +1005,8 @@ func marshalContainerStatus(cs *pb.ContainerStatus) (string, error) {
 
 // containerStatus sends a ContainerStatusRequest to the server, and parses
 // the returned ContainerStatusResponse.
-// nolint:dupl // pods and containers are similar, but still different
+//
+//nolint:dupl // pods and containers are similar, but still different
 func containerStatus(client internalapi.RuntimeService, ids []string, output string, tmplStr string, quiet bool) error {
 	verbose := !(quiet)
 	if output == "" { // default to json output
