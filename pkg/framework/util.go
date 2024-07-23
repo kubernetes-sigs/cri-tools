@@ -26,14 +26,14 @@ import (
 
 	"github.com/distribution/reference"
 	"github.com/google/uuid"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	"gopkg.in/yaml.v3"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	remote "k8s.io/cri-client/pkg"
-	"sigs.k8s.io/cri-tools/pkg/common"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"sigs.k8s.io/cri-tools/pkg/common"
 )
 
 var (

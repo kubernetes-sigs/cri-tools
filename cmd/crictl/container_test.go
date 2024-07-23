@@ -19,11 +19,10 @@ package main
 import (
 	"time"
 
-	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"k8s.io/kubelet/pkg/types"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
+	"k8s.io/kubelet/pkg/types"
 )
 
 // fakeContainersWithCreatedAtDesc creates fake containers in the least recent order of the createdAt.

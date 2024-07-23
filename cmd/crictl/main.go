@@ -32,7 +32,6 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
-
 	internalapi "k8s.io/cri-api/pkg/apis"
 	remote "k8s.io/cri-client/pkg"
 	"k8s.io/klog/v2"

@@ -28,16 +28,16 @@ import (
 	"sync"
 	"time"
 
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
 	remoteclient "k8s.io/client-go/tools/remotecommand"
 	"k8s.io/client-go/transport/spdy"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"sigs.k8s.io/cri-tools/pkg/framework"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"sigs.k8s.io/cri-tools/pkg/framework"
 )
 
 const defaultExecStdinCloseTimeout = 20 * time.Second
