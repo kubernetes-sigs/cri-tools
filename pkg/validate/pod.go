@@ -162,7 +162,7 @@ func createLogTempDir(podSandboxName string) (string, string) {
 	hostPath, err := os.MkdirTemp("", "podLogTest")
 	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
 	podLogPath := filepath.Join(hostPath, podSandboxName)
-	err = os.MkdirAll(podLogPath, 0777)
+	err = os.MkdirAll(podLogPath, 0o777)
 	framework.ExpectNoError(err, "failed to create host path %s: %v", podLogPath, err)
 
 	return hostPath, podLogPath

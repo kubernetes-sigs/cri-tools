@@ -47,7 +47,7 @@ var _ = framework.KubeDescribe("SELinux", func() {
 			var sandboxID string
 			var sandboxConfig *runtimeapi.PodSandboxConfig
 
-			var sandboxTests = func(privileged bool) {
+			sandboxTests := func(privileged bool) {
 				It("should work with just selinux level set", func() {
 					options := &runtimeapi.SELinuxOption{
 						Level: "s0",

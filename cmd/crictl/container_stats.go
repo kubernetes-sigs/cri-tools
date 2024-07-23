@@ -213,8 +213,10 @@ func (d containerStatsDisplayer) displayStats(ctx context.Context, client intern
 			}
 			cpuPerc = float64(cpu-old.GetCpu().GetUsageCoreNanoSeconds().GetValue()) / float64(duration) * 100
 		}
-		d.display.AddRow([]string{id, name, fmt.Sprintf("%.2f", cpuPerc), units.HumanSize(float64(mem)),
-			units.HumanSize(float64(disk)), strconv.FormatUint(inodes, 10)})
+		d.display.AddRow([]string{
+			id, name, fmt.Sprintf("%.2f", cpuPerc), units.HumanSize(float64(mem)),
+			units.HumanSize(float64(disk)), strconv.FormatUint(inodes, 10),
+		})
 
 	}
 	d.display.ClearScreen()

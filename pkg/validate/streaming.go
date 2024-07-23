@@ -146,7 +146,6 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			By("check the output of portforward")
 			checkPortForward(rc, req, webServerHostPortForPortForward, webServerContainerPort)
 		})
-
 	})
 })
 

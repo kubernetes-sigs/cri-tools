@@ -56,7 +56,7 @@ var runtimePortForwardCommand = &cli.Command{
 			return err
 		}
 
-		var opts = portforwardOptions{
+		opts := portforwardOptions{
 			id:        c.Args().Get(0),
 			ports:     c.Args().Tail(),
 			transport: c.String(transportFlag),
@@ -72,7 +72,6 @@ var runtimePortForwardCommand = &cli.Command{
 func PortForward(client internalapi.RuntimeService, opts portforwardOptions) error {
 	if opts.id == "" {
 		return errors.New("ID cannot be empty")
-
 	}
 	request := &pb.PortForwardRequest{
 		PodSandboxId: opts.id,

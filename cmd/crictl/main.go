@@ -41,8 +41,10 @@ import (
 	"sigs.k8s.io/cri-tools/pkg/version"
 )
 
-const defaultTimeout = 2 * time.Second
-const defaultTimeoutWindows = 200 * time.Second
+const (
+	defaultTimeout        = 2 * time.Second
+	defaultTimeoutWindows = 200 * time.Second
+)
 
 var (
 	// RuntimeEndpoint is CRI server runtime endpoint.

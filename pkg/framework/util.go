@@ -140,7 +140,7 @@ func LoadCRIClient() (*InternalAPIClient, error) {
 		return nil, err
 	}
 
-	var imageServiceAddr = TestContext.ImageServiceAddr
+	imageServiceAddr := TestContext.ImageServiceAddr
 	if imageServiceAddr == "" {
 		// Fallback to runtime service endpoint
 		imageServiceAddr = TestContext.RuntimeServiceAddr
