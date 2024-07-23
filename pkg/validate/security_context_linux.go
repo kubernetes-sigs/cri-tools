@@ -610,7 +610,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				containerConfig := &runtimeapi.ContainerConfig{
 					Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 					Image:    &runtimeapi.ImageSpec{Image: testImagePreDefinedGroup},
-					Command:  []string{"sh", "-c", "id -G; while :; do sleep 1; done"},
+					Command:  []string{"sh", "-c", "id -G; sleep infinity"},
 					Linux: &runtimeapi.LinuxContainerConfig{
 						SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
 							RunAsUser:          &runtimeapi.Int64Value{Value: imagePredefinedGroupUID},
@@ -677,7 +677,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				containerConfig := &runtimeapi.ContainerConfig{
 					Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 					Image:    &runtimeapi.ImageSpec{Image: testImagePreDefinedGroup},
-					Command:  []string{"sh", "-c", "id -G; while :; do sleep 1; done"},
+					Command:  []string{"sh", "-c", "id -G; sleep infinity"},
 					Linux: &runtimeapi.LinuxContainerConfig{
 						SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
 							RunAsUser:                &runtimeapi.Int64Value{Value: imagePredefinedGroupUID},
