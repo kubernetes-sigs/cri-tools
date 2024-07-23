@@ -616,8 +616,6 @@ var _ = framework.KubeDescribe("Security Context", func() {
 						SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
 							RunAsUser:          &runtimeapi.Int64Value{Value: imagePredefinedGroupUID},
 							SupplementalGroups: []int64{supplementalGroup},
-							// SupplementalGroupsPolicy_Merge is default(0)
-							// SupplementalGroupsPolicy: runtimeapi.SupplementalGroupsPolicy_Merge,
 						},
 					},
 					LogPath: logPath,
