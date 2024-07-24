@@ -240,8 +240,6 @@ func createHostNetWebServerContainer(rc internalapi.RuntimeService, ic internala
 // checkMainPage check if the we can get the main page of the pod via given IP:port.
 func checkMainPage(c internalapi.RuntimeService, podID string, hostPort, containerPort int32) {
 	By("get the IP:port needed to be checked")
-	var err error
-	var resp *http.Response
 
 	url := "http://"
 	if hostPort != 0 {
@@ -256,11 +254,28 @@ func checkMainPage(c internalapi.RuntimeService, podID string, hostPort, contain
 
 	By("check the content of " + url)
 
+	respChan := make(chan *http.Response, 1)
+	defer close(respChan)
+
 	Eventually(func() error {
-		resp, err = http.Get(url)
-		return err
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
+		if err != nil {
+			return err
+		}
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+		respChan <- resp
+		return nil
 	}, time.Minute, time.Second).Should(BeNil())
 
+	resp := <-respChan
 	Expect(resp.StatusCode).To(Equal(200), "The status code of response should be 200.")
 	framework.Logf("check port mapping succeed")
 }
