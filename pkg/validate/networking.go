@@ -194,7 +194,7 @@ func createPodSandboxWithPortMapping(c internalapi.RuntimeService, portMappings 
 }
 
 // checkHostname checks the container hostname.
-func checkHostname(c internalapi.RuntimeService, containerID string, hostname string) {
+func checkHostname(c internalapi.RuntimeService, containerID, hostname string) {
 	By("get the current hostname via execSync")
 	stdout, stderr, err := c.ExecSync(context.TODO(), containerID, getHostnameCmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	framework.ExpectNoError(err, "failed to execSync in container %q", containerID)
@@ -238,7 +238,7 @@ func createHostNetWebServerContainer(rc internalapi.RuntimeService, ic internala
 }
 
 // checkMainPage check if the we can get the main page of the pod via given IP:port.
-func checkMainPage(c internalapi.RuntimeService, podID string, hostPort int32, containerPort int32) {
+func checkMainPage(c internalapi.RuntimeService, podID string, hostPort, containerPort int32) {
 	By("get the IP:port needed to be checked")
 	var err error
 	var resp *http.Response

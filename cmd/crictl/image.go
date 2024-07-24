@@ -580,7 +580,7 @@ func parseCreds(creds string) (string, string, error) {
 	return up[0], up[1], nil
 }
 
-func getAuth(creds string, auth string, username string) (*pb.AuthConfig, error) {
+func getAuth(creds, auth, username string) (*pb.AuthConfig, error) {
 	if username != "" {
 		fmt.Print("Enter Password:")
 		bytePassword, err := term.ReadPassword(int(syscall.Stdin))

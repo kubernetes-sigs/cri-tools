@@ -157,7 +157,7 @@ func createExec(c internalapi.RuntimeService, execReq *runtimeapi.ExecRequest) s
 	return resp.Url
 }
 
-func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, stdoutExactMatch bool, isTty bool) {
+func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, stdoutExactMatch, isTty bool) {
 	var (
 		localOut                  = &safeBuffer{buffer: bytes.Buffer{}}
 		localErr                  = &safeBuffer{buffer: bytes.Buffer{}}

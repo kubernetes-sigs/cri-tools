@@ -1208,7 +1208,7 @@ func createInvalidRunAsGroupContainer(rc internalapi.RuntimeService, ic internal
 }
 
 // createNamespacePodSandbox creates a PodSandbox with different NamespaceOption config for creating containers.
-func createNamespacePodSandbox(rc internalapi.RuntimeService, podSandboxNamespace *runtimeapi.NamespaceOption, podSandboxName string, podLogPath string) (string, *runtimeapi.PodSandboxConfig) {
+func createNamespacePodSandbox(rc internalapi.RuntimeService, podSandboxNamespace *runtimeapi.NamespaceOption, podSandboxName, podLogPath string) (string, *runtimeapi.PodSandboxConfig) {
 	By("create NamespaceOption podSandbox")
 	uid := framework.DefaultUIDPrefix + framework.NewUUID()
 	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
@@ -1229,7 +1229,7 @@ func createNamespacePodSandbox(rc internalapi.RuntimeService, podSandboxNamespac
 }
 
 // createNamespaceContainer creates container with different NamespaceOption config.
-func createNamespaceContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, containerName string, image string, containerNamespace *runtimeapi.NamespaceOption, command []string, path string) (string, string, string) {
+func createNamespaceContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, containerName, image string, containerNamespace *runtimeapi.NamespaceOption, command []string, path string) (string, string, string) {
 	By("create NamespaceOption container")
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
@@ -1332,7 +1332,7 @@ func checkNetworkManagement(rc internalapi.RuntimeService, containerID string, m
 }
 
 // createCapabilityContainer creates container with specified Capability in ContainerConfig.
-func createCapabilityContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, add []string, drop []string) string {
+func createCapabilityContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, add, drop []string) string {
 	By("create Capability container")
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
@@ -1407,7 +1407,7 @@ func createSeccompProfileDir() (string, error) {
 }
 
 // createSeccompProfile creates a seccomp test profile with profileContents.
-func createSeccompProfile(profileContents string, profileName string, hostPath string) (string, error) {
+func createSeccompProfile(profileContents, profileName, hostPath string) (string, error) {
 	profilePath := filepath.Join(hostPath, profileName)
 	err := os.WriteFile(profilePath, []byte(profileContents), 0o644)
 	if err != nil {
