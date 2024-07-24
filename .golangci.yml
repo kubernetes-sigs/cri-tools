@@ -186,10 +186,10 @@ linters-settings:
       - typeUnparen
       - uncheckedInlineErr
       - unlabelStmt
+      - unnamedResult
       - unnecessaryBlock
       - unnecessaryDefer
       - weakCond
+      - whyNoLint
       - yodaStyleExpr
       # - hugeParam
-      # - unnamedResult
-      # - whyNoLint

@@ -566,7 +566,7 @@ func ouputImageFsInfoTable(r *pb.ImageFsInfoResponse) {
 	tablePrintFileSystem("Image", r.ImageFilesystems)
 }
 
-func parseCreds(creds string) (string, string, error) {
+func parseCreds(creds string) (username, password string, err error) {
 	if creds == "" {
 		return "", "", errors.New("credentials can't be empty")
 	}
@@ -638,7 +638,7 @@ func normalizeRepoTagPair(repoTags []string, imageName string) (repoTagPairs [][
 	return
 }
 
-func normalizeRepoDigest(repoDigests []string) (string, string) {
+func normalizeRepoDigest(repoDigests []string) (repo, digest string) {
 	if len(repoDigests) == 0 {
 		return "<none>", "<none>"
 	}

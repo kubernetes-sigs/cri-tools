@@ -158,10 +158,10 @@ func listPodSandbox(c internalapi.RuntimeService, filter *runtimeapi.PodSandboxF
 }
 
 // createLogTempDir creates the log temp directory for podSandbox.
-func createLogTempDir(podSandboxName string) (string, string) {
+func createLogTempDir(podSandboxName string) (hostPath, podLogPath string) {
 	hostPath, err := os.MkdirTemp("", "podLogTest")
 	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
-	podLogPath := filepath.Join(hostPath, podSandboxName)
+	podLogPath = filepath.Join(hostPath, podSandboxName)
 	err = os.MkdirAll(podLogPath, 0o777)
 	framework.ExpectNoError(err, "failed to create host path %s: %v", podLogPath, err)
 
@@ -169,14 +169,14 @@ func createLogTempDir(podSandboxName string) (string, string) {
 }
 
 // createPodSandboxWithLogDirectory creates a PodSandbox with log directory.
-func createPodSandboxWithLogDirectory(c internalapi.RuntimeService) (string, *runtimeapi.PodSandboxConfig, string) {
+func createPodSandboxWithLogDirectory(c internalapi.RuntimeService) (sandboxID string, podConfig *runtimeapi.PodSandboxConfig, hostPath string) {
 	By("create a PodSandbox with log directory")
 	podSandboxName := "PodSandbox-with-log-directory-" + framework.NewUUID()
 	uid := framework.DefaultUIDPrefix + framework.NewUUID()
 	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
 
 	hostPath, podLogPath := createLogTempDir(podSandboxName)
-	podConfig := &runtimeapi.PodSandboxConfig{
+	podConfig = &runtimeapi.PodSandboxConfig{
 		Metadata:     framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 		LogDirectory: podLogPath,
 		Linux: &runtimeapi.LinuxPodSandboxConfig{
