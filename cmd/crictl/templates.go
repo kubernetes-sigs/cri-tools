@@ -49,7 +49,7 @@ func jsonBuiltinTmplFunc(v interface{}) string {
 
 // tmplExecuteRawJSON executes the template with interface{} with decoded by
 // rawJSON string.
-func tmplExecuteRawJSON(tmplStr string, rawJSON string) (string, error) {
+func tmplExecuteRawJSON(tmplStr, rawJSON string) (string, error) {
 	dec := json.NewDecoder(
 		bytes.NewReader([]byte(rawJSON)),
 	)

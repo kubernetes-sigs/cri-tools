@@ -157,7 +157,7 @@ var _ = framework.KubeDescribe("SELinux", func() {
 	}
 })
 
-func createContainerWithSelinux(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, sandboxID string, sandboxConfig *runtimeapi.PodSandboxConfig, options *runtimeapi.SELinuxOption, privileged bool, shouldStart, shouldCreate bool) string {
+func createContainerWithSelinux(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, sandboxID string, sandboxConfig *runtimeapi.PodSandboxConfig, options *runtimeapi.SELinuxOption, privileged, shouldStart, shouldCreate bool) string {
 	By("create a container with selinux")
 	containerName := "selinux-test-" + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{

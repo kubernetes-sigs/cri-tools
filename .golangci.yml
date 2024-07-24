@@ -154,6 +154,7 @@ linters-settings:
       - nestingReduce
       - nilValReturn
       - octalLiteral
+      - paramTypeCombine
       - preferDecodeRune
       - preferFilepathJoin
       - preferFprint
@@ -190,6 +191,5 @@ linters-settings:
       - weakCond
       - yodaStyleExpr
       # - hugeParam
-      # - paramTypeCombine
       # - unnamedResult
       # - whyNoLint
