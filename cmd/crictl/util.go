@@ -77,6 +77,7 @@ func InterruptableRPC[T any](
 	rpcFunc func(context.Context) (T, error),
 ) (res T, err error) {
 	if ctx == nil {
+		//nolint:contextcheck // creating a new context is intentional
 		ctx = context.Background()
 	}
 	ctx, cancel := context.WithCancel(ctx)

@@ -151,7 +151,7 @@ func (d *podStatsDisplayer) displayPodStats(
 	c context.Context,
 	client cri.RuntimeService,
 ) error {
-	stats, err := getPodSandboxStats(client, d.filter)
+	stats, err := getPodSandboxStats(c, client, d.filter)
 	if err != nil {
 		return err
 	}
@@ -174,7 +174,7 @@ func (d *podStatsDisplayer) displayPodStats(
 
 	time.Sleep(d.opts.sample)
 
-	stats, err = getPodSandboxStats(client, d.filter)
+	stats, err = getPodSandboxStats(c, client, d.filter)
 	if err != nil {
 		return err
 	}
@@ -252,12 +252,13 @@ func (d *podStatsDisplayer) displayPodStats(
 }
 
 func getPodSandboxStats(
+	ctx context.Context,
 	client cri.RuntimeService,
 	filter *pb.PodSandboxStatsFilter,
 ) ([]*pb.PodSandboxStats, error) {
 	logrus.Debugf("PodSandboxStatsFilter: %v", filter)
 
-	stats, err := InterruptableRPC(nil, func(ctx context.Context) ([]*pb.PodSandboxStats, error) {
+	stats, err := InterruptableRPC(ctx, func(ctx context.Context) ([]*pb.PodSandboxStats, error) {
 		return client.ListPodSandboxStats(ctx, filter)
 	})
 	if err != nil {
