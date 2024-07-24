@@ -504,11 +504,11 @@ func verifyExecSyncOutput(c internalapi.RuntimeService, containerID string, comm
 }
 
 // createHostPath creates the hostPath and flagFile for volume.
-func createHostPath(podID string) (string, string) {
+func createHostPath(podID string) (hostPath, flagFile string) {
 	hostPath, err := os.MkdirTemp("", "test"+podID)
 	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
 
-	flagFile := "testVolume.file"
+	flagFile = "testVolume.file"
 	_, err = os.Create(filepath.Join(hostPath, flagFile))
 	framework.ExpectNoError(err, "failed to create volume file %q: %v", flagFile, err)
 
@@ -544,7 +544,7 @@ func createVolumeContainer(rc internalapi.RuntimeService, ic internalapi.ImageMa
 }
 
 // createLogContainer creates a container with log and the prefix of containerName.
-func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix, podID string, podConfig *runtimeapi.PodSandboxConfig) (string, string) {
+func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix, podID string, podConfig *runtimeapi.PodSandboxConfig) (logPath, containerID string) {
 	By("create a container with log and name")
 	containerName := prefix + framework.NewUUID()
 	path := containerName + ".log"
@@ -558,7 +558,7 @@ func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManag
 }
 
 // createKeepLoggingContainer creates a container keeps logging defaultLog to output.
-func createKeepLoggingContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix, podID string, podConfig *runtimeapi.PodSandboxConfig) (string, string) {
+func createKeepLoggingContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix, podID string, podConfig *runtimeapi.PodSandboxConfig) (logPath, containerID string) {
 	By("create a container with log and name")
 	containerName := prefix + framework.NewUUID()
 	path := containerName + ".log"
