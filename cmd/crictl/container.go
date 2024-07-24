@@ -330,7 +330,7 @@ var updateContainerCommand = &cli.Command{
 			return err
 		}
 
-		options := updateOptions{
+		options := &updateOptions{
 			CPUCount:           c.Int64("cpu-count"),
 			CPUMaximum:         c.Int64("cpu-maximum"),
 			CPUPeriod:          c.Int64("cpu-period"),
@@ -622,7 +622,7 @@ var listContainersCommand = &cli.Command{
 			return err
 		}
 
-		opts := listOptions{
+		opts := &listOptions{
 			id:               c.String("id"),
 			podID:            c.String("pod"),
 			state:            c.String("state"),
@@ -882,7 +882,7 @@ type updateOptions struct {
 
 // UpdateContainerResources sends an UpdateContainerResourcesRequest to the server, and parses
 // the returned UpdateContainerResourcesResponse.
-func UpdateContainerResources(client internalapi.RuntimeService, id string, opts updateOptions) error {
+func UpdateContainerResources(client internalapi.RuntimeService, id string, opts *updateOptions) error {
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
@@ -1089,7 +1089,7 @@ func outputContainerStatusTable(r *pb.ContainerStatusResponse, verbose bool) {
 
 // ListContainers sends a ListContainerRequest to the server, and parses
 // the returned ListContainerResponse.
-func ListContainers(runtimeClient internalapi.RuntimeService, imageClient internalapi.ImageManagerService, opts listOptions) error {
+func ListContainers(runtimeClient internalapi.RuntimeService, imageClient internalapi.ImageManagerService, opts *listOptions) error {
 	filter := &pb.ContainerFilter{}
 	if opts.id != "" {
 		filter.Id = opts.id
@@ -1248,7 +1248,7 @@ func getPodNameFromLabels(label map[string]string) string {
 	return "unknown"
 }
 
-func getContainersList(containersList []*pb.Container, opts listOptions) []*pb.Container {
+func getContainersList(containersList []*pb.Container, opts *listOptions) []*pb.Container {
 	filtered := []*pb.Container{}
 	for _, c := range containersList {
 		// Filter by pod name/namespace regular expressions.
