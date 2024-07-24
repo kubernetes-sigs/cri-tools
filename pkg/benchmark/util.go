@@ -123,7 +123,7 @@ func (lbrm *LifecycleBenchmarksResultsManager) awaitResult() {
 			lbrm.resultsSet.Datapoints = append(lbrm.resultsSet.Datapoints, *res)
 
 		case <-timeout:
-			err := fmt.Errorf("Timed out after waiting %d seconds for new results.", lbrm.resultsChannelTimeoutSeconds)
+			err := fmt.Errorf("timed out after waiting %d seconds for new results", lbrm.resultsChannelTimeoutSeconds)
 			logrus.Error(err.Error())
 			panic(err)
 		}
@@ -154,24 +154,24 @@ func (lbrm *LifecycleBenchmarksResultsManager) AwaitAllResults(timeoutSeconds in
 		return nil
 	case <-timeout:
 		logrus.Warnf("Failed to await all results. Results registered so far were: %+v", lbrm.resultsSet)
-		return fmt.Errorf("Benchmark results waiting timed out after %d seconds.", timeoutSeconds)
+		return fmt.Errorf("benchmark results waiting timed out after %d seconds", timeoutSeconds)
 	}
 }
 
 // Saves the results gathered so far as JSON under the given filepath.
 func (lbrm *LifecycleBenchmarksResultsManager) WriteResultsFile(filepath string) error {
 	if lbrm.resultsConsumerRunning {
-		return errors.New("Results consumer is still running and expecting results.")
+		return errors.New("results consumer is still running and expecting results")
 	}
 
 	data, err := json.MarshalIndent(lbrm.resultsSet, "", " ")
 	if err == nil {
 		err = os.WriteFile(filepath, data, 0o644)
 		if err != nil {
-			return fmt.Errorf("Failed to write benchmarks results to file: %v", filepath)
+			return fmt.Errorf("failed to write benchmarks results to file: %v", filepath)
 		}
 	} else {
-		return fmt.Errorf("Failed to serialize benchmark data: %v", err)
+		return fmt.Errorf("failed to serialize benchmark data: %w", err)
 	}
 
 	return nil

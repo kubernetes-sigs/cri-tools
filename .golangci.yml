@@ -18,7 +18,9 @@ linters:
     - dupl
     - dupword
     - durationcheck
+    - errchkjson
     - errname
+    - errorlint
     - exportloopref
     - fatcontext
     - forcetypeassert
@@ -79,8 +81,6 @@ linters:
     # - depguard
     # - err113
     # - errcheck
-    # - errchkjson
-    # - errorlint
     # - exhaustive
     # - exhaustruct
     # - forbidigo
