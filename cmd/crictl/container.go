@@ -1180,7 +1180,7 @@ func ListContainers(runtimeClient internalapi.RuntimeService, imageClient intern
 			if opts.resolveImagePath {
 				orig, err := getRepoImage(imageClient, image)
 				if err != nil {
-					return fmt.Errorf("failed to fetch repo image %v", err)
+					return fmt.Errorf("failed to fetch repo image %w", err)
 				}
 				image = orig
 			}

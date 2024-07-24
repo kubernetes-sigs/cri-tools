@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 
@@ -84,7 +85,7 @@ func Events(cliContext *cli.Context, client internalapi.RuntimeService) error {
 		_, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
 			return nil, client.GetContainerEvents(ctx, containerEventsCh, nil)
 		})
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			errCh <- nil
 			return
 		}

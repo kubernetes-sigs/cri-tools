@@ -18,6 +18,7 @@ package framework
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"runtime"
@@ -337,28 +338,26 @@ func ListImage(c internalapi.ImageManagerService, filter *runtimeapi.ImageFilter
 // PrepareImageName builds a pullable image name for the provided one.
 func PrepareImageName(imageName string) string {
 	ref, err := reference.ParseNamed(imageName)
-
-	switch err {
-	case nil:
-		// Modify the image if it's a fully qualified image name
-		if TestContext.RegistryPrefix != DefaultRegistryPrefix {
-			r := fmt.Sprintf("%s/%s", TestContext.RegistryPrefix, reference.Path(ref))
-			ref, err = reference.ParseNamed(r)
-			ExpectNoError(err, "failed to parse new image name: %v", err)
-		}
-		imageName = ref.String()
-
-		if !strings.Contains(imageName, ":") {
-			imageName += ":latest"
-			Logf("Use latest as default image tag.")
+	if err != nil {
+		if errors.Is(err, reference.ErrNameNotCanonical) {
+			// Non canonical images can simply be prefixed
+			return fmt.Sprintf("%s/%s", TestContext.RegistryPrefix, imageName)
 		}
 
-	case reference.ErrNameNotCanonical:
-		// Non canonical images can simply be prefixed
-		imageName = fmt.Sprintf("%s/%s", TestContext.RegistryPrefix, imageName)
-
-	default:
 		Failf("Unable to parse imageName: %v", err)
+	}
+
+	// Modify the image if it's a fully qualified image name
+	if TestContext.RegistryPrefix != DefaultRegistryPrefix {
+		r := fmt.Sprintf("%s/%s", TestContext.RegistryPrefix, reference.Path(ref))
+		ref, err = reference.ParseNamed(r)
+		ExpectNoError(err, "failed to parse new image name: %v", err)
+	}
+	imageName = ref.String()
+
+	if !strings.Contains(imageName, ":") {
+		imageName += ":latest"
+		Logf("Use latest as default image tag.")
 	}
 
 	return imageName
@@ -382,12 +381,12 @@ func LoadYamlFile(filepath string, obj interface{}) error {
 	Logf("Attempting to load YAML file %q into %+v", filepath, obj)
 	fileContent, err := os.ReadFile(filepath)
 	if err != nil {
-		return fmt.Errorf("error reading %q file contents: %v", filepath, err)
+		return fmt.Errorf("error reading %q file contents: %w", filepath, err)
 	}
 
 	err = yaml.Unmarshal(fileContent, obj)
 	if err != nil {
-		return fmt.Errorf("error unmarshalling %q YAML file: %v", filepath, err)
+		return fmt.Errorf("error unmarshalling %q YAML file: %w", filepath, err)
 	}
 
 	Logf("Successfully loaded YAML file %q into %+v", filepath, obj)
