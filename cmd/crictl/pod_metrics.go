@@ -96,7 +96,7 @@ func (p *podMetricsDisplayer) displayPodMetrics(
 	c context.Context,
 	client cri.RuntimeService,
 ) error {
-	metrics, err := podSandboxMetrics(client)
+	metrics, err := podSandboxMetrics(c, client)
 	if err != nil {
 		return err
 	}
@@ -111,8 +111,8 @@ func (p *podMetricsDisplayer) displayPodMetrics(
 	return nil
 }
 
-func podSandboxMetrics(client cri.RuntimeService) ([]*pb.PodSandboxMetrics, error) {
-	metrics, err := InterruptableRPC(nil, func(ctx context.Context) ([]*pb.PodSandboxMetrics, error) {
+func podSandboxMetrics(ctx context.Context, client cri.RuntimeService) ([]*pb.PodSandboxMetrics, error) {
+	metrics, err := InterruptableRPC(ctx, func(ctx context.Context) ([]*pb.PodSandboxMetrics, error) {
 		return client.ListPodSandboxMetrics(ctx)
 	})
 	if err != nil {

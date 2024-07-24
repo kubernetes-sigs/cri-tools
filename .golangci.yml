@@ -10,6 +10,7 @@ linters:
     - bidichk
     - canonicalheader
     - containedctx
+    - contextcheck
     - copyloopvar
     - decorder
     - dogsled
@@ -74,7 +75,6 @@ linters:
     - whitespace
     - zerologlint
     # - bodyclose
-    # - contextcheck
     # - cyclop
     # - depguard
     # - err113
