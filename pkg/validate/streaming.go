@@ -23,7 +23,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -335,14 +334,18 @@ func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string, 
 	framework.ExpectNoError(err, "failed to create spdy round tripper")
 	parsedURL := parseURL(c, portForwardSeverURL)
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", parsedURL)
-	pf, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", hostPort, containerPort)}, stopChan, readyChan, os.Stdout, os.Stderr)
+
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+
+	pf, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", hostPort, containerPort)}, stopChan, readyChan, stdout, stderr)
 	framework.ExpectNoError(err, "failed to create port forward for %q", portForwardSeverURL)
 
 	go func() {
 		defer GinkgoRecover()
 		By("start port forward")
-		err = pf.ForwardPorts()
-		framework.ExpectNoError(err, "failed to start port forward for %q", portForwardSeverURL)
+		err := pf.ForwardPorts()
+		framework.ExpectNoError(err, "failed to start port forward for %q, stdout: %s, stderr: %s", portForwardSeverURL, stdout.String(), stderr.String())
 	}()
 
 	By(fmt.Sprintf("check if we can get nginx main page via localhost:%d", hostPort))
