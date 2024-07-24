@@ -8,6 +8,7 @@ linters:
     - asasalint
     - asciicheck
     - bidichk
+    - bodyclose
     - canonicalheader
     - containedctx
     - contextcheck
@@ -74,7 +75,6 @@ linters:
     - wastedassign
     - whitespace
     - zerologlint
-    # - bodyclose
     # - cyclop
     # - depguard
     # - err113
