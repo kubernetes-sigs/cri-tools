@@ -41,9 +41,7 @@ func bashCompletion(c *cli.Context) error {
 		if command.Hidden {
 			continue
 		}
-		for _, name := range command.Names() {
-			subcommands = append(subcommands, name)
-		}
+		subcommands = append(subcommands, command.Names()...)
 	}
 
 	for _, flag := range c.App.Flags {

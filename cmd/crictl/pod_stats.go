@@ -142,7 +142,7 @@ func podStats(
 	d := podStatsDisplayer{
 		filter:  filter,
 		opts:    opts,
-		display: newTableDisplay(20, 1, 3, ' ', 0),
+		display: newDefaultTableDisplay(),
 	}
 	return handleDisplay(c, client, opts.watch, d.displayPodStats)
 }
@@ -211,8 +211,10 @@ func (d *podStatsDisplayer) displayPodStats(
 			continue
 		}
 
-		var oldCpu uint64
-		var oldCpuTs int64
+		var (
+			oldCPU   uint64
+			oldCPUTs int64
+		)
 		old, ok := oldStats[s.Attributes.Id]
 		if !ok {
 			// Skip new pod
@@ -222,21 +224,21 @@ func (d *podStatsDisplayer) displayPodStats(
 		oldLinux := old.GetLinux()
 		oldWindows := old.GetWindows()
 		if linux != nil {
-			oldCpuTs = oldLinux.GetCpu().GetTimestamp()
-			oldCpu = oldLinux.GetCpu().GetUsageCoreNanoSeconds().GetValue()
+			oldCPUTs = oldLinux.GetCpu().GetTimestamp()
+			oldCPU = oldLinux.GetCpu().GetUsageCoreNanoSeconds().GetValue()
 		} else if windows != nil {
-			oldCpuTs = oldWindows.GetCpu().GetTimestamp()
-			oldCpu = oldWindows.GetCpu().GetUsageCoreNanoSeconds().GetValue()
+			oldCPUTs = oldWindows.GetCpu().GetTimestamp()
+			oldCPU = oldWindows.GetCpu().GetUsageCoreNanoSeconds().GetValue()
 		}
 
 		var cpuPerc float64
 		if cpu != 0 {
 			// Only generate cpuPerc for running sandbox
-			duration := ts - oldCpuTs
+			duration := ts - oldCPUTs
 			if duration == 0 {
 				return errors.New("cpu stat is not updated during sample")
 			}
-			cpuPerc = float64(cpu-oldCpu) / float64(duration) * 100
+			cpuPerc = float64(cpu-oldCPU) / float64(duration) * 100
 		}
 		d.display.AddRow([]string{
 			s.Attributes.GetMetadata().GetName(),

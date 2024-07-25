@@ -57,7 +57,7 @@ var _ = framework.KubeDescribe("Image", func() {
 	var ic internalapi.ImageManagerService
 	f := framework.NewDefaultCRIFramework()
 
-	var testImageList []string = framework.TestContext.BenchmarkingParams.ImageListingBenchmarkImages
+	testImageList := framework.TestContext.BenchmarkingParams.ImageListingBenchmarkImages
 	if len(testImageList) == 0 {
 		if runtime.GOARCH == "amd64" {
 			testImageList = defaultImageListingBenchmarkImagesAmd64
@@ -133,7 +133,7 @@ var _ = framework.KubeDescribe("Image", func() {
 				By(fmt.Sprintf("Pull Image %d", idx))
 				startTime := time.Now().UnixNano()
 				lastStartTime = startTime
-				imageId := framework.PullPublicImage(ic, imagePullingBenchmarkImage, nil)
+				imageID := framework.PullPublicImage(ic, imagePullingBenchmarkImage, nil)
 				lastEndTime = time.Now().UnixNano()
 				durations[0] = lastEndTime - lastStartTime
 
@@ -156,7 +156,7 @@ var _ = framework.KubeDescribe("Image", func() {
 					StartTime:             startTime,
 					EndTime:               lastEndTime,
 					OperationsDurationsNs: durations,
-					MetaInfo:              map[string]string{"imageId": imageId},
+					MetaInfo:              map[string]string{"imageId": imageID},
 				}
 				lifecycleResultsChannel <- &res
 			}, samplingConfig)

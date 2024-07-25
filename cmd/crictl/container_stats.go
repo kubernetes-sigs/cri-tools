@@ -152,7 +152,7 @@ func ContainerStats(client internalapi.RuntimeService, opts *statsOptions) error
 				LabelSelector: opts.labels,
 			},
 		},
-		display: newTableDisplay(20, 1, 3, ' ', 0),
+		display: newDefaultTableDisplay(),
 	}
 
 	return handleDisplay(context.TODO(), client, opts.watch, d.displayStats)

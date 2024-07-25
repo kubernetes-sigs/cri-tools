@@ -249,7 +249,7 @@ func removeDuplicates(ss []string) []string {
 	encountered := map[string]bool{}
 	result := []string{}
 	for _, s := range ss {
-		if encountered[s] == true {
+		if encountered[s] {
 			continue
 		}
 		encountered[s] = true

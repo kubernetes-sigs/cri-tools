@@ -26,6 +26,7 @@ import (
 )
 
 func TestNameFilterByRegex(t *testing.T) {
+	t.Parallel()
 	testCases := []struct {
 		desc    string
 		pattern string
@@ -65,6 +66,7 @@ func TestNameFilterByRegex(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
 			r := matchesRegex(tc.pattern, tc.name)
 			if r != tc.isMatch {
 				t.Errorf("expected matched to be %v; actual result is %v", tc.isMatch, r)
@@ -73,6 +75,7 @@ func TestNameFilterByRegex(t *testing.T) {
 	}
 }
 
+//nolint:paralleltest //should not run in parallel
 func TestOutputStatusData(t *testing.T) {
 	const (
 		statusResponse = `{"conditions":[
@@ -152,7 +155,6 @@ func TestOutputStatusData(t *testing.T) {
 		},
 	}
 
-	// Run tests
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			captureOutput := func(f func() error) (string, error) {

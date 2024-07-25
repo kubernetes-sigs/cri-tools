@@ -13,6 +13,7 @@ linters:
     - containedctx
     - contextcheck
     - copyloopvar
+    - cyclop
     - decorder
     - dogsled
     - dupl
@@ -21,14 +22,18 @@ linters:
     - errchkjson
     - errname
     - errorlint
+    - exhaustive
     - exportloopref
     - fatcontext
     - forcetypeassert
     - gci
     - gocheckcompilerdirectives
     - gochecksumtype
+    - gocognit
     - gocritic
+    - gocyclo
     - godot
+    - godox
     - gofmt
     - gofumpt
     - goheader
@@ -36,6 +41,7 @@ linters:
     - gomoddirectives
     - gomodguard
     - goprintffuncname
+    - gosimple
     - gosmopolitan
     - govet
     - grouper
@@ -51,20 +57,25 @@ linters:
     - misspell
     - musttag
     - nakedret
+    - nestif
     - nilerr
+    - noctx
     - nolintlint
     - nosprintfhostport
+    - paralleltest
     - perfsprint
     - prealloc
     - predeclared
     - promlinter
     - protogetter
     - reassign
+    - revive
     - rowserrcheck
     - sloglint
     - spancheck
     - sqlclosecheck
     - staticcheck
+    - stylecheck
     - tagalign
     - tagliatelle
     - tenv
@@ -72,47 +83,57 @@ linters:
     - testifylint
     - tparallel
     - typecheck
+    - unconvert
+    - unparam
     - unused
     - usestdlibvars
     - wastedassign
     - whitespace
     - zerologlint
-    # - cyclop
     # - depguard
     # - err113
     # - errcheck
-    # - exhaustive
     # - exhaustruct
     # - forbidigo
     # - funlen
     # - ginkgolinter
     # - gochecknoglobals
     # - gochecknoinits
-    # - gocognit
     # - goconst
-    # - gocyclo
-    # - godox
     # - gosec
-    # - gosimple
     # - ireturn
     # - lll
     # - mnd
-    # - nestif
     # - nilnil
     # - nlreturn
-    # - noctx
     # - nonamedreturns
-    # - paralleltest
-    # - revive
-    # - stylecheck
     # - testpackage
     # - thelper
-    # - unconvert
-    # - unparam
     # - varnamelen
     # - wrapcheck
     # - wsl
 linters-settings:
+  stylecheck:
+    checks:
+      - all
+      - -ST1001  # dot imports
+  revive:
+    rules:
+      - name: dot-imports
+        disabled: true
+  nestif:
+    min-complexity: 17
+  godox:
+    keywords:
+      - BUG
+      - FIXME
+      - HACK
+  gocyclo:
+    min-complexity: 35
+  cyclop:
+    max-complexity: 37
+  gocognit:
+    min-complexity: 53
   gci:
     sections:
       - standard

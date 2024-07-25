@@ -216,7 +216,7 @@ var createContainerCommand = &cli.Command{
 		if c.Args().Len() != 3 {
 			return cli.ShowSubcommandHelp(c)
 		}
-		if c.Bool("no-pull") == true && c.Bool("with-pull") == true {
+		if c.Bool("no-pull") && c.Bool("with-pull") {
 			return errors.New("confict: no-pull and with-pull are both set")
 		}
 
@@ -659,7 +659,7 @@ var runContainerCommand = &cli.Command{
 		if c.Args().Len() != 2 {
 			return cli.ShowSubcommandHelp(c)
 		}
-		if c.Bool("no-pull") == true && c.Bool("with-pull") == true {
+		if c.Bool("no-pull") && c.Bool("with-pull") {
 			return errors.New("confict: no-pull and with-pull are both set")
 		}
 
@@ -716,7 +716,7 @@ var checkpointContainerCommand = &cli.Command{
 		}
 		if c.String("export") == "" {
 			return errors.New(
-				"Cannot checkpoint a container without specifying the checkpoint destination. " +
+				"cannot checkpoint a container without specifying the checkpoint destination. " +
 					"Use --export=/path/to/checkpoint.tar",
 			)
 		}
@@ -1148,7 +1148,7 @@ func ListContainers(runtimeClient internalapi.RuntimeService, imageClient intern
 		return fmt.Errorf("unsupported output format %q", opts.output)
 	}
 
-	display := newTableDisplay(20, 1, 3, ' ', 0)
+	display := newDefaultTableDisplay()
 	if !opts.verbose && !opts.quiet {
 		display.AddRow([]string{columnContainer, columnImage, columnCreated, columnState, columnName, columnAttempt, columnPodID, columnPodname})
 	}

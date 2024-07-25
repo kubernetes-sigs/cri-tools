@@ -273,7 +273,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support starting container with volume [Conformance]", func() {
 			By("create host path and flag file")
-			hostPath, _ := createHostPath(podID)
+			hostPath := createHostPath(podID)
 
 			defer os.RemoveAll(hostPath) // clean up the TempDir
 
@@ -290,7 +290,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support starting container with volume when host path is a symlink [Conformance]", func() {
 			By("create host path and flag file")
-			hostPath, _ := createHostPath(podID)
+			hostPath := createHostPath(podID)
 			defer os.RemoveAll(hostPath) // clean up the TempDir
 
 			By("create symlink")
@@ -504,15 +504,15 @@ func verifyExecSyncOutput(c internalapi.RuntimeService, containerID string, comm
 }
 
 // createHostPath creates the hostPath and flagFile for volume.
-func createHostPath(podID string) (hostPath, flagFile string) {
+func createHostPath(podID string) (hostPath string) {
 	hostPath, err := os.MkdirTemp("", "test"+podID)
 	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
 
-	flagFile = "testVolume.file"
+	flagFile := "testVolume.file"
 	_, err = os.Create(filepath.Join(hostPath, flagFile))
 	framework.ExpectNoError(err, "failed to create volume file %q: %v", flagFile, err)
 
-	return hostPath, flagFile
+	return hostPath
 }
 
 // createSymlink creates a symlink of path.

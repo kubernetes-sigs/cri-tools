@@ -24,6 +24,7 @@ import (
 )
 
 func TestCrictl(t *testing.T) {
+	t.Parallel()
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Crictl Suite")
 }
