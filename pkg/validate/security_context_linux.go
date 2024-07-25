@@ -102,7 +102,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("get nginx container pid")
 			command := []string{"sh", "-c", "while [ ! -f /var/run/nginx.pid ]; do sleep 1; done && cat /var/run/nginx.pid"}
 			output := execSyncContainer(rc, containerID, command)
-			nginxPid := strings.TrimSpace(string(output))
+			nginxPid := strings.TrimSpace(output)
 			framework.Logf("Nginx's pid is %q", nginxPid)
 
 			By("create busybox container with hostPID")
@@ -120,7 +120,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("should show its pid in the hostPID namespace container")
 			cmd := []string{"pidof", "nginx", "||", "true"}
 			output = execSyncContainer(rc, containerID, cmd)
-			pids := strings.TrimSpace(string(output))
+			pids := strings.TrimSpace(output)
 			framework.Logf("Got nginx's pid %q from pod %q", pids, nginxContainerName)
 
 			if pids == "" {
@@ -168,6 +168,8 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				Expect(o).To(ContainSubstring(segmentID), substr)
 			case runtimeapi.NamespaceMode_POD:
 				Expect(o).NotTo(ContainSubstring(segmentID), substr)
+			case runtimeapi.NamespaceMode_CONTAINER, runtimeapi.NamespaceMode_TARGET:
+				framework.Failf("Unexpected namespace mode: %v", mode)
 			}
 		}
 
@@ -933,13 +935,13 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			return containerID
 		}
 		It("should not allow privilege escalation when true", func() {
-			containerName := "alpine-nnp-true-" + string(framework.NewUUID())
+			containerName := "alpine-nnp-true-" + framework.NewUUID()
 			createContainerWithNoNewPrivs(containerName, true, 1000)
 			matchContainerOutput(podConfig, containerName, "Effective uid: 1000\n")
 		})
 
 		It("should allow privilege escalation when false", func() {
-			containerName := "alpine-nnp-false-" + string(framework.NewUUID())
+			containerName := "alpine-nnp-false-" + framework.NewUUID()
 			createContainerWithNoNewPrivs(containerName, false, 1000)
 			matchContainerOutput(podConfig, containerName, "Effective uid: 0\n")
 		})
@@ -1050,8 +1052,8 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 					// The container outputs the content of its /proc/self/uid_map.
 					// That output should match the regex of the host userns content.
-					containerId, hostId, length := mapping[0], mapping[1], mapping[2]
-					regex := fmt.Sprintf(`\s+%v\s+%v\s+%v`, containerId, hostId, length)
+					containerID, hostID, length := mapping[0], mapping[1], mapping[2]
+					regex := fmt.Sprintf(`\s+%v\s+%v\s+%v`, containerID, hostID, length)
 					matchContainerOutputRe(podConfig, containerName, regex)
 				}
 			})
@@ -1379,7 +1381,7 @@ func createAndCheckHostNetwork(rc internalapi.RuntimeService, ic internalapi.Ima
 	Eventually(func() error {
 		log := parseLogLine(podConfig, logPath)
 		for _, msg := range log {
-			if strings.Contains(string(msg.log), ":"+hostNetworkPort) {
+			if strings.Contains(msg.log, ":"+hostNetworkPort) {
 				if hostNetwork {
 					return nil
 				}

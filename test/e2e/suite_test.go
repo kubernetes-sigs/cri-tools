@@ -27,6 +27,7 @@ import (
 
 // TestE2E runs the created specs.
 func TestE2E(t *testing.T) {
+	t.Parallel()
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "e2e")
 }

@@ -106,7 +106,7 @@ CRICTL OPTIONS:
 			}
 			return common.WriteConfig(config, configFile)
 		} else if c.Bool("list") {
-			display := newTableDisplay(20, 1, 3, ' ', 0)
+			display := newDefaultTableDisplay()
 			display.AddRow([]string{columnKey, columnValue})
 			display.AddRow([]string{"runtime-endpoint", config.RuntimeEndpoint})
 			display.AddRow([]string{"image-endpoint", config.ImageEndpoint})
@@ -118,17 +118,18 @@ CRICTL OPTIONS:
 			display.Flush()
 
 			return nil
-		} else { // default for backwards compatibility
-			key := c.Args().First()
-			if key == "" {
-				return cli.ShowSubcommandHelp(c)
-			}
-			value := c.Args().Get(1)
-			if err := setValue(key, value, config); err != nil {
-				return err
-			}
-			return common.WriteConfig(config, configFile)
 		}
+
+		// default for backwards compatibility
+		key := c.Args().First()
+		if key == "" {
+			return cli.ShowSubcommandHelp(c)
+		}
+		value := c.Args().Get(1)
+		if err := setValue(key, value, config); err != nil {
+			return err
+		}
+		return common.WriteConfig(config, configFile)
 	},
 }
 

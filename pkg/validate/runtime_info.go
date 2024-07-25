@@ -68,11 +68,11 @@ func TestGetRuntimeStatus(c internalapi.RuntimeService) {
 	framework.ExpectNoError(err, "failed to get runtime conditions: %v", err)
 
 	for _, condition := range status.Status.Conditions {
-		if condition.Type == "RuntimeReady" && condition.Status == true {
-			count += 1
+		if condition.Type == "RuntimeReady" && condition.Status {
+			count++
 		}
-		if condition.Type == "NetworkReady" && condition.Status == true {
-			count += 1
+		if condition.Type == "NetworkReady" && condition.Status {
+			count++
 		}
 	}
 	Expect(count >= 2).To(BeTrue(), "should return all the required runtime conditions")

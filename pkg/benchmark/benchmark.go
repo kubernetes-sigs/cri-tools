@@ -28,6 +28,7 @@ import (
 // If a "report directory" is specified, one or more JUnit test reports will be
 // generated in this directory.
 func TestPerformance(t *testing.T) {
+	t.Parallel()
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Benchmark Test Suite")
 }

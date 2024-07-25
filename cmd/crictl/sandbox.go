@@ -54,7 +54,7 @@ var runPodCommand = &cli.Command{
 		Aliases:   []string{"js"},
 		Usage:     "Display the JSON schema for the pod-config.json",
 		UsageText: "The schema will be generated from the PodSandboxConfig of the CRI API compiled with this version of crictl",
-		Action: func(c *cli.Context) error {
+		Action: func(*cli.Context) error {
 			return printJSONSchema(&pb.PodSandboxConfig{})
 		},
 	}},
@@ -168,27 +168,27 @@ var removePodCommand = &cli.Command{
 
 		funcs := []func() error{}
 		for _, id := range ids {
-			podId := id
+			podID := id
 			funcs = append(funcs, func() error {
 				resp, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.PodSandboxStatusResponse, error) {
-					return runtimeClient.PodSandboxStatus(ctx, podId, false)
+					return runtimeClient.PodSandboxStatus(ctx, podID, false)
 				})
 				if err != nil {
-					return fmt.Errorf("getting sandbox status of pod %q: %w", podId, err)
+					return fmt.Errorf("getting sandbox status of pod %q: %w", podID, err)
 				}
 				if resp.Status.State == pb.PodSandboxState_SANDBOX_READY {
 					if ctx.Bool("force") {
-						if err := StopPodSandbox(runtimeClient, podId); err != nil {
-							return fmt.Errorf("stopping the pod sandbox %q failed: %w", podId, err)
+						if err := StopPodSandbox(runtimeClient, podID); err != nil {
+							return fmt.Errorf("stopping the pod sandbox %q failed: %w", podID, err)
 						}
 					} else {
-						return fmt.Errorf("pod sandbox %q is running, please stop it first", podId)
+						return fmt.Errorf("pod sandbox %q is running, please stop it first", podID)
 					}
 				}
 
-				err = RemovePodSandbox(runtimeClient, podId)
+				err = RemovePodSandbox(runtimeClient, podID)
 				if err != nil {
-					return fmt.Errorf("removing the pod sandbox %q: %w", podId, err)
+					return fmt.Errorf("removing the pod sandbox %q: %w", podID, err)
 				}
 
 				return nil
@@ -533,7 +533,7 @@ func ListPodSandboxes(client internalapi.RuntimeService, opts *listOptions) erro
 		return fmt.Errorf("unsupported output format %q", opts.output)
 	}
 
-	display := newTableDisplay(20, 1, 3, ' ', 0)
+	display := newDefaultTableDisplay()
 	if !opts.verbose && !opts.quiet {
 		display.AddRow([]string{
 			columnPodID,

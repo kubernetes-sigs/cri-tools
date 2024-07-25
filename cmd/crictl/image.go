@@ -96,7 +96,7 @@ var pullImageCommand = &cli.Command{
 		Aliases:   []string{"js"},
 		Usage:     "Display the JSON schema for the pod-config.json, ",
 		UsageText: "The schema will be generated from the PodSandboxConfig of the CRI API compiled with this version of crictl",
-		Action: func(c *cli.Context) error {
+		Action: func(*cli.Context) error {
 			return printJSONSchema(&pb.PodSandboxConfig{})
 		},
 	}},
@@ -104,7 +104,7 @@ var pullImageCommand = &cli.Command{
 	Action: func(c *cli.Context) error {
 		imageName := c.Args().First()
 		if imageName == "" {
-			return errors.New("Image name cannot be empty")
+			return errors.New("image name cannot be empty")
 		}
 
 		if c.NArg() > 1 {
@@ -217,7 +217,7 @@ var listImageCommand = &cli.Command{
 		}
 
 		// output in table format by default.
-		display := newTableDisplay(20, 1, 3, ' ', 0)
+		display := newDefaultTableDisplay()
 		verbose := c.Bool("verbose")
 		showDigest := c.Bool("digests")
 		showPinned := c.Bool("pinned")
@@ -583,7 +583,7 @@ func parseCreds(creds string) (username, password string, err error) {
 func getAuth(creds, auth, username string) (*pb.AuthConfig, error) {
 	if username != "" {
 		fmt.Print("Enter Password:")
-		bytePassword, err := term.ReadPassword(int(syscall.Stdin))
+		bytePassword, err := term.ReadPassword(int(syscall.Stdin)) //nolint:unconvert // required for windows
 		fmt.Print("\n")
 		if err != nil {
 			return nil, err

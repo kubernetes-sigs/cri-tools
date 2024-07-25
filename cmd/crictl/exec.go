@@ -203,15 +203,13 @@ func stream(ctx context.Context, in, tty bool, transport string, parsedURL *url.
 	logrus.Debugf("StreamOptions: %v", streamOptions)
 	if !tty {
 		return executor.StreamWithContext(ctx, streamOptions)
-	} else {
-		var detachKeys []byte
-		detachKeys, err = mobyterm.ToBytes(detachSequence)
-		if err != nil {
-			return errors.New("could not bind detach keys")
-		}
-		pr := mobyterm.NewEscapeProxy(streamOptions.Stdin, detachKeys)
-		streamOptions.Stdin = pr
 	}
+	detachKeys, err := mobyterm.ToBytes(detachSequence)
+	if err != nil {
+		return errors.New("could not bind detach keys")
+	}
+	pr := mobyterm.NewEscapeProxy(streamOptions.Stdin, detachKeys)
+	streamOptions.Stdin = pr
 	if !in {
 		return errors.New("tty=true must be specified with interactive=true")
 	}
