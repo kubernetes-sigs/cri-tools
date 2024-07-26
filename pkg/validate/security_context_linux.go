@@ -484,7 +484,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				context.TODO(), containerID, []string{"ping", "127.0.0.1"},
 				time.Duration(defaultExecSyncTimeout)*time.Second,
 			)
-			Expect(err).NotTo(BeNil())
+			Expect(err).To(HaveOccurred())
 			Expect(string(stdout)).NotTo(BeEmpty())
 			Expect(string(stderr)).To(ContainSubstring("permission denied"))
 		})
@@ -505,7 +505,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				context.TODO(), containerID, []string{"cat", "/proc/self/status"},
 				time.Duration(defaultExecSyncTimeout)*time.Second,
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(string(stderr)).To(BeEmpty())
 			Expect(string(stdout)).NotTo(MatchRegexp(`CapBnd:\s0000000000000000`))
 		})
@@ -526,7 +526,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				context.TODO(), containerID, []string{"cat", "/proc/self/status"},
 				time.Duration(defaultExecSyncTimeout)*time.Second,
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(string(stderr)).To(BeEmpty())
 			Expect(string(stdout)).To(MatchRegexp(`CapBnd:\s0000000000000000`))
 		})

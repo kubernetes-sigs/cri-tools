@@ -147,7 +147,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 		removeImageList(c, testDifferentTagDifferentImageList)
 		ids := pullImageList(c, testDifferentTagDifferentImageList, testImagePodSandbox)
 		ids = removeDuplicates(ids)
-		Expect(len(ids)).To(Equal(3), "3 image ids should be returned")
+		Expect(ids).To(HaveLen(3), "3 image ids should be returned")
 
 		defer removeImageList(c, testDifferentTagDifferentImageList)
 
@@ -156,7 +156,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 		for i, id := range ids {
 			for _, img := range images {
 				if img.Id == id {
-					Expect(len(img.RepoTags)).To(Equal(1), "Should only have 1 repo tag")
+					Expect(img.RepoTags).To(HaveLen(1), "Should only have 1 repo tag")
 					Expect(img.RepoTags[0]).To(Equal(testDifferentTagDifferentImageList[i]), "Repo tag should be correct")
 					break
 				}
@@ -169,7 +169,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 		removeImageList(c, testDifferentTagSameImageList)
 		ids := pullImageList(c, testDifferentTagSameImageList, testImagePodSandbox)
 		ids = removeDuplicates(ids)
-		Expect(len(ids)).To(Equal(1), "Only 1 image id should be returned")
+		Expect(ids).To(HaveLen(1), "Only 1 image id should be returned")
 
 		defer removeImageList(c, testDifferentTagSameImageList)
 

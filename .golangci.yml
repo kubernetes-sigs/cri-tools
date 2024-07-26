@@ -27,6 +27,7 @@ linters:
     - fatcontext
     - forcetypeassert
     - gci
+    - ginkgolinter
     - gocheckcompilerdirectives
     - gochecksumtype
     - gocognit
@@ -96,7 +97,6 @@ linters:
     # - exhaustruct
     # - forbidigo
     # - funlen
-    # - ginkgolinter
     # - gochecknoglobals
     # - gochecknoinits
     # - goconst

@@ -190,7 +190,7 @@ func TestOutputStatusData(t *testing.T) {
 				return nil
 			})
 			if err != nil {
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 			}
 
 			if outStr != tc.expectedOut {

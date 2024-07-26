@@ -239,7 +239,7 @@ func createContainerWithAppArmor(rc internalapi.RuntimeService, ic internalapi.I
 
 	containerID, err := framework.CreateContainerWithError(rc, ic, containerConfig, sandboxID, sandboxConfig)
 	if shouldSucceed {
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		By("start container with apparmor")
 		err := rc.StartContainer(context.TODO(), containerID)
 		Expect(err).NotTo(HaveOccurred())
