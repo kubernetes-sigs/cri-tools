@@ -75,7 +75,7 @@ func TestGetRuntimeStatus(c internalapi.RuntimeService) {
 			count++
 		}
 	}
-	Expect(count >= 2).To(BeTrue(), "should return all the required runtime conditions")
+	Expect(count).To(BeNumerically(">=", 2), "should return all the required runtime conditions")
 }
 
 // getVersion gets runtime version info.

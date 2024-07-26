@@ -78,9 +78,9 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 
 			switch propagation {
 			case runtimeapi.MountPropagation_PROPAGATION_PRIVATE:
-				Expect(len(output)).To(BeZero(), "len(output) should be zero.")
+				Expect(output).To(BeEmpty(), "len(output) should be zero.")
 			case runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL, runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER:
-				Expect(len(output)).NotTo(BeZero(), "len(output) should not be zero.")
+				Expect(output).NotTo(BeEmpty(), "len(output) should not be zero.")
 			}
 
 			By("create a directory named containerMntPoint as a mount point in container")
@@ -98,9 +98,9 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 
 			switch propagation {
 			case runtimeapi.MountPropagation_PROPAGATION_PRIVATE, runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER:
-				Expect(len(fileInfo)).To(BeZero(), "len(fileInfo) should be zero.")
+				Expect(fileInfo).To(BeEmpty(), "len(fileInfo) should be zero.")
 			case runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL:
-				Expect(len(fileInfo)).NotTo(BeZero(), "len(fileInfo) should not be zero.")
+				Expect(fileInfo).NotTo(BeEmpty(), "len(fileInfo) should not be zero.")
 			}
 		}
 
@@ -159,9 +159,11 @@ var _ = framework.KubeDescribe("Container OOM", func() {
 			state := getContainerStatus(rc, containerID)
 
 			By("exit code is 137")
+			//nolint:ginkgolinter // This cannot be fixed right now since it introduces a behavioral change. See: https://github.com/cri-o/cri-o/issues/8411
 			Expect(state.ExitCode, int32(137))
 
 			By("reason is OOMKilled")
+			//nolint:ginkgolinter // This cannot be fixed right now since it introduces a behavioral change. See: https://github.com/cri-o/cri-o/issues/8411
 			Expect(state.Reason, "OOMKilled")
 		})
 	})
@@ -255,7 +257,7 @@ func createMountPropagationContainer(
 	By("verifying container status")
 	resp, err := rc.ContainerStatus(context.TODO(), containerID, true)
 	framework.ExpectNoError(err, "unable to get container status")
-	Expect(len(resp.Status.Mounts), 1)
+	Expect(resp.Status.Mounts).To(HaveLen(1))
 	Expect(resp.Status.Mounts[0].ContainerPath).To(Equal(hostPath))
 	Expect(resp.Status.Mounts[0].HostPath).To(Equal(hostPath))
 	Expect(resp.Status.Mounts[0].Readonly).To(BeFalse())
@@ -499,7 +501,7 @@ func createMountContainer(
 	By("verifying container status")
 	resp, err := rc.ContainerStatus(context.TODO(), containerID, true)
 	framework.ExpectNoError(err, "unable to get container status")
-	Expect(len(resp.Status.Mounts), len(mounts))
+	Expect(resp.Status.Mounts).To(HaveLen(len(mounts)))
 
 	return containerID
 }

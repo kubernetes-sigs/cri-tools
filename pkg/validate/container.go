@@ -285,7 +285,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 			By("check whether 'hostPath' contains file or dir in container")
 			output := execSyncContainer(rc, containerID, checkPathCmd(hostPath))
-			Expect(len(output)).NotTo(BeZero(), "len(output) should not be zero.")
+			Expect(output).NotTo(BeEmpty(), "len(output) should not be zero.")
 		})
 
 		It("runtime should support starting container with volume when host path is a symlink [Conformance]", func() {
@@ -305,7 +305,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 			By("check whether 'symlink' contains file or dir in container")
 			output := execSyncContainer(rc, containerID, checkPathCmd(symlinkPath))
-			Expect(len(output)).NotTo(BeZero(), "len(output) should not be zero.")
+			Expect(output).NotTo(BeEmpty(), "len(output) should not be zero.")
 		})
 
 		// TODO(random-liu): Decide whether to add host path not exist test when https://github.com/kubernetes/kubernetes/pull/61460

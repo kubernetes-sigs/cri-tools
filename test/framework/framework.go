@@ -75,7 +75,7 @@ func cmd(workDir, format string, args ...interface{}) *Session {
 	}
 
 	session, err := Start(command, GinkgoWriter, GinkgoWriter)
-	Expect(err).To(BeNil())
+	Expect(err).ToNot(HaveOccurred())
 
 	return session
 }
