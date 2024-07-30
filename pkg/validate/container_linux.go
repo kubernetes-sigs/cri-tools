@@ -53,9 +53,9 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 
 		AfterEach(func() {
 			By("stop PodSandbox")
-			rc.StopPodSandbox(context.TODO(), podID)
+			Expect(rc.StopPodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 			By("delete PodSandbox")
-			rc.RemovePodSandbox(context.TODO(), podID)
+			Expect(rc.RemovePodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 		})
 
 		testMountPropagation := func(propagation runtimeapi.MountPropagation) {
@@ -139,9 +139,9 @@ var _ = framework.KubeDescribe("Container OOM", func() {
 
 		AfterEach(func() {
 			By("stop PodSandbox")
-			rc.StopPodSandbox(context.TODO(), podID)
+			Expect(rc.StopPodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 			By("delete PodSandbox")
-			rc.RemovePodSandbox(context.TODO(), podID)
+			Expect(rc.RemovePodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 		})
 
 		It("should terminate with exitCode 137 and reason OOMKilled", func() {
@@ -331,9 +331,9 @@ var _ = framework.KubeDescribe("Container Mount Readonly", func() {
 
 		AfterEach(func() {
 			By("stop PodSandbox")
-			rc.StopPodSandbox(context.TODO(), podID)
+			Expect(rc.StopPodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 			By("delete PodSandbox")
-			rc.RemovePodSandbox(context.TODO(), podID)
+			Expect(rc.RemovePodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 		})
 
 		testRRO := func(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, rro bool) {

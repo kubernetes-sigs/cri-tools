@@ -47,9 +47,9 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 		AfterEach(func() {
 			By("stop PodSandbox")
-			rc.StopPodSandbox(context.TODO(), podID)
+			Expect(rc.StopPodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 			By("delete PodSandbox")
-			rc.RemovePodSandbox(context.TODO(), podID)
+			Expect(rc.RemovePodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 		})
 
 		It("should support safe sysctls", func() {

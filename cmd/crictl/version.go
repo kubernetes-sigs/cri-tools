@@ -32,7 +32,7 @@ var runtimeVersionCommand = &cli.Command{
 	Usage: "Display runtime version information",
 	Action: func(c *cli.Context) error {
 		if c.NArg() != 0 {
-			cli.ShowSubcommandHelp(c)
+			return cli.ShowSubcommandHelp(c)
 		}
 
 		runtimeClient, err := getRuntimeService(c, 0)

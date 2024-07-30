@@ -73,9 +73,9 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		AfterEach(func() {
 			By("stop PodSandbox")
-			rc.StopPodSandbox(context.TODO(), podID)
+			Expect(rc.StopPodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 			By("delete PodSandbox")
-			rc.RemovePodSandbox(context.TODO(), podID)
+			Expect(rc.RemovePodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 		})
 
 		It("runtime should support creating container [Conformance]", func() {
@@ -266,9 +266,9 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		AfterEach(func() {
 			By("stop PodSandbox")
-			rc.StopPodSandbox(context.TODO(), podID)
+			Expect(rc.StopPodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 			By("delete PodSandbox")
-			rc.RemovePodSandbox(context.TODO(), podID)
+			Expect(rc.RemovePodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 		})
 
 		It("runtime should support starting container with volume [Conformance]", func() {
@@ -322,9 +322,9 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		AfterEach(func() {
 			By("stop PodSandbox")
-			rc.StopPodSandbox(context.TODO(), podID)
+			Expect(rc.StopPodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 			By("delete PodSandbox")
-			rc.RemovePodSandbox(context.TODO(), podID)
+			Expect(rc.RemovePodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 			By("clean up the TempDir")
 			os.RemoveAll(hostPath)
 		})

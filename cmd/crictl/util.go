@@ -326,7 +326,9 @@ func outputStatusData(statuses []statusData, format, tmplStr string) (err error)
 
 		for _, k := range keys {
 			var genericVal map[string]any
-			json.Unmarshal([]byte(status.info[k]), &genericVal)
+			if err := json.Unmarshal([]byte(status.info[k]), &genericVal); err != nil {
+				return fmt.Errorf("unmarshal status info JSON: %w", err)
+			}
 			infoMap[k] = genericVal
 		}
 

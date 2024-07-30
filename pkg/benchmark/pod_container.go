@@ -83,9 +83,9 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				framework.ExpectNoError(err, "failed to start Container: %v", err)
 
 				By("stop PodSandbox")
-				rc.StopPodSandbox(context.TODO(), podID)
+				Expect(rc.StopPodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 				By("delete PodSandbox")
-				rc.RemovePodSandbox(context.TODO(), podID)
+				Expect(rc.RemovePodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 			}
 
 			// Run a single test to ensure images are available and everything works

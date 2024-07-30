@@ -64,9 +64,9 @@ var _ = framework.KubeDescribe("Security Context", func() {
 	AfterEach(func() {
 		if podID != "" {
 			By("stop PodSandbox")
-			rc.StopPodSandbox(context.TODO(), podID)
+			Expect(rc.StopPodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 			By("delete PodSandbox")
-			rc.RemovePodSandbox(context.TODO(), podID)
+			Expect(rc.RemovePodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 		}
 		if podLogDir != "" {
 			os.RemoveAll(podLogDir)
@@ -243,7 +243,8 @@ var _ = framework.KubeDescribe("Security Context", func() {
 					if err != nil {
 						return
 					}
-					conn.Write([]byte("hello"))
+					_, err = conn.Write([]byte("hello"))
+					Expect(err).NotTo(HaveOccurred())
 				}
 			}()
 			defer srv.Close()
@@ -264,7 +265,8 @@ var _ = framework.KubeDescribe("Security Context", func() {
 					if err != nil {
 						return
 					}
-					conn.Write([]byte("hello"))
+					_, err = conn.Write([]byte("hello"))
+					Expect(err).NotTo(HaveOccurred())
 				}
 			}()
 			defer srv.Close()
@@ -1075,6 +1077,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				}
 
 				runUserNamespacePodWithError(rc, podName, usernsOptions)
+				podID = "" // no need to cleanup the pod
 			})
 
 			It("runtime should fail if container ID 0 is not mapped", func() {
@@ -1090,18 +1093,21 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				}
 
 				runUserNamespacePodWithError(rc, podName, usernsOptions)
+				podID = "" // no need to cleanup the pod
 			})
 
 			It("runtime should fail with NamespaceMode_CONTAINER", func() {
 				usernsOptions := &runtimeapi.UserNamespace{Mode: runtimeapi.NamespaceMode_CONTAINER}
 
 				runUserNamespacePodWithError(rc, podName, usernsOptions)
+				podID = "" // no need to cleanup the pod
 			})
 
 			It("runtime should fail with NamespaceMode_TARGET", func() {
 				usernsOptions := &runtimeapi.UserNamespace{Mode: runtimeapi.NamespaceMode_TARGET}
 
 				runUserNamespacePodWithError(rc, podName, usernsOptions)
+				podID = "" // no need to cleanup the pod
 			})
 		})
 	})
