@@ -215,9 +215,9 @@ func checkContainerSelinux(rc internalapi.RuntimeService, containerID string, sh
 
 func cleanupSandbox(rc internalapi.RuntimeService, sandboxID string) {
 	By("stop PodSandbox")
-	rc.StopPodSandbox(context.TODO(), sandboxID)
+	Expect(rc.StopPodSandbox(context.TODO(), sandboxID)).NotTo(HaveOccurred())
 	By("delete PodSandbox")
-	rc.RemovePodSandbox(context.TODO(), sandboxID)
+	Expect(rc.RemovePodSandbox(context.TODO(), sandboxID)).NotTo(HaveOccurred())
 }
 
 func checkMountLabelRoleType(rc internalapi.RuntimeService, containerID string) {

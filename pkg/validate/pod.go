@@ -43,10 +43,12 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 		var podID string
 
 		AfterEach(func() {
-			By("stop PodSandbox")
-			rc.StopPodSandbox(context.TODO(), podID)
-			By("delete PodSandbox")
-			rc.RemovePodSandbox(context.TODO(), podID)
+			if podID != "" {
+				By("stop PodSandbox")
+				Expect(rc.StopPodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
+				By("delete PodSandbox")
+				Expect(rc.RemovePodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
+			}
 		})
 
 		It("runtime should support running PodSandbox [Conformance]", func() {
@@ -75,6 +77,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 			By("test remove PodSandbox")
 			testRemovePodSandbox(rc, podID)
+			podID = "" // no need to cleanup pod
 		})
 	})
 })

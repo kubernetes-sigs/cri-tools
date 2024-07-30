@@ -174,11 +174,17 @@ func TestCRISuite(t *testing.T) {
 	}
 
 	if *isBenchMark {
-		flag.Set("ginkgo.focus", "benchmark")
-		flag.Set("ginkgo.succinct", "true")
+		if err := flag.Set("ginkgo.focus", "benchmark"); err != nil {
+			t.Fatalf("set ginkgo benchmark focus: %v", err)
+		}
+		if err := flag.Set("ginkgo.succinct", "true"); err != nil {
+			t.Fatalf("set ginkgo succinct: %v", err)
+		}
 	} else {
 		// Skip benchmark measurements for validation tests.
-		flag.Set("ginkgo.skip", "benchmark")
+		if err := flag.Set("ginkgo.skip", "benchmark"); err != nil {
+			t.Fatalf("skip ginkgo benchmarks: %v", err)
+		}
 	}
 
 	if *parallel > 1 {

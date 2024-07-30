@@ -19,6 +19,7 @@ linters:
     - dupl
     - dupword
     - durationcheck
+    - errcheck
     - errchkjson
     - errname
     - errorlint
@@ -93,7 +94,6 @@ linters:
     - zerologlint
     # - depguard
     # - err113
-    # - errcheck
     # - exhaustruct
     # - forbidigo
     # - funlen

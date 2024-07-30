@@ -58,9 +58,9 @@ var _ = framework.KubeDescribe("Streaming", func() {
 
 		AfterEach(func() {
 			By("stop PodSandbox")
-			rc.StopPodSandbox(context.TODO(), podID)
+			Expect(rc.StopPodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 			By("delete PodSandbox")
-			rc.RemovePodSandbox(context.TODO(), podID)
+			Expect(rc.RemovePodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 		})
 
 		It("runtime should support exec with tty=false and stdin=false [Conformance]", func() {
@@ -283,7 +283,8 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 			header = localOut.String()
 			return len(header) == len(oldHeader)
 		}, 10*time.Second, time.Second).Should(BeTrue(), "The container should stop output when there is no input")
-		writer.Write([]byte(strings.Join(echoHelloCmd, " ") + "\n"))
+		_, err := writer.Write([]byte(strings.Join(echoHelloCmd, " ") + "\n"))
+		Expect(err).NotTo(HaveOccurred())
 		Eventually(func() string {
 			return strings.TrimPrefix(localOut.String(), header)
 		}, time.Minute, time.Second).Should(Equal(attachEchoHelloOutput), "The stdout of attach should be hello")

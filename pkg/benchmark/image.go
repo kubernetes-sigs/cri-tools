@@ -24,6 +24,7 @@ import (
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gmeasure"
 	"github.com/sirupsen/logrus"
 	internalapi "k8s.io/cri-api/pkg/apis"
@@ -75,7 +76,7 @@ var _ = framework.KubeDescribe("Image", func() {
 			imageSpec := &runtimeapi.ImageSpec{
 				Image: imageName,
 			}
-			ic.RemoveImage(context.TODO(), imageSpec)
+			Expect(ic.RemoveImage(context.TODO(), imageSpec)).NotTo(HaveOccurred())
 		}
 	})
 

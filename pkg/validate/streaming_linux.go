@@ -20,6 +20,7 @@ import (
 	"context"
 
 	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
@@ -42,9 +43,9 @@ var _ = framework.KubeDescribe("Streaming", func() {
 
 		AfterEach(func() {
 			By("stop PodSandbox")
-			rc.StopPodSandbox(context.TODO(), podID)
+			Expect(rc.StopPodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 			By("delete PodSandbox")
-			rc.RemovePodSandbox(context.TODO(), podID)
+			Expect(rc.RemovePodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 		})
 
 		It("runtime should support portforward in host network", func() {

@@ -23,6 +23,7 @@ import (
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gmeasure"
 	"github.com/sirupsen/logrus"
 	internalapi "k8s.io/cri-api/pkg/apis"
@@ -133,9 +134,9 @@ var _ = framework.KubeDescribe("Container", func() {
 				resultsChannel <- &res
 
 				By(fmt.Sprintf("stop PodSandbox %d", idx))
-				rc.StopPodSandbox(context.TODO(), podID)
+				Expect(rc.StopPodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 				By(fmt.Sprintf("delete PodSandbox %d", idx))
-				rc.RemovePodSandbox(context.TODO(), podID)
+				Expect(rc.RemovePodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
 			}, samplingConfig)
 
 			// Send nil and give the manager a minute to process any already-queued results:
