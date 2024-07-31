@@ -37,6 +37,8 @@ import (
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/kubelet/pkg/types"
+
+	"sigs.k8s.io/cri-tools/pkg/framework"
 )
 
 type containerByCreated []*pb.Container
@@ -580,7 +582,7 @@ var listContainersCommand = &cli.Command{
 			Name:    "output",
 			Aliases: []string{"o"},
 			Usage:   "Output format, One of: json|yaml|table",
-			Value:   "table",
+			Value:   outputTypeTable,
 		},
 		&cli.BoolFlag{
 			Name:    "all",
@@ -889,7 +891,7 @@ func UpdateContainerResources(client internalapi.RuntimeService, id string, opts
 	request := &pb.UpdateContainerResourcesRequest{
 		ContainerId: id,
 	}
-	if goruntime.GOOS != "windows" {
+	if goruntime.GOOS != framework.OSWindows {
 		request.Linux = &pb.LinuxContainerResources{
 			CpuPeriod:          opts.CPUPeriod,
 			CpuQuota:           opts.CPUQuota,
@@ -1010,7 +1012,7 @@ func marshalContainerStatus(cs *pb.ContainerStatus) (string, error) {
 func containerStatus(client internalapi.RuntimeService, ids []string, output, tmplStr string, quiet bool) error {
 	verbose := !(quiet)
 	if output == "" { // default to json output
-		output = "json"
+		output = outputTypeJSON
 	}
 	if len(ids) == 0 {
 		return errors.New("ID cannot be empty")
@@ -1036,7 +1038,7 @@ func containerStatus(client internalapi.RuntimeService, ids []string, output, tm
 			return fmt.Errorf("marshal container status: %w", err)
 		}
 
-		if output == "table" {
+		if output == outputTypeTable {
 			outputContainerStatusTable(r, verbose)
 		} else {
 			statuses = append(statuses, statusData{json: statusJSON, info: r.Info})
@@ -1138,11 +1140,11 @@ func ListContainers(runtimeClient internalapi.RuntimeService, imageClient intern
 	r = getContainersList(r, opts)
 
 	switch opts.output {
-	case "json":
+	case outputTypeJSON:
 		return outputProtobufObjAsJSON(&pb.ListContainersResponse{Containers: r})
-	case "yaml":
+	case outputTypeYAML:
 		return outputProtobufObjAsYAML(&pb.ListContainersResponse{Containers: r})
-	case "table":
+	case outputTypeTable:
 	// continue; output will be generated after the switch block ends.
 	default:
 		return fmt.Errorf("unsupported output format %q", opts.output)

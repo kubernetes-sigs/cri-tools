@@ -287,7 +287,7 @@ var listPodCommand = &cli.Command{
 			Name:    "output",
 			Aliases: []string{"o"},
 			Usage:   "Output format, One of: json|yaml|table",
-			Value:   "table",
+			Value:   outputTypeTable,
 		},
 		&cli.BoolFlag{
 			Name:    "latest",
@@ -406,7 +406,7 @@ func marshalPodSandboxStatus(ps *pb.PodSandboxStatus) (string, error) {
 func podSandboxStatus(client internalapi.RuntimeService, ids []string, output string, quiet bool, tmplStr string) error {
 	verbose := !(quiet)
 	if output == "" { // default to json output
-		output = "json"
+		output = outputTypeJSON
 	}
 	if len(ids) == 0 {
 		return errors.New("ID cannot be empty")
@@ -433,7 +433,7 @@ func podSandboxStatus(client internalapi.RuntimeService, ids []string, output st
 			return fmt.Errorf("marshal pod sandbox status: %w", err)
 		}
 
-		if output == "table" {
+		if output == outputTypeTable {
 			outputPodSandboxStatusTable(r, verbose)
 		} else {
 			statuses = append(statuses, statusData{json: statusJSON, info: r.Info})
@@ -523,11 +523,11 @@ func ListPodSandboxes(client internalapi.RuntimeService, opts *listOptions) erro
 	r = getSandboxesList(r, opts)
 
 	switch opts.output {
-	case "json":
+	case outputTypeJSON:
 		return outputProtobufObjAsJSON(&pb.ListPodSandboxResponse{Items: r})
-	case "yaml":
+	case outputTypeYAML:
 		return outputProtobufObjAsYAML(&pb.ListPodSandboxResponse{Items: r})
-	case "table":
+	case outputTypeTable:
 	// continue; output will be generated after the switch block ends.
 	default:
 		return fmt.Errorf("unsupported output format %q", opts.output)

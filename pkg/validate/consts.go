@@ -61,7 +61,7 @@ var (
 )
 
 var _ = framework.AddBeforeSuiteCallback(func() {
-	if runtime.GOOS != "windows" || framework.TestContext.IsLcow {
+	if runtime.GOOS != framework.OSWindows || framework.TestContext.IsLcow {
 		echoHelloCmd = echoHelloLinuxCmd
 		sleepCmd = sleepLinuxCmd
 		checkSleepCmd = checkSleepLinuxCmd
@@ -162,7 +162,7 @@ var (
 )
 
 var _ = framework.AddBeforeSuiteCallback(func() {
-	if runtime.GOOS != "windows" || framework.TestContext.IsLcow {
+	if runtime.GOOS != framework.OSWindows || framework.TestContext.IsLcow {
 		testImageWithoutTag = testLinuxImageWithoutTag
 		testImageWithTag = testLinuxImageWithTag
 		testImageWithDigest = testLinuxImageWithDigest
@@ -234,7 +234,7 @@ var (
 )
 
 var _ = framework.AddBeforeSuiteCallback(func() {
-	if runtime.GOOS != "windows" || framework.TestContext.IsLcow {
+	if runtime.GOOS != framework.OSWindows || framework.TestContext.IsLcow {
 		webServerImage = webServerLinuxImage
 		hostNetWebServerImage = hostNetWebServerLinuxImage
 		getDNSConfigCmd = getDNSConfigLinuxCmd
@@ -270,7 +270,7 @@ const (
 var attachEchoHelloOutput string
 
 var _ = framework.AddBeforeSuiteCallback(func() {
-	if runtime.GOOS != "windows" || framework.TestContext.IsLcow {
+	if runtime.GOOS != framework.OSWindows || framework.TestContext.IsLcow {
 		attachEchoHelloOutput = attachEchoHelloLinuxOutput
 	} else {
 		attachEchoHelloOutput = attachEchoHelloWindowsOutput

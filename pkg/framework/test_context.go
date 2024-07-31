@@ -126,6 +126,8 @@ const (
 
 	ContainerdSockPathUnix    = "unix:///run/containerd/containerd.sock"
 	ContainerdSockPathWindows = "npipe:////./pipe/containerd-containerd"
+
+	OSWindows = "windows"
 )
 
 // RegisterFlags registers flags to e2e test suites.
@@ -149,7 +151,7 @@ func RegisterFlags() {
 
 	svcaddr := ContainerdSockPathUnix
 	defaultConfigPath := "/etc/crictl.yaml"
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == OSWindows {
 		svcaddr = ContainerdSockPathWindows
 		defaultConfigPath = filepath.Join(os.Getenv("USERPROFILE"), ".crictl", "crictl.yaml")
 	}
@@ -161,7 +163,7 @@ func RegisterFlags() {
 	flag.StringVar(&benchamrkSettingFilePath, "benchmarking-params-file", "", "Optional path to a YAML file specifying benchmarking configuration options.")
 	flag.StringVar(&TestContext.BenchmarkingOutputDir, "benchmarking-output-dir", "", "Optional path to a directory in which benchmarking data should be placed.")
 
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == OSWindows {
 		flag.BoolVar(&TestContext.IsLcow, "lcow", false, "Run Linux container on Windows tests instead of Windows container tests")
 	} else {
 		TestContext.IsLcow = false

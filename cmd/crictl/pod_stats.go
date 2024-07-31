@@ -158,9 +158,9 @@ func (d *podStatsDisplayer) displayPodStats(
 
 	response := &pb.ListPodSandboxStatsResponse{Stats: stats}
 	switch d.opts.output {
-	case "json":
+	case outputTypeJSON:
 		return outputProtobufObjAsJSON(response)
-	case "yaml":
+	case outputTypeYAML:
 		return outputProtobufObjAsYAML(response)
 	}
 

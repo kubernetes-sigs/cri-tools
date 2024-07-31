@@ -173,23 +173,29 @@ func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
 	// These ScalarNodes help preserve comments associated with
 	// the YAML entry
 	if !foundOption {
+		const (
+			tagPrefix = "!!"
+			tagStr    = tagPrefix + "str"
+			tagBool   = tagPrefix + "bool"
+			tagInt    = tagPrefix + "int"
+		)
 		name := &yaml.Node{
 			Kind:  yaml.ScalarNode,
 			Value: configName,
-			Tag:   "!!str",
+			Tag:   tagStr,
 		}
 		var tagType string
 		switch configName {
 		case "timeout":
-			tagType = "!!int"
+			tagType = tagInt
 		case "debug":
-			tagType = "!!bool"
+			tagType = tagBool
 		case "pull-image-on-create":
-			tagType = "!!bool"
+			tagType = tagBool
 		case "disable-pull-on-run":
-			tagType = "!!bool"
+			tagType = tagBool
 		default:
-			tagType = "!!str"
+			tagType = tagStr
 		}
 
 		value := &yaml.Node{

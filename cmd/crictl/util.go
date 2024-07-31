@@ -44,6 +44,11 @@ import (
 const (
 	// truncatedImageIDLen is the truncated length of imageID.
 	truncatedIDLen = 13
+
+	outputTypeJSON       = "json"
+	outputTypeYAML       = "yaml"
+	outputTypeTable      = "table"
+	outputTypeGoTemplate = "go-template"
 )
 
 var (
@@ -348,19 +353,19 @@ func outputStatusData(statuses []statusData, format, tmplStr string) (err error)
 	}
 
 	switch format {
-	case "yaml":
+	case outputTypeYAML:
 		yamlInfo, err := yaml.JSONToYAML(jsonResult)
 		if err != nil {
 			return fmt.Errorf("JSON result to YAML: %w", err)
 		}
 		fmt.Println(string(yamlInfo))
-	case "json":
+	case outputTypeJSON:
 		var output bytes.Buffer
 		if err := json.Indent(&output, jsonResult, "", "  "); err != nil {
 			return fmt.Errorf("indent JSON result: %w", err)
 		}
 		fmt.Println(output.String())
-	case "go-template":
+	case outputTypeGoTemplate:
 		output, err := tmplExecuteRawJSON(tmplStr, string(jsonResult))
 		if err != nil {
 			return fmt.Errorf("execute template: %w", err)
@@ -375,17 +380,17 @@ func outputStatusData(statuses []statusData, format, tmplStr string) (err error)
 
 func outputEvent(event protoiface.MessageV1, format, tmplStr string) error {
 	switch format {
-	case "yaml":
+	case outputTypeYAML:
 		err := outputProtobufObjAsYAML(event)
 		if err != nil {
 			return err
 		}
-	case "json":
+	case outputTypeJSON:
 		err := outputProtobufObjAsJSON(event)
 		if err != nil {
 			return err
 		}
-	case "go-template":
+	case outputTypeGoTemplate:
 		jsonEvent, err := protobufObjectToJSON(event)
 		if err != nil {
 			return err
@@ -440,7 +445,7 @@ func marshalMapInOrder(m map[string]interface{}, t interface{}) (string, error) 
 
 // jsonFieldFromTag gets json field name from field tag.
 func jsonFieldFromTag(tag reflect.StructTag) string {
-	field := strings.Split(tag.Get("json"), ",")[0]
+	field := strings.Split(tag.Get(outputTypeJSON), ",")[0]
 	for _, f := range strings.Split(tag.Get("protobuf"), ",") {
 		if !strings.HasPrefix(f, "json=") {
 			continue

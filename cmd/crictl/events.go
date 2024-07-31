@@ -37,7 +37,7 @@ var eventsCommand = &cli.Command{
 		&cli.StringFlag{
 			Name:    "output",
 			Aliases: []string{"o"},
-			Value:   "json",
+			Value:   outputTypeJSON,
 			Usage:   "Output format, One of: json|yaml|go-template",
 		},
 		&cli.StringFlag{
@@ -51,11 +51,11 @@ var eventsCommand = &cli.Command{
 		}
 
 		switch format := c.String("output"); format {
-		case "json", "yaml":
+		case outputTypeJSON, outputTypeYAML:
 			if c.String("template") != "" {
 				return fmt.Errorf("template can't be used with %q format", format)
 			}
-		case "go-template":
+		case outputTypeGoTemplate:
 			if err := validateTemplate(c.String(("template"))); err != nil {
 				return fmt.Errorf("failed to parse go-template: %w", err)
 			}

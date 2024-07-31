@@ -36,7 +36,7 @@ var runtimeStatusCommand = &cli.Command{
 		&cli.StringFlag{
 			Name:    "output",
 			Aliases: []string{"o"},
-			Value:   "json",
+			Value:   outputTypeJSON,
 			Usage:   "Output format, One of: json|yaml|go-template",
 		},
 		&cli.BoolFlag{

@@ -96,7 +96,7 @@ const (
 
 // Set the constants based on operating system and flags.
 var _ = BeforeSuite(func() {
-	if runtime.GOOS != "windows" || TestContext.IsLcow {
+	if runtime.GOOS != OSWindows || TestContext.IsLcow {
 		DefaultPodLabels = DefaultLinuxPodLabels
 		DefaultContainerCommand = DefaultLinuxContainerCommand
 		DefaultPauseCommand = DefaultLinuxPauseCommand

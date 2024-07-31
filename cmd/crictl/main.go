@@ -37,6 +37,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"sigs.k8s.io/cri-tools/pkg/common"
+	"sigs.k8s.io/cri-tools/pkg/framework"
 	"sigs.k8s.io/cri-tools/pkg/tracing"
 	"sigs.k8s.io/cri-tools/pkg/version"
 )
@@ -165,7 +166,7 @@ func getTimeout(timeDuration time.Duration) time.Duration {
 		return timeDuration
 	}
 
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == framework.OSWindows {
 		return defaultTimeoutWindows
 	}
 

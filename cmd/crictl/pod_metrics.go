@@ -66,7 +66,7 @@ var podMetricsCommand = &cli.Command{
 		}
 
 		switch opts.output {
-		case "json", "yaml", "":
+		case outputTypeJSON, outputTypeYAML, "":
 		default:
 			return cli.ShowSubcommandHelp(c)
 		}
@@ -103,9 +103,9 @@ func (p *podMetricsDisplayer) displayPodMetrics(
 
 	response := &pb.ListPodSandboxMetricsResponse{PodMetrics: metrics}
 	switch p.opts.output {
-	case "json", "":
+	case outputTypeJSON, "":
 		return outputProtobufObjAsJSON(response)
-	case "yaml":
+	case outputTypeYAML:
 		return outputProtobufObjAsYAML(response)
 	}
 	return nil

@@ -32,6 +32,7 @@ linters:
     - gocheckcompilerdirectives
     - gochecksumtype
     - gocognit
+    - goconst
     - gocritic
     - gocyclo
     - godot
@@ -99,7 +100,6 @@ linters:
     # - funlen
     # - gochecknoglobals
     # - gochecknoinits
-    # - goconst
     # - gosec
     # - ireturn
     # - lll
