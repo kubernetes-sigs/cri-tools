@@ -164,9 +164,9 @@ func (d containerStatsDisplayer) displayStats(ctx context.Context, client intern
 		return err
 	}
 	switch d.opts.output {
-	case "json":
+	case outputTypeJSON:
 		return outputProtobufObjAsJSON(r)
-	case "yaml":
+	case outputTypeYAML:
 		return outputProtobufObjAsYAML(r)
 	}
 	oldStats := make(map[string]*pb.ContainerStats)

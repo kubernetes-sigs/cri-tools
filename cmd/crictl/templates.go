@@ -32,10 +32,10 @@ func builtinTmplFuncs() template.FuncMap {
 	l := cases.Lower(language.Und)
 	u := cases.Upper(language.Und)
 	return template.FuncMap{
-		"json":  jsonBuiltinTmplFunc,
-		"title": t.String,
-		"lower": l.String,
-		"upper": u.String,
+		outputTypeJSON: jsonBuiltinTmplFunc,
+		"title":        t.String,
+		"lower":        l.String,
+		"upper":        u.String,
 	}
 }
 

@@ -89,7 +89,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podSandboxName, "")
 
 			By("create nginx container")
-			prefix := "nginx-container-"
+			prefix := "nginx-container-hostpid-"
 			nginxContainerName := prefix + framework.NewUUID()
 			containerID, _ := createNamespaceContainer(rc, ic, podID, podConfig, nginxContainerName, nginxContainerImage, namespaceOption, nil, "")
 
@@ -190,7 +190,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podSandboxName, "")
 
 			By("create nginx container")
-			prefix := "nginx-container-"
+			prefix := "nginx-container-process-namespace-"
 			containerName := prefix + framework.NewUUID()
 			containerID, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, nginxContainerImage, namespaceOption, nil, "")
 
@@ -216,7 +216,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podSandboxName, "")
 
 			By("create nginx container")
-			prefix := "nginx-container-"
+			prefix := "nginx-container-pid-"
 			containerName := prefix + framework.NewUUID()
 			containerID, _ := createNamespaceContainer(rc, ic, podID, podConfig, containerName, nginxContainerImage, namespaceOption, nil, "")
 

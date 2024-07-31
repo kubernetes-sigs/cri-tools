@@ -210,9 +210,9 @@ var listImageCommand = &cli.Command{
 		}
 
 		switch c.String("output") {
-		case "json":
+		case outputTypeJSON:
 			return outputProtobufObjAsJSON(r)
-		case "yaml":
+		case outputTypeYAML:
 			return outputProtobufObjAsYAML(r)
 		}
 
@@ -320,7 +320,7 @@ var imageStatusCommand = &cli.Command{
 		verbose := !(c.Bool("quiet"))
 		output := c.String("output")
 		if output == "" { // default to json output
-			output = "json"
+			output = outputTypeJSON
 		}
 		tmplStr := c.String("template")
 
@@ -342,7 +342,7 @@ var imageStatusCommand = &cli.Command{
 				return fmt.Errorf("marshal status to JSON for %q: %w", id, err)
 			}
 
-			if output == "table" {
+			if output == outputTypeTable {
 				outputImageStatusTable(r, verbose)
 			} else {
 				statuses = append(statuses, statusData{json: statusJSON, info: r.Info})
@@ -528,7 +528,7 @@ var imageFsInfoCommand = &cli.Command{
 
 		output := c.String("output")
 		if output == "" { // default to json output
-			output = "json"
+			output = outputTypeJSON
 		}
 		tmplStr := c.String("template")
 
@@ -541,7 +541,7 @@ var imageFsInfoCommand = &cli.Command{
 			return fmt.Errorf("marshal filesystem info to json: %w", err)
 		}
 
-		if output == "table" {
+		if output == outputTypeTable {
 			ouputImageFsInfoTable(r)
 		} else {
 			return outputStatusData([]statusData{{json: status}}, output, tmplStr)

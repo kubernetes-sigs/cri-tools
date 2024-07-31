@@ -99,7 +99,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 		testRemoveImage(c, imageName)
 	})
 
-	if runtime.GOOS != "windows" || framework.TestContext.IsLcow {
+	if runtime.GOOS != framework.OSWindows || framework.TestContext.IsLcow {
 		It("image status get image fields should not have Uid|Username empty [Conformance]", func() {
 			for _, item := range []struct {
 				description string
