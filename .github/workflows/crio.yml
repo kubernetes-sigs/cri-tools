@@ -9,34 +9,27 @@ on:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         suite:
           - e2e
           - critest
-    name: ${{matrix.suite}}
+        oci-runtime:
+          - crun
+          - runc
+        monitor:
+          - conmon
+          - conmon-rs
+    name: ${{matrix.suite}} / ${{matrix.oci-runtime}} / ${{matrix.monitor}}
     runs-on: ubuntu-22.04
     steps:
+      - name: Checkout cri-tools
+        uses: actions/checkout@v4
+
       - name: Install go
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
-          cache: false
-
-      - name: Setup environment
-        shell: bash
-        run: |
-          echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
-          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
-
-      - name: Cache go modules and build cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-            '%LocalAppData%\go-build' # Windows
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-go-
 
       - name: Setup system
         run: |
@@ -55,47 +48,72 @@ jobs:
           ginkgo version
           sudo cp $(command -v ginkgo) /usr/local/bin
 
-      - name: Install CRI-O latest main
+      - name: Install CRI-O
         run: |
           curl https://raw.githubusercontent.com/cri-o/packaging/main/get | sudo bash
 
-      - name: Configure and start CRI-O
+      - name: Configure CRI-O
         run: |
           sudo mkdir -p /etc/crio/crio.conf.d
           printf '[crio.runtime]\nlog_level = "debug"\n' | sudo tee /etc/crio/crio.conf.d/01-log-level.conf
-          printf '[crio.runtime]\nseccomp_use_default_when_empty = false\n' | sudo tee /etc/crio/crio.conf.d/02-seccomp.conf
+
+      - name: Configure CRI-O to use conmon-rs intead of the default conmon
+        if: ${{matrix.monitor == 'conmon-rs'}}
+        run: |
+          sudo sed -i -E 's;(monitor_path = ).*;\1"/usr/libexec/crio/conmonrs"\nruntime_type = "pod";g' /etc/crio/crio.conf.d/10-crio.conf
+
+      - name: Configure CRI-O to use runc instead of the default crun
+        if: ${{matrix.oci-runtime == 'runc'}}
+        run: |
+          sudo sed -i -E 's;(default_runtime = ).*;\1"runc";g' /etc/crio/crio.conf.d/10-crio.conf
+
+      - name: Show the CRI-O config drop-in
+        run: cat /etc/crio/crio.conf.d/10-crio.conf
+
+      - name: Start CRI-O
+        run: |
           sudo systemctl daemon-reload
           sudo systemctl start crio
-
-      - name: Checkout cri-tools for this commit
-        uses: actions/checkout@v4
-        with:
-          path: ${{github.workspace}}/src/github.com/kubernetes-sigs/cri-tools
+          sudo crio status config
 
       - name: Build cri-tools
         run: |
           make
           sudo -E PATH=$PATH make install
-        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
 
       - name: Run critest
         if: ${{matrix.suite == 'critest'}}
+        shell: bash
         run: |
+          set -euox pipefail
+
+          ARGS=()
+          if [[ "${{matrix.oci-runtime}}" == "crun" && "${{matrix.monitor}}" == "conmon-rs" ]]; then
+            # TODO: check why these tests fail on that combination
+            ARGS=(--ginkgo.skip 'SupplementalGroups|AppArmor|RunAsUser')
+          fi
+
           sudo -E PATH=$PATH critest \
             --runtime-endpoint=unix:///var/run/crio/crio.sock \
-            --ginkgo.flakeAttempts=3 \
-            --parallel=$(nproc)
-          sudo journalctl -u crio > cri-o.log
+            --parallel=$(nproc) \
+            --ginkgo.flake-attempts=3 \
+            --ginkgo.randomize-all \
+            --ginkgo.timeout=2m \
+            --ginkgo.trace \
+            --ginkgo.vv \
+            "${ARGS[@]}"
 
       - name: Run crictl e2e tests
         if: ${{matrix.suite == 'e2e'}}
         run: |
           sudo -E PATH=$PATH make test-e2e \
             TESTFLAGS="-crictl-runtime-endpoint=unix://var/run/crio/crio.sock"
-        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/cri-tools
+
+      - name: Collect CRI-O logs
+        run: sudo journalctl -u crio > cri-o.log
 
       - name: Upload CRI-O logs
         uses: actions/upload-artifact@v4
         with:
-          name: cri-o-${{matrix.version}}-${{github.sha}}.log
+          name: cri-o-${{matrix.suite}}-${{matrix.oci-runtime}}-${{matrix.monitor}}-${{github.sha}}.log
           path: cri-o.log

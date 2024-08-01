@@ -134,7 +134,8 @@ test-e2e: $(GINKGO)
 		-r \
 		--randomize-all \
 		--randomize-suites \
-		--slow-spec-threshold 60s \
+		--race \
+		--vv \
 		test \
 		-- \
 		$(TESTFLAGS)
