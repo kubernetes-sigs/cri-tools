@@ -93,6 +93,7 @@ jobs:
             ARGS=(--ginkgo.skip 'SupplementalGroups|AppArmor|RunAsUser')
           fi
 
+          set +o errexit
           sudo -E PATH=$PATH critest \
             --runtime-endpoint=unix:///var/run/crio/crio.sock \
             --parallel=$(nproc) \
@@ -102,18 +103,31 @@ jobs:
             --ginkgo.trace \
             --ginkgo.vv \
             "${ARGS[@]}"
+          TEST_RC=$?
+          set -o errexit
+
+          sudo journalctl --no-pager > journal.log
+          test $TEST_RC -ne 0 && cat journal.log
+          exit $TEST_RC
 
       - name: Run crictl e2e tests
         if: ${{matrix.suite == 'e2e'}}
+        shell: bash
         run: |
+          set -euox pipefail
+
+          set +o errexit
           sudo -E PATH=$PATH make test-e2e \
             TESTFLAGS="-crictl-runtime-endpoint=unix://var/run/crio/crio.sock"
+          TEST_RC=$?
+          set -o errexit
 
-      - name: Collect CRI-O logs
-        run: sudo journalctl -u crio > cri-o.log
+          sudo journalctl --no-pager > journal.log
+          test $TEST_RC -ne 0 && cat journal.log
+          exit $TEST_RC
 
-      - name: Upload CRI-O logs
+      - name: Upload logs
         uses: actions/upload-artifact@v4
         with:
-          name: cri-o-${{matrix.suite}}-${{matrix.oci-runtime}}-${{matrix.monitor}}-${{github.sha}}.log
-          path: cri-o.log
+          name: ${{matrix.suite}}-${{matrix.oci-runtime}}-${{matrix.monitor}}-${{github.sha}}.log
+          path: journal.log
