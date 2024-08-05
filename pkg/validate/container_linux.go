@@ -159,12 +159,10 @@ var _ = framework.KubeDescribe("Container OOM", func() {
 			state := getContainerStatus(rc, containerID)
 
 			By("exit code is 137")
-			//nolint:ginkgolinter // This cannot be fixed right now since it introduces a behavioral change. See: https://github.com/cri-o/cri-o/issues/8411
-			Expect(state.ExitCode, int32(137))
+			Expect(state.ExitCode).To(BeEquivalentTo(137))
 
 			By("reason is OOMKilled")
-			//nolint:ginkgolinter // This cannot be fixed right now since it introduces a behavioral change. See: https://github.com/cri-o/cri-o/issues/8411
-			Expect(state.Reason, "OOMKilled")
+			Expect(state.Reason).To(Equal("OOMKilled"))
 		})
 	})
 })
