@@ -657,12 +657,8 @@ func PullImageWithSandbox(client internalapi.ImageManagerService, image string, 
 			Image:       image,
 			Annotations: ann,
 		},
-	}
-	if auth != nil {
-		request.Auth = auth
-	}
-	if sandbox != nil {
-		request.SandboxConfig = sandbox
+		Auth:          auth,
+		SandboxConfig: sandbox,
 	}
 	logrus.Debugf("PullImageRequest: %v", request)
 
