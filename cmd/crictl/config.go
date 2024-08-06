@@ -46,15 +46,15 @@ CRICTL OPTIONS:
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:  "get",
-			Usage: "show the option value",
+			Usage: "Show the option value",
 		},
 		&cli.StringSliceFlag{
 			Name:  "set",
-			Usage: "set option (can specify multiple or separate values with commas: opt1=val1,opt2=val2)",
+			Usage: "Set option (can specify multiple or separate values with commas: opt1=val1,opt2=val2)",
 		},
 		&cli.BoolFlag{
 			Name:  "list",
-			Usage: "show all option value",
+			Usage: "Show all option value",
 		},
 	},
 	Action: func(c *cli.Context) error {

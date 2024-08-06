@@ -61,13 +61,11 @@ var statsCommand = &cli.Command{
 		},
 		&cli.StringFlag{
 			Name:  "id",
-			Value: "",
 			Usage: "Filter by container id",
 		},
 		&cli.StringFlag{
 			Name:    "pod",
 			Aliases: []string{"p"},
-			Value:   "",
 			Usage:   "Filter by pod id",
 		},
 		&cli.StringSliceFlag{

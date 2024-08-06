@@ -67,7 +67,6 @@ var runPodCommand = &cli.Command{
 		&cli.DurationFlag{
 			Name:    "cancel-timeout",
 			Aliases: []string{"T"},
-			Value:   0,
 			Usage:   "Seconds to wait for a run pod sandbox request to complete before cancelling the request",
 		},
 	},
@@ -250,23 +249,19 @@ var listPodCommand = &cli.Command{
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:  "id",
-			Value: "",
 			Usage: "filter by pod id",
 		},
 		&cli.StringFlag{
 			Name:  "name",
-			Value: "",
 			Usage: "filter by pod name regular expression pattern",
 		},
 		&cli.StringFlag{
 			Name:  "namespace",
-			Value: "",
 			Usage: "filter by pod namespace regular expression pattern",
 		},
 		&cli.StringFlag{
 			Name:    "state",
 			Aliases: []string{"s"},
-			Value:   "",
 			Usage:   "filter by pod state",
 		},
 		&cli.StringSliceFlag{

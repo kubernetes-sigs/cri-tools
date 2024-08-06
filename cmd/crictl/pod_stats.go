@@ -55,7 +55,6 @@ var podStatsCommand = &cli.Command{
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:  "id",
-			Value: "",
 			Usage: "Filter by pod id",
 		},
 		&cli.StringSliceFlag{
