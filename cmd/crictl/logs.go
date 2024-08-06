@@ -68,7 +68,6 @@ var logsCommand = &cli.Command{
 		},
 		&cli.StringFlag{
 			Name:  "since",
-			Value: "",
 			Usage: "Show logs since timestamp (e.g. 2013-01-02T13:23:37) or relative (e.g. 42m for 42 minutes)",
 		},
 		&cli.BoolFlag{

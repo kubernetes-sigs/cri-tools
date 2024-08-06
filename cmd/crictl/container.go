@@ -102,17 +102,14 @@ var createPullFlags = []cli.Flag{
 	},
 	&cli.StringFlag{
 		Name:  "creds",
-		Value: "",
 		Usage: "Use `USERNAME[:PASSWORD]` for accessing the registry",
 	},
 	&cli.StringFlag{
 		Name:  "auth",
-		Value: "",
 		Usage: "Use `AUTH_STRING` for accessing the registry. AUTH_STRING is a base64 encoded 'USERNAME[:PASSWORD]'",
 	},
 	&cli.StringFlag{
 		Name:  "username",
-		Value: "",
 		Usage: "Use `USERNAME` for accessing the registry. The password will be requested on the command line",
 	},
 	&cli.DurationFlag{
@@ -139,17 +136,14 @@ var runPullFlags = []cli.Flag{
 	},
 	&cli.StringFlag{
 		Name:  "creds",
-		Value: "",
 		Usage: "Use `USERNAME[:PASSWORD]` for accessing the registry",
 	},
 	&cli.StringFlag{
 		Name:  "auth",
-		Value: "",
 		Usage: "Use `AUTH_STRING` for accessing the registry. AUTH_STRING is a base64 encoded 'USERNAME[:PASSWORD]'",
 	},
 	&cli.StringFlag{
 		Name:  "username",
-		Value: "",
 		Usage: "Use `USERNAME` for accessing the registry. password will be requested",
 	},
 	&cli.StringFlag{
@@ -544,29 +538,24 @@ var listContainersCommand = &cli.Command{
 		},
 		&cli.StringFlag{
 			Name:  "id",
-			Value: "",
 			Usage: "Filter by container id",
 		},
 		&cli.StringFlag{
 			Name:  "name",
-			Value: "",
-			Usage: "filter by container name regular expression pattern",
+			Usage: "Filter by container name regular expression pattern",
 		},
 		&cli.StringFlag{
 			Name:    "pod",
 			Aliases: []string{"p"},
-			Value:   "",
 			Usage:   "Filter by pod id",
 		},
 		&cli.StringFlag{
 			Name:  "image",
-			Value: "",
 			Usage: "Filter by container image",
 		},
 		&cli.StringFlag{
 			Name:    "state",
 			Aliases: []string{"s"},
-			Value:   "",
 			Usage:   "Filter by container state",
 		},
 		&cli.StringSliceFlag{

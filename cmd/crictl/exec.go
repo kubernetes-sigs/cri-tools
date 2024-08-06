@@ -58,7 +58,6 @@ var runtimeExecCommand = &cli.Command{
 		},
 		&cli.Int64Flag{
 			Name:  "timeout",
-			Value: 0,
 			Usage: "Timeout in seconds",
 		},
 		&cli.BoolFlag{
