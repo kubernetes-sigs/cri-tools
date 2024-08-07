@@ -191,18 +191,9 @@ var listImageCommand = &cli.Command{
 			return err
 		}
 
-		r, err := ListImages(imageClient, c.Args().First())
+		r, err := ListImages(imageClient, c.Args().First(), c.StringSlice("filter"))
 		if err != nil {
 			return fmt.Errorf("listing images: %w", err)
-		}
-
-		sort.Sort(imageByRef(r.Images))
-
-		if len(c.StringSlice("filter")) > 0 && len(r.Images) > 0 {
-			r.Images, err = filterImagesList(r.Images, c.StringSlice("filter"))
-			if err != nil {
-				return fmt.Errorf("listing images: %w", err)
-			}
 		}
 
 		switch c.String("output") {
@@ -303,11 +294,17 @@ var imageStatusCommand = &cli.Command{
 			Name:  "template",
 			Usage: "The template string is only used when output is go-template; The Template format is golang template",
 		},
+		&cli.StringFlag{
+			Name:  "name",
+			Usage: "Filter by image name",
+		},
+		&cli.StringSliceFlag{
+			Name:    "filter",
+			Aliases: []string{"f"},
+			Usage:   "Filter output based on provided conditions.\nAvailable filters: \n* dangling=(boolean - true or false)\n* reference=/regular expression/\n* before=<image-name>[:<tag>]|<image id>|<image@digest>\n* since=<image-name>[:<tag>]|<image id>|<image@digest>\nMultiple filters can be combined together.",
+		},
 	},
 	Action: func(c *cli.Context) error {
-		if c.NArg() == 0 {
-			return cli.ShowSubcommandHelp(c)
-		}
 		imageClient, err := getImageService(c)
 		if err != nil {
 			return err
@@ -320,10 +317,25 @@ var imageStatusCommand = &cli.Command{
 		}
 		tmplStr := c.String("template")
 
-		statuses := []statusData{}
-		for i := range c.NArg() {
-			id := c.Args().Get(i)
+		ids := c.Args().Slice()
 
+		if len(ids) == 0 {
+			r, err := ListImages(imageClient, c.String("name"), c.StringSlice("filter"))
+			if err != nil {
+				return fmt.Errorf("listing images: %w", err)
+			}
+			for _, img := range r.GetImages() {
+				ids = append(ids, img.GetId())
+			}
+		}
+
+		if len(ids) == 0 {
+			logrus.Error("No IDs provided or nothing found per filter")
+			return cli.ShowSubcommandHelp(c)
+		}
+
+		statuses := []statusData{}
+		for _, id := range ids {
 			r, err := ImageStatus(imageClient, id, verbose)
 			if err != nil {
 				return fmt.Errorf("image status for %q request: %w", id, err)
@@ -684,8 +696,8 @@ func PullImageWithSandbox(client internalapi.ImageManagerService, image string, 
 
 // ListImages sends a ListImagesRequest to the server, and parses
 // the returned ListImagesResponse.
-func ListImages(client internalapi.ImageManagerService, image string) (*pb.ListImagesResponse, error) {
-	request := &pb.ListImagesRequest{Filter: &pb.ImageFilter{Image: &pb.ImageSpec{Image: image}}}
+func ListImages(client internalapi.ImageManagerService, nameFilter string, conditionFilters []string) (*pb.ListImagesResponse, error) {
+	request := &pb.ListImagesRequest{Filter: &pb.ImageFilter{Image: &pb.ImageSpec{Image: nameFilter}}}
 	logrus.Debugf("ListImagesRequest: %v", request)
 	res, err := InterruptableRPC(nil, func(ctx context.Context) ([]*pb.Image, error) {
 		return client.ListImages(ctx, request.Filter)
@@ -695,6 +707,16 @@ func ListImages(client internalapi.ImageManagerService, image string) (*pb.ListI
 	}
 	resp := &pb.ListImagesResponse{Images: res}
 	logrus.Debugf("ListImagesResponse: %v", resp)
+
+	sort.Sort(imageByRef(resp.Images))
+
+	if len(conditionFilters) > 0 && len(resp.Images) > 0 {
+		resp.Images, err = filterImagesList(resp.Images, conditionFilters)
+		if err != nil {
+			return nil, fmt.Errorf("filter images: %w", err)
+		}
+	}
+
 	return resp, nil
 }
 

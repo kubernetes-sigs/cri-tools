@@ -218,19 +218,71 @@ var podStatusCommand = &cli.Command{
 			Name:  "template",
 			Usage: "The template string is only used when output is go-template; The Template format is golang template",
 		},
+		&cli.StringFlag{
+			Name:  "name",
+			Usage: "Filter by pod name regular expression pattern",
+		},
+		&cli.StringFlag{
+			Name:  "namespace",
+			Usage: "Filter by pod namespace regular expression pattern",
+		},
+		&cli.StringFlag{
+			Name:    "state",
+			Aliases: []string{"s"},
+			Usage:   "Filter by pod state",
+		},
+		&cli.StringSliceFlag{
+			Name:  "label",
+			Usage: "Filter by key=value label",
+		},
+		&cli.BoolFlag{
+			Name:    "latest",
+			Aliases: []string{"l"},
+			Usage:   "Show the most recently created pod",
+		},
+		&cli.IntFlag{
+			Name:    "last",
+			Aliases: []string{"n"},
+			Usage:   "Show last n recently created pods. Set 0 for unlimited",
+		},
 	},
 	Action: func(c *cli.Context) error {
-		if c.NArg() == 0 {
-			return cli.ShowSubcommandHelp(c)
-		}
 		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
 			return err
 		}
 
+		ids := c.Args().Slice()
+
+		if len(ids) == 0 {
+			opts := &listOptions{
+				nameRegexp:         c.String("name"),
+				podNamespaceRegexp: c.String("namespace"),
+				state:              c.String("state"),
+				latest:             c.Bool("latest"),
+				last:               c.Int("last"),
+			}
+			opts.labels, err = parseLabelStringSlice(c.StringSlice("label"))
+			if err != nil {
+				return fmt.Errorf("parse label string slice: %w", err)
+			}
+			sbs, err := ListPodSandboxes(runtimeClient, opts)
+			if err != nil {
+				return fmt.Errorf("listing pod sandboxes: %w", err)
+			}
+			for _, sb := range sbs {
+				ids = append(ids, sb.GetId())
+			}
+		}
+
+		if len(ids) == 0 {
+			logrus.Error("No IDs provided or nothing found per filter")
+			return cli.ShowSubcommandHelp(c)
+		}
+
 		if err := podSandboxStatus(
 			runtimeClient,
-			c.Args().Slice(),
+			ids,
 			c.String("output"),
 			c.Bool("quiet"),
 			c.String("template"),
@@ -253,30 +305,30 @@ var listPodCommand = &cli.Command{
 		},
 		&cli.StringFlag{
 			Name:  "name",
-			Usage: "filter by pod name regular expression pattern",
+			Usage: "Filter by pod name regular expression pattern",
 		},
 		&cli.StringFlag{
 			Name:  "namespace",
-			Usage: "filter by pod namespace regular expression pattern",
+			Usage: "Filter by pod namespace regular expression pattern",
 		},
 		&cli.StringFlag{
 			Name:    "state",
 			Aliases: []string{"s"},
-			Usage:   "filter by pod state",
+			Usage:   "Filter by pod state",
 		},
 		&cli.StringSliceFlag{
 			Name:  "label",
-			Usage: "filter by key=value label",
+			Usage: "Filter by key=value label",
 		},
 		&cli.BoolFlag{
 			Name:    "verbose",
 			Aliases: []string{"v"},
-			Usage:   "show verbose info for pods",
+			Usage:   "Show verbose info for pods",
 		},
 		&cli.BoolFlag{
 			Name:    "quiet",
 			Aliases: []string{"q"},
-			Usage:   "list only pod IDs",
+			Usage:   "List only pod IDs",
 		},
 		&cli.StringFlag{
 			Name:    "output",
@@ -322,7 +374,7 @@ var listPodCommand = &cli.Command{
 		if err != nil {
 			return err
 		}
-		if err = ListPodSandboxes(runtimeClient, opts); err != nil {
+		if err = OutputPodSandboxes(runtimeClient, opts); err != nil {
 			return fmt.Errorf("listing pod sandboxes: %w", err)
 		}
 		return nil
@@ -482,7 +534,7 @@ func outputPodSandboxStatusTable(r *pb.PodSandboxStatusResponse, verbose bool) {
 
 // ListPodSandboxes sends a ListPodSandboxRequest to the server, and parses
 // the returned ListPodSandboxResponse.
-func ListPodSandboxes(client internalapi.RuntimeService, opts *listOptions) error {
+func ListPodSandboxes(client internalapi.RuntimeService, opts *listOptions) ([]*pb.PodSandbox, error) {
 	filter := &pb.PodSandboxFilter{}
 	if opts.id != "" {
 		filter.Id = opts.id
@@ -513,9 +565,18 @@ func ListPodSandboxes(client internalapi.RuntimeService, opts *listOptions) erro
 	})
 	logrus.Debugf("ListPodSandboxResponse: %v", r)
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("call list sandboxes RPC: %w", err)
 	}
-	r = getSandboxesList(r, opts)
+	return getSandboxesList(r, opts), nil
+}
+
+// OutputPodSandboxes sends a ListPodSandboxRequest to the server, and parses
+// the returned ListPodSandboxResponse for output.
+func OutputPodSandboxes(client internalapi.RuntimeService, opts *listOptions) error {
+	r, err := ListPodSandboxes(client, opts)
+	if err != nil {
+		return fmt.Errorf("list pod sandboxes: %w", err)
+	}
 
 	switch opts.output {
 	case outputTypeJSON:

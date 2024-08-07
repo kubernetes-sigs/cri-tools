@@ -502,19 +502,78 @@ var containerStatusCommand = &cli.Command{
 			Name:  "template",
 			Usage: "The template string is only used when output is go-template; The Template format is golang template",
 		},
+		&cli.StringFlag{
+			Name:  "name",
+			Usage: "Filter by container name regular expression pattern",
+		},
+		&cli.StringFlag{
+			Name:    "pod",
+			Aliases: []string{"p"},
+			Usage:   "Filter by pod id",
+		},
+		&cli.StringFlag{
+			Name:  "image",
+			Usage: "Filter by container image",
+		},
+		&cli.StringFlag{
+			Name:    "state",
+			Aliases: []string{"s"},
+			Usage:   "Filter by container state",
+		},
+		&cli.StringSliceFlag{
+			Name:  "label",
+			Usage: "Filter by key=value label",
+		},
+		&cli.BoolFlag{
+			Name:    "latest",
+			Aliases: []string{"l"},
+			Usage:   "Show the most recently created container (includes all states)",
+		},
+		&cli.IntFlag{
+			Name:    "last",
+			Aliases: []string{"n"},
+			Usage:   "Show last n recently created containers (includes all states). Set 0 for unlimited.",
+		},
 	},
 	Action: func(c *cli.Context) error {
-		if c.NArg() == 0 {
-			return errors.New("ID cannot be empty")
-		}
 		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
 			return err
 		}
 
+		ids := c.Args().Slice()
+
+		if len(ids) == 0 {
+			opts := &listOptions{
+				nameRegexp: c.String("name"),
+				podID:      c.String("pod"),
+				image:      c.String("image"),
+				state:      c.String("state"),
+				latest:     c.Bool("latest"),
+				last:       c.Int("last"),
+			}
+			opts.labels, err = parseLabelStringSlice(c.StringSlice("label"))
+			if err != nil {
+				return err
+			}
+
+			ctrs, err := ListContainers(runtimeClient, opts)
+			if err != nil {
+				return fmt.Errorf("listing containers: %w", err)
+			}
+			for _, ctr := range ctrs {
+				ids = append(ids, ctr.GetId())
+			}
+		}
+
+		if len(ids) == 0 {
+			logrus.Error("No IDs provided or nothing found per filter")
+			return cli.ShowSubcommandHelp(c)
+		}
+
 		if err := containerStatus(
 			runtimeClient,
-			c.Args().Slice(),
+			ids,
 			c.String("output"),
 			c.String("template"),
 			c.Bool("quiet"),
@@ -633,7 +692,7 @@ var listContainersCommand = &cli.Command{
 			return err
 		}
 
-		if err = ListContainers(runtimeClient, imageClient, opts); err != nil {
+		if err = OutputContainers(runtimeClient, imageClient, opts); err != nil {
 			return fmt.Errorf("listing containers: %w", err)
 		}
 		return nil
@@ -1080,7 +1139,7 @@ func outputContainerStatusTable(r *pb.ContainerStatusResponse, verbose bool) {
 
 // ListContainers sends a ListContainerRequest to the server, and parses
 // the returned ListContainerResponse.
-func ListContainers(runtimeClient internalapi.RuntimeService, imageClient internalapi.ImageManagerService, opts *listOptions) error {
+func ListContainers(runtimeClient internalapi.RuntimeService, opts *listOptions) ([]*pb.Container, error) {
 	filter := &pb.ContainerFilter{}
 	if opts.id != "" {
 		filter.Id = opts.id
@@ -1124,9 +1183,18 @@ func ListContainers(runtimeClient internalapi.RuntimeService, imageClient intern
 	})
 	logrus.Debugf("ListContainerResponse: %v", r)
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("call list containers RPC: %w", err)
 	}
-	r = getContainersList(r, opts)
+	return getContainersList(r, opts), nil
+}
+
+// OutputContainers sends a ListContainerRequest to the server, and parses
+// the returned ListContainerResponse for output.
+func OutputContainers(runtimeClient internalapi.RuntimeService, imageClient internalapi.ImageManagerService, opts *listOptions) error {
+	r, err := ListContainers(runtimeClient, opts)
+	if err != nil {
+		return fmt.Errorf("list containers: %w", err)
+	}
 
 	switch opts.output {
 	case outputTypeJSON:
