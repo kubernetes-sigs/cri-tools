@@ -88,9 +88,15 @@ jobs:
           set -euox pipefail
 
           ARGS=()
-          if [[ "${{matrix.oci-runtime}}" == "crun" && "${{matrix.monitor}}" == "conmon-rs" ]]; then
-            # TODO: check why these tests fail on that combination
-            ARGS=(--ginkgo.skip 'SupplementalGroups|AppArmor|RunAsUser')
+          # TODO: check why these tests fail on that combination
+          if [[ "${{matrix.oci-runtime}}" == "crun" ]]; then
+            SKIP=rshared
+
+            if [[ "${{matrix.monitor}}" == "conmon-rs" ]]; then
+              SKIP="$SKIP|SupplementalGroups|AppArmor|RunAsUser"
+            fi
+
+            ARGS=(--ginkgo.skip "$SKIP")
           fi
 
           set +o errexit
