@@ -43,7 +43,6 @@ const (
 	columnInodes     = "INODES"
 	columnDisk       = "DISK"
 	columnCPU        = "CPU %"
-	columnPodname    = "POD"
 	columnKey        = "KEY"
 	columnValue      = "VALUE"
 )

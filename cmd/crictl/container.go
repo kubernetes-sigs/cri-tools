@@ -1209,7 +1209,7 @@ func OutputContainers(runtimeClient internalapi.RuntimeService, imageClient inte
 
 	display := newDefaultTableDisplay()
 	if !opts.verbose && !opts.quiet {
-		display.AddRow([]string{columnContainer, columnImage, columnCreated, columnState, columnName, columnAttempt, columnPodID, columnPodname})
+		display.AddRow([]string{columnContainer, columnImage, columnCreated, columnState, columnName, columnAttempt, columnPodID, columnPodName})
 	}
 	for _, c := range r {
 		if match, err := matchesImage(imageClient, opts.image, c.GetImage().GetImage()); err != nil {
