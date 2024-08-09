@@ -93,7 +93,7 @@ jobs:
             SKIP=rshared
 
             if [[ "${{matrix.monitor}}" == "conmon-rs" ]]; then
-              SKIP="$SKIP|SupplementalGroups|AppArmor|RunAsUser"
+              SKIP="$SKIP|SupplementalGroups|AppArmor"
             fi
 
             ARGS=(--ginkgo.skip "$SKIP")
