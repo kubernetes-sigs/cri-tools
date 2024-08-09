@@ -8,43 +8,26 @@ jobs:
     name: release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-go@v5
-        with:
-          go-version: '1.22'
-          cache: false
-
-      - name: Set env
-        shell: bash
-        run: |
-          echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
-          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-          key: go-release-${{ hashFiles('**/go.sum') }}
-          restore-keys: go-release-
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          path: src/github.com/kubernetes-sigs/cri-tools
-      - run: |
-          make release-notes release
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - run: make release-notes release
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        working-directory: src/github.com/kubernetes-sigs/cri-tools
       - uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          artifacts: src/github.com/kubernetes-sigs/cri-tools/_output/releases/*
-          bodyFile: src/github.com/kubernetes-sigs/cri-tools/release-notes.md
+          artifacts: _output/releases/*
+          bodyFile: release-notes.md
           token: ${{ secrets.GH_TOKEN }}
       - uses: actions/upload-artifact@v4
         with:
           name: release-notes
-          path: src/github.com/kubernetes-sigs/cri-tools/release-notes.md
+          path: release-notes.md
       - uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
-          path: src/github.com/kubernetes-sigs/cri-tools/_output
+          path: _output

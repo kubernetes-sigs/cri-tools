@@ -47,9 +47,9 @@ CRI_TEST_PLATFORMS=(
 
 # Create releases output directory.
 PROJECT="sigs.k8s.io/cri-tools"
-CRI_TOOLS_ROOT="$GOPATH/src/$PROJECT"
-OUTPUTDIR=$CRI_TOOLS_ROOT/_output/releases
-mkdir -p "$OUTPUTDIR"
+OUTPUT_DIR=_output
+RELEASES_DIR=$OUTPUT_DIR/releases
+mkdir -p "$RELEASES_DIR"
 
 GO_LDFLAGS="-X ${PROJECT}/pkg/version.Version=${VERSION}"
 
@@ -63,14 +63,14 @@ for platform in "${CRI_CTL_PLATFORMS[@]}"; do
         CRICTL_BIN="crictl.exe"
     fi
 
-    output_bin=${CRI_TOOLS_ROOT}/_output/bin/$arch-$os/${CRICTL_BIN}
+    output_bin=$OUTPUT_DIR/bin/$arch-$os/${CRICTL_BIN}
     GOARCH="$arch" GOOS="$os" CGO_ENABLED=0 go build \
         -o ${output_bin} \
         -ldflags "${GO_LDFLAGS}" \
         ${PROJECT}/cmd/crictl
     file ${output_bin}
-    tar zcf "$OUTPUTDIR/crictl-$VERSION-$os-$arch.tar.gz" \
-        -C ${CRI_TOOLS_ROOT}/_output/bin/$arch-$os \
+    tar zcf "$RELEASES_DIR/crictl-$VERSION-$os-$arch.tar.gz" \
+        -C $OUTPUT_DIR/bin/$arch-$os \
         ${CRICTL_BIN}
 done
 
@@ -84,14 +84,14 @@ for platform in "${CRI_TEST_PLATFORMS[@]}"; do
         CRITEST_BIN="critest.exe"
     fi
 
-    output_bin=${CRI_TOOLS_ROOT}/_output/bin/$arch-$os/${CRITEST_BIN}
+    output_bin=$OUTPUT_DIR/bin/$arch-$os/${CRITEST_BIN}
     GOARCH="$arch" GOOS="$os" CGO_ENABLED=0 go test -c \
         -o ${output_bin} \
         -ldflags "${GO_LDFLAGS}" \
         ${PROJECT}/cmd/critest
     file ${output_bin}
-    tar zcf "$OUTPUTDIR/critest-$VERSION-$os-$arch.tar.gz" \
-        -C ${CRI_TOOLS_ROOT}/_output/bin/$arch-$os \
+    tar zcf "$RELEASES_DIR/critest-$VERSION-$os-$arch.tar.gz" \
+        -C $OUTPUT_DIR/bin/$arch-$os \
         ${CRITEST_BIN}
 done
 
@@ -101,14 +101,14 @@ echo "| ---- | ------ | ------" | tee -a release-notes.md
 
 # Show sha256/512 for release files
 if [[ "${OSTYPE}" == "darwin"* ]]; then
-    for file in "$OUTPUTDIR"/*.tar.gz; do
+    for file in "$RELEASES_DIR"/*.tar.gz; do
         SHA256=$(shasum -a 256 "$file" | sed -e "s,$file,," | awk '{print $1}' | tee "$file.sha256")
         SHA512=$(shasum -a 512 "$file" | sed -e "s,$file,," | awk '{print $1}' | tee "$file.sha512")
         BASE=$(basename "$file")
         echo "| $BASE | $SHA256 | $SHA512 |" | tee -a release-notes.md
     done
 else
-    for file in "$OUTPUTDIR"/*.tar.gz; do
+    for file in "$RELEASES_DIR"/*.tar.gz; do
         SHA256=$(sha256sum -b "$file" | sed -e "s,$file,," | awk '{print $1}' | tee "$file.sha256")
         SHA512=$(sha512sum -b "$file" | sed -e "s,$file,," | awk '{print $1}' | tee "$file.sha512")
         BASE=$(basename "$file")
