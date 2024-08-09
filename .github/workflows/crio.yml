@@ -93,7 +93,7 @@ jobs:
             SKIP=rshared
 
             if [[ "${{matrix.monitor}}" == "conmon-rs" ]]; then
-              SKIP="$SKIP|SupplementalGroups|AppArmor|RunAsUser"
+              SKIP="$SKIP|SupplementalGroups|RunAsUser"
             fi
 
             ARGS=(--ginkgo.skip "$SKIP")
@@ -106,6 +106,7 @@ jobs:
             --ginkgo.flake-attempts=3 \
             --ginkgo.randomize-all \
             --ginkgo.timeout=2m \
+            --ginkgo.focus="AppArmor.*runtime should support apparmor field.*should fail with an unloaded apparmor_profile" \
             --ginkgo.trace \
             --ginkgo.vv \
             "${ARGS[@]}"
