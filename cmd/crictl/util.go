@@ -330,11 +330,19 @@ func outputStatusData(statuses []statusData, format, tmplStr string) (err error)
 		}
 
 		for _, k := range keys {
-			var genericVal map[string]any
-			if err := json.Unmarshal([]byte(status.info[k]), &genericVal); err != nil {
-				return fmt.Errorf("unmarshal status info JSON: %w", err)
+			val := status.info[k]
+
+			if strings.HasPrefix(val, "{") {
+				// Assume a JSON object
+				var genericVal map[string]any
+				if err := json.Unmarshal([]byte(val), &genericVal); err != nil {
+					return fmt.Errorf("unmarshal status info JSON: %w", err)
+				}
+				infoMap[k] = genericVal
+			} else {
+				// Assume a string and remove any double quotes
+				infoMap[k] = strings.Trim(val, `"`)
 			}
-			infoMap[k] = genericVal
 		}
 
 		result = append(result, infoMap)
