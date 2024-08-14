@@ -87,18 +87,6 @@ jobs:
         run: |
           set -euox pipefail
 
-          ARGS=()
-          # TODO: check why these tests fail on that combination
-          if [[ "${{matrix.oci-runtime}}" == "crun" ]]; then
-            SKIP=rshared
-
-            if [[ "${{matrix.monitor}}" == "conmon-rs" ]]; then
-              SKIP="$SKIP|SupplementalGroups|AppArmor|RunAsUser"
-            fi
-
-            ARGS=(--ginkgo.skip "$SKIP")
-          fi
-
           set +o errexit
           sudo -E PATH=$PATH critest \
             --runtime-endpoint=unix:///var/run/crio/crio.sock \
@@ -107,8 +95,7 @@ jobs:
             --ginkgo.randomize-all \
             --ginkgo.timeout=2m \
             --ginkgo.trace \
-            --ginkgo.vv \
-            "${ARGS[@]}"
+            --ginkgo.vv
           TEST_RC=$?
           set -o errexit
 
