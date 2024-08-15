@@ -81,7 +81,7 @@ func WriteConfig(c *Config, filepath string) error {
 func getConfigOptions(yamlData *yaml.Node) (*Config, error) {
 	config := &Config{yamlData: yamlData}
 
-	if yamlData.Content == nil || len(yamlData.Content) == 0 ||
+	if len(yamlData.Content) == 0 ||
 		yamlData.Content[0].Content == nil {
 		return config, nil
 	}
@@ -142,7 +142,7 @@ func setConfigOptions(config *Config) {
 
 // Set config option on yaml.
 func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
-	if yamlData.Content == nil || len(yamlData.Content) == 0 {
+	if len(yamlData.Content) == 0 {
 		yamlData.Kind = yaml.DocumentNode
 		yamlData.Content = make([]*yaml.Node, 1)
 		yamlData.Content[0] = &yaml.Node{
