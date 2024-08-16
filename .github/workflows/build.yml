@@ -23,46 +23,20 @@ jobs:
         os: [ubuntu-22.04]  # TODO: pass linters on 'macos-10.15' and 'windows-2019'
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Install Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.23'
-          cache: false
-
-      - name: Set env
-        shell: bash
-        run: |
-          echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
-          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
-
-      - name: Cache go modules and build cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-            '%LocalAppData%\go-build' # Windows
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-go-
-
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          path: src/github.com/kubernetes-sigs/cri-tools
-
       - name: Make check
-        shell: bash
         run: |
           make lint
           make verify-boilerplate
           hack/verify-go-modules.sh
           hack/verify-docs.sh
-        working-directory: src/github.com/kubernetes-sigs/cri-tools
-
       - name: Test
-        shell: bash
         run: make test-crictl
-        working-directory: src/github.com/kubernetes-sigs/cri-tools
 
   releases:
     name: releases / on ${{ matrix.os }}
@@ -74,35 +48,13 @@ jobs:
         os: [ubuntu-22.04, macos-12]  # TODO: make releases on 'linux-ppc64le' 'windows-2019'
                                          # Ref: https://github.com/uraimo/run-on-arch-action
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Install Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.23'
-          cache: false
-
-      - name: Set env
-        shell: bash
-        run: |
-          echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
-          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
-
-      - name: Cache go modules and build cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-            '%LocalAppData%\go-build' # Windows
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-go-
-
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          path: src/github.com/kubernetes-sigs/cri-tools
-          fetch-depth: 0
-
       - name: Make release
-        shell: bash
         run: make release
-        working-directory: src/github.com/kubernetes-sigs/cri-tools
