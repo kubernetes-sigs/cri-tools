@@ -6,6 +6,8 @@ on:
     branches:
       - master
   pull_request:
+env:
+  GO_VERSION: '1.23'
 jobs:
   images:
     runs-on: ubuntu-latest
@@ -14,29 +16,37 @@ jobs:
       - run: images/build -d
 
   linters:
-    name: lint and vendor check / ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: verify / ${{ matrix.run }}
+    runs-on: ubuntu-latest
     timeout-minutes: 10
-
     strategy:
       matrix:
-        os: [ubuntu-22.04]  # TODO: pass linters on 'macos-10.15' and 'windows-2019'
-
+        run:
+          - lint
+          - boilerplate
+          - dependencies
+          - go-modules
+          - docs
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Install Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
-      - name: Make check
-        run: |
-          make lint
-          make verify-boilerplate
-          hack/verify-go-modules.sh
-          hack/verify-docs.sh
-      - name: Test
-        run: make test-crictl
+          go-version: ${{ env.GO_VERSION }}
+      - run: make verify-${{ matrix.run }}
+
+  test:
+    name: test / crictl
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - run: make test-crictl
 
   releases:
     name: releases / on ${{ matrix.os }}
@@ -55,6 +65,6 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: ${{ env.GO_VERSION }}
       - name: Make release
         run: make release

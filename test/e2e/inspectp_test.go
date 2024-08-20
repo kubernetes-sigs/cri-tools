@@ -53,7 +53,7 @@ var _ = t.Describe("inspectp", func() {
 			res := t.Crictl("rmp -f " + sb)
 			Expect(res).To(Exit(0))
 		}
-		Expect(t.Crictl("rmi registry.k8s.io/pause:3.9")).To(Exit(0))
+		Expect(t.Crictl("rmi -q")).To(Exit(0))
 	})
 
 	It("should succeed", func() {

@@ -1,0 +1,45 @@
+---
+dependencies:
+  - name: cri-tools
+    version: v1.31.1
+    refPaths:
+      - path: README.md
+        match: VERSION
+
+  - name: go
+    version: 1.23
+    refPaths:
+      - path: go.mod
+        match: go
+      - path: .github/workflows/build.yml
+        match: GO_VERSION
+      - path: .github/workflows/containerd.yml
+        match: GO_VERSION
+      - path: .github/workflows/crio.yml
+        match: GO_VERSION
+      - path: .github/workflows/release.yml
+        match: GO_VERSION
+
+  - name: zeitgeist
+    version: v0.5.3
+    refPaths:
+      - path: Makefile
+        match: ZEITGEIST_VERSION
+
+  - name: golangci-lint
+    version: v1.60.1
+    refPaths:
+      - path: Makefile
+        match: GOLANGCI_LINT_VERSION
+
+  - name: repo-infra
+    version: v0.2.5
+    refPaths:
+      - path: Makefile
+        match: REPO_INFRA_VERSION
+
+  - name: release-notes
+    version: v0.17.2
+    refPaths:
+      - path: hack/release-notes.sh
+        match: VERSION
