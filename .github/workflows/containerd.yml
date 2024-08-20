@@ -6,6 +6,8 @@ on:
     branches:
       - master
   pull_request:
+env:
+  GO_VERSION: '1.23'
 jobs:
   #
   # Run CRI tests against containerd
@@ -50,7 +52,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: ${{ env.GO_VERSION }}
           cache: false
 
       - name: Set env

@@ -46,8 +46,19 @@ define go-build
 	@echo > /dev/null
 endef
 
+define curl_to
+	curl -sSfL --retry 5 --retry-delay 3 "$(1)" -o $(2)
+	chmod +x $(2)
+endef
+
+ZEITGEIST_VERSION = v0.5.3
+GOLANGCI_LINT_VERSION := v1.60.1
+REPO_INFRA_VERSION = v0.2.5
+
 GINKGO := $(BUILD_BIN_PATH)/ginkgo
 GOLANGCI_LINT := $(BUILD_BIN_PATH)/golangci-lint
+ZEITGEIST := $(BUILD_BIN_PATH)/zeitgeist
+VERIFY_BOILERPLATE := $(BUILD_BIN_PATH)/verify_boilerplate.py
 
 CRITEST := $(BUILD_BIN_PATH)/critest$(BIN_EXT)
 CRICTL := $(BUILD_BIN_PATH)/crictl$(BIN_EXT)
@@ -90,21 +101,17 @@ install: $(CRITEST) $(CRICTL)
 	install -d $(DESTDIR)$(BINDIR)
 	install -m 755 $^ $(DESTDIR)$(BINDIR)/
 
-lint: $(GOLANGCI_LINT)
+verify-lint: $(GOLANGCI_LINT)
 	$(GOLANGCI_LINT) run
 
-verify-boilerplate: $(BUILD_BIN_PATH)/verify_boilerplate.py
-	$(BUILD_BIN_PATH)/verify_boilerplate.py --boilerplate-dir hack/boilerplate
+verify-boilerplate: $(VERIFY_BOILERPLATE)
+	$(VERIFY_BOILERPLATE) --boilerplate-dir hack/boilerplate
 
 $(BUILD_BIN_PATH):
 	mkdir -p $(BUILD_BIN_PATH)
 
-REPO_INFRA_VERSION = v0.2.5
-
-$(BUILD_BIN_PATH)/verify_boilerplate.py: $(BUILD_BIN_PATH)
-	curl -sfL https://raw.githubusercontent.com/kubernetes/repo-infra/$(REPO_INFRA_VERSION)/hack/verify_boilerplate.py \
-		-o $(BUILD_BIN_PATH)/verify_boilerplate.py
-	chmod +x $(BUILD_BIN_PATH)/verify_boilerplate.py
+$(VERIFY_BOILERPLATE): $(BUILD_BIN_PATH)
+	$(call curl_to,https://raw.githubusercontent.com/kubernetes/repo-infra/$(REPO_INFRA_VERSION)/hack/verify_boilerplate.py,$(VERIFY_BOILERPLATE))
 
 install.tools: $(GINKGO) $(GOLANGCI_LINT)
 
@@ -113,7 +120,7 @@ install.lint: $(GOLANGCI_LINT)
 
 $(GOLANGCI_LINT):
 	export \
-		VERSION=v1.60.1 \
+		VERSION=$(GOLANGCI_LINT_VERSION) \
 		URL=https://raw.githubusercontent.com/golangci/golangci-lint \
 		BINDIR=${BUILD_BIN_PATH} && \
 	curl -sfL $$URL/$$VERSION/install.sh | sh -s $$VERSION
@@ -159,6 +166,18 @@ vendor:
 		$(GO) mod vendor && \
 		$(GO) mod verify
 
+$(ZEITGEIST): $(BUILD_BIN_PATH)
+	$(call curl_to,https://storage.googleapis.com/k8s-artifacts-sig-release/kubernetes-sigs/zeitgeist/$(ZEITGEIST_VERSION)/zeitgeist-amd64-linux,$(ZEITGEIST))
+
+verify-docs:
+	hack/verify-docs.sh
+
+verify-dependencies: $(BUILD_BIN_PATH)/zeitgeist
+	$(ZEITGEIST) validate --local-only --base-path . --config dependencies.yaml
+
+verify-go-modules:
+	hack/verify-go-modules.sh
+
 .PHONY: \
 	help \
 	critest \
@@ -166,7 +185,6 @@ vendor:
 	clean \
 	binaries \
 	install \
-	lint \
 	install.tools \
 	install.ginkgo \
 	install.lint \
@@ -174,4 +192,8 @@ vendor:
 	release-notes \
 	test-e2e \
 	vendor \
-	verify-boilerplate
+	verify-boilerplate \
+	verify-dependencies \
+	verify-docs \
+	verify-go-modules \
+	verify-lint
