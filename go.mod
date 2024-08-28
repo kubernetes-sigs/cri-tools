@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/distribution/reference v0.6.0
-	github.com/docker/docker v27.1.2+incompatible
+	github.com/docker/docker v27.2.0+incompatible
 	github.com/docker/go-units v0.5.0
 	github.com/google/uuid v1.6.0
 	github.com/invopop/jsonschema v0.12.0
