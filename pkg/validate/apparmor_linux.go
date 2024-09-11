@@ -101,8 +101,6 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 		It("should fail with an unloaded apparmor_profile", func() {
 			profile := &runtimeapi.LinuxContainerSecurityContext{
 				ApparmorProfile: apparmorProfileNamePrefix + "non-existent-profile",
-				// TODO: remove once https://github.com/containers/crun/issues/1482 is resolved
-				NamespaceOptions: &runtimeapi.NamespaceOption{Pid: runtimeapi.NamespaceMode_CONTAINER},
 			}
 			containerID := createContainerWithAppArmor(rc, ic, sandboxID, sandboxConfig, profile, false)
 			Expect(containerID).To(BeEmpty())
@@ -146,8 +144,6 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 					ProfileType:  runtimeapi.SecurityProfile_Localhost,
 					LocalhostRef: apparmorProfileNamePrefix + "non-existent-profile",
 				},
-				// TODO: remove once https://github.com/containers/crun/issues/1482 is resolved
-				NamespaceOptions: &runtimeapi.NamespaceOption{Pid: runtimeapi.NamespaceMode_CONTAINER},
 			}
 			containerID := createContainerWithAppArmor(rc, ic, sandboxID, sandboxConfig, profile, false)
 			Expect(containerID).To(BeEmpty())
@@ -198,8 +194,6 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 					ProfileType:  runtimeapi.SecurityProfile_Localhost,
 					LocalhostRef: apparmorProfileNamePrefix + "non-existent-profile",
 				},
-				// TODO: remove once https://github.com/containers/crun/issues/1482 is resolved
-				NamespaceOptions: &runtimeapi.NamespaceOption{Pid: runtimeapi.NamespaceMode_CONTAINER},
 			}
 			containerID := createContainerWithAppArmor(rc, ic, sandboxID, sandboxConfig, profile, false)
 			Expect(containerID).To(BeEmpty())
