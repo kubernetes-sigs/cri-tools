@@ -41,14 +41,16 @@ const (
 	transportFlag      = "transport"
 	transportWebsocket = "websocket"
 	transportSpdy      = "spdy"
+
+	detachSequence = "ctrl-p,ctrl-q"
 )
 
-const detachSequence = "ctrl-p,ctrl-q"
-
 var runtimeExecCommand = &cli.Command{
-	Name:                   "exec",
-	Usage:                  "Run a command in a running container",
-	ArgsUsage:              "CONTAINER-ID COMMAND [ARG...]",
+	Name:      "exec",
+	Usage:     "Run a command in a running container",
+	ArgsUsage: "[CONTAINER-ID] COMMAND [ARG...]",
+	Description: `The CONTAINER-ID is only required if none of the following filter flags are set:
+--image, --label, --last, --latest, --name, --pod, --state`,
 	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
@@ -76,9 +78,40 @@ var runtimeExecCommand = &cli.Command{
 			Value:   transportSpdy,
 			Usage:   fmt.Sprintf("Transport protocol to use, one of: %s|%s", transportSpdy, transportWebsocket),
 		},
+		&cli.StringFlag{
+			Name:  "name",
+			Usage: "Exec command for all containers matching this name filter regular expression pattern",
+		},
+		&cli.StringFlag{
+			Name:    "pod",
+			Aliases: []string{"p"},
+			Usage:   "Exec command for all containers matching this pod ID filter",
+		},
+		&cli.StringFlag{
+			Name:  "image",
+			Usage: "Exec command for all containers matching this container image filter",
+		},
+		&cli.StringFlag{
+			Name:  "state",
+			Usage: "Exec command for all containers matching this container state filter",
+		},
+		&cli.StringSliceFlag{
+			Name:  "label",
+			Usage: "Exec command for all containers matching this key=value label filter",
+		},
+		&cli.BoolFlag{
+			Name:    "latest",
+			Aliases: []string{"l"},
+			Usage:   "Exec command for the most recently created container",
+		},
+		&cli.IntFlag{
+			Name:    "last",
+			Aliases: []string{"n"},
+			Usage:   "Exec command for all last n containers, set to 0 for unlimited",
+		},
 	},
 	Action: func(c *cli.Context) error {
-		if c.NArg() < 2 {
+		if c.NArg() < 1 {
 			return cli.ShowSubcommandHelp(c)
 		}
 
@@ -87,32 +120,91 @@ var runtimeExecCommand = &cli.Command{
 			return err
 		}
 
+		// Assume a regular exec where the first arg is the container ID.
+		ids := []string{c.Args().First()}
+		cmd := c.Args().Slice()[1:]
+		outputContainerID := false
+
+		// If any of the filter flags are set, then we assume that no
+		// CONTAINER-ID is provided as CLI parameter.
+		if c.IsSet("name") ||
+			c.IsSet("pod") ||
+			c.IsSet("image") ||
+			c.IsSet("state") ||
+			c.IsSet("label") ||
+			c.IsSet("latest") ||
+			c.IsSet("last") {
+
+			ids = []string{}
+			cmd = c.Args().Slice()
+			outputContainerID = true
+
+			opts := &listOptions{
+				nameRegexp: c.String("name"),
+				podID:      c.String("pod"),
+				image:      c.String("image"),
+				state:      c.String("state"),
+				latest:     c.Bool("latest"),
+				last:       c.Int("last"),
+			}
+
+			opts.labels, err = parseLabelStringSlice(c.StringSlice("label"))
+			if err != nil {
+				return err
+			}
+
+			ctrs, err := ListContainers(runtimeClient, opts)
+			if err != nil {
+				return fmt.Errorf("listing containers: %w", err)
+			}
+
+			for _, ctr := range ctrs {
+				ids = append(ids, ctr.GetId())
+			}
+
+			if len(ids) == 0 {
+				logrus.Error("No containers found per filter flags")
+				return cli.ShowSubcommandHelp(c)
+			}
+		} else if c.NArg() < 2 {
+			return cli.ShowSubcommandHelp(c)
+		}
+
 		opts := execOptions{
-			id:        c.Args().First(),
 			timeout:   c.Int64("timeout"),
 			tty:       c.Bool("tty"),
 			stdin:     c.Bool("interactive"),
-			cmd:       c.Args().Slice()[1:],
+			cmd:       cmd,
 			transport: c.String(transportFlag),
 		}
-		if c.Bool("sync") {
-			exitCode, err := ExecSync(runtimeClient, opts)
+
+		for _, id := range ids {
+			opts.id = id
+
+			if outputContainerID {
+				fmt.Println(id + ":")
+			}
+
+			if c.Bool("sync") {
+				exitCode, err := ExecSync(runtimeClient, opts)
+				if err != nil {
+					return fmt.Errorf("execing command in container synchronously: %w", err)
+				}
+				if exitCode != 0 {
+					return cli.Exit("non-zero exit code", exitCode)
+				}
+				continue
+			}
+
+			ctx, cancel := context.WithCancel(c.Context)
+			defer cancel()
+			err = Exec(ctx, runtimeClient, opts)
 			if err != nil {
-				return fmt.Errorf("execing command in container synchronously: %w", err)
+				return fmt.Errorf("execing command in container: %w", err)
 			}
-			if exitCode != 0 {
-				return cli.Exit("non-zero exit code", exitCode)
-			}
-			return nil
+
 		}
 
-		ctx, cancel := context.WithCancel(c.Context)
-		defer cancel()
-
-		err = Exec(ctx, runtimeClient, opts)
-		if err != nil {
-			return fmt.Errorf("execing command in container: %w", err)
-		}
 		return nil
 	},
 }
