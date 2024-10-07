@@ -29,8 +29,8 @@ require (
 	k8s.io/api v0.32.0-alpha.1
 	k8s.io/apimachinery v0.32.0-alpha.1
 	k8s.io/client-go v0.32.0-alpha.1
-	k8s.io/cri-api v0.31.0-rc.1
-	k8s.io/cri-client v0.31.0-rc.1
+	k8s.io/cri-api v0.32.0-alpha.1
+	k8s.io/cri-client v0.32.0-alpha.1
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kubectl v0.31.0-rc.1
 	k8s.io/kubelet v0.31.0-rc.1
@@ -38,8 +38,8 @@ require (
 )
 
 require (
-	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
-	github.com/Microsoft/go-winio v0.6.0 // indirect
+	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
+	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
@@ -83,9 +83,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.30.0 // indirect
 	go.opentelemetry.io/otel/metric v1.30.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
-	golang.org/x/mod v0.20.0 // indirect
 	golang.org/x/oauth2 v0.22.0 // indirect
-	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.24.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240903143218-8af14fe29dc1 // indirect
@@ -93,7 +91,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/cli-runtime v0.31.0-rc.1 // indirect
-	k8s.io/component-base v0.31.0-rc.1 // indirect
+	k8s.io/component-base v0.32.0-alpha.1 // indirect
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
