@@ -29,7 +29,7 @@ require (
 	k8s.io/api v0.32.0-alpha.1
 	k8s.io/apimachinery v0.32.0-alpha.1
 	k8s.io/client-go v0.32.0-alpha.1
-	k8s.io/cri-api v0.31.0-rc.1
+	k8s.io/cri-api v0.32.0-alpha.1
 	k8s.io/cri-client v0.31.0-rc.1
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kubectl v0.31.0-rc.1
