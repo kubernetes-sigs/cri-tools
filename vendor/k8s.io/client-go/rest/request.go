@@ -450,9 +450,11 @@ func (r *Request) Body(obj interface{}) *Request {
 			r.err = err
 			return r
 		}
+		glogBody("Request Body", data)
 		r.body = nil
 		r.bodyBytes = data
 	case []byte:
+		glogBody("Request Body", t)
 		r.body = nil
 		r.bodyBytes = t
 	case io.Reader:
@@ -473,6 +475,7 @@ func (r *Request) Body(obj interface{}) *Request {
 			r.err = err
 			return r
 		}
+		glogBody("Request Body", data)
 		r.body = nil
 		r.bodyBytes = data
 		r.SetHeader("Content-Type", r.c.content.ContentType)
@@ -701,10 +704,6 @@ func (b *throttledLogger) Infof(message string, args ...interface{}) {
 // Watch attempts to begin watching the requested location.
 // Returns a watch.Interface, or an error.
 func (r *Request) Watch(ctx context.Context) (watch.Interface, error) {
-	if r.body == nil {
-		logBody(ctx, 2, "Request Body", r.bodyBytes)
-	}
-
 	// We specifically don't want to rate limit watches, so we
 	// don't use r.rateLimiter here.
 	if r.err != nil {
@@ -753,9 +752,8 @@ func (r *Request) Watch(ctx context.Context) (watch.Interface, error) {
 				// the server must have sent us an error in 'err'
 				return true, nil
 			}
-			result := r.transformResponse(ctx, resp, req)
-			if err := result.Error(); err != nil {
-				return true, err
+			if result := r.transformResponse(resp, req); result.err != nil {
+				return true, result.err
 			}
 			return true, fmt.Errorf("for request %s, got status: %v", url, resp.StatusCode)
 		}()
@@ -846,10 +844,6 @@ func (r WatchListResult) Into(obj runtime.Object) error {
 // Check the documentation https://kubernetes.io/docs/reference/using-api/api-concepts/#streaming-lists
 // to see what parameters are currently required.
 func (r *Request) WatchList(ctx context.Context) WatchListResult {
-	if r.body == nil {
-		logBody(ctx, 2, "Request Body", r.bodyBytes)
-	}
-
 	if !clientfeatures.FeatureGates().Enabled(clientfeatures.WatchListClient) {
 		return WatchListResult{err: fmt.Errorf("%q feature gate is not enabled", clientfeatures.WatchListClient)}
 	}
@@ -974,10 +968,6 @@ func sanitize(req *Request, resp *http.Response, err error) (string, string) {
 // Any non-2xx http status code causes an error.  If we get a non-2xx code, we try to convert the body into an APIStatus object.
 // If we can, we return that as an error.  Otherwise, we create an error that lists the http status and the content of the response.
 func (r *Request) Stream(ctx context.Context) (io.ReadCloser, error) {
-	if r.body == nil {
-		logBody(ctx, 2, "Request Body", r.bodyBytes)
-	}
-
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -1021,7 +1011,7 @@ func (r *Request) Stream(ctx context.Context) (io.ReadCloser, error) {
 				if retry.IsNextRetry(ctx, r, req, resp, err, neverRetryError) {
 					return false, nil
 				}
-				result := r.transformResponse(ctx, resp, req)
+				result := r.transformResponse(resp, req)
 				if err := result.Error(); err != nil {
 					return true, err
 				}
@@ -1153,7 +1143,7 @@ func (r *Request) request(ctx context.Context, fn func(*http.Request, *http.Resp
 			return false
 		}
 		// For connection errors and apiserver shutdown errors retry.
-		if net.IsConnectionReset(err) || net.IsProbableEOF(err) || net.IsHTTP2ConnectionLost(err) {
+		if net.IsConnectionReset(err) || net.IsProbableEOF(err) {
 			return true
 		}
 		return false
@@ -1208,13 +1198,9 @@ func (r *Request) request(ctx context.Context, fn func(*http.Request, *http.Resp
 //   - If the server responds with a status: *errors.StatusError or *errors.UnexpectedObjectError
 //   - http.Client.Do errors are returned directly.
 func (r *Request) Do(ctx context.Context) Result {
-	if r.body == nil {
-		logBody(ctx, 2, "Request Body", r.bodyBytes)
-	}
-
 	var result Result
 	err := r.request(ctx, func(req *http.Request, resp *http.Response) {
-		result = r.transformResponse(ctx, resp, req)
+		result = r.transformResponse(resp, req)
 	})
 	if err != nil {
 		return Result{err: err}
@@ -1227,14 +1213,10 @@ func (r *Request) Do(ctx context.Context) Result {
 
 // DoRaw executes the request but does not process the response body.
 func (r *Request) DoRaw(ctx context.Context) ([]byte, error) {
-	if r.body == nil {
-		logBody(ctx, 2, "Request Body", r.bodyBytes)
-	}
-
 	var result Result
 	err := r.request(ctx, func(req *http.Request, resp *http.Response) {
 		result.body, result.err = io.ReadAll(resp.Body)
-		logBody(ctx, 2, "Response Body", result.body)
+		glogBody("Response Body", result.body)
 		if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusPartialContent {
 			result.err = r.transformUnstructuredResponseError(resp, req, result.body)
 		}
@@ -1249,7 +1231,7 @@ func (r *Request) DoRaw(ctx context.Context) ([]byte, error) {
 }
 
 // transformResponse converts an API response into a structured API object
-func (r *Request) transformResponse(ctx context.Context, resp *http.Response, req *http.Request) Result {
+func (r *Request) transformResponse(resp *http.Response, req *http.Request) Result {
 	var body []byte
 	if resp.Body != nil {
 		data, err := io.ReadAll(resp.Body)
@@ -1278,8 +1260,7 @@ func (r *Request) transformResponse(ctx context.Context, resp *http.Response, re
 		}
 	}
 
-	// Call depth is tricky. This one is okay for Do and DoRaw.
-	logBody(ctx, 7, "Response Body", body)
+	glogBody("Response Body", body)
 
 	// verify the content type is accurate
 	var decoder runtime.Decoder
@@ -1339,14 +1320,14 @@ func (r *Request) transformResponse(ctx context.Context, resp *http.Response, re
 }
 
 // truncateBody decides if the body should be truncated, based on the glog Verbosity.
-func truncateBody(logger klog.Logger, body string) string {
+func truncateBody(body string) string {
 	max := 0
 	switch {
-	case bool(logger.V(10).Enabled()):
+	case bool(klog.V(10).Enabled()):
 		return body
-	case bool(logger.V(9).Enabled()):
+	case bool(klog.V(9).Enabled()):
 		max = 10240
-	case bool(logger.V(8).Enabled()):
+	case bool(klog.V(8).Enabled()):
 		max = 1024
 	}
 
@@ -1357,21 +1338,17 @@ func truncateBody(logger klog.Logger, body string) string {
 	return body[:max] + fmt.Sprintf(" [truncated %d chars]", len(body)-max)
 }
 
-// logBody logs a body output that could be either JSON or protobuf. It explicitly guards against
+// glogBody logs a body output that could be either JSON or protobuf. It explicitly guards against
 // allocating a new string for the body output unless necessary. Uses a simple heuristic to determine
 // whether the body is printable.
-//
-// It needs to be called by all functions which send or receive the data.
-func logBody(ctx context.Context, callDepth int, prefix string, body []byte) {
-	logger := klog.FromContext(ctx)
-	if loggerV := logger.V(8); loggerV.Enabled() {
-		loggerV := loggerV.WithCallDepth(callDepth)
+func glogBody(prefix string, body []byte) {
+	if klogV := klog.V(8); klogV.Enabled() {
 		if bytes.IndexFunc(body, func(r rune) bool {
 			return r < 0x0a
 		}) != -1 {
-			loggerV.Info(prefix, "body", truncateBody(logger, hex.Dump(body)))
+			klogV.Infof("%s:\n%s", prefix, truncateBody(hex.Dump(body)))
 		} else {
-			loggerV.Info(prefix, "body", truncateBody(logger, string(body)))
+			klogV.Infof("%s: %s", prefix, truncateBody(string(body)))
 		}
 	}
 }
