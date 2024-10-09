@@ -25,11 +25,11 @@ jobs:
           artifacts: _output/releases/*
           bodyFile: release-notes.md
           token: ${{ secrets.GH_TOKEN }}
-      - uses: actions/upload-artifact@604373da6381bf24206979c74d06a550515601b9 # v4.4.1
+      - uses: actions/upload-artifact@84480863f228bb9747b473957fcc9e309aa96097 # v4.4.2
         with:
           name: release-notes
           path: release-notes.md
-      - uses: actions/upload-artifact@604373da6381bf24206979c74d06a550515601b9 # v4.4.1
+      - uses: actions/upload-artifact@84480863f228bb9747b473957fcc9e309aa96097 # v4.4.2
         with:
           name: build-artifacts
           path: _output
