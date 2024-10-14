@@ -507,6 +507,10 @@ var containerStatusCommand = &cli.Command{
 			Usage: "Filter by container name regular expression pattern",
 		},
 		&cli.StringFlag{
+			Name:  "namespace",
+			Usage: "Filter by pod namespace regular expression pattern",
+		},
+		&cli.StringFlag{
 			Name:    "pod",
 			Aliases: []string{"p"},
 			Usage:   "Filter by pod id",
@@ -545,12 +549,13 @@ var containerStatusCommand = &cli.Command{
 
 		if len(ids) == 0 {
 			opts := &listOptions{
-				nameRegexp: c.String("name"),
-				podID:      c.String("pod"),
-				image:      c.String("image"),
-				state:      c.String("state"),
-				latest:     c.Bool("latest"),
-				last:       c.Int("last"),
+				nameRegexp:         c.String("name"),
+				podID:              c.String("pod"),
+				podNamespaceRegexp: c.String("namespace"),
+				image:              c.String("image"),
+				state:              c.String("state"),
+				latest:             c.Bool("latest"),
+				last:               c.Int("last"),
 			}
 			opts.labels, err = parseLabelStringSlice(c.StringSlice("label"))
 			if err != nil {
@@ -656,6 +661,10 @@ var listContainersCommand = &cli.Command{
 			Aliases: []string{"r"},
 			Usage:   "Show image path instead of image id",
 		},
+		&cli.StringFlag{
+			Name:  "namespace",
+			Usage: "Filter by pod namespace regular expression pattern",
+		},
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() != 0 {
@@ -673,19 +682,20 @@ var listContainersCommand = &cli.Command{
 		}
 
 		opts := &listOptions{
-			id:               c.String("id"),
-			podID:            c.String("pod"),
-			state:            c.String("state"),
-			verbose:          c.Bool("verbose"),
-			quiet:            c.Bool("quiet"),
-			output:           c.String("output"),
-			all:              c.Bool("all"),
-			nameRegexp:       c.String("name"),
-			latest:           c.Bool("latest"),
-			last:             c.Int("last"),
-			noTrunc:          c.Bool("no-trunc"),
-			image:            c.String("image"),
-			resolveImagePath: c.Bool("resolve-image-path"),
+			id:                 c.String("id"),
+			podID:              c.String("pod"),
+			podNamespaceRegexp: c.String("namespace"),
+			state:              c.String("state"),
+			verbose:            c.Bool("verbose"),
+			quiet:              c.Bool("quiet"),
+			output:             c.String("output"),
+			all:                c.Bool("all"),
+			nameRegexp:         c.String("name"),
+			latest:             c.Bool("latest"),
+			last:               c.Int("last"),
+			noTrunc:            c.Bool("no-trunc"),
+			image:              c.String("image"),
+			resolveImagePath:   c.Bool("resolve-image-path"),
 		}
 		opts.labels, err = parseLabelStringSlice(c.StringSlice("label"))
 		if err != nil {
@@ -1299,10 +1309,18 @@ func convertContainerState(state pb.ContainerState) string {
 	}
 }
 
-func getPodNameFromLabels(label map[string]string) string {
-	podName, ok := label[types.KubernetesPodNameLabel]
+func getPodNameFromLabels(labels map[string]string) string {
+	return getFromLabels(labels, types.KubernetesPodNameLabel)
+}
+
+func getPodNamespaceFromLabels(labels map[string]string) string {
+	return getFromLabels(labels, types.KubernetesPodNamespaceLabel)
+}
+
+func getFromLabels(labels map[string]string, label string) string {
+	value, ok := labels[label]
 	if ok {
-		return podName
+		return value
 	}
 	return "unknown"
 }
@@ -1310,8 +1328,10 @@ func getPodNameFromLabels(label map[string]string) string {
 func getContainersList(containersList []*pb.Container, opts *listOptions) []*pb.Container {
 	filtered := []*pb.Container{}
 	for _, c := range containersList {
+		podNamespace := getPodNamespaceFromLabels(c.Labels)
 		// Filter by pod name/namespace regular expressions.
-		if matchesRegex(opts.nameRegexp, c.Metadata.Name) {
+		if matchesRegex(opts.nameRegexp, c.Metadata.Name) &&
+			matchesRegex(opts.podNamespaceRegexp, podNamespace) {
 			filtered = append(filtered, c)
 		}
 	}
