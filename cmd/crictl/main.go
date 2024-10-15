@@ -72,13 +72,14 @@ func getRuntimeService(_ *cli.Context, timeout time.Duration) (res internalapi.R
 	if RuntimeEndpointIsSet && RuntimeEndpoint == "" {
 		return nil, errors.New("--runtime-endpoint is not set")
 	}
-	logrus.Debug("get runtime connection")
+	logrus.Debug("Get runtime connection")
 
 	// Check if a custom timeout is provided.
 	t := Timeout
 	if timeout != 0 {
 		t = timeout
 	}
+	logrus.Debugf("Using runtime connection timeout: %v", t)
 
 	// Use the noop tracer provider and not tracerProvider directly, otherwise
 	// we'll panic in the unary call interceptor
@@ -124,7 +125,7 @@ func getImageService(*cli.Context) (res internalapi.ImageManagerService, err err
 		ImageEndpointIsSet = RuntimeEndpointIsSet
 	}
 
-	logrus.Debugf("get image connection")
+	logrus.Debug("Get image connection")
 
 	// Use the noop tracer provider and not tracerProvider directly, otherwise
 	// we'll panic in the unary call interceptor
@@ -137,7 +138,7 @@ func getImageService(*cli.Context) (res internalapi.ImageManagerService, err err
 
 	// If no EP set then use the default endpoint types
 	if !ImageEndpointIsSet {
-		logrus.Warningf("image connect using default endpoints: %v. "+
+		logrus.Warningf("Image connect using default endpoints: %v. "+
 			"As the default settings are now deprecated, you should set the "+
 			"endpoint instead.", defaultRuntimeEndpoints)
 		logrus.Debug("Note that performance maybe affected as each default " +
