@@ -1219,7 +1219,7 @@ func OutputContainers(runtimeClient internalapi.RuntimeService, imageClient inte
 
 	display := newDefaultTableDisplay()
 	if !opts.verbose && !opts.quiet {
-		display.AddRow([]string{columnContainer, columnImage, columnCreated, columnState, columnName, columnAttempt, columnPodID, columnPodName})
+		display.AddRow([]string{columnContainer, columnImage, columnCreated, columnState, columnName, columnAttempt, columnPodID, columnPodName, columnNamespace})
 	}
 	for _, c := range r {
 		if match, err := matchesImage(imageClient, opts.image, c.GetImage().GetImage()); err != nil {
@@ -1234,6 +1234,7 @@ func OutputContainers(runtimeClient internalapi.RuntimeService, imageClient inte
 
 		createdAt := time.Unix(0, c.CreatedAt)
 		ctm := units.HumanDuration(time.Now().UTC().Sub(createdAt)) + " ago"
+		podNamespace := getPodNamespaceFromLabels(c.Labels)
 		if !opts.verbose {
 			id := c.Id
 			image := c.Image.Image
@@ -1256,13 +1257,14 @@ func OutputContainers(runtimeClient internalapi.RuntimeService, imageClient inte
 			podName := getPodNameFromLabels(c.Labels)
 			display.AddRow([]string{
 				id, image, ctm, convertContainerState(c.State), c.Metadata.Name,
-				strconv.FormatUint(uint64(c.Metadata.Attempt), 10), podID, podName,
+				strconv.FormatUint(uint64(c.Metadata.Attempt), 10), podID, podName, podNamespace,
 			})
 			continue
 		}
 
 		fmt.Printf("ID: %s\n", c.Id)
 		fmt.Printf("PodID: %s\n", c.PodSandboxId)
+		fmt.Printf("Namespace: %s\n", podNamespace)
 		if c.Metadata != nil {
 			if c.Metadata.Name != "" {
 				fmt.Printf("Name: %s\n", c.Metadata.Name)
