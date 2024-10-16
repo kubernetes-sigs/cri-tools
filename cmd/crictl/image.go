@@ -32,6 +32,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/term"
+	errorUtils "k8s.io/apimachinery/pkg/util/errors"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
@@ -466,50 +467,44 @@ var removeImageCommand = &cli.Command{
 			return cli.ShowSubcommandHelp(cliCtx)
 		}
 
-		errored := false
+		funcs := []func() error{}
 		for id, remove := range ids {
 			if !remove {
 				continue
 			}
-			status, err := ImageStatus(imageClient, id, false)
-			if err != nil {
-				logrus.Errorf("image status request for %q failed: %v", id, err)
-				errored = true
-				continue
-			}
-			if status.Image == nil {
-				logrus.Errorf("no such image %s", id)
-				errored = true
-				continue
-			}
+			funcs = append(funcs, func() error {
+				status, err := ImageStatus(imageClient, id, false)
+				if err != nil {
+					return fmt.Errorf("image status request for %q failed: %w", id, err)
+				}
+				if status.Image == nil {
+					return fmt.Errorf("no such image %s", id)
+				}
 
-			if err := RemoveImage(imageClient, id); err != nil {
-				// We ignore further errors on prune because there might be
-				// races
-				if !prune {
-					logrus.Errorf("error of removing image %q: %v", id, err)
-					errored = true
+				if err := RemoveImage(imageClient, id); err != nil {
+					// We ignore further errors on prune because there might be
+					// races
+					if !prune {
+						return fmt.Errorf("error of removing image %q: %w", id, err)
+					}
+					return nil
 				}
-				continue
-			}
-			if len(status.Image.RepoTags) == 0 {
-				// RepoTags is nil when pulling image by repoDigest,
-				// so print deleted using that instead.
-				for _, repoDigest := range status.Image.RepoDigests {
-					fmt.Printf("Deleted: %s\n", repoDigest)
+				if len(status.Image.RepoTags) == 0 {
+					// RepoTags is nil when pulling image by repoDigest,
+					// so print deleted using that instead.
+					for _, repoDigest := range status.Image.RepoDigests {
+						fmt.Printf("Deleted: %s\n", repoDigest)
+					}
+					return nil
 				}
-				continue
-			}
-			for _, repoTag := range status.Image.RepoTags {
-				fmt.Printf("Deleted: %s\n", repoTag)
-			}
+				for _, repoTag := range status.Image.RepoTags {
+					fmt.Printf("Deleted: %s\n", repoTag)
+				}
+				return nil
+			})
 		}
 
-		if errored {
-			return errors.New("unable to remove the image(s)")
-		}
-
-		return nil
+		return errorUtils.AggregateGoroutines(funcs...)
 	},
 }
 
