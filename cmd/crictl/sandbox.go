@@ -167,27 +167,26 @@ var removePodCommand = &cli.Command{
 
 		funcs := []func() error{}
 		for _, id := range ids {
-			podID := id
 			funcs = append(funcs, func() error {
 				resp, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.PodSandboxStatusResponse, error) {
-					return runtimeClient.PodSandboxStatus(ctx, podID, false)
+					return runtimeClient.PodSandboxStatus(ctx, id, false)
 				})
 				if err != nil {
-					return fmt.Errorf("getting sandbox status of pod %q: %w", podID, err)
+					return fmt.Errorf("getting sandbox status of pod %q: %w", id, err)
 				}
 				if resp.Status.State == pb.PodSandboxState_SANDBOX_READY {
 					if ctx.Bool("force") {
-						if err := StopPodSandbox(runtimeClient, podID); err != nil {
-							return fmt.Errorf("stopping the pod sandbox %q failed: %w", podID, err)
+						if err := StopPodSandbox(runtimeClient, id); err != nil {
+							return fmt.Errorf("stopping the pod sandbox %q failed: %w", id, err)
 						}
 					} else {
-						return fmt.Errorf("pod sandbox %q is running, please stop it first", podID)
+						return fmt.Errorf("pod sandbox %q is running, please stop it first", id)
 					}
 				}
 
-				err = RemovePodSandbox(runtimeClient, podID)
+				err = RemovePodSandbox(runtimeClient, id)
 				if err != nil {
-					return fmt.Errorf("removing the pod sandbox %q: %w", podID, err)
+					return fmt.Errorf("removing the pod sandbox %q: %w", id, err)
 				}
 
 				return nil
@@ -405,6 +404,7 @@ func StopPodSandbox(client internalapi.RuntimeService, id string) error {
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
+	logrus.Debugf("Stopping pod sandbox: %s", id)
 	if _, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
 		return nil, client.StopPodSandbox(ctx, id)
 	}); err != nil {
@@ -421,6 +421,7 @@ func RemovePodSandbox(client internalapi.RuntimeService, id string) error {
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
+	logrus.Debugf("Removing pod sandbox: %s", id)
 	if _, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
 		return nil, client.RemovePodSandbox(ctx, id)
 	}); err != nil {
