@@ -690,7 +690,7 @@ func getSandboxesList(sandboxesList []*pb.PodSandbox, opts *listOptions) []*pb.P
 	filtered := []*pb.PodSandbox{}
 	for _, p := range sandboxesList {
 		// Filter by pod name/namespace regular expressions.
-		if matchesRegex(opts.nameRegexp, p.Metadata.Name) &&
+		if p.Metadata != nil && matchesRegex(opts.nameRegexp, p.Metadata.Name) &&
 			matchesRegex(opts.podNamespaceRegexp, p.Metadata.Namespace) {
 			filtered = append(filtered, p)
 		}
