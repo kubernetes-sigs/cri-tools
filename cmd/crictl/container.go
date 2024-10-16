@@ -1332,7 +1332,8 @@ func getContainersList(containersList []*pb.Container, opts *listOptions) []*pb.
 	for _, c := range containersList {
 		podNamespace := getPodNamespaceFromLabels(c.Labels)
 		// Filter by pod name/namespace regular expressions.
-		if matchesRegex(opts.nameRegexp, c.Metadata.Name) &&
+		if c.Metadata != nil &&
+			matchesRegex(opts.nameRegexp, c.Metadata.Name) &&
 			matchesRegex(opts.podNamespaceRegexp, podNamespace) {
 			filtered = append(filtered, c)
 		}
