@@ -34,6 +34,7 @@ import (
 	godigest "github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	errorUtils "k8s.io/apimachinery/pkg/util/errors"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/kubelet/pkg/types"
@@ -428,58 +429,51 @@ var removeContainerCommand = &cli.Command{
 			return cli.ShowSubcommandHelp(ctx)
 		}
 
-		errored := false
+		funcs := []func() error{}
 		for _, id := range ids {
-			resp, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
-				return runtimeClient.ContainerStatus(ctx, id, false)
-			})
-			if err != nil {
-				logrus.Error(err)
-				errored = true
-				continue
-			}
-			if resp.GetStatus().GetState() == pb.ContainerState_CONTAINER_RUNNING {
-				if ctx.Bool("force") {
-					if err := StopContainer(runtimeClient, id, 0); err != nil {
-						logrus.Errorf("stopping the container %q failed: %v", id, err)
-						errored = true
-						continue
-					}
-				} else {
-					logrus.Errorf("container %q is running, please stop it first", id)
-					errored = true
-					continue
+			funcs = append(funcs, func() error {
+				resp, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
+					return runtimeClient.ContainerStatus(ctx, id, false)
+				})
+				if err != nil {
+					return fmt.Errorf("getting container status %q: %w", id, err)
 				}
-			}
-
-			err = RemoveContainer(runtimeClient, id)
-			if err != nil {
-				logrus.Errorf("removing container %q failed: %v", id, err)
-				errored = true
-				continue
-			} else if !ctx.Bool("keep-logs") {
-				logPath := resp.GetStatus().GetLogPath()
-				if logPath != "" {
-					logRotations, err := filepath.Glob(logPath + ".*")
-					if err != nil {
-						logRotations = []string{}
+				if resp.GetStatus().GetState() == pb.ContainerState_CONTAINER_RUNNING {
+					if ctx.Bool("force") {
+						if err := StopContainer(runtimeClient, id, 0); err != nil {
+							return fmt.Errorf("stopping the container %q: %w", id, err)
+						}
+					} else {
+						return fmt.Errorf("container %q is running, please stop it first", id)
 					}
-					logRotations = append(logRotations, logPath)
+				}
 
-					for _, logFile := range logRotations {
-						err = os.Remove(logFile)
+				err = RemoveContainer(runtimeClient, id)
+				if err != nil {
+					return fmt.Errorf("removing container %q: %w", id, err)
+				} else if !ctx.Bool("keep-logs") {
+					logPath := resp.GetStatus().GetLogPath()
+					if logPath != "" {
+						logRotations, err := filepath.Glob(logPath + ".*")
 						if err != nil {
-							logrus.Errorf("removing log file %s for container %q failed: %v", logFile, id, err)
+							logRotations = []string{}
+						}
+						logRotations = append(logRotations, logPath)
+
+						for _, logFile := range logRotations {
+							err = os.Remove(logFile)
+							if err != nil {
+								logrus.Errorf("removing log file %s for container %q failed: %v", logFile, id, err)
+							}
 						}
 					}
 				}
-			}
+
+				return nil
+			})
 		}
 
-		if errored {
-			return errors.New("unable to remove container(s)")
-		}
-		return nil
+		return errorUtils.AggregateGoroutines(funcs...)
 	},
 }
 
@@ -984,6 +978,7 @@ func StopContainer(client internalapi.RuntimeService, id string, timeout int64) 
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
+	logrus.Debugf("Stopping container: %s (timeout = %v)", id, timeout)
 	if _, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
 		return nil, client.StopContainer(ctx, id, timeout)
 	}); err != nil {
@@ -1023,6 +1018,7 @@ func RemoveContainer(client internalapi.RuntimeService, id string) error {
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
+	logrus.Debugf("Removing container: %s", id)
 	if _, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
 		return nil, client.RemoveContainer(ctx, id)
 	}); err != nil {
