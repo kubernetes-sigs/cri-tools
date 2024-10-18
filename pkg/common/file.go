@@ -19,10 +19,12 @@ package common
 import (
 	"fmt"
 	"os"
-	gofilepath "path/filepath"
-	"strconv"
+	"path/filepath"
+	"reflect"
+	"slices"
 
-	"gopkg.in/yaml.v3"
+	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/yaml"
 )
 
 // Config is the internal representation of the yaml that defines
@@ -34,177 +36,147 @@ type Config struct {
 	Debug             bool
 	PullImageOnCreate bool
 	DisablePullOnRun  bool
-	yamlData          *yaml.Node // YAML representation of config
 }
+
+const (
+	runtimeEndpointKey   = "runtime-endpoint"
+	imageEndpointKey     = "image-endpoint"
+	timeoutKey           = "timeout"
+	debugKey             = "debug"
+	pullImageOnCreateKey = "pull-image-on-create"
+	disablePullOnRunKey  = "disable-pull-on-run"
+)
 
 // ReadConfig reads from a file with the given name and returns a config or
 // an error if the file was unable to be parsed.
-func ReadConfig(filepath string) (*Config, error) {
-	data, err := os.ReadFile(filepath)
+func ReadConfig(path string) (*Config, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read config file path: %w", err)
+	}
+
+	m := map[string]any{}
+	if err := yaml.Unmarshal(data, &m); err != nil {
+		return nil, fmt.Errorf("unmarshal YAML config: %w", err)
+	}
+	logrus.Debugf("Unmarshaled config map: %v", m)
+
+	for k := range m {
+		if !slices.Contains([]string{
+			runtimeEndpointKey,
+			imageEndpointKey,
+			timeoutKey,
+			debugKey,
+			pullImageOnCreateKey,
+			disablePullOnRunKey,
+		}, k) {
+			return nil, fmt.Errorf("invalid config option: %s", k)
+		}
+	}
+
+	c := &Config{}
+
+	runtimeEndpoint, err := mapKeyValue[string](m, runtimeEndpointKey)
 	if err != nil {
 		return nil, err
 	}
-	yamlConfig := &yaml.Node{}
-	err = yaml.Unmarshal(data, yamlConfig)
+	c.RuntimeEndpoint = runtimeEndpoint
+
+	imageEndpoint, err := mapKeyValue[string](m, imageEndpointKey)
 	if err != nil {
 		return nil, err
 	}
-	config, err := getConfigOptions(yamlConfig)
+	c.ImageEndpoint = imageEndpoint
+
+	timeout, err := mapKeyValue[int](m, timeoutKey)
 	if err != nil {
 		return nil, err
 	}
-	return config, err
+	c.Timeout = timeout
+
+	debug, err := mapKeyValue[bool](m, debugKey)
+	if err != nil {
+		return nil, err
+	}
+	c.Debug = debug
+
+	pullImageOnCreate, err := mapKeyValue[bool](m, pullImageOnCreateKey)
+	if err != nil {
+		return nil, err
+	}
+	c.PullImageOnCreate = pullImageOnCreate
+
+	disablePullOnRun, err := mapKeyValue[bool](m, disablePullOnRunKey)
+	if err != nil {
+		return nil, err
+	}
+	c.DisablePullOnRun = disablePullOnRun
+
+	return c, nil
 }
 
-// WriteConfig writes config to file
-// an error if the file was unable to be written to.
-func WriteConfig(c *Config, filepath string) error {
+func mapKeyValue[T any](m map[string]any, key string) (ret T, err error) {
+	if value, ok := m[key]; ok {
+		// Even Integer values will be interpreted as float
+		if reflect.TypeOf(value).Kind() == reflect.Float64 {
+			//nolint:forcetypeassert // type assertion done before
+			value = int(value.(float64))
+		}
+
+		if typedValue, ok := value.(T); ok {
+			return typedValue, nil
+		} else {
+			return ret, fmt.Errorf("invalid value \"%T\" for key %q", value, key)
+		}
+	}
+	return ret, nil
+}
+
+// WriteConfig writes config to file and return
+// an error if the file was unable to be written.
+func WriteConfig(c *Config, path string) error {
 	if c == nil {
 		c = &Config{}
 	}
-	if c.yamlData == nil {
-		c.yamlData = &yaml.Node{}
+	m := map[string]any{}
+
+	if c.RuntimeEndpoint != "" {
+		m[runtimeEndpointKey] = c.RuntimeEndpoint
 	}
 
-	setConfigOptions(c)
+	if c.ImageEndpoint != "" {
+		m[imageEndpointKey] = c.ImageEndpoint
+	}
 
-	data, err := yaml.Marshal(c.yamlData)
+	if c.Timeout != 0 {
+		m[timeoutKey] = c.Timeout
+	}
+
+	if c.Debug {
+		m[debugKey] = c.Debug
+	}
+
+	if c.PullImageOnCreate {
+		m[pullImageOnCreateKey] = c.PullImageOnCreate
+	}
+
+	if c.DisablePullOnRun {
+		m[disablePullOnRunKey] = c.DisablePullOnRun
+	}
+
+	logrus.Debugf("Marshalling config map: %v", m)
+	data, err := yaml.Marshal(m)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal YAML config: %w", err)
 	}
 
-	if err := os.MkdirAll(gofilepath.Dir(filepath), 0o755); err != nil {
-		return err
-	}
-	return os.WriteFile(filepath, data, 0o644)
-}
-
-// Extracts config options from the yaml data which is loaded from file.
-func getConfigOptions(yamlData *yaml.Node) (*Config, error) {
-	config := &Config{yamlData: yamlData}
-
-	if len(yamlData.Content) == 0 ||
-		yamlData.Content[0].Content == nil {
-		return config, nil
-	}
-	contentLen := len(yamlData.Content[0].Content)
-
-	// YAML representation contains 2 yaml ScalarNodes per config option.
-	// One is config option name and other is the value of the option
-	// These ScalarNodes help preserve comments associated with
-	// the YAML entry
-	for indx := 0; indx < contentLen-1; {
-		configOption := yamlData.Content[0].Content[indx]
-		name := configOption.Value
-		value := yamlData.Content[0].Content[indx+1].Value
-		var err error
-		switch name {
-		case "runtime-endpoint":
-			config.RuntimeEndpoint = value
-		case "image-endpoint":
-			config.ImageEndpoint = value
-		case "timeout":
-			config.Timeout, err = strconv.Atoi(value)
-			if err != nil {
-				return nil, fmt.Errorf("parsing config option '%s': %w", name, err)
-			}
-		case "debug":
-			config.Debug, err = strconv.ParseBool(value)
-			if err != nil {
-				return nil, fmt.Errorf("parsing config option '%s': %w", name, err)
-			}
-		case "pull-image-on-create":
-			config.PullImageOnCreate, err = strconv.ParseBool(value)
-			if err != nil {
-				return nil, fmt.Errorf("parsing config option '%s': %w", name, err)
-			}
-		case "disable-pull-on-run":
-			config.DisablePullOnRun, err = strconv.ParseBool(value)
-			if err != nil {
-				return nil, fmt.Errorf("parsing config option '%s': %w", name, err)
-			}
-		default:
-			return nil, fmt.Errorf("Config option '%s' is not valid", name)
-		}
-		indx += 2
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return fmt.Errorf("ensure config path dir: %w", err)
 	}
 
-	return config, nil
-}
-
-// Set config options on yaml data for persistece to file.
-func setConfigOptions(config *Config) {
-	setConfigOption("runtime-endpoint", config.RuntimeEndpoint, config.yamlData)
-	setConfigOption("image-endpoint", config.ImageEndpoint, config.yamlData)
-	setConfigOption("timeout", strconv.Itoa(config.Timeout), config.yamlData)
-	setConfigOption("debug", strconv.FormatBool(config.Debug), config.yamlData)
-	setConfigOption("pull-image-on-create", strconv.FormatBool(config.PullImageOnCreate), config.yamlData)
-	setConfigOption("disable-pull-on-run", strconv.FormatBool(config.DisablePullOnRun), config.yamlData)
-}
-
-// Set config option on yaml.
-func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
-	if len(yamlData.Content) == 0 {
-		yamlData.Kind = yaml.DocumentNode
-		yamlData.Content = make([]*yaml.Node, 1)
-		yamlData.Content[0] = &yaml.Node{
-			Kind: yaml.MappingNode,
-			Tag:  "!!map",
-		}
-	}
-	contentLen := 0
-	foundOption := false
-	if yamlData.Content[0].Content != nil {
-		contentLen = len(yamlData.Content[0].Content)
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		return fmt.Errorf("write config file: %w", err)
 	}
 
-	// Set value on existing config option
-	for indx := 0; indx < contentLen-1; {
-		name := yamlData.Content[0].Content[indx].Value
-		if name == configName {
-			yamlData.Content[0].Content[indx+1].Value = configValue
-			foundOption = true
-			break
-		}
-		indx += 2
-	}
-
-	// New config option to set
-	// YAML representation contains 2 yaml ScalarNodes per config option.
-	// One is config option name and other is the value of the option
-	// These ScalarNodes help preserve comments associated with
-	// the YAML entry
-	if !foundOption {
-		const (
-			tagPrefix = "!!"
-			tagStr    = tagPrefix + "str"
-			tagBool   = tagPrefix + "bool"
-			tagInt    = tagPrefix + "int"
-		)
-		name := &yaml.Node{
-			Kind:  yaml.ScalarNode,
-			Value: configName,
-			Tag:   tagStr,
-		}
-		var tagType string
-		switch configName {
-		case "timeout":
-			tagType = tagInt
-		case "debug":
-			tagType = tagBool
-		case "pull-image-on-create":
-			tagType = tagBool
-		case "disable-pull-on-run":
-			tagType = tagBool
-		default:
-			tagType = tagStr
-		}
-
-		value := &yaml.Node{
-			Kind:  yaml.ScalarNode,
-			Value: configValue,
-			Tag:   tagType,
-		}
-		yamlData.Content[0].Content = append(yamlData.Content[0].Content, name, value)
-	}
+	return nil
 }
