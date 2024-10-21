@@ -77,6 +77,6 @@ func tmplExecuteRawJSON(tmplStr, rawJSON string) (string, error) {
 }
 
 func validateTemplate(tmplStr string) error {
-	_, err := template.New("").Parse(tmplStr)
+	_, err := template.New("").Funcs(builtinTmplFuncs()).Parse(tmplStr)
 	return err
 }
