@@ -60,8 +60,10 @@ func ReadConfig(filepath string) (*Config, error) {
 // an error if the file was unable to be written to.
 func WriteConfig(c *Config, filepath string) error {
 	if c == nil {
-		c = new(Config)
-		c.yamlData = new(yaml.Node)
+		c = &Config{}
+	}
+	if c.yamlData == nil {
+		c.yamlData = &yaml.Node{}
 	}
 
 	setConfigOptions(c)
