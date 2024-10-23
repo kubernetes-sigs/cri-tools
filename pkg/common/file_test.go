@@ -50,7 +50,7 @@ var _ = DescribeTable("ReadConfig",
 		Expect(readConfig.DisablePullOnRun).To(Equal(expectedConfig.DisablePullOnRun))
 	},
 
-	Entry("should succeed with config", `
+	Entry("should succeed with valid config", `
 runtime-endpoint: "foo"
 image-endpoint: "bar"
 timeout: 10
@@ -64,6 +64,59 @@ disable-pull-on-run: true
 		Debug:             true,
 		PullImageOnCreate: true,
 		DisablePullOnRun:  true,
+	}, false),
+
+	Entry("should succeed with comments", `
+# This is a comment
+runtime-endpoint: "foo" # Comment
+# This is another comment
+`, &common.Config{
+		RuntimeEndpoint:   "foo",
+		ImageEndpoint:     "",
+		Timeout:           0,
+		Debug:             false,
+		PullImageOnCreate: false,
+		DisablePullOnRun:  false,
+	}, false),
+
+	Entry("should succeed with empty lines between entries", `
+runtime-endpoint: "foo"
+
+
+image-endpoint: "bar"
+
+`, &common.Config{
+		RuntimeEndpoint:   "foo",
+		ImageEndpoint:     "bar",
+		Timeout:           0,
+		Debug:             false,
+		PullImageOnCreate: false,
+		DisablePullOnRun:  false,
+	}, false),
+
+	Entry("should succeed with duplicate entries", `
+runtime-endpoint: "foo"
+runtime-endpoint: "bar"
+image-endpoint: "bar"
+timeout: 10
+timeout: 20
+
+`, &common.Config{
+		RuntimeEndpoint:   "bar",
+		ImageEndpoint:     "bar",
+		Timeout:           20,
+		Debug:             false,
+		PullImageOnCreate: false,
+		DisablePullOnRun:  false,
+	}, false),
+
+	Entry("should succeed with an empty file", "", &common.Config{
+		RuntimeEndpoint:   "",
+		ImageEndpoint:     "",
+		Timeout:           0,
+		Debug:             false,
+		PullImageOnCreate: false,
+		DisablePullOnRun:  false,
 	}, false),
 
 	Entry("should fail with invalid config option", `runtime-endpoint-wrong: "foo"`, nil, true),
