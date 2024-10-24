@@ -22,6 +22,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 // ServerConfiguration is the config for connecting to and using a CRI server.
@@ -50,8 +52,9 @@ func GetServerConfigFromFile(configFileName, currentDir string) (*ServerConfigur
 		// If the config file was not found, try looking in the program's
 		// directory as a fallback. This is to accommodate where the config file
 		// is placed with the cri tools binary.
-		configFileName = filepath.Join(filepath.Dir(currentDir), "crictl.yaml")
-		if _, err := os.Stat(configFileName); err != nil {
+		nextConfigFileName := filepath.Join(filepath.Dir(currentDir), "crictl.yaml")
+		logrus.Warnf("Config %q does not exist, trying next: %q", configFileName, nextConfigFileName)
+		if _, err := os.Stat(nextConfigFileName); err != nil {
 			return nil, fmt.Errorf("load config file: %w", err)
 		}
 	}
