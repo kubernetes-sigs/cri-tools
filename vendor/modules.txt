@@ -515,7 +515,7 @@ k8s.io/apimachinery/pkg/version
 k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/netutil
 k8s.io/apimachinery/third_party/forked/golang/reflect
-# k8s.io/cli-runtime v0.31.1
+# k8s.io/cli-runtime v0.31.2
 ## explicit; go 1.22.0
 k8s.io/cli-runtime/pkg/printers
 # k8s.io/client-go v0.31.2
@@ -574,7 +574,7 @@ k8s.io/klog/v2/internal/dbg
 k8s.io/klog/v2/internal/serialize
 k8s.io/klog/v2/internal/severity
 k8s.io/klog/v2/internal/sloghandler
-# k8s.io/kubectl v0.31.1
+# k8s.io/kubectl v0.31.2
 ## explicit; go 1.22.0
 k8s.io/kubectl/pkg/util/interrupt
 k8s.io/kubectl/pkg/util/term
