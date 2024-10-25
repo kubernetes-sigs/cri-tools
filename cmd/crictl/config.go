@@ -72,17 +72,17 @@ CRICTL OPTIONS:
 		if c.IsSet("get") {
 			get := c.String("get")
 			switch get {
-			case "runtime-endpoint":
+			case common.RuntimeEndpoint:
 				fmt.Println(config.RuntimeEndpoint)
-			case "image-endpoint":
+			case common.ImageEndpoint:
 				fmt.Println(config.ImageEndpoint)
-			case "timeout":
+			case common.Timeout:
 				fmt.Println(config.Timeout)
-			case "debug":
+			case common.Debug:
 				fmt.Println(config.Debug)
-			case "pull-image-on-create":
+			case common.PullImageOnCreate:
 				fmt.Println(config.PullImageOnCreate)
-			case "disable-pull-on-run":
+			case common.DisablePullOnRun:
 				fmt.Println(config.DisablePullOnRun)
 			default:
 				return fmt.Errorf("no configuration option named %s", get)
@@ -108,12 +108,12 @@ CRICTL OPTIONS:
 		} else if c.Bool("list") {
 			display := newDefaultTableDisplay()
 			display.AddRow([]string{columnKey, columnValue})
-			display.AddRow([]string{"runtime-endpoint", config.RuntimeEndpoint})
-			display.AddRow([]string{"image-endpoint", config.ImageEndpoint})
-			display.AddRow([]string{"timeout", strconv.Itoa(config.Timeout)})
-			display.AddRow([]string{"debug", strconv.FormatBool(config.Debug)})
-			display.AddRow([]string{"pull-image-on-create", strconv.FormatBool(config.PullImageOnCreate)})
-			display.AddRow([]string{"disable-pull-on-run", strconv.FormatBool(config.DisablePullOnRun)})
+			display.AddRow([]string{common.RuntimeEndpoint, config.RuntimeEndpoint})
+			display.AddRow([]string{common.ImageEndpoint, config.ImageEndpoint})
+			display.AddRow([]string{common.Timeout, strconv.Itoa(config.Timeout)})
+			display.AddRow([]string{common.Debug, strconv.FormatBool(config.Debug)})
+			display.AddRow([]string{common.PullImageOnCreate, strconv.FormatBool(config.PullImageOnCreate)})
+			display.AddRow([]string{common.DisablePullOnRun, strconv.FormatBool(config.DisablePullOnRun)})
 			display.ClearScreen()
 			display.Flush()
 
@@ -135,29 +135,29 @@ CRICTL OPTIONS:
 
 func setValue(key, value string, config *common.Config) error {
 	switch key {
-	case "runtime-endpoint":
+	case common.RuntimeEndpoint:
 		config.RuntimeEndpoint = value
-	case "image-endpoint":
+	case common.ImageEndpoint:
 		config.ImageEndpoint = value
-	case "timeout":
+	case common.Timeout:
 		n, err := strconv.Atoi(value)
 		if err != nil {
 			return fmt.Errorf("parse timeout value '%s': %w", value, err)
 		}
 		config.Timeout = n
-	case "debug":
+	case common.Debug:
 		debug, err := strconv.ParseBool(value)
 		if err != nil {
 			return fmt.Errorf("parse debug value '%s': %w", value, err)
 		}
 		config.Debug = debug
-	case "pull-image-on-create":
+	case common.PullImageOnCreate:
 		pi, err := strconv.ParseBool(value)
 		if err != nil {
 			return fmt.Errorf("parse pull-image-on-create value '%s': %w", value, err)
 		}
 		config.PullImageOnCreate = pi
-	case "disable-pull-on-run":
+	case common.DisablePullOnRun:
 		pi, err := strconv.ParseBool(value)
 		if err != nil {
 			return fmt.Errorf("parse disable-pull-on-run value '%s': %w", value, err)

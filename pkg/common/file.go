@@ -37,6 +37,26 @@ type Config struct {
 	yamlData          *yaml.Node // YAML representation of config
 }
 
+const (
+	// RuntimeEndpoint is the YAML key for the runtime endpoint config option.
+	RuntimeEndpoint = "runtime-endpoint"
+
+	// ImageEndpoint is the YAML key for the image endpoint config option.
+	ImageEndpoint = "image-endpoint"
+
+	// Timeout is the YAML key for the timeout config option.
+	Timeout = "timeout"
+
+	// Debug is the YAML key for the debug config option.
+	Debug = "debug"
+
+	// PullImageOnCreate is the YAML key for the pull image on create config option.
+	PullImageOnCreate = "pull-image-on-create"
+
+	// DisablePullOnRun is the YAML key for the disable pull on run config option.
+	DisablePullOnRun = "disable-pull-on-run"
+)
+
 // ReadConfig reads from a file with the given name and returns a config or
 // an error if the file was unable to be parsed.
 func ReadConfig(filepath string) (*Config, error) {
@@ -99,26 +119,26 @@ func getConfigOptions(yamlData *yaml.Node) (*Config, error) {
 		value := yamlData.Content[0].Content[indx+1].Value
 		var err error
 		switch name {
-		case "runtime-endpoint":
+		case RuntimeEndpoint:
 			config.RuntimeEndpoint = value
-		case "image-endpoint":
+		case ImageEndpoint:
 			config.ImageEndpoint = value
-		case "timeout":
+		case Timeout:
 			config.Timeout, err = strconv.Atoi(value)
 			if err != nil {
 				return nil, fmt.Errorf("parsing config option '%s': %w", name, err)
 			}
-		case "debug":
+		case Debug:
 			config.Debug, err = strconv.ParseBool(value)
 			if err != nil {
 				return nil, fmt.Errorf("parsing config option '%s': %w", name, err)
 			}
-		case "pull-image-on-create":
+		case PullImageOnCreate:
 			config.PullImageOnCreate, err = strconv.ParseBool(value)
 			if err != nil {
 				return nil, fmt.Errorf("parsing config option '%s': %w", name, err)
 			}
-		case "disable-pull-on-run":
+		case DisablePullOnRun:
 			config.DisablePullOnRun, err = strconv.ParseBool(value)
 			if err != nil {
 				return nil, fmt.Errorf("parsing config option '%s': %w", name, err)
@@ -134,12 +154,12 @@ func getConfigOptions(yamlData *yaml.Node) (*Config, error) {
 
 // Set config options on yaml data for persistece to file.
 func setConfigOptions(config *Config) {
-	setConfigOption("runtime-endpoint", config.RuntimeEndpoint, config.yamlData)
-	setConfigOption("image-endpoint", config.ImageEndpoint, config.yamlData)
-	setConfigOption("timeout", strconv.Itoa(config.Timeout), config.yamlData)
-	setConfigOption("debug", strconv.FormatBool(config.Debug), config.yamlData)
-	setConfigOption("pull-image-on-create", strconv.FormatBool(config.PullImageOnCreate), config.yamlData)
-	setConfigOption("disable-pull-on-run", strconv.FormatBool(config.DisablePullOnRun), config.yamlData)
+	setConfigOption(RuntimeEndpoint, config.RuntimeEndpoint, config.yamlData)
+	setConfigOption(ImageEndpoint, config.ImageEndpoint, config.yamlData)
+	setConfigOption(Timeout, strconv.Itoa(config.Timeout), config.yamlData)
+	setConfigOption(Debug, strconv.FormatBool(config.Debug), config.yamlData)
+	setConfigOption(PullImageOnCreate, strconv.FormatBool(config.PullImageOnCreate), config.yamlData)
+	setConfigOption(DisablePullOnRun, strconv.FormatBool(config.DisablePullOnRun), config.yamlData)
 }
 
 // Set config option on yaml.
@@ -188,13 +208,13 @@ func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
 		}
 		var tagType string
 		switch configName {
-		case "timeout":
+		case Timeout:
 			tagType = tagInt
-		case "debug":
+		case Debug:
 			tagType = tagBool
-		case "pull-image-on-create":
+		case PullImageOnCreate:
 			tagType = tagBool
-		case "disable-pull-on-run":
+		case DisablePullOnRun:
 			tagType = tagBool
 		default:
 			tagType = tagStr
