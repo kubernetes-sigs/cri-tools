@@ -22,6 +22,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 
 	"sigs.k8s.io/cri-tools/pkg/common"
@@ -29,16 +30,26 @@ import (
 
 var configCommand = &cli.Command{
 	Name:  "config",
-	Usage: "Get and set crictl client configuration options",
+	Usage: "Get, set and list crictl configuration options",
 	ArgsUsage: `[<crictl options>]
 
-EXAMPLE:
+EXAMPLES:
+   # Set the key "debug" to "true"
    crictl config --set debug=true
 
+   # Set the key "debug" to "true"
+   crictl config debug true
+
+   # Get the value of "debug"
+   crictl config --get debug
+
+   # Show the full configuration
+   crictl config --list
+
 CRICTL OPTIONS:
-	 runtime-endpoint:	Container runtime endpoint
-	 image-endpoint:	Image endpoint
-	 timeout:	Timeout of connecting to server (default: 2s)
+	 runtime-endpoint:	Container Runtime Interface (CRI) runtime endpoint (default: "")
+	 image-endpoint:	Container Runtime Interface (CRI) image endpoint (default: "")
+	 timeout:	Timeout of connecting to server (default: 2)
 	 debug:	Enable debug output (default: false)
 	 pull-image-on-create:	Enable pulling image on create requests (default: false)
 	 disable-pull-on-run:	Disable pulling image on run requests (default: false)`,
@@ -126,8 +137,9 @@ CRICTL OPTIONS:
 			return cli.ShowSubcommandHelp(c)
 		}
 		value := c.Args().Get(1)
+		logrus.Infof("No --get, --set or --list provided, setting key %q to value %q", key, value)
 		if err := setValue(key, value, config); err != nil {
-			return err
+			return fmt.Errorf("set %q to %q: %w", key, value, err)
 		}
 		return common.WriteConfig(config, configFile)
 	},
