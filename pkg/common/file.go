@@ -182,9 +182,9 @@ func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
 	for indx := 0; indx < contentLen-1; {
 		name := yamlData.Content[0].Content[indx].Value
 		if name == configName {
+			// Set the value, even if we have the option defined multiple times.
 			yamlData.Content[0].Content[indx+1].Value = configValue
 			foundOption = true
-			break
 		}
 		indx += 2
 	}

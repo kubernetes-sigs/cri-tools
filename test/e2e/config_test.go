@@ -87,4 +87,42 @@ pull-image-on-create: false
 disable-pull-on-run: false
 `))
 	})
+
+	It("should succeed to get the right value if duplicate entries are defined", func() {
+		_, err := configFile.WriteString(`
+timeout: 20
+timeout: 5
+timeout: 10
+`)
+		Expect(err).NotTo(HaveOccurred())
+
+		t.CrictlExpectSuccess("--config "+configFile.Name()+" config --get timeout", "10")
+	})
+
+	It("should succeed to set duplicate entries", func() {
+		_, err := configFile.WriteString(`
+timeout: 20
+timeout: 5
+timeout: 10
+`)
+		Expect(err).NotTo(HaveOccurred())
+
+		t.CrictlExpectSuccess("--config "+configFile.Name()+" config --set timeout=30", "")
+
+		cfgContent, err := os.ReadFile(configFile.Name())
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(string(cfgContent)).To(Equal(
+			`timeout: 30
+timeout: 30
+timeout: 30
+runtime-endpoint: ""
+image-endpoint: ""
+debug: false
+pull-image-on-create: false
+disable-pull-on-run: false
+`))
+
+		t.CrictlExpectSuccess("--config "+configFile.Name()+" config --get timeout", "30")
+	})
 })
