@@ -972,7 +972,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			statusOnce.Do(func() {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 				defer cancel()
-				// Set verbose to true, other BeforeEachs calls need the info field
+				// Set verbose to true, other BeforeEach calls need the info field
 				// populated.
 				// XXX: Do NOT use ":=" here, it breaks the closure reference to
 				// statusResp.

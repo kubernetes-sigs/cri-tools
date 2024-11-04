@@ -25,7 +25,7 @@ curl -sSfL --retry 5 --retry-delay 10 -o $BINARY \
     https://storage.googleapis.com/k8s-artifacts-sig-release/kubernetes/release/$VERSION/release-notes-amd64-linux
 chmod +x $BINARY
 
-PREVOUS_TAG=$(git tag | tail -2 | head -1)
+PREVIOUS_TAG=$(git tag | tail -2 | head -1)
 LATEST_TAG=$(git tag | tail -1)
 
 $BINARY \
@@ -33,6 +33,6 @@ $BINARY \
     --repo cri-tools \
     --required-author "" \
     --branch master \
-    --start-rev "$PREVOUS_TAG" \
+    --start-rev "$PREVIOUS_TAG" \
     --end-rev "$LATEST_TAG" \
     --output release-notes.md

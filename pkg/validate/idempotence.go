@@ -109,7 +109,7 @@ var _ = framework.KubeDescribe("Idempotence", func() {
 	// https://github.com/kubernetes/cri-api/blob/c20fa40/pkg/apis/runtime/v1/api.proto#L74-L75
 	Context("RemoveContainer", func() {
 		It("should not return an error if not found", func() {
-			By("remove not existing comtainer")
+			By("remove not existing container")
 			Expect(rc.RemoveContainer(c, uuid.New().String())).NotTo(HaveOccurred())
 		})
 	})

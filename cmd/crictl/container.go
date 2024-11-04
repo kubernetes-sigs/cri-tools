@@ -214,7 +214,7 @@ var createContainerCommand = &cli.Command{
 			return cli.ShowSubcommandHelp(c)
 		}
 		if c.Bool("no-pull") && c.Bool("with-pull") {
-			return errors.New("confict: no-pull and with-pull are both set")
+			return errors.New("conflict: no-pull and with-pull are both set")
 		}
 
 		withPull := (!c.Bool("no-pull") && PullImageOnCreate) || c.Bool("with-pull")
@@ -714,7 +714,7 @@ var runContainerCommand = &cli.Command{
 			return cli.ShowSubcommandHelp(c)
 		}
 		if c.Bool("no-pull") && c.Bool("with-pull") {
-			return errors.New("confict: no-pull and with-pull are both set")
+			return errors.New("conflict: no-pull and with-pull are both set")
 		}
 
 		withPull := (!DisablePullOnRun && !c.Bool("no-pull")) || c.Bool("with-pull")

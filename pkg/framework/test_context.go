@@ -29,7 +29,7 @@ import (
 
 var (
 	testImagesFilePath       string
-	benchamrkSettingFilePath string
+	benchmarkSettingFilePath string
 )
 
 // TestImageList aggregates references to the images used in tests.
@@ -160,7 +160,7 @@ func RegisterFlags() {
 	flag.DurationVar(&TestContext.RuntimeServiceTimeout, "runtime-service-timeout", 300*time.Second, "Timeout when trying to connect to a runtime service.")
 	flag.StringVar(&TestContext.RuntimeHandler, "runtime-handler", "", "Runtime handler to use in the test.")
 
-	flag.StringVar(&benchamrkSettingFilePath, "benchmarking-params-file", "", "Optional path to a YAML file specifying benchmarking configuration options.")
+	flag.StringVar(&benchmarkSettingFilePath, "benchmarking-params-file", "", "Optional path to a YAML file specifying benchmarking configuration options.")
 	flag.StringVar(&TestContext.BenchmarkingOutputDir, "benchmarking-output-dir", "", "Optional path to a directory in which benchmarking data should be placed.")
 
 	if runtime.GOOS == OSWindows {
@@ -183,8 +183,8 @@ func (tc *TestContextType) LoadYamlConfigFiles() error {
 	Logf("Testing context container image list: %+v", TestContext.TestImageList)
 
 	// Attempt to load benchmark settings file:
-	if benchamrkSettingFilePath != "" {
-		err := LoadYamlFile(benchamrkSettingFilePath, &TestContext.BenchmarkingParams)
+	if benchmarkSettingFilePath != "" {
+		err := LoadYamlFile(benchmarkSettingFilePath, &TestContext.BenchmarkingParams)
 		if err != nil {
 			return err
 		}

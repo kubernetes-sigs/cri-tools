@@ -1,0 +1,27 @@
+[files]
+extend-exclude = [
+    "go.mod",
+    "vendor",
+]
+ignore-hidden = true
+ignore-files = true
+ignore-dot = true
+ignore-vcs = true
+ignore-global = true
+ignore-parent = true
+
+[default]
+binary = false
+check-filename = true
+check-file = true
+unicode = true
+ignore-hex = true
+identifier-leading-digits = false
+locale = "en"
+extend-ignore-identifiers-re = []
+extend-ignore-re = [
+    "InterruptableRPC", # Interrupt + able
+    "stopp", # stop pod abbreviation
+    "da86e6ba6ca19", # example container / pod
+    "538721340ded1", # example container / pod
+]

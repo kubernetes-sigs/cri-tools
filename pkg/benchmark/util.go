@@ -44,7 +44,7 @@ type LifecycleBenchmarkDatapoint struct {
 	// The operation durations should be in the order they were executed in.
 	// Note that the sum of OperationsDurationsNs need not be exactly equal to the duration
 	// determined by subtracting StartTime from EndTime, as there may be additional steps
-	// (e.g. timer setup) performed between the invidual operations.
+	// (e.g. timer setup) performed between the individual operations.
 	OperationsDurationsNs []int64 `json:"operationsDurationsNs"`
 
 	// String mapping for adding arbitrary meta-info for the lifecycle result:

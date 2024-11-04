@@ -545,7 +545,7 @@ var imageFsInfoCommand = &cli.Command{
 		}
 
 		if output == outputTypeTable {
-			ouputImageFsInfoTable(r)
+			outputImageFsInfoTable(r)
 		} else {
 			return outputStatusData([]statusData{{json: status}}, output, tmplStr)
 		}
@@ -554,7 +554,7 @@ var imageFsInfoCommand = &cli.Command{
 	},
 }
 
-func ouputImageFsInfoTable(r *pb.ImageFsInfoResponse) {
+func outputImageFsInfoTable(r *pb.ImageFsInfoResponse) {
 	tablePrintFileSystem := func(fileLabel string, filesystem []*pb.FilesystemUsage) {
 		fmt.Printf("%s Filesystem \n", fileLabel)
 		for i, val := range filesystem {

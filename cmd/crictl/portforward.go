@@ -106,7 +106,7 @@ func PortForward(client internalapi.RuntimeService, opts portforwardOptions) err
 
 	readyChan := make(chan struct{})
 
-	logrus.Debugf("Ports to forword: %v", opts.ports)
+	logrus.Debugf("Ports to forward: %v", opts.ports)
 	pf, err := portforward.New(dialer, opts.ports, SetupInterruptSignalHandler(), readyChan, os.Stdout, os.Stderr)
 	if err != nil {
 		return err

@@ -58,7 +58,7 @@ func TestNameFilterByRegex(t *testing.T) {
 			false,
 		},
 		{
-			"reguar expression should match",
+			"regular expression should match",
 			"iner$",
 			"i_am_a_container",
 			true,
