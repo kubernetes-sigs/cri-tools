@@ -83,7 +83,7 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 		Expect(loadTestProfiles()).NotTo(HaveOccurred())
 	})
 
-	Context("runtime should support depracated apparmor_profile field", func() {
+	Context("runtime should support deprecated apparmor_profile field", func() {
 		var sandboxID string
 		var sandboxConfig *runtimeapi.PodSandboxConfig
 
@@ -114,7 +114,7 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 			checkContainerApparmor(rc, containerID, false)
 		})
 
-		It("should enforce a permissive depracated profile", func() {
+		It("should enforce a permissive deprecated profile", func() {
 			profile := &runtimeapi.LinuxContainerSecurityContext{
 				ApparmorProfile: apparmorProfileNamePrefix + "cri-validate-apparmor-test-audit-write",
 			}
@@ -160,7 +160,7 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 			checkContainerApparmor(rc, containerID, false)
 		})
 
-		It("should enforce a permissive depracated profile", func() {
+		It("should enforce a permissive deprecated profile", func() {
 			profile := &runtimeapi.LinuxContainerSecurityContext{
 				Apparmor: &runtimeapi.SecurityProfile{
 					ProfileType:  runtimeapi.SecurityProfile_Localhost,
@@ -255,12 +255,12 @@ func createContainerWithAppArmor(rc internalapi.RuntimeService, ic internalapi.I
 	return containerID
 }
 
-func checkContainerApparmor(rc internalapi.RuntimeService, containerID string, shoudRun bool) {
+func checkContainerApparmor(rc internalapi.RuntimeService, containerID string, shouldRun bool) {
 	By("get container status")
 	resp, err := rc.ContainerStatus(context.TODO(), containerID, false)
 	Expect(err).NotTo(HaveOccurred())
 
-	if shoudRun {
+	if shouldRun {
 		Expect(resp.GetStatus().GetExitCode()).To(Equal(int32(0)))
 	} else {
 		Expect(resp.GetStatus().GetExitCode()).NotTo(Equal(int32(0)))
