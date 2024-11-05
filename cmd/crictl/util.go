@@ -36,6 +36,7 @@ import (
 	"google.golang.org/protobuf/protoadapt"
 	"google.golang.org/protobuf/runtime/protoiface"
 	utilyaml "k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/client-go/rest"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"sigs.k8s.io/yaml"
@@ -157,7 +158,10 @@ type execOptions struct {
 	cmd []string
 	// transport to be used
 	transport string
+	// TLS configuration for streaming
+	tlsConfig *rest.TLSClientConfig
 }
+
 type attachOptions struct {
 	// id of container
 	id string
@@ -167,6 +171,8 @@ type attachOptions struct {
 	stdin bool
 	// transport to be used
 	transport string
+	// TLS configuration for streaming
+	tlsConfig *rest.TLSClientConfig
 }
 
 type portforwardOptions struct {
@@ -176,6 +182,8 @@ type portforwardOptions struct {
 	ports []string
 	// transport to be used
 	transport string
+	// TLS configuration for streaming
+	tlsConfig *rest.TLSClientConfig
 }
 
 func getSortedKeys(m map[string]string) []string {

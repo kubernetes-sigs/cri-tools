@@ -50,6 +50,24 @@ var runtimeAttachCommand = &cli.Command{
 			Value:   transportSpdy,
 			Usage:   fmt.Sprintf("Transport protocol to use, one of: %s|%s", transportSpdy, transportWebsocket),
 		},
+		&cli.StringFlag{
+			Name:    flagTLSSNI,
+			Usage:   "Server name used in the TLS client to check server certificates against",
+			Aliases: []string{"tls-server-name"},
+			Value:   "localhost",
+		},
+		&cli.StringFlag{
+			Name:  flagTLSCA,
+			Usage: "Path to the streaming TLS CA certificate",
+		},
+		&cli.StringFlag{
+			Name:  flagTLSCert,
+			Usage: "Path to the streaming TLS certificate",
+		},
+		&cli.StringFlag{
+			Name:  flagTLSKey,
+			Usage: "Path to the streaming TLS key",
+		},
 	},
 	Action: func(c *cli.Context) error {
 		id := c.Args().First()
@@ -70,10 +88,17 @@ var runtimeAttachCommand = &cli.Command{
 		defer cancel()
 
 		opts := attachOptions{
-			id:    id,
-			tty:   c.Bool("tty"),
-			stdin: c.Bool("stdin"),
+			id:        id,
+			tty:       c.Bool("tty"),
+			stdin:     c.Bool("stdin"),
+			transport: c.String("transport"),
 		}
+
+		opts.tlsConfig, err = tlsConfigFromFlags(c)
+		if err != nil {
+			return fmt.Errorf("get TLS config from flags: %w", err)
+		}
+
 		if err = Attach(ctx, runtimeClient, opts); err != nil {
 			return fmt.Errorf("attaching running container failed: %w", err)
 		}
@@ -116,5 +141,5 @@ func Attach(ctx context.Context, client internalapi.RuntimeService, opts attachO
 	}
 
 	logrus.Debugf("Attach URL: %v", URL)
-	return stream(ctx, opts.stdin, opts.tty, opts.transport, URL)
+	return stream(ctx, opts.stdin, opts.tty, opts.transport, URL, opts.tlsConfig)
 }
