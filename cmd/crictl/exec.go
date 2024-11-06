@@ -125,6 +125,24 @@ var runtimeExecCommand = &cli.Command{
 			Aliases: []string{"x"},
 			Usage:   "Run the command in parallel if multiple containers are selected",
 		},
+		&cli.StringFlag{
+			Name:    flagTLSSNI,
+			Usage:   "Server name used in the TLS client to check server certificates against",
+			Aliases: []string{"tls-server-name"},
+			Value:   "localhost",
+		},
+		&cli.StringFlag{
+			Name:  flagTLSCA,
+			Usage: "Path to the streaming TLS CA certificate",
+		},
+		&cli.StringFlag{
+			Name:  flagTLSCert,
+			Usage: "Path to the streaming TLS certificate",
+		},
+		&cli.StringFlag{
+			Name:  flagTLSKey,
+			Usage: "Path to the streaming TLS key",
+		},
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() < 1 {
@@ -200,6 +218,11 @@ var runtimeExecCommand = &cli.Command{
 			transport: c.String(transportFlag),
 		}
 
+		opts.tlsConfig, err = tlsConfigFromFlags(c)
+		if err != nil {
+			return fmt.Errorf("get TLS config from flags: %w", err)
+		}
+
 		funcs := []func() error{}
 		for _, id := range ids {
 			funcs = append(funcs, func() error {
@@ -210,7 +233,7 @@ var runtimeExecCommand = &cli.Command{
 					fmt.Println(id + ":")
 				}
 				if c.Bool("sync") {
-					exitCode, err := ExecSync(runtimeClient, optsCopy)
+					exitCode, err := ExecSync(runtimeClient, &optsCopy)
 					if err != nil {
 						return fmt.Errorf("execing command in container %s synchronously: %w", id, err)
 					}
@@ -220,7 +243,7 @@ var runtimeExecCommand = &cli.Command{
 				} else {
 					ctx, cancel := context.WithCancel(c.Context)
 					defer cancel()
-					err = Exec(ctx, runtimeClient, optsCopy)
+					err = Exec(ctx, runtimeClient, &optsCopy)
 					if err != nil {
 						return fmt.Errorf("execing command in container %s: %w", id, err)
 					}
@@ -241,10 +264,37 @@ var runtimeExecCommand = &cli.Command{
 	},
 }
 
+const (
+	flagTLSSNI  = "tls-sni"
+	flagTLSCA   = "tls-ca"
+	flagTLSCert = "tls-cert"
+	flagTLSKey  = "tls-key"
+)
+
+func tlsConfigFromFlags(ctx *cli.Context) (*rest.TLSClientConfig, error) {
+	cfg := &rest.TLSClientConfig{
+		ServerName: ctx.String(flagTLSSNI),
+		CAFile:     ctx.String(flagTLSCA),
+		CertFile:   ctx.String(flagTLSCert),
+		KeyFile:    ctx.String(flagTLSKey),
+	}
+	if cfg.CAFile == "" && cfg.CertFile == "" && cfg.KeyFile == "" {
+		return &rest.TLSClientConfig{Insecure: true}, nil
+	}
+	if cfg.CAFile == "" || cfg.CertFile == "" || cfg.KeyFile == "" {
+		return nil, fmt.Errorf(
+			"all three flags --%s, --%s and --%s are required for TLS streaming",
+			flagTLSCA, flagTLSCert, flagTLSKey,
+		)
+	}
+
+	return cfg, nil
+}
+
 // ExecSync sends an ExecSyncRequest to the server, and parses
 // the returned ExecSyncResponse. The function returns the corresponding exit
 // code beside an general error.
-func ExecSync(client internalapi.RuntimeService, opts execOptions) (int, error) {
+func ExecSync(client internalapi.RuntimeService, opts *execOptions) (int, error) {
 	request := &pb.ExecSyncRequest{
 		ContainerId: opts.id,
 		Cmd:         opts.cmd,
@@ -271,7 +321,7 @@ func ExecSync(client internalapi.RuntimeService, opts execOptions) (int, error) 
 }
 
 // Exec sends an ExecRequest to server, and parses the returned ExecResponse.
-func Exec(ctx context.Context, client internalapi.RuntimeService, opts execOptions) error {
+func Exec(ctx context.Context, client internalapi.RuntimeService, opts *execOptions) error {
 	request := &pb.ExecRequest{
 		ContainerId: opts.id,
 		Cmd:         opts.cmd,
@@ -305,11 +355,11 @@ func Exec(ctx context.Context, client internalapi.RuntimeService, opts execOptio
 	}
 
 	logrus.Debugf("Exec URL: %v", URL)
-	return stream(ctx, opts.stdin, opts.tty, opts.transport, URL)
+	return stream(ctx, opts.stdin, opts.tty, opts.transport, URL, opts.tlsConfig)
 }
 
-func stream(ctx context.Context, in, tty bool, transport string, parsedURL *url.URL) error {
-	executor, err := getExecutor(transport, parsedURL)
+func stream(ctx context.Context, in, tty bool, transport string, parsedURL *url.URL, tlsConfig *rest.TLSClientConfig) error {
+	executor, err := getExecutor(transport, parsedURL, tlsConfig)
 	if err != nil {
 		return fmt.Errorf("get executor: %w", err)
 	}
@@ -348,8 +398,8 @@ func stream(ctx context.Context, in, tty bool, transport string, parsedURL *url.
 	return t.Safe(func() error { return executor.StreamWithContext(ctx, streamOptions) })
 }
 
-func getExecutor(transport string, parsedURL *url.URL) (exec remoteclient.Executor, err error) {
-	config := &rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}
+func getExecutor(transport string, parsedURL *url.URL, tlsConfig *rest.TLSClientConfig) (exec remoteclient.Executor, err error) {
+	config := &rest.Config{TLSClientConfig: *tlsConfig}
 
 	switch transport {
 	case transportSpdy:

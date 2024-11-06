@@ -45,6 +45,24 @@ var runtimePortForwardCommand = &cli.Command{
 			Value:   transportSpdy,
 			Usage:   fmt.Sprintf("Transport protocol to use, one of: %s|%s", transportSpdy, transportWebsocket),
 		},
+		&cli.StringFlag{
+			Name:    flagTLSSNI,
+			Usage:   "Server name used in the TLS client to check server certificates against",
+			Aliases: []string{"tls-server-name"},
+			Value:   "localhost",
+		},
+		&cli.StringFlag{
+			Name:  flagTLSCA,
+			Usage: "Path to the streaming TLS CA certificate",
+		},
+		&cli.StringFlag{
+			Name:  flagTLSCert,
+			Usage: "Path to the streaming TLS certificate",
+		},
+		&cli.StringFlag{
+			Name:  flagTLSKey,
+			Usage: "Path to the streaming TLS key",
+		},
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() < 2 {
@@ -61,6 +79,12 @@ var runtimePortForwardCommand = &cli.Command{
 			ports:     c.Args().Tail(),
 			transport: c.String(transportFlag),
 		}
+
+		opts.tlsConfig, err = tlsConfigFromFlags(c)
+		if err != nil {
+			return fmt.Errorf("get TLS config from flags: %w", err)
+		}
+
 		if err = PortForward(runtimeClient, opts); err != nil {
 			return fmt.Errorf("port forward: %w", err)
 		}
@@ -99,7 +123,7 @@ func PortForward(client internalapi.RuntimeService, opts portforwardOptions) err
 	}
 
 	logrus.Debugf("PortForward URL: %v", parsedURL)
-	dialer, err := getDialer(opts.transport, parsedURL)
+	dialer, err := getDialer(opts.transport, parsedURL, opts.tlsConfig)
 	if err != nil {
 		return fmt.Errorf("get dialer: %w", err)
 	}
@@ -114,8 +138,8 @@ func PortForward(client internalapi.RuntimeService, opts portforwardOptions) err
 	return pf.ForwardPorts()
 }
 
-func getDialer(transport string, parsedURL *url.URL) (exec httpstream.Dialer, err error) {
-	config := &rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}
+func getDialer(transport string, parsedURL *url.URL, tlsConfig *rest.TLSClientConfig) (exec httpstream.Dialer, err error) {
+	config := &rest.Config{TLSClientConfig: *tlsConfig}
 
 	switch transport {
 	case transportSpdy:
