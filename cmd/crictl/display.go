@@ -41,6 +41,7 @@ const (
 	columnDigest     = "DIGEST"
 	columnMemory     = "MEM"
 	columnInodes     = "INODES"
+	columnSwap       = "SWAP"
 	columnDisk       = "DISK"
 	columnCPU        = "CPU %"
 	columnKey        = "KEY"
