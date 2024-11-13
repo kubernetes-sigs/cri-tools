@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"slices"
 	"sort"
 	"time"
 
@@ -146,7 +147,6 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 		// Make sure test image does not exist.
 		removeImageList(c, testDifferentTagDifferentImageList)
 		ids := pullImageList(c, testDifferentTagDifferentImageList, testImagePodSandbox)
-		ids = removeDuplicates(ids)
 		Expect(ids).To(HaveLen(3), "3 image ids should be returned")
 
 		defer removeImageList(c, testDifferentTagDifferentImageList)
@@ -168,7 +168,8 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 		// Make sure test image does not exist.
 		removeImageList(c, testDifferentTagSameImageList)
 		ids := pullImageList(c, testDifferentTagSameImageList, testImagePodSandbox)
-		ids = removeDuplicates(ids)
+		slices.Sort(ids)
+		ids = slices.Compact(ids)
 		Expect(ids).To(HaveLen(1), "Only 1 image id should be returned")
 
 		defer removeImageList(c, testDifferentTagSameImageList)
@@ -216,8 +217,7 @@ func testPullPublicImage(c internalapi.ImageManagerService, imageName string, po
 }
 
 // pullImageList pulls the images listed in the imageList.
-func pullImageList(c internalapi.ImageManagerService, imageList []string, podConfig *runtimeapi.PodSandboxConfig) []string {
-	ids := []string{}
+func pullImageList(c internalapi.ImageManagerService, imageList []string, podConfig *runtimeapi.PodSandboxConfig) (ids []string) {
 	for _, imageName := range imageList {
 		ids = append(ids, framework.PullPublicImage(c, imageName, podConfig))
 	}
@@ -242,18 +242,4 @@ func removeImage(c internalapi.ImageManagerService, imageName string) {
 		err = c.RemoveImage(context.TODO(), &runtimeapi.ImageSpec{Image: image.Image.Id})
 		framework.ExpectNoError(err, "failed to remove image: %v", err)
 	}
-}
-
-// removeDuplicates remove duplicates strings from a list.
-func removeDuplicates(ss []string) []string {
-	encountered := map[string]bool{}
-	result := []string{}
-	for _, s := range ss {
-		if encountered[s] {
-			continue
-		}
-		encountered[s] = true
-		result = append(result, s)
-	}
-	return result
 }
