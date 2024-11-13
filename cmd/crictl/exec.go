@@ -281,9 +281,9 @@ func tlsConfigFromFlags(ctx *cli.Context) (*rest.TLSClientConfig, error) {
 	if cfg.CAFile == "" && cfg.CertFile == "" && cfg.KeyFile == "" {
 		return &rest.TLSClientConfig{Insecure: true}, nil
 	}
-	if cfg.CAFile == "" || cfg.CertFile == "" || cfg.KeyFile == "" {
+	if cfg.CertFile == "" || cfg.KeyFile == "" {
 		return nil, fmt.Errorf(
-			"all three flags --%s, --%s and --%s are required for TLS streaming",
+			"all two flags --%s and --%s are required for TLS streaming, only --%s is optional",
 			flagTLSCA, flagTLSCert, flagTLSKey,
 		)
 	}
