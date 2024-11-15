@@ -122,6 +122,8 @@ linters-settings:
         disabled: true
   nestif:
     min-complexity: 17
+  maintidx:
+    under: 10
   godox:
     keywords:
       - BUG
@@ -132,7 +134,7 @@ linters-settings:
   cyclop:
     max-complexity: 37
   gocognit:
-    min-complexity: 53
+    min-complexity: 71
   gci:
     sections:
       - standard

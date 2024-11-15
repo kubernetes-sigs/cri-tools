@@ -21,7 +21,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
+	"runtime/pprof"
 	"slices"
 	"sort"
 	"strings"
@@ -270,11 +272,46 @@ func main() {
 			Usage: "Address to which the gRPC tracing collector will send spans to.",
 			Value: "127.0.0.1:4317",
 		},
+		&cli.StringFlag{
+			Name:  "profile-cpu",
+			Usage: "Write a pprof CPU profile to the provided path.",
+		},
+		&cli.StringFlag{
+			Name:  "profile-mem",
+			Usage: "Write a pprof memory profile to the provided path.",
+		},
 	}
+
+	var cpuProfile *os.File
+	defer func() {
+		if cpuProfile != nil {
+			pprof.StopCPUProfile()
+			cpuProfile.Close()
+		}
+	}()
 
 	app.Before = func(context *cli.Context) (err error) {
 		var config *common.ServerConfiguration
 		var exePath string
+
+		cpuProfilePath := context.String("profile-cpu")
+		if cpuProfilePath != "" {
+			cpuProfilePath, err = filepath.Abs(cpuProfilePath)
+			if err != nil {
+				return fmt.Errorf("unable to get absolute memory profile path: %w", err)
+			}
+
+			logrus.Infof("Creating CPU profile in: %s", cpuProfilePath)
+
+			cpuProfile, err = os.Create(cpuProfilePath)
+			if err != nil {
+				return fmt.Errorf("could not create CPU profile %q: %w", cpuProfilePath, err)
+			}
+
+			if err := pprof.StartCPUProfile(cpuProfile); err != nil {
+				return fmt.Errorf("could not start CPU profiling in %q: %w", cpuProfilePath, err)
+			}
+		}
 
 		if exePath, err = os.Executable(); err != nil {
 			logrus.Fatal(err)
@@ -355,6 +392,34 @@ func main() {
 
 		return nil
 	}
+
+	app.After = func(ctx *cli.Context) (err error) {
+		memProfilePath := ctx.String("profile-mem")
+		if memProfilePath != "" {
+			memProfilePath, err = filepath.Abs(memProfilePath)
+			if err != nil {
+				return fmt.Errorf("unable to get absolute memory profile path: %w", err)
+			}
+
+			logrus.Infof("Creating memory profile in: %s", memProfilePath)
+
+			file, err := os.Create(memProfilePath)
+			if err != nil {
+				return fmt.Errorf("could not create memory profile %q: %w", memProfilePath, err)
+			}
+			defer file.Close()
+
+			// Ensure up to date data
+			runtime.GC()
+
+			if err := pprof.WriteHeapProfile(file); err != nil {
+				return fmt.Errorf("could not write memory profile in %q: %w", memProfilePath, err)
+			}
+		}
+
+		return nil
+	}
+
 	// sort all flags
 	for _, cmd := range app.Commands {
 		sort.Sort(cli.FlagsByName(cmd.Flags))
