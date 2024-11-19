@@ -39,38 +39,38 @@ crictl [global options] command [command options] [arguments...]
 
 COMMANDS:
 
-- `attach`:                Attach to a running container
-- `create`:                Create a new container
-- `exec`:                  Run a command in a running container
-- `version`:               Display runtime version information
-- `images, image, img`:    List images
-- `inspect`:               Display the status of one or more containers
-- `inspecti`:              Return the status of one or more images
-- `imagefsinfo`:           Return image filesystem info
-- `inspectp`:              Display the status of one or more pods
-- `logs`:                  Fetch the logs of a container
-- `port-forward`:          Forward local port to a pod
-- `ps`:                    List containers
-- `pull`:                  Pull an image from a registry
-- `run`:                   Run a new container inside a sandbox
-- `runp`:                  Run a new pod
-- `rm`:                    Remove one or more containers
-- `rmi`:                   Remove one or more images
-- `rmp`:                   Remove one or more pods
-- `pods`:                  List pods
-- `start`:                 Start one or more created containers
-- `info`:                  Display information of the container runtime
-- `stop`:                  Stop one or more running containers
-- `stopp`:                 Stop one or more running pods
-- `update`:                Update one or more running containers
-- `config`:                Get and set `crictl` client configuration options
-- `stats`:                 List container(s) resource usage statistics
-- `statsp`:                List pod(s) resource usage statistics
-- `completion`:            Output bash shell completion code
-- `checkpoint`:            Checkpoint one or more running containers
-- `events, event`:         Stream the events of containers
-- `update-runtime-config`  Update the runtime configuration
-- `help, h`:               Shows a list of commands or help for one command
+- `attach`: Attach to a running container
+- `create`: Create a new container
+- `exec`: Run a command in a running container
+- `version`: Display runtime version information
+- `images, image, img`: List images
+- `inspect`: Display the status of one or more containers
+- `inspecti`: Return the status of one or more images
+- `imagefsinfo`: Return image filesystem info
+- `inspectp`: Display the status of one or more pods
+- `logs`: Fetch the logs of a container
+- `port-forward`: Forward local port to a pod
+- `ps`: List containers
+- `pull`: Pull an image from a registry
+- `run`: Run a new container inside a sandbox
+- `runp`: Run a new pod
+- `rm`: Remove one or more containers
+- `rmi`: Remove one or more images
+- `rmp`: Remove one or more pods
+- `pods`: List pods
+- `start`: Start one or more created containers
+- `info`: Display information of the container runtime
+- `stop`: Stop one or more running containers
+- `stopp`: Stop one or more running pods
+- `update`: Update one or more running containers
+- `config`: Get and set `crictl` client configuration options
+- `stats`: List container(s) resource usage statistics
+- `statsp`: List pod(s) resource usage statistics
+- `completion`: Output bash shell completion code
+- `checkpoint`: Checkpoint one or more running containers
+- `events, event`: Stream the events of containers
+- `update-runtime-config` Update the runtime configuration
+- `help, h`: Shows a list of commands or help for one command
 
 `crictl` by default connects on Unix to:
 
@@ -102,7 +102,7 @@ If the endpoint is not set then it works as follows:
 - If the image endpoint is not set, `crictl` will by default use the runtime endpoint setting
 
 > Note: The default endpoints are now deprecated and the runtime endpoint should always be set instead.
-The performance maybe affected as each default connection attempt takes n-seconds to complete before timing out and going to the next in sequence.
+> The performance maybe affected as each default connection attempt takes n-seconds to complete before timing out and going to the next in sequence.
 
 Unix:
 
@@ -139,8 +139,8 @@ via sudo (`sudo -E crictl ...`).
 ## Additional options
 
 - `--timeout`, `-t`: Timeout of connecting to server in seconds (default: `2s`).
-0 or less is interpreted as unset and converted to the default. There is no
-option for no timeout value set and the smallest supported timeout is `1s`
+  0 or less is interpreted as unset and converted to the default. There is no
+  option for no timeout value set and the smallest supported timeout is `1s`
 - `--debug`, `-D`: Enable debug output
 - `--help`, `-h`: show help
 - `--version`, `-v`: print the version information of `crictl`
@@ -175,18 +175,18 @@ COMMAND OPTIONS:
 - `disable-pull-on-run`: Disable pulling image on run requests (default: `false`)
 
 > When enabled `pull-image-on-create` modifies the create container command to first pull the container's image.
-This feature is used as a helper to make creating containers easier and faster.
-Some users of `crictl` may desire to not pull the image necessary to create the container.
-For example, the image may have already been pulled or otherwise loaded into the container runtime, or the user may be running without a network. For this reason the default for `pull-image-on-create` is `false`.
+> This feature is used as a helper to make creating containers easier and faster.
+> Some users of `crictl` may desire to not pull the image necessary to create the container.
+> For example, the image may have already been pulled or otherwise loaded into the container runtime, or the user may be running without a network. For this reason the default for `pull-image-on-create` is `false`.
 
 > By default the run command first pulls the container image, and `disable-pull-on-run` is `false`.
-Some users of `crictl` may desire to set `disable-pull-on-run` to `true` to not pull the image by default when using the run command.
+> Some users of `crictl` may desire to set `disable-pull-on-run` to `true` to not pull the image by default when using the run command.
 
 > To override these default pull configuration settings, `--no-pull` and `--with-pull` options are provided for the create and run commands.
 
 ## Examples
 
-- [Run pod sandbox with config file](#run-pod-sandbox-with-config-file) 
+- [Run pod sandbox with config file](#run-pod-sandbox-with-config-file)
 - [Run pod sandbox with runtime handler](#run-pod-sandbox-with-runtime-handler)
 - [Pull a busybox image](#pull-a-busybox-image)
 - [Filter images](#filter-images)
@@ -486,5 +486,5 @@ $ ls /path/to/checkpoint.tar
 
 ## More information
 
-* See the [Kubernetes.io Debugging Kubernetes nodes with crictl doc](https://kubernetes.io/docs/tasks/debug-application-cluster/crictl/)
-* Visit [kubernetes-sigs/cri-tools](https://github.com/kubernetes-sigs/cri-tools) for more information.
+- See the [Kubernetes.io Debugging Kubernetes nodes with crictl doc](https://kubernetes.io/docs/tasks/debug-application-cluster/crictl/)
+- Visit [kubernetes-sigs/cri-tools](https://github.com/kubernetes-sigs/cri-tools) for more information.

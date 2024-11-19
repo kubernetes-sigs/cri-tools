@@ -53,10 +53,10 @@ You can build and install `cri-tools` as follows:
 
 If all goes well at this point you should be able to check for `critest` and `crictl` binaries
 
-  ```bash
-    $ which crictl
-    /usr/local/bin/crictl
+```bash
+  $ which crictl
+  /usr/local/bin/crictl
 
-    $ which critest
-    /usr/local/bin/critest
-  ```
+  $ which critest
+  /usr/local/bin/critest
+```

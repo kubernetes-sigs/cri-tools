@@ -2,13 +2,10 @@
   "metadata": {
     "name": "busybox"
   },
-  "image":{
+  "image": {
     "image": "docker.io/busybox"
   },
-  "command": [
-    "top"
-  ],
-  "log_path":"busybox.0.log",
-  "linux": {
-  }
+  "command": ["top"],
+  "log_path": "busybox.0.log",
+  "linux": {}
 }
