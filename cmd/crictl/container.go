@@ -1233,8 +1233,11 @@ func OutputContainers(runtimeClient internalapi.RuntimeService, imageClient inte
 		podNamespace := getPodNamespaceFromLabels(c.Labels)
 		if !opts.verbose {
 			id := c.Id
-			image := c.Image.Image
 			podID := c.PodSandboxId
+			var image string
+			if c.Image != nil {
+				image = c.Image.Image
+			}
 			if !opts.noTrunc {
 				id = getTruncatedID(id, "")
 				podID = getTruncatedID(podID, "")
