@@ -7,7 +7,7 @@ on:
       - master
   pull_request:
 env:
-  GO_VERSION: '1.23'
+  GO_VERSION: "1.23"
 jobs:
   images:
     runs-on: ubuntu-latest
@@ -55,8 +55,9 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-22.04, macos-12]  # TODO: make releases on 'linux-ppc64le' 'windows-2019'
-                                         # Ref: https://github.com/uraimo/run-on-arch-action
+        os:
+          [ubuntu-22.04, macos-12] # TODO: make releases on 'linux-ppc64le' 'windows-2019'
+          # Ref: https://github.com/uraimo/run-on-arch-action
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -76,3 +77,12 @@ jobs:
       - uses: crate-ci/typos@b74202f74b4346efdbce7801d187ec57b266bac8 # v1.27.3
         with:
           config: .typos.toml
+
+  prettier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: creyD/prettier_action@31355f8eef017f8aeba2e0bc09d8502b13dbbad1 # v4.3
+        with:
+          dry: true
+          prettier_options: --write .

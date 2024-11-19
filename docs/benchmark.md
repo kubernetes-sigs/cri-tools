@@ -1,6 +1,6 @@
 # Container Runtime Interface (CRI) Performance Benchmarking
 
-CRI performance benchmarking provides a benchmarking framework for CRI-compatible container runtimes.  This allows the CRI runtime developers to benchmark the performance of their runtime without needing to set up Kubernetes components or run Kubernetes benchmark tests.
+CRI performance benchmarking provides a benchmarking framework for CRI-compatible container runtimes. This allows the CRI runtime developers to benchmark the performance of their runtime without needing to set up Kubernetes components or run Kubernetes benchmark tests.
 
 ## Install
 
@@ -39,7 +39,6 @@ containersNumber: 100
 # The total number of samples will be floor(containersNumber / containersNumberParallel)
 containersNumberParallel: 2
 
-
 # The number of pod lifecycle benchmarks to run:
 podsNumber: 1000
 # The number of pod lifecycle benchmarks to run in parallel.
@@ -69,7 +68,7 @@ critest connects to Unix: `unix:///run/containerd/containerd.sock` or Windows: `
 - `-image-endpoint`: Set the endpoint of image service. Same with runtime-endpoint if not specified.
 - `-runtime-endpoint`: Set the endpoint of runtime service. Default to Unix: `unix:///run/containerd/containerd.sock` or Windows: `npipe:////./pipe/containerd-containerd`.
 - `-benchmarking-params-file`: optional path to a YAML file containing parameters describing which
-benchmarks should be run.
+  benchmarks should be run.
 - `-benchmarking-output-dir`: optional path to a pre-existing directory in which to write JSON
   files detailing the results of the benchmarks.
 - `-ginkgo.skip`: Skip the tests that match the regular expression.

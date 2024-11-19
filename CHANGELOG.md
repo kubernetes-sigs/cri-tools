@@ -1,4 +1,5 @@
 <!-- TOC -->
+
 - [v1.17.0](#v1170)
   - [CRI CLI (crictl)](#cri-cli-crictl)
   - [Downloads](#downloads)
@@ -109,7 +110,7 @@ cri-tools v1.16.0 has upgraded to kubernetes v1.16. It mainly focus on bug fixes
 
 - [#477](https://github.com/kubernetes-sigs/cri-tools/pull/477) Add registry prefix option.
 - [#487](https://github.com/kubernetes-sigs/cri-tools/pull/487) Add test for MaskedPaths and ReadonlyPaths.
-- [#488](https://github.com/kubernetes-sigs/cri-tools/pull/488) Switch to multi-arch nonewprivs image. 
+- [#488](https://github.com/kubernetes-sigs/cri-tools/pull/488) Switch to multi-arch nonewprivs image.
 - [#489](https://github.com/kubernetes-sigs/cri-tools/pull/489) Use arch specific hostnet-nginx image.
 - [#494](https://github.com/kubernetes-sigs/cri-tools/pull/494) Move from gometalinter to golangci-lint.
 - [#503](https://github.com/kubernetes-sigs/cri-tools/pull/503) Use a dedicated image for all reference test.
@@ -391,7 +392,7 @@ cri-tools v1.0.0-alpha.0 is mainly focus on UX improvements, including make cric
 - [#164](https://github.com/kubernetes-sigs/cri-tools/pull/164) Fix security context test to not rely on `/etc/hosts`
 - [#165](https://github.com/kubernetes-sigs/cri-tools/pull/165) Validate IPv4 only for port mapping tests
 - [#196](https://github.com/kubernetes-sigs/cri-tools/pull/196) Fix privileged container validation by replacing `ip link` with `brctl addbr` command
--  [#197](https://github.com/kubernetes-sigs/cri-tools/pull/197) Fix hostIPC validation to support old ipcmk versions
+- [#197](https://github.com/kubernetes-sigs/cri-tools/pull/197) Fix hostIPC validation to support old ipcmk versions
 - [#199](https://github.com/kubernetes-sigs/cri-tools/pull/199) [#201](https://github.com/kubernetes-sigs/cri-tools/pull/201) Fix container logs validation
 - [#200](https://github.com/kubernetes-sigs/cri-tools/pull/200) Add SELinux validation tests
 
@@ -420,7 +421,7 @@ cri-tools v1.0.0-alpha.0 is mainly focus on UX improvements, including make cric
 
 # v0.2
 
-cri-tools v0.2 enhances validation testings, improves crictl UX and also fixes several bugs.  It has also updates container runtime interface (CRI) to kubernetes v1.8.
+cri-tools v0.2 enhances validation testings, improves crictl UX and also fixes several bugs. It has also updates container runtime interface (CRI) to kubernetes v1.8.
 
 ## CRI validation testing (critest)
 
@@ -459,28 +460,28 @@ cri-tools provides a set of tools for Kubelet Container Runtime Interface (CRI):
 
 ### CRI validation testing
 
-  - basic sandbox and container operations
-  - basic image operations
-  - networking, e.g. DNS config, port mapping
-  - streaming, e.g. exec, attach, portforward
-  - security context, e.g.
-    - hostPID, hostIPC, hostNetwork
-    - runAsUser, readOnlyRootfs, privileged
-  - execSync,version,status
+- basic sandbox and container operations
+- basic image operations
+- networking, e.g. DNS config, port mapping
+- streaming, e.g. exec, attach, portforward
+- security context, e.g.
+  - hostPID, hostIPC, hostNetwork
+  - runAsUser, readOnlyRootfs, privileged
+- execSync,version,status
 
 ### crictl
 
-  - get version and status
-  - sandbox run, stop, status, list, and remove
-  - container create, start, stop, status, list and remove
-  - image pull, list, status and remove
-  - streaming attach, exec and portforward
+- get version and status
+- sandbox run, stop, status, list, and remove
+- container create, start, stop, status, list and remove
+- image pull, list, status and remove
+- streaming attach, exec and portforward
 
 ### CRI performance benchmarking
 
-  - parallel sandbox run, stop, status, list and remove
-  - parallel container create, start, stop, status, list and remove
-  - parallel image pull, list and remove
+- parallel sandbox run, stop, status, list and remove
+- parallel container create, start, stop, status, list and remove
+- parallel image pull, list and remove
 
 ## Documentation
 

@@ -2,7 +2,6 @@
 name: Bug Report
 about: Report a bug encountered while using cri-tools (crictl, critest)
 labels: kind/bug, sig/node
-
 ---
 
 <!-- Please use this template while reporting a bug and provide as much info as possible. Not doing so may result in your bug not being addressed in a timely manner. Thanks!
