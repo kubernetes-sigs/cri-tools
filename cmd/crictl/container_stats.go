@@ -182,7 +182,7 @@ func (d containerStatsDisplayer) displayStats(ctx context.Context, client intern
 		return err
 	}
 
-	d.display.AddRow([]string{columnContainer, columnName, columnCPU, columnMemory, columnDisk, columnInodes})
+	d.display.AddRow([]string{columnContainer, columnName, columnCPU, columnMemory, columnDisk, columnInodes, columnSwap})
 	for _, s := range r.GetStats() {
 		if ctx.Err() != nil {
 			return ctx.Err()
@@ -193,6 +193,7 @@ func (d containerStatsDisplayer) displayStats(ctx context.Context, client intern
 		mem := s.GetMemory().GetWorkingSetBytes().GetValue()
 		disk := s.GetWritableLayer().GetUsedBytes().GetValue()
 		inodes := s.GetWritableLayer().GetInodesUsed().GetValue()
+		swap := s.GetSwap().GetSwapUsageBytes().GetValue()
 		if !d.opts.all && cpu == 0 && mem == 0 {
 			// Skip non-running container
 			continue
@@ -213,7 +214,7 @@ func (d containerStatsDisplayer) displayStats(ctx context.Context, client intern
 		}
 		d.display.AddRow([]string{
 			id, name, fmt.Sprintf("%.2f", cpuPerc), units.HumanSize(float64(mem)),
-			units.HumanSize(float64(disk)), strconv.FormatUint(inodes, 10),
+			units.HumanSize(float64(disk)), strconv.FormatUint(inodes, 10), units.HumanSize(float64(swap)),
 		})
 	}
 	d.display.ClearScreen()
