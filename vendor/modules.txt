@@ -562,7 +562,7 @@ k8s.io/component-base/version
 ## explicit; go 1.22.0
 k8s.io/cri-api/pkg/apis
 k8s.io/cri-api/pkg/apis/runtime/v1
-# k8s.io/cri-client v0.31.2
+# k8s.io/cri-client v0.31.3
 ## explicit; go 1.22.0
 k8s.io/cri-client/pkg
 k8s.io/cri-client/pkg/internal
