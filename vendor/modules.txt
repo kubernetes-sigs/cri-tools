@@ -470,7 +470,7 @@ gopkg.in/yaml.v3
 # k8s.io/api v0.31.2
 ## explicit; go 1.22.0
 k8s.io/api/core/v1
-# k8s.io/apimachinery v0.31.2
+# k8s.io/apimachinery v0.31.3
 ## explicit; go 1.22.0
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
