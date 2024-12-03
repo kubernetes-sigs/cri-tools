@@ -25,8 +25,8 @@ require (
 	google.golang.org/grpc v1.68.0
 	google.golang.org/protobuf v1.35.2
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/api v0.32.0-rc.0
-	k8s.io/apimachinery v0.32.0-rc.0
+	k8s.io/api v0.33.0-alpha.0
+	k8s.io/apimachinery v0.33.0-alpha.0
 	k8s.io/client-go v0.32.0-rc.0
 	k8s.io/cri-api v0.32.0-rc.0
 	k8s.io/cri-client v0.32.0-rc.0
