@@ -1400,7 +1400,7 @@ func createAndCheckHostNetwork(rc internalapi.RuntimeService, ic internalapi.Ima
 			return fmt.Errorf("host port %s should be in container's port list", hostNetworkPort)
 		}
 		return nil
-	}, time.Minute, time.Second).Should(BeNil())
+	}, time.Minute, time.Second).Should(Succeed())
 
 	return podID, podLogDir
 }

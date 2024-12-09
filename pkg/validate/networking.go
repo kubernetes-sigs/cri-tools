@@ -273,7 +273,7 @@ func checkMainPage(c internalapi.RuntimeService, podID string, hostPort, contain
 		defer resp.Body.Close()
 		respChan <- resp
 		return nil
-	}, time.Minute, time.Second).Should(BeNil())
+	}, time.Minute, time.Second).Should(Succeed())
 
 	resp := <-respChan
 	Expect(resp.StatusCode).To(Equal(200), "The status code of response should be 200.")
