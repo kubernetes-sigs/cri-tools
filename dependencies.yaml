@@ -1,7 +1,7 @@
 ---
 dependencies:
   - name: cri-tools
-    version: v1.31.1
+    version: v1.32.0
     refPaths:
       - path: README.md
         match: VERSION
