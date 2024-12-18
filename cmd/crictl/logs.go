@@ -83,6 +83,7 @@ var logsCommand = &cli.Command{
 		},
 		&cli.StringFlag{
 			Name:  "stream",
+			Aliases: []string{"s"},
 			Usage: "Show specified stream (stdout or stderr). Defaults to both.",
 		},
 	},
