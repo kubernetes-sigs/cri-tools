@@ -87,6 +87,7 @@ func isFlagSet(name string) bool {
 
 // runTestSuite runs cri validation tests and benchmark tests.
 func runTestSuite(t *testing.T) {
+	t.Helper()
 	gomega.RegisterFailHandler(ginkgo.Fail)
 	ginkgo.RunSpecs(t, "CRI validation")
 }
@@ -105,6 +106,7 @@ func generateTempTestName() (string, error) {
 }
 
 func runParallelTestSuite(t *testing.T) {
+	t.Helper()
 	criPath, err := os.Executable()
 	if err != nil {
 		t.Fatalf("Failed to lookup path of critest: %v", err)
