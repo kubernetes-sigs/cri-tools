@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -33,6 +34,11 @@ import (
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/cri-client/pkg/logs"
 	"k8s.io/klog/v2"
+)
+
+const (
+	streamStdout = "stdout"
+	streamStderr = "stderr"
 )
 
 var logsCommand = &cli.Command{
@@ -75,6 +81,11 @@ var logsCommand = &cli.Command{
 			Aliases: []string{"t"},
 			Usage:   "Show timestamps",
 		},
+		&cli.StringFlag{
+			Name:    "stream",
+			Aliases: []string{"s"},
+			Usage:   "Show specified stream (stdout or stderr). Defaults to both.",
+		},
 	},
 	Action: func(c *cli.Context) (retErr error) {
 		containerID := c.Args().First()
@@ -108,6 +119,17 @@ var logsCommand = &cli.Command{
 		}
 		timestamp := c.Bool("timestamps")
 		previous := c.Bool("previous")
+		stream := c.String("stream")
+
+		switch stream {
+		case streamStdout, streamStderr, "":
+		default:
+			return fmt.Errorf(`invalid stream %q, must be "stdout" or "stderr"`, stream)
+		}
+		if c.IsSet("tail") && c.IsSet("stream") {
+			return errors.New("--tail and --stream are mutually exclusive")
+		}
+
 		logOptions := logs.NewLogOptions(&v1.PodLogOptions{
 			Follow:     c.Bool("follow"),
 			TailLines:  &tailLines,
@@ -153,7 +175,19 @@ var logsCommand = &cli.Command{
 			cancelFn()
 		}()
 		logger := klog.Background()
-		return logs.ReadLogs(readLogCtx, &logger, logPath, status.GetStatus().GetId(), logOptions, runtimeService, os.Stdout, os.Stderr)
+
+		var (
+			stdoutStream io.Writer = os.Stdout
+			stderrStream io.Writer = os.Stderr
+		)
+		switch stream {
+		case streamStdout:
+			stderrStream = nil
+		case streamStderr:
+			stdoutStream = nil
+		}
+
+		return logs.ReadLogs(readLogCtx, &logger, logPath, status.GetStatus().GetId(), logOptions, runtimeService, stdoutStream, stderrStream)
 	},
 }
 
