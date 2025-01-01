@@ -4,6 +4,7 @@
 [![Test Go](https://github.com/invopop/jsonschema/actions/workflows/test.yaml/badge.svg)](https://github.com/invopop/jsonschema/actions/workflows/test.yaml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/invopop/jsonschema)](https://goreportcard.com/report/github.com/invopop/jsonschema)
 [![GoDoc](https://godoc.org/github.com/invopop/jsonschema?status.svg)](https://godoc.org/github.com/invopop/jsonschema)
+[![codecov](https://codecov.io/gh/invopop/jsonschema/graph/badge.svg?token=JMEB8W8GNZ)](https://codecov.io/gh/invopop/jsonschema)
 ![Latest Tag](https://img.shields.io/github/v/tag/invopop/jsonschema)
 
 This package can be used to generate [JSON Schemas](http://json-schema.org/latest/json-schema-validation.html) from Go types through reflection.
@@ -52,10 +53,10 @@ jsonschema.Reflect(&TestUser{})
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/invopop/jsonschema_test/sample-user",
-  "$ref": "#/$defs/SampleUser",
+  "$id": "https://github.com/invopop/jsonschema_test/test-user",
+  "$ref": "#/$defs/TestUser",
   "$defs": {
-    "SampleUser": {
+    "TestUser": {
       "oneOf": [
         {
           "required": ["birth_date"],
