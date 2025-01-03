@@ -1545,14 +1545,14 @@ func createContainerWithExpectation(rc internalapi.RuntimeService,
 }
 
 // checkSetHostname checks if the hostname can be set in the container.
-func checkSetHostname(rc internalapi.RuntimeService, containerID string, setable bool) {
+func checkSetHostname(rc internalapi.RuntimeService, containerID string, settable bool) {
 	By("set hostname in container to determine whether sethostname is blocked")
 
 	cmd := []string{"hostname", "ANewHostName"}
 	stdout, stderr, err := rc.ExecSync(context.TODO(), containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
 
-	if setable {
+	if settable {
 		Expect(err).NotTo(HaveOccurred(), msg)
 	} else {
 		Expect(err).To(HaveOccurred(), msg)
