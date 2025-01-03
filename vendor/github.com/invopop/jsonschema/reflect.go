@@ -143,6 +143,16 @@ type Reflector struct {
 	// AdditionalFields allows adding structfields for a given type
 	AdditionalFields func(reflect.Type) []reflect.StructField
 
+	// LookupComment allows customizing comment lookup. Given a reflect.Type and optionally
+	// a field name, it should return the comment string associated with this type or field.
+	//
+	// If the field name is empty, it should return the type's comment; otherwise, the field's
+	// comment should be returned. If no comment is found, an empty string should be returned.
+	//
+	// When set, this function is called before the below CommentMap lookup mechanism. However,
+	// if it returns an empty string, the CommentMap is still consulted.
+	LookupComment func(reflect.Type, string) string
+
 	// CommentMap is a dictionary of fully qualified go types and fields to comment
 	// strings that will be used if a description has not already been provided in
 	// the tags. Types and fields are added to the package path using "." as a
@@ -156,7 +166,7 @@ type Reflector struct {
 	//
 	//   map[string]string{"github.com/invopop/jsonschema.Reflector.DoNotReference": "Do not reference definitions."}
 	//
-	// See also: AddGoComments
+	// See also: AddGoComments, LookupComment
 	CommentMap map[string]string
 }
 
@@ -558,19 +568,6 @@ func appendUniqueString(base []string, value string) []string {
 	return append(base, value)
 }
 
-func (r *Reflector) lookupComment(t reflect.Type, name string) string {
-	if r.CommentMap == nil {
-		return ""
-	}
-
-	n := fullyQualifiedTypeName(t)
-	if name != "" {
-		n = n + "." + name
-	}
-
-	return r.CommentMap[n]
-}
-
 // addDefinition will append the provided schema. If needed, an ID and anchor will also be added.
 func (r *Reflector) addDefinition(definitions Definitions, t reflect.Type, s *Schema) {
 	name := r.typeName(t)
@@ -768,10 +765,7 @@ func (t *Schema) stringKeywords(tags []string) {
 			case "pattern":
 				t.Pattern = val
 			case "format":
-				switch val {
-				case "date-time", "email", "hostname", "ipv4", "ipv6", "uri", "uuid":
-					t.Format = val
-				}
+				t.Format = val
 			case "readOnly":
 				i, _ := strconv.ParseBool(val)
 				t.ReadOnly = i
@@ -976,6 +970,15 @@ func ignoredByJSONSchemaTags(tags []string) bool {
 	return tags[0] == "-"
 }
 
+func inlinedByJSONTags(tags []string) bool {
+	for _, tag := range tags[1:] {
+		if tag == "inline" {
+			return true
+		}
+	}
+	return false
+}
+
 // toJSONNumber converts string to *json.Number.
 // It'll aso return whether the number is valid.
 func toJSONNumber(s string) (json.Number, bool) {
@@ -1037,6 +1040,11 @@ func (r *Reflector) reflectFieldName(f reflect.StructField) (string, bool, bool,
 		}
 	}
 
+	// As per JSON Marshal rules, inline nested structs that have `inline` tag.
+	if inlinedByJSONTags(jsonTags) {
+		return "", true, false, false
+	}
+
 	// Try to determine the name from the different combos
 	name := f.Name
 	if jsonTags[0] != "" {
@@ -1087,7 +1095,7 @@ func (t *Schema) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if t.Extras == nil || len(t.Extras) == 0 {
+	if len(t.Extras) == 0 {
 		return b, nil
 	}
 	m, err := json.Marshal(t.Extras)
@@ -1137,14 +1145,4 @@ func splitOnUnescapedCommas(tagString string) []string {
 
 func fullyQualifiedTypeName(t reflect.Type) string {
 	return t.PkgPath() + "." + t.Name()
-}
-
-// AddGoComments will update the reflectors comment map with all the comments
-// found in the provided source directories. See the #ExtractGoComments method
-// for more details.
-func (r *Reflector) AddGoComments(base, path string) error {
-	if r.CommentMap == nil {
-		r.CommentMap = make(map[string]string)
-	}
-	return ExtractGoComments(base, path, r.CommentMap)
 }
