@@ -962,7 +962,7 @@ func UpdateContainerResources(client internalapi.RuntimeService, id string, opts
 		}
 	}
 	logrus.Debugf("UpdateContainerResourcesRequest: %v", request)
-	resources := &pb.ContainerResources{Linux: request.Linux}
+	resources := &pb.ContainerResources{Linux: request.Linux, Windows: request.Windows}
 	if _, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
 		return nil, client.UpdateContainerResources(ctx, id, resources)
 	}); err != nil {
