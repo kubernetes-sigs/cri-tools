@@ -166,8 +166,13 @@ var removePodCommand = &cli.Command{
 		}
 
 		funcs := []func() error{}
+		// set max concurrency to 10, to avoid too many goroutines
+		maxConcurrency := 10
+		sem := make(chan struct{}, maxConcurrency)
 		for _, id := range ids {
 			funcs = append(funcs, func() error {
+				sem <- struct{}{}
+				defer func() { <-sem }()
 				resp, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.PodSandboxStatusResponse, error) {
 					return runtimeClient.PodSandboxStatus(ctx, id, false)
 				})
