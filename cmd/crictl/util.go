@@ -492,7 +492,7 @@ func matchesRegex(pattern, target string) bool {
 }
 
 func matchesImage(imageClient internalapi.ImageManagerService, image, containerImage string) (bool, error) {
-	if image == "" {
+	if image == "" || imageClient == nil {
 		return true, nil
 	}
 	r1, err := ImageStatus(imageClient, image, false)

@@ -154,6 +154,11 @@ var runtimeExecCommand = &cli.Command{
 			return err
 		}
 
+		imageClient, err := getImageService(c)
+		if err != nil {
+			return err
+		}
+
 		// Assume a regular exec where the first arg is the container ID.
 		ids := []string{c.Args().First()}
 		cmd := c.Args().Slice()[1:]
@@ -193,7 +198,7 @@ var runtimeExecCommand = &cli.Command{
 				return err
 			}
 
-			ctrs, err := ListContainers(runtimeClient, opts)
+			ctrs, err := ListContainers(runtimeClient, imageClient, opts)
 			if err != nil {
 				return fmt.Errorf("listing containers: %w", err)
 			}
