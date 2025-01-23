@@ -47,7 +47,8 @@ func fakeContainer(name string, createdAt int64) *pb.Container {
 
 var _ = DescribeTable("getContainersList",
 	func(input []*pb.Container, options *listOptions, indexes []int) {
-		actual := getContainersList(input, options)
+		actual, err := getContainersList(nil, input, options)
+		Expect(err).NotTo(HaveOccurred())
 		var expected []*pb.Container
 		for _, i := range indexes {
 			expected = append(expected, input[i])

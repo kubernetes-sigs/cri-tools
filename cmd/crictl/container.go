@@ -532,9 +532,19 @@ var containerStatusCommand = &cli.Command{
 			Aliases: []string{"n"},
 			Usage:   "Show last n recently created containers (includes all states). Set 0 for unlimited.",
 		},
+		&cli.BoolFlag{
+			Name:    "all",
+			Aliases: []string{"a"},
+			Usage:   "Show all containers",
+		},
 	},
 	Action: func(c *cli.Context) error {
 		runtimeClient, err := getRuntimeService(c, 0)
+		if err != nil {
+			return err
+		}
+
+		imageClient, err := getImageService(c)
 		if err != nil {
 			return err
 		}
@@ -550,13 +560,14 @@ var containerStatusCommand = &cli.Command{
 				state:              c.String("state"),
 				latest:             c.Bool("latest"),
 				last:               c.Int("last"),
+				all:                c.Bool("all"),
 			}
 			opts.labels, err = parseLabelStringSlice(c.StringSlice("label"))
 			if err != nil {
 				return err
 			}
 
-			ctrs, err := ListContainers(runtimeClient, opts)
+			ctrs, err := ListContainers(runtimeClient, imageClient, opts)
 			if err != nil {
 				return fmt.Errorf("listing containers: %w", err)
 			}
@@ -1145,7 +1156,7 @@ func outputContainerStatusTable(r *pb.ContainerStatusResponse, verbose bool) {
 
 // ListContainers sends a ListContainerRequest to the server, and parses
 // the returned ListContainerResponse.
-func ListContainers(runtimeClient internalapi.RuntimeService, opts *listOptions) ([]*pb.Container, error) {
+func ListContainers(runtimeClient internalapi.RuntimeService, imageClient internalapi.ImageManagerService, opts *listOptions) ([]*pb.Container, error) {
 	filter := &pb.ContainerFilter{}
 	if opts.id != "" {
 		filter.Id = opts.id
@@ -1191,13 +1202,13 @@ func ListContainers(runtimeClient internalapi.RuntimeService, opts *listOptions)
 	if err != nil {
 		return nil, fmt.Errorf("call list containers RPC: %w", err)
 	}
-	return getContainersList(r, opts), nil
+	return getContainersList(imageClient, r, opts)
 }
 
 // OutputContainers sends a ListContainerRequest to the server, and parses
 // the returned ListContainerResponse for output.
 func OutputContainers(runtimeClient internalapi.RuntimeService, imageClient internalapi.ImageManagerService, opts *listOptions) error {
-	r, err := ListContainers(runtimeClient, opts)
+	r, err := ListContainers(runtimeClient, imageClient, opts)
 	if err != nil {
 		return fmt.Errorf("list containers: %w", err)
 	}
@@ -1218,11 +1229,6 @@ func OutputContainers(runtimeClient internalapi.RuntimeService, imageClient inte
 		display.AddRow([]string{columnContainer, columnImage, columnCreated, columnState, columnName, columnAttempt, columnPodID, columnPodName, columnNamespace})
 	}
 	for _, c := range r {
-		if match, err := matchesImage(imageClient, opts.image, c.GetImage().GetImage()); err != nil {
-			return fmt.Errorf("check image match: %w", err)
-		} else if !match {
-			continue
-		}
 		if opts.quiet {
 			fmt.Printf("%s\n", c.Id)
 			continue
@@ -1326,9 +1332,15 @@ func getFromLabels(labels map[string]string, label string) string {
 	return "unknown"
 }
 
-func getContainersList(containersList []*pb.Container, opts *listOptions) []*pb.Container {
+func getContainersList(imageClient internalapi.ImageManagerService, containersList []*pb.Container, opts *listOptions) ([]*pb.Container, error) {
 	filtered := []*pb.Container{}
 	for _, c := range containersList {
+		if match, err := matchesImage(imageClient, opts.image, c.GetImage().GetImage()); err != nil {
+			return nil, fmt.Errorf("check image match: %w", err)
+		} else if !match {
+			continue
+		}
+
 		podNamespace := getPodNamespaceFromLabels(c.Labels)
 		// Filter by pod name/namespace regular expressions.
 		if c.Metadata != nil &&
@@ -1353,5 +1365,5 @@ func getContainersList(containersList []*pb.Container, opts *listOptions) []*pb.
 		return b
 	}(n, len(filtered))
 
-	return filtered[:n]
+	return filtered[:n], nil
 }

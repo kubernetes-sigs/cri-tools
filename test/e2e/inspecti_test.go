@@ -29,7 +29,6 @@ import (
 var _ = t.Describe("inspecti", func() {
 	const (
 		imageSuccessText = "Image is up to date"
-		registry         = "gcr.io/k8s-staging-cri-tools/"
 		image1           = registry + "test-image-2"
 		image2           = registry + "test-image-3"
 	)

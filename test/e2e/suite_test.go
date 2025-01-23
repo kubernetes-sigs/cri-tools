@@ -25,6 +25,8 @@ import (
 	. "sigs.k8s.io/cri-tools/test/framework"
 )
 
+const registry = "gcr.io/k8s-staging-cri-tools/"
+
 // TestE2E runs the created specs.
 func TestE2E(t *testing.T) {
 	t.Parallel()
