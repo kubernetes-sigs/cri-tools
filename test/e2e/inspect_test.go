@@ -54,8 +54,8 @@ var _ = t.Describe("inspect", func() {
 	})
 
 	AfterEach(func() {
-		res := t.Crictl("rmp -f " + sandbox)
-		Expect(res).To(Exit(0))
+		Expect(t.Crictl("rmp -f " + sandbox)).To(Exit(0))
+		Expect(t.Crictl("rmi " + imageLatest)).To(Exit(0))
 	})
 
 	validateSingleResponse := func(contents []byte) {
