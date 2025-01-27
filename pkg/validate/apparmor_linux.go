@@ -71,6 +71,7 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 			buf, err := os.ReadFile("/sys/module/apparmor/parameters/enabled")
 			appArmorEnabled = err == nil && len(buf) > 1 && buf[0] == 'Y'
 		})
+
 		return appArmorEnabled
 	}
 
@@ -227,6 +228,7 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 
 func createContainerWithAppArmor(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, sandboxID string, sandboxConfig *runtimeapi.PodSandboxConfig, profile *runtimeapi.LinuxContainerSecurityContext, shouldSucceed bool) string {
 	By("create a container with apparmor")
+
 	containerName := "apparmor-test-" + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
@@ -241,6 +243,7 @@ func createContainerWithAppArmor(rc internalapi.RuntimeService, ic internalapi.I
 	if shouldSucceed {
 		Expect(err).ToNot(HaveOccurred())
 		By("start container with apparmor")
+
 		err := rc.StartContainer(context.TODO(), containerID)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -257,6 +260,7 @@ func createContainerWithAppArmor(rc internalapi.RuntimeService, ic internalapi.I
 
 func checkContainerApparmor(rc internalapi.RuntimeService, containerID string, shouldRun bool) {
 	By("get container status")
+
 	resp, err := rc.ContainerStatus(context.TODO(), containerID, false)
 	Expect(err).NotTo(HaveOccurred())
 
@@ -272,6 +276,7 @@ func loadTestProfiles() error {
 	if err != nil {
 		return fmt.Errorf("open temp file: %w", err)
 	}
+
 	defer os.Remove(f.Name())
 	defer f.Close()
 
@@ -290,6 +295,7 @@ func loadTestProfiles() error {
 		if stderr.Len() > 0 {
 			logrus.Warn(stderr.String())
 		}
+
 		if len(out) > 0 {
 			logrus.Infof("apparmor_parser: %s", out)
 		}

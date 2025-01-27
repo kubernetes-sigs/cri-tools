@@ -87,6 +87,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 // createSandboxWithSysctls creates a PodSandbox with specified sysctls.
 func createSandboxWithSysctls(rc internalapi.RuntimeService, sysctls map[string]string) (string, *runtimeapi.PodSandboxConfig) {
 	By("create a PodSandbox with sysctls")
+
 	podSandboxName := "pod-sandbox-with-sysctls-" + framework.NewUUID()
 	uid := framework.DefaultUIDPrefix + framework.NewUUID()
 	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
@@ -97,6 +98,7 @@ func createSandboxWithSysctls(rc internalapi.RuntimeService, sysctls map[string]
 			Sysctls:      sysctls,
 		},
 	}
+
 	return framework.RunPodSandbox(rc, podConfig), podConfig
 }
 

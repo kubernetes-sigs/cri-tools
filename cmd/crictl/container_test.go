@@ -29,10 +29,12 @@ import (
 func fakeContainersWithCreatedAtDesc(names ...string) []*pb.Container {
 	containers := make([]*pb.Container, len(names))
 	creationTime := time.Date(2023, 1, 1, 12, 0o0, 0o0, 0o0, time.UTC)
+
 	for i, name := range names {
 		containers[i] = fakeContainer(name, creationTime.UnixNano())
 		creationTime = creationTime.Truncate(time.Hour)
 	}
+
 	return containers
 }
 

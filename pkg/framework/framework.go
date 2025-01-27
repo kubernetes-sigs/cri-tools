@@ -57,6 +57,7 @@ func (f *Framework) BeforeEach() {
 	if f.CRIClient == nil {
 		c, err := LoadCRIClient()
 		Expect(err).NotTo(HaveOccurred())
+
 		f.CRIClient = c
 	}
 }

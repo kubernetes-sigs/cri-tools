@@ -62,6 +62,7 @@ var updateRuntimeConfigCommand = &cli.Command{
 		}
 
 		logrus.Info("Runtime config successfully updated")
+
 		return nil
 	},
 }

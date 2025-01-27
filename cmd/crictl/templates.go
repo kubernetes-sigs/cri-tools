@@ -31,6 +31,7 @@ func builtinTmplFuncs() template.FuncMap {
 	t := cases.Title(language.Und, cases.NoLower)
 	l := cases.Lower(language.Und)
 	u := cases.Upper(language.Und)
+
 	return template.FuncMap{
 		outputTypeJSON: jsonBuiltinTmplFunc,
 		"title":        t.String,
@@ -42,10 +43,12 @@ func builtinTmplFuncs() template.FuncMap {
 // jsonBuiltinTmplFunc allows to jsonify result of template execution.
 func jsonBuiltinTmplFunc(v interface{}) string {
 	o := new(bytes.Buffer)
+
 	enc := json.NewEncoder(o)
 	if err := enc.Encode(v); err != nil {
 		logrus.Fatalf("Unable to encode JSON: %v", err)
 	}
+
 	return o.String()
 }
 
@@ -63,6 +66,7 @@ func tmplExecuteRawJSON(tmplStr, rawJSON string) (string, error) {
 	}
 
 	o := new(bytes.Buffer)
+
 	tmpl, err := template.New("tmplExecuteRawJSON").Funcs(builtinTmplFuncs()).Parse(tmplStr)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate go-template: %w", err)
@@ -73,10 +77,12 @@ func tmplExecuteRawJSON(tmplStr, rawJSON string) (string, error) {
 	if err := tmpl.Execute(o, raw); err != nil {
 		return "", fmt.Errorf("failed to template data: %w", err)
 	}
+
 	return o.String(), nil
 }
 
 func validateTemplate(tmplStr string) error {
 	_, err := template.New("").Funcs(builtinTmplFuncs()).Parse(tmplStr)
+
 	return err
 }

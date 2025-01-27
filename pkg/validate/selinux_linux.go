@@ -159,6 +159,7 @@ var _ = framework.KubeDescribe("SELinux", func() {
 
 func createContainerWithSelinux(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, sandboxID string, sandboxConfig *runtimeapi.PodSandboxConfig, options *runtimeapi.SELinuxOption, privileged, shouldStart, shouldCreate bool) string {
 	By("create a container with selinux")
+
 	containerName := "selinux-test-" + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
@@ -171,15 +172,18 @@ func createContainerWithSelinux(rc internalapi.RuntimeService, ic internalapi.Im
 			},
 		},
 	}
+
 	containerID, err := framework.CreateContainerWithError(rc, ic, containerConfig, sandboxID, sandboxConfig)
 	if !shouldCreate {
 		Expect(err).To(HaveOccurred())
+
 		return ""
 	}
 
 	Expect(err).NotTo(HaveOccurred())
 
 	By("start container with selinux")
+
 	err = rc.StartContainer(context.TODO(), containerID)
 	if shouldStart {
 		Expect(err).NotTo(HaveOccurred())
@@ -197,6 +201,7 @@ func createContainerWithSelinux(rc internalapi.RuntimeService, ic internalapi.Im
 
 func checkContainerSelinux(rc internalapi.RuntimeService, containerID string, shouldRun bool) {
 	By("get container status")
+
 	status, err := rc.ContainerStatus(context.TODO(), containerID, false)
 	Expect(err).NotTo(HaveOccurred())
 
@@ -204,6 +209,7 @@ func checkContainerSelinux(rc internalapi.RuntimeService, containerID string, sh
 		Expect(status.GetStatus().GetExitCode()).To(Equal(int32(0)))
 	} else {
 		Expect(status.GetStatus().GetExitCode()).NotTo(Equal(int32(0)))
+
 		return
 	}
 
@@ -236,6 +242,7 @@ func checkProcessLabelRoleType(rc internalapi.RuntimeService, containerID string
 	label := strings.Trim(string(stdout), "\x00")
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
 	Expect(err).NotTo(HaveOccurred(), msg)
+
 	if privileged {
 		Expect(label).To(ContainSubstring(":system_r:spc_t:"))
 	} else {
@@ -260,6 +267,7 @@ func checkProcessLabelMCS(rc internalapi.RuntimeService, containerID string, pri
 	label := strings.Trim(string(stdout), "\x00")
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
 	Expect(err).NotTo(HaveOccurred(), msg)
+
 	if privileged {
 		// check that a process label exists with optional MCS, where level is always s0 and we permit all categories
 		Expect(label).To(MatchRegexp(`:s0(-s0)?(:c0\.c1023)?$`))
@@ -267,5 +275,6 @@ func checkProcessLabelMCS(rc internalapi.RuntimeService, containerID string, pri
 		// check that a process label exists with MCS, where level is always s0 and there are two or more categories
 		Expect(label).To(MatchRegexp(`:s0(-s0)?:c[0-9]+(,c[0-9]+)+$`))
 	}
+
 	return label
 }

@@ -40,6 +40,7 @@ var _ = t.Describe("config", func() {
 	listConfig := func() string {
 		res := t.Crictl("--config " + configFile.Name() + " config --list")
 		Expect(res).To(Exit(0))
+
 		return string(res.Out.Contents())
 	}
 

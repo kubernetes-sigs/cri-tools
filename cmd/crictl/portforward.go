@@ -88,6 +88,7 @@ var runtimePortForwardCommand = &cli.Command{
 		if err = PortForward(runtimeClient, opts); err != nil {
 			return fmt.Errorf("port forward: %w", err)
 		}
+
 		return nil
 	},
 }
@@ -97,14 +98,17 @@ func PortForward(client internalapi.RuntimeService, opts portforwardOptions) err
 	if opts.id == "" {
 		return errors.New("ID cannot be empty")
 	}
+
 	request := &pb.PortForwardRequest{
 		PodSandboxId: opts.id,
 	}
 	logrus.Debugf("PortForwardRequest: %v", request)
+
 	r, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.PortForwardResponse, error) {
 		return client.PortForward(ctx, request)
 	})
 	logrus.Debugf("PortForwardResponse; %v", r)
+
 	if err != nil {
 		return err
 	}
@@ -123,6 +127,7 @@ func PortForward(client internalapi.RuntimeService, opts portforwardOptions) err
 	}
 
 	logrus.Debugf("PortForward URL: %v", parsedURL)
+
 	dialer, err := getDialer(opts.transport, parsedURL, opts.tlsConfig)
 	if err != nil {
 		return fmt.Errorf("get dialer: %w", err)
@@ -131,10 +136,12 @@ func PortForward(client internalapi.RuntimeService, opts portforwardOptions) err
 	readyChan := make(chan struct{})
 
 	logrus.Debugf("Ports to forward: %v", opts.ports)
+
 	pf, err := portforward.New(dialer, opts.ports, SetupInterruptSignalHandler(), readyChan, os.Stdout, os.Stderr)
 	if err != nil {
 		return err
 	}
+
 	return pf.ForwardPorts()
 }
 
@@ -147,6 +154,7 @@ func getDialer(transport string, parsedURL *url.URL, tlsConfig *rest.TLSClientCo
 		if err != nil {
 			return nil, fmt.Errorf("get SPDY round tripper: %w", err)
 		}
+
 		return spdy.NewDialer(upgrader, &http.Client{Transport: tr}, "POST", parsedURL), nil
 
 	case transportWebsocket:

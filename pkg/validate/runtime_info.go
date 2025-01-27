@@ -64,6 +64,7 @@ func TestGetVersion(c internalapi.RuntimeService) {
 // TestGetRuntimeStatus test if we can get runtime status.
 func TestGetRuntimeStatus(c internalapi.RuntimeService) {
 	var count int
+
 	status, err := c.Status(context.TODO(), false)
 	framework.ExpectNoError(err, "failed to get runtime conditions: %v", err)
 
@@ -71,10 +72,12 @@ func TestGetRuntimeStatus(c internalapi.RuntimeService) {
 		if condition.Type == "RuntimeReady" && condition.Status {
 			count++
 		}
+
 		if condition.Type == "NetworkReady" && condition.Status {
 			count++
 		}
 	}
+
 	Expect(count).To(BeNumerically(">=", 2), "should return all the required runtime conditions")
 }
 
@@ -82,5 +85,6 @@ func TestGetRuntimeStatus(c internalapi.RuntimeService) {
 func getVersion(c internalapi.RuntimeService) *runtimeapi.VersionResponse {
 	version, err := c.Version(context.TODO(), defaultAPIVersion)
 	framework.ExpectNoError(err, "failed to get version: %v", err)
+
 	return version
 }

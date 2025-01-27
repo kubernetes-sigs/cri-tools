@@ -74,6 +74,7 @@ func getRuntimeService(_ *cli.Context, timeout time.Duration) (res internalapi.R
 	if RuntimeEndpointIsSet && RuntimeEndpoint == "" {
 		return nil, errors.New("--runtime-endpoint is not set")
 	}
+
 	logrus.Debug("Get runtime connection")
 
 	// Check if a custom timeout is provided.
@@ -81,6 +82,7 @@ func getRuntimeService(_ *cli.Context, timeout time.Duration) (res internalapi.R
 	if timeout != 0 {
 		t = timeout
 	}
+
 	logrus.Debugf("Using runtime connection timeout: %v", t)
 
 	// Use the noop tracer provider and not tracerProvider directly, otherwise
@@ -107,14 +109,18 @@ func getRuntimeService(_ *cli.Context, timeout time.Duration) (res internalapi.R
 			res, err = remote.NewRemoteRuntimeService(endPoint, t, tp, &logger)
 			if err != nil {
 				logrus.Error(err)
+
 				continue
 			}
 
 			logrus.Debugf("Connected successfully using endpoint: %s", endPoint)
+
 			break
 		}
+
 		return res, err
 	}
+
 	return remote.NewRemoteRuntimeService(RuntimeEndpoint, t, tp, &logger)
 }
 
@@ -123,6 +129,7 @@ func getImageService(*cli.Context) (res internalapi.ImageManagerService, err err
 		if RuntimeEndpointIsSet && RuntimeEndpoint == "" {
 			return nil, errors.New("--image-endpoint is not set")
 		}
+
 		ImageEndpoint = RuntimeEndpoint
 		ImageEndpointIsSet = RuntimeEndpointIsSet
 	}
@@ -153,14 +160,18 @@ func getImageService(*cli.Context) (res internalapi.ImageManagerService, err err
 			res, err = remote.NewRemoteImageService(endPoint, Timeout, tp, &logger)
 			if err != nil {
 				logrus.Error(err)
+
 				continue
 			}
 
 			logrus.Debugf("Connected successfully using endpoint: %s", endPoint)
+
 			break
 		}
+
 		return res, err
 	}
+
 	return remote.NewRemoteImageService(ImageEndpoint, Timeout, tp, &logger)
 }
 
@@ -292,6 +303,7 @@ func main() {
 
 	app.Before = func(context *cli.Context) (err error) {
 		var config *common.ServerConfiguration
+
 		var exePath string
 
 		cpuProfilePath := context.String("profile-cpu")
@@ -316,6 +328,7 @@ func main() {
 		if exePath, err = os.Executable(); err != nil {
 			logrus.Fatal(err)
 		}
+
 		if config, err = common.GetServerConfigFromFile(context.String("config"), exePath); err != nil {
 			if context.IsSet("config") {
 				logrus.Fatal(err)
@@ -324,18 +337,23 @@ func main() {
 
 		if config == nil {
 			RuntimeEndpoint = context.String("runtime-endpoint")
+
 			if context.IsSet("runtime-endpoint") {
 				RuntimeEndpointIsSet = true
 			}
+
 			ImageEndpoint = context.String("image-endpoint")
+
 			if context.IsSet("image-endpoint") {
 				ImageEndpointIsSet = true
 			}
+
 			if context.IsSet("timeout") {
 				Timeout = getTimeout(context.Duration("timeout"))
 			} else {
 				Timeout = context.Duration("timeout")
 			}
+
 			Debug = context.Bool("debug")
 			DisablePullOnRun = false
 		} else {
@@ -349,6 +367,7 @@ func main() {
 			} else {
 				RuntimeEndpoint = context.String("runtime-endpoint")
 			}
+
 			if context.IsSet("image-endpoint") { //nolint:gocritic
 				ImageEndpoint = context.String("image-endpoint")
 				ImageEndpointIsSet = true
@@ -358,6 +377,7 @@ func main() {
 			} else {
 				ImageEndpoint = context.String("image-endpoint")
 			}
+
 			if context.IsSet("timeout") { //nolint:gocritic
 				Timeout = getTimeout(context.Duration("timeout"))
 			} else if config.Timeout > 0 { // 0/neg value set to default timeout
@@ -365,11 +385,13 @@ func main() {
 			} else {
 				Timeout = context.Duration("timeout")
 			}
+
 			if context.IsSet("debug") {
 				Debug = context.Bool("debug")
 			} else {
 				Debug = config.Debug
 			}
+
 			PullImageOnCreate = config.PullImageOnCreate
 			DisablePullOnRun = config.DisablePullOnRun
 		}
@@ -424,6 +446,7 @@ func main() {
 	for _, cmd := range app.Commands {
 		sort.Sort(cli.FlagsByName(cmd.Flags))
 	}
+
 	sort.Sort(cli.FlagsByName(app.Flags))
 
 	if err := app.Run(os.Args); err != nil {
@@ -434,6 +457,7 @@ func main() {
 	if tracerProvider != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), Timeout)
 		defer cancel()
+
 		if err := tracerProvider.Shutdown(ctx); err != nil {
 			logrus.Errorf("Unable to shutdown tracer provider: %v", err)
 		}

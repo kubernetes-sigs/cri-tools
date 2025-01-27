@@ -153,6 +153,7 @@ func createExec(c internalapi.RuntimeService, execReq *runtimeapi.ExecRequest) s
 	resp, err := c.Exec(context.TODO(), execReq)
 	framework.ExpectNoError(err, "failed to exec in container %q", execReq.ContainerId)
 	framework.Logf("Get exec URL: " + resp.Url)
+
 	return resp.Url
 }
 
@@ -170,12 +171,14 @@ func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, stdou
 	go func() {
 		defer wg.Done()
 		defer localInWrite.Close()
+
 		ticker := time.NewTicker(defaultExecStdinCloseTimeout)
 		select {
 		case <-testDone:
 		case <-ticker.C:
 		}
 	}()
+
 	defer func() {
 		close(testDone)
 		wg.Wait()
@@ -208,6 +211,7 @@ func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, stdou
 	} else {
 		Expect(localOut.String()).To(ContainSubstring(stdout), "The stdout of exec should contain "+stdout)
 	}
+
 	Expect(localErr.String()).To(BeEmpty(), "The stderr of exec should be empty")
 	framework.Logf("Check exec URL %q succeed", execServerURL)
 }
@@ -221,6 +225,7 @@ func parseURL(c internalapi.RuntimeService, serverURL string) *url.URL {
 		if parsedURL.Host == "" {
 			parsedURL.Host = defaultStreamServerAddress
 		}
+
 		if parsedURL.Scheme == "" {
 			parsedURL.Scheme = defaultStreamServerScheme
 		}
@@ -228,6 +233,7 @@ func parseURL(c internalapi.RuntimeService, serverURL string) *url.URL {
 
 	Expect(parsedURL.Host).NotTo(BeEmpty(), "The host of URL should not be empty")
 	framework.Logf("Parse URL %q succeed", serverURL)
+
 	return parsedURL
 }
 
@@ -244,6 +250,7 @@ func createDefaultAttach(c internalapi.RuntimeService, containerID string) strin
 	resp, err := c.Attach(context.TODO(), req)
 	framework.ExpectNoError(err, "failed to attach in container %q", containerID)
 	framework.Logf("Get attach URL: " + resp.Url)
+
 	return resp.Url
 }
 
@@ -258,6 +265,7 @@ type safeBuffer struct {
 func (s *safeBuffer) Write(p []byte) (n int, err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	return s.buffer.Write(p)
 }
 
@@ -266,6 +274,7 @@ func (s *safeBuffer) Write(p []byte) (n int, err error) {
 func (s *safeBuffer) String() string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	return s.buffer.String()
 }
 
@@ -273,16 +282,21 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 	localOut := &safeBuffer{buffer: bytes.Buffer{}}
 	localErr := &safeBuffer{buffer: bytes.Buffer{}}
 	reader, writer := io.Pipe()
+
 	go func() {
 		defer GinkgoRecover()
 		defer writer.Close()
+
 		header := localOut.String()
+
 		time.Sleep(1 * time.Second)
 		Eventually(func() bool {
 			oldHeader := header
 			header = localOut.String()
+
 			return len(header) == len(oldHeader)
 		}, 10*time.Second, time.Second).Should(BeTrue(), "The container should stop output when there is no input")
+
 		_, err := writer.Write([]byte(strings.Join(echoHelloCmd, " ") + "\n"))
 		Expect(err).NotTo(HaveOccurred())
 		Eventually(func() string {
@@ -323,6 +337,7 @@ func createDefaultPortForward(c internalapi.RuntimeService, podID string) string
 	resp, err := c.PortForward(context.TODO(), req)
 	framework.ExpectNoError(err, "failed to port forward PodSandbox %q", podID)
 	framework.Logf("Get port forward URL: " + resp.Url)
+
 	return resp.Url
 }
 
@@ -333,6 +348,7 @@ func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string, 
 
 	transport, upgrader, err := spdy.RoundTripperFor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}})
 	framework.ExpectNoError(err, "failed to create spdy round tripper")
+
 	parsedURL := parseURL(c, portForwardSeverURL)
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", parsedURL)
 
@@ -345,6 +361,7 @@ func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string, 
 	go func() {
 		defer GinkgoRecover()
 		By("start port forward")
+
 		err := pf.ForwardPorts()
 		framework.ExpectNoError(err, "failed to start port forward for %q, stdout: %s, stderr: %s", portForwardSeverURL, stdout.String(), stderr.String())
 	}()

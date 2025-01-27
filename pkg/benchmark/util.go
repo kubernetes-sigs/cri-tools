@@ -94,14 +94,17 @@ func NewLifecycleBenchmarksResultsManager(initialResultsSet LifecycleBenchmarksR
 	if lbrm.resultsSet.Datapoints == nil {
 		lbrm.resultsSet.Datapoints = make([]LifecycleBenchmarkDatapoint, 0)
 	}
+
 	return &lbrm
 }
 
 // Function which continuously consumes results from the resultsChannel until receiving a nil.
 func (lbrm *LifecycleBenchmarksResultsManager) awaitResult() {
 	numOperations := len(lbrm.resultsSet.OperationsNames)
+
 	for {
 		var res *LifecycleBenchmarkDatapoint
+
 		timeout := time.After(time.Duration(lbrm.resultsChannelTimeoutSeconds) * time.Second)
 
 		select {
@@ -109,8 +112,10 @@ func (lbrm *LifecycleBenchmarksResultsManager) awaitResult() {
 			// Receiving nil indicates results are over:
 			if res == nil {
 				logrus.Info("Results ended")
+
 				lbrm.resultsConsumerRunning = false
 				lbrm.resultsOverChannel <- true
+
 				return
 			}
 
@@ -138,6 +143,7 @@ func (lbrm *LifecycleBenchmarksResultsManager) StartResultsConsumer() chan *Life
 		lbrm.resultsConsumerRunning = true
 		go lbrm.awaitResult()
 	}
+
 	return lbrm.resultsChannel
 }
 
@@ -151,9 +157,11 @@ func (lbrm *LifecycleBenchmarksResultsManager) AwaitAllResults(timeoutSeconds in
 	select {
 	case <-lbrm.resultsOverChannel:
 		lbrm.resultsConsumerRunning = false
+
 		return nil
 	case <-timeout:
 		logrus.Warnf("Failed to await all results. Results registered so far were: %+v", lbrm.resultsSet)
+
 		return fmt.Errorf("benchmark results waiting timed out after %d seconds", timeoutSeconds)
 	}
 }

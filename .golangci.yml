@@ -64,6 +64,7 @@ linters:
     - nestif
     - nilerr
     - nilnesserr
+    - nlreturn
     - noctx
     - nolintlint
     - nosprintfhostport
@@ -97,6 +98,7 @@ linters:
     - usetesting
     - wastedassign
     - whitespace
+    - wsl
     - zerologlint
     # - depguard
     # - err113
@@ -110,12 +112,10 @@ linters:
     # - lll
     # - mnd
     # - nilnil
-    # - nlreturn
     # - nonamedreturns
     # - testpackage
     # - varnamelen
     # - wrapcheck
-    # - wsl
 linters-settings:
   stylecheck:
     checks:

@@ -45,9 +45,11 @@ func (a imageByRef) Less(i, j int) bool {
 	if len(a[i].RepoTags) > 0 && len(a[j].RepoTags) > 0 {
 		return a[i].RepoTags[0] < a[j].RepoTags[0]
 	}
+
 	if len(a[i].RepoDigests) > 0 && len(a[j].RepoDigests) > 0 {
 		return a[i].RepoDigests[0] < a[j].RepoDigests[0]
 	}
+
 	return a[i].Id < a[j].Id
 }
 
@@ -138,6 +140,7 @@ var pullImageCommand = &cli.Command{
 			return fmt.Errorf("pulling image: %w", err)
 		}
 		fmt.Printf("Image is up to date for %s\n", r.ImageRef)
+
 		return nil
 	},
 }
@@ -225,6 +228,7 @@ var listImageCommand = &cli.Command{
 		for _, image := range r.Images {
 			if quiet {
 				fmt.Printf("%s\n", image.Id)
+
 				continue
 			}
 			if !verbose {
@@ -247,6 +251,7 @@ var listImageCommand = &cli.Command{
 					}
 					display.AddRow(row)
 				}
+
 				continue
 			}
 			fmt.Printf("ID: %s\n", image.Id)
@@ -271,6 +276,7 @@ var listImageCommand = &cli.Command{
 			fmt.Printf("\n")
 		}
 		display.Flush()
+
 		return nil
 	},
 }
@@ -332,6 +338,7 @@ var imageStatusCommand = &cli.Command{
 
 		if len(ids) == 0 {
 			logrus.Error("No IDs provided or nothing found per filter")
+
 			return cli.ShowSubcommandHelp(c)
 		}
 
@@ -365,14 +372,18 @@ var imageStatusCommand = &cli.Command{
 func outputImageStatusTable(r *pb.ImageStatusResponse, verbose bool) {
 	// otherwise output in table format
 	fmt.Printf("ID: %s\n", r.Image.Id)
+
 	for _, tag := range r.Image.RepoTags {
 		fmt.Printf("Tag: %s\n", tag)
 	}
+
 	for _, digest := range r.Image.RepoDigests {
 		fmt.Printf("Digest: %s\n", digest)
 	}
+
 	size := units.HumanSizeWithPrecision(float64(r.Image.GetSize_()), 3)
 	fmt.Printf("Size: %s\n", size)
+
 	if verbose {
 		fmt.Printf("Info: %v\n", r.GetInfo())
 	}
@@ -422,6 +433,7 @@ var removeImageCommand = &cli.Command{
 				// Pinned images should not be removed on prune.
 				if prune && img.Pinned {
 					logrus.Debugf("Excluding pinned container image: %v", img.GetId())
+
 					continue
 				}
 				logrus.Debugf("Adding container image to be removed: %v", img.GetId())
@@ -451,6 +463,7 @@ var removeImageCommand = &cli.Command{
 						"image status request for %q failed: %v",
 						img, err,
 					)
+
 					continue
 				}
 				id := imageStatus.GetImage().GetId()
@@ -462,8 +475,10 @@ var removeImageCommand = &cli.Command{
 		if len(ids) == 0 {
 			if all || prune {
 				logrus.Info("No images to remove")
+
 				return nil
 			}
+
 			return cli.ShowSubcommandHelp(cliCtx)
 		}
 
@@ -487,6 +502,7 @@ var removeImageCommand = &cli.Command{
 					if !prune {
 						return fmt.Errorf("error of removing image %q: %w", id, err)
 					}
+
 					return nil
 				}
 				if len(status.Image.RepoTags) == 0 {
@@ -495,11 +511,13 @@ var removeImageCommand = &cli.Command{
 					for _, repoDigest := range status.Image.RepoDigests {
 						fmt.Printf("Deleted: %s\n", repoDigest)
 					}
+
 					return nil
 				}
 				for _, repoTag := range status.Image.RepoTags {
 					fmt.Printf("Deleted: %s\n", repoTag)
 				}
+
 				return nil
 			})
 		}
@@ -557,6 +575,7 @@ var imageFsInfoCommand = &cli.Command{
 func outputImageFsInfoTable(r *pb.ImageFsInfoResponse) {
 	tablePrintFileSystem := func(fileLabel string, filesystem []*pb.FilesystemUsage) {
 		fmt.Printf("%s Filesystem \n", fileLabel)
+
 		for i, val := range filesystem {
 			fmt.Printf("TimeStamp[%d]: %d\n", i, val.Timestamp)
 			fmt.Printf("Disk[%d]: %s\n", i, units.HumanSize(float64(val.UsedBytes.GetValue())))
@@ -573,48 +592,61 @@ func parseCreds(creds string) (username, password string, err error) {
 	if creds == "" {
 		return "", "", errors.New("credentials can't be empty")
 	}
+
 	up := strings.SplitN(creds, ":", 2)
 	if len(up) == 1 {
 		return up[0], "", nil
 	}
+
 	if up[0] == "" {
 		return "", "", errors.New("username can't be empty")
 	}
+
 	return up[0], up[1], nil
 }
 
 func getAuth(creds, auth, username string) (*pb.AuthConfig, error) {
 	if username != "" {
 		fmt.Print("Enter Password:")
+
 		bytePassword, err := term.ReadPassword(int(syscall.Stdin)) //nolint:unconvert // required for windows
+
 		fmt.Print("\n")
+
 		if err != nil {
 			return nil, err
 		}
+
 		password := string(bytePassword)
+
 		return &pb.AuthConfig{
 			Username: username,
 			Password: password,
 		}, nil
 	}
+
 	if creds != "" && auth != "" {
 		return nil, errors.New("both `--creds` and `--auth` are specified")
 	}
+
 	if creds != "" {
 		username, password, err := parseCreds(creds)
 		if err != nil {
 			return nil, err
 		}
+
 		return &pb.AuthConfig{
 			Username: username,
 			Password: password,
 		}, nil
 	}
+
 	if auth != "" {
 		return &pb.AuthConfig{
 			Auth: auth,
 		}, nil
 	}
+
 	return nil, nil
 }
 
@@ -624,20 +656,26 @@ func normalizeRepoTagPair(repoTags []string, imageName string) (repoTagPairs [][
 	const none = "<none>"
 	if len(repoTags) == 0 {
 		repoTagPairs = append(repoTagPairs, []string{imageName, none})
+
 		return
 	}
+
 	for _, repoTag := range repoTags {
 		idx := strings.LastIndex(repoTag, ":")
 		if idx == -1 {
 			repoTagPairs = append(repoTagPairs, []string{"errorRepoTag", "errorRepoTag"})
+
 			continue
 		}
+
 		name := repoTag[:idx]
 		if name == none {
 			name = imageName
 		}
+
 		repoTagPairs = append(repoTagPairs, []string{name, repoTag[idx+1:]})
 	}
+
 	return
 }
 
@@ -645,10 +683,12 @@ func normalizeRepoDigest(repoDigests []string) (repo, digest string) {
 	if len(repoDigests) == 0 {
 		return "<none>", "<none>"
 	}
+
 	repoDigestPair := strings.Split(repoDigests[0], "@")
 	if len(repoDigestPair) != 2 {
 		return "errorName", "errorRepoDigest"
 	}
+
 	return repoDigestPair[0], repoDigestPair[1]
 }
 
@@ -674,6 +714,7 @@ func PullImageWithSandbox(client internalapi.ImageManagerService, image string, 
 
 	if timeout > 0 {
 		logrus.Debugf("Using pull context with timeout of %s", timeout)
+
 		ctx, cancel = context.WithTimeout(ctx, timeout)
 		defer cancel()
 	}
@@ -684,8 +725,10 @@ func PullImageWithSandbox(client internalapi.ImageManagerService, image string, 
 	if err != nil {
 		return nil, err
 	}
+
 	resp := &pb.PullImageResponse{ImageRef: res}
 	logrus.Debugf("PullImageResponse: %v", resp)
+
 	return resp, nil
 }
 
@@ -694,12 +737,14 @@ func PullImageWithSandbox(client internalapi.ImageManagerService, image string, 
 func ListImages(client internalapi.ImageManagerService, nameFilter string, conditionFilters []string) (*pb.ListImagesResponse, error) {
 	request := &pb.ListImagesRequest{Filter: &pb.ImageFilter{Image: &pb.ImageSpec{Image: nameFilter}}}
 	logrus.Debugf("ListImagesRequest: %v", request)
+
 	res, err := InterruptableRPC(nil, func(ctx context.Context) ([]*pb.Image, error) {
 		return client.ListImages(ctx, request.Filter)
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	resp := &pb.ListImagesResponse{Images: res}
 	logrus.Debugf("ListImagesResponse: %v", resp)
 
@@ -719,6 +764,7 @@ func ListImages(client internalapi.ImageManagerService, nameFilter string, condi
 func filterImagesList(imageList []*pb.Image, filters []string) ([]*pb.Image, error) {
 	filtered := []*pb.Image{}
 	filtered = append(filtered, imageList...)
+
 	for _, filter := range filters {
 		switch {
 		case strings.HasPrefix(filter, "before="):
@@ -739,19 +785,23 @@ func filterImagesList(imageList []*pb.Image, filters []string) ([]*pb.Image, err
 			return []*pb.Image{}, fmt.Errorf("unknown filter flag: %s", filter)
 		}
 	}
+
 	return filtered, nil
 }
 
 func filterByBeforeSince(filterValue string, imageList []*pb.Image) []*pb.Image {
 	filtered := []*pb.Image{}
+
 	for _, img := range imageList {
 		// Filter by <image-name>[:<tag>]
 		if strings.Contains(filterValue, ":") && !strings.Contains(filterValue, "@") {
 			imageName, _ := normalizeRepoDigest(img.RepoDigests)
+
 			repoTagPairs := normalizeRepoTagPair(img.RepoTags, imageName)
 			if strings.Join(repoTagPairs[0], ":") == filterValue {
 				break
 			}
+
 			filtered = append(filtered, img)
 		}
 		// Filter by <image id>
@@ -759,6 +809,7 @@ func filterByBeforeSince(filterValue string, imageList []*pb.Image) []*pb.Image 
 			if strings.HasPrefix(img.Id, filterValue) {
 				break
 			}
+
 			filtered = append(filtered, img)
 		}
 		// Filter by <image@sha>
@@ -767,6 +818,7 @@ func filterByBeforeSince(filterValue string, imageList []*pb.Image) []*pb.Image 
 				if strings.HasPrefix(img.RepoDigests[0], filterValue) {
 					break
 				}
+
 				filtered = append(filtered, img)
 			}
 		}
@@ -777,10 +829,12 @@ func filterByBeforeSince(filterValue string, imageList []*pb.Image) []*pb.Image 
 
 func filterByReference(filterValue string, imageList []*pb.Image) ([]*pb.Image, error) {
 	filtered := []*pb.Image{}
+
 	re, err := regexp.Compile(filterValue)
 	if err != nil {
 		return filtered, err
 	}
+
 	for _, img := range imageList {
 		imgName, _ := normalizeRepoDigest(img.RepoDigests)
 		if re.MatchString(imgName) || imgName == filterValue {
@@ -793,10 +847,12 @@ func filterByReference(filterValue string, imageList []*pb.Image) ([]*pb.Image, 
 
 func filterByDangling(filterValue string, imageList []*pb.Image) []*pb.Image {
 	filtered := []*pb.Image{}
+
 	for _, img := range imageList {
 		if filterValue == "true" && len(img.RepoTags) == 0 {
 			filtered = append(filtered, img)
 		}
+
 		if filterValue == "false" && len(img.RepoTags) > 0 {
 			filtered = append(filtered, img)
 		}
@@ -813,13 +869,16 @@ func ImageStatus(client internalapi.ImageManagerService, image string, verbose b
 		Verbose: verbose,
 	}
 	logrus.Debugf("ImageStatusRequest: %v", request)
+
 	res, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.ImageStatusResponse, error) {
 		return client.ImageStatus(ctx, request.Image, request.Verbose)
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	logrus.Debugf("ImageStatusResponse: %v", res)
+
 	return res, nil
 }
 
@@ -829,11 +888,14 @@ func RemoveImage(client internalapi.ImageManagerService, image string) error {
 	if image == "" {
 		return errors.New("ImageID cannot be empty")
 	}
+
 	request := &pb.RemoveImageRequest{Image: &pb.ImageSpec{Image: image}}
 	logrus.Debugf("RemoveImageRequest: %v", request)
+
 	_, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.RemoveImageResponse, error) {
 		return nil, client.RemoveImage(ctx, request.Image)
 	})
+
 	return err
 }
 
@@ -846,10 +908,12 @@ func ImageFsInfo(client internalapi.ImageManagerService) (*pb.ImageFsInfoRespons
 	if err != nil {
 		return nil, err
 	}
+
 	resp := &pb.ImageFsInfoResponse{
 		ImageFilesystems:     res.GetImageFilesystems(),
 		ContainerFilesystems: res.GetContainerFilesystems(),
 	}
 	logrus.Debugf("ImageFsInfoResponse: %v", resp)
+
 	return resp, nil
 }

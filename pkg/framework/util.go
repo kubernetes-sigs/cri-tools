@@ -126,6 +126,7 @@ var _ = BeforeSuite(func() {
 // AddBeforeSuiteCallback adds a callback to run during BeforeSuite.
 func AddBeforeSuiteCallback(callback func()) bool {
 	beforeSuiteCallbacks = append(beforeSuiteCallbacks, callback)
+
 	return true
 }
 
@@ -146,6 +147,7 @@ func LoadCRIClient() (*InternalAPIClient, error) {
 		// Fallback to runtime service endpoint
 		imageServiceAddr = TestContext.RuntimeServiceAddr
 	}
+
 	iService, err := remote.NewRemoteImageService(imageServiceAddr, TestContext.ImageServiceTimeout, nil, nil)
 	if err != nil {
 		return nil, err
@@ -182,6 +184,7 @@ func ExpectNoError(err error, explain ...interface{}) {
 	if err != nil {
 		Logf("Unexpected error occurred: %v", err)
 	}
+
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), explain...)
 }
 
@@ -202,6 +205,7 @@ func RunDefaultPodSandbox(c internalapi.RuntimeService, prefix string) string {
 		},
 		Labels: DefaultPodLabels,
 	}
+
 	return RunPodSandbox(c, config)
 }
 
@@ -219,6 +223,7 @@ func BuildPodSandboxMetadata(podSandboxName, uid, namespace string, attempt uint
 func RunPodSandbox(c internalapi.RuntimeService, config *runtimeapi.PodSandboxConfig) string {
 	podID, err := c.RunPodSandbox(context.TODO(), config, TestContext.RuntimeHandler)
 	ExpectNoError(err, "failed to create PodSandbox: %v", err)
+
 	return podID
 }
 
@@ -226,6 +231,7 @@ func RunPodSandbox(c internalapi.RuntimeService, config *runtimeapi.PodSandboxCo
 func RunPodSandboxError(c internalapi.RuntimeService, config *runtimeapi.PodSandboxConfig) string {
 	podID, err := c.RunPodSandbox(context.TODO(), config, TestContext.RuntimeHandler)
 	Expect(err).To(HaveOccurred())
+
 	return podID
 }
 
@@ -243,6 +249,7 @@ func CreatePodSandboxForContainer(c internalapi.RuntimeService) (string, *runtim
 	}
 
 	podID := RunPodSandbox(c, config)
+
 	return podID, config
 }
 
@@ -292,6 +299,7 @@ func CreateContainerWithError(rc internalapi.RuntimeService, ic internalapi.Imag
 	imageName := config.Image.Image
 	if !strings.Contains(imageName, ":") {
 		imageName += ":latest"
+
 		Logf("Use latest as default image tag.")
 	}
 
@@ -305,7 +313,9 @@ func CreateContainerWithError(rc internalapi.RuntimeService, ic internalapi.Imag
 	}
 
 	By("Create container.")
+
 	containerID, err := rc.CreateContainer(context.TODO(), podID, config, podConfig)
+
 	return containerID, err
 }
 
@@ -314,6 +324,7 @@ func CreateContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerS
 	containerID, err := CreateContainerWithError(rc, ic, config, podID, podConfig)
 	ExpectNoError(err, "failed to create container: %v", err)
 	Logf("Created container %q\n", containerID)
+
 	return containerID
 }
 
@@ -325,6 +336,7 @@ func ImageStatus(c internalapi.ImageManagerService, imageName string) *runtimeap
 	}
 	status, err := c.ImageStatus(context.TODO(), imageSpec, false)
 	ExpectNoError(err, "failed to get image status: %v", err)
+
 	return status.GetImage()
 }
 
@@ -332,6 +344,7 @@ func ImageStatus(c internalapi.ImageManagerService, imageName string) *runtimeap
 func ListImage(c internalapi.ImageManagerService, filter *runtimeapi.ImageFilter) []*runtimeapi.Image {
 	images, err := c.ListImages(context.TODO(), filter)
 	ExpectNoError(err, "Failed to get image list: %v", err)
+
 	return images
 }
 
@@ -353,10 +366,12 @@ func PrepareImageName(imageName string) string {
 		ref, err = reference.ParseNamed(r)
 		ExpectNoError(err, "failed to parse new image name: %v", err)
 	}
+
 	imageName = ref.String()
 
 	if !strings.Contains(imageName, ":") {
 		imageName += ":latest"
+
 		Logf("Use latest as default image tag.")
 	}
 
@@ -373,12 +388,14 @@ func PullPublicImage(c internalapi.ImageManagerService, imageName string, podCon
 	}
 	id, err := c.PullImage(context.TODO(), imageSpec, nil, podConfig)
 	ExpectNoError(err, "failed to pull image: %v", err)
+
 	return id
 }
 
 // LoadYamlFile attempts to load the given YAML file into the given struct.
 func LoadYamlFile(filepath string, obj interface{}) error {
 	Logf("Attempting to load YAML file %q into %+v", filepath, obj)
+
 	fileContent, err := os.ReadFile(filepath)
 	if err != nil {
 		return fmt.Errorf("error reading %q file contents: %w", filepath, err)
@@ -390,5 +407,6 @@ func LoadYamlFile(filepath string, obj interface{}) error {
 	}
 
 	Logf("Successfully loaded YAML file %q into %+v", filepath, obj)
+
 	return nil
 }

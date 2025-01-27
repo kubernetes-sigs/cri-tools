@@ -69,6 +69,7 @@ func getConfigFromFile() {
 		if !isFlagSet("runtime-endpoint") && configFromFile.RuntimeEndpoint != "" {
 			framework.TestContext.RuntimeServiceAddr = configFromFile.RuntimeEndpoint
 		}
+
 		if !isFlagSet("image-endpoint") && configFromFile.ImageEndpoint != "" {
 			framework.TestContext.ImageServiceAddr = configFromFile.ImageEndpoint
 		}
@@ -77,11 +78,13 @@ func getConfigFromFile() {
 
 func isFlagSet(name string) bool {
 	found := false
+
 	flag.Visit(func(f *flag.Flag) {
 		if f.Name == name {
 			found = true
 		}
 	})
+
 	return found
 }
 
@@ -102,34 +105,41 @@ func generateTempTestName() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return filepath.Join(dir, "critest-"+string(suffix)+".test"), nil
 }
 
 func runParallelTestSuite(t *testing.T) {
 	t.Helper()
+
 	criPath, err := os.Executable()
 	if err != nil {
 		t.Fatalf("Failed to lookup path of critest: %v", err)
 	}
+
 	t.Logf("critest path: %s", criPath)
 
 	tempFileName, err := generateTempTestName()
 	if err != nil {
 		t.Fatalf("Failed to generate temp test name: %v", err)
 	}
+
 	err = os.Symlink(criPath, tempFileName)
 	if err != nil {
 		t.Fatalf("Failed to lookup path of critest: %v", err)
 	}
+
 	defer os.Remove(tempFileName)
 
 	ginkgoArgs, err := generateGinkgoRunFlags()
 	if err != nil {
 		t.Fatalf("Failed to generate ginkgo args: %v", err)
 	}
+
 	ginkgoArgs = append(ginkgoArgs, fmt.Sprintf("--nodes=%d", *parallel))
 
 	var testArgs []string
+
 	flag.Visit(func(f *flag.Flag) {
 		// NOTE(fuweid):
 		//
@@ -150,8 +160,10 @@ func runParallelTestSuite(t *testing.T) {
 		if f.Name == parallelFlag || f.Name == benchmarkFlag {
 			return
 		}
+
 		testArgs = append(testArgs, fmt.Sprintf("-%s=%s", f.Name, f.Value.String()))
 	})
+
 	var args []string
 	args = append(args, ginkgoArgs...)
 	args = append(args, tempFileName, "--")
@@ -160,6 +172,7 @@ func runParallelTestSuite(t *testing.T) {
 	cmd := exec.Command("ginkgo", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+
 	err = cmd.Run()
 	if err != nil {
 		t.Fatalf("Failed to run tests in parallel: %v", err)
@@ -179,6 +192,7 @@ func TestCRISuite(t *testing.T) {
 		if err := flag.Set("ginkgo.focus", "benchmark"); err != nil {
 			t.Fatalf("set ginkgo benchmark focus: %v", err)
 		}
+
 		if err := flag.Set("ginkgo.succinct", "true"); err != nil {
 			t.Fatalf("set ginkgo succinct: %v", err)
 		}
@@ -211,5 +225,6 @@ func generateGinkgoRunFlags() ([]string, error) {
 		"S": &suiteConfig,
 		"R": &reporterConfig,
 	}
+
 	return ginkgotypes.GenerateFlagArgs(flags, bindings)
 }

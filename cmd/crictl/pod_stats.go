@@ -134,6 +134,7 @@ func podStats(
 	if opts.id != "" {
 		filter.Id = opts.id
 	}
+
 	if opts.labels != nil {
 		filter.LabelSelector = opts.labels
 	}
@@ -143,6 +144,7 @@ func podStats(
 		opts:    opts,
 		display: newDefaultTableDisplay(),
 	}
+
 	return handleDisplay(c, client, opts.watch, d.displayPodStats)
 }
 
@@ -156,6 +158,7 @@ func (d *podStatsDisplayer) displayPodStats(
 	}
 
 	response := &pb.ListPodSandboxStatsResponse{Stats: stats}
+
 	switch d.opts.output {
 	case outputTypeJSON:
 		return outputProtobufObjAsJSON(response)
@@ -164,10 +167,12 @@ func (d *podStatsDisplayer) displayPodStats(
 	}
 
 	oldStats := make(map[string]*pb.PodSandboxStats)
+
 	for _, s := range stats {
 		if c.Err() != nil {
 			return c.Err()
 		}
+
 		oldStats[s.Attributes.Id] = s
 	}
 
@@ -179,13 +184,16 @@ func (d *podStatsDisplayer) displayPodStats(
 	}
 
 	d.display.AddRow([]string{columnPodName, columnPodID, columnCPU, columnMemory})
+
 	for _, s := range stats {
 		if c.Err() != nil {
 			return c.Err()
 		}
+
 		id := getTruncatedID(s.Attributes.Id, "")
 
 		var cpu, mem uint64
+
 		var ts int64
 
 		linux := s.GetLinux()
@@ -214,6 +222,7 @@ func (d *podStatsDisplayer) displayPodStats(
 			oldCPU   uint64
 			oldCPUTs int64
 		)
+
 		old, ok := oldStats[s.Attributes.Id]
 		if !ok {
 			// Skip new pod
@@ -222,6 +231,7 @@ func (d *podStatsDisplayer) displayPodStats(
 
 		oldLinux := old.GetLinux()
 		oldWindows := old.GetWindows()
+
 		if linux != nil {
 			oldCPUTs = oldLinux.GetCpu().GetTimestamp()
 			oldCPU = oldLinux.GetCpu().GetUsageCoreNanoSeconds().GetValue()
@@ -231,14 +241,17 @@ func (d *podStatsDisplayer) displayPodStats(
 		}
 
 		var cpuPerc float64
+
 		if cpu != 0 {
 			// Only generate cpuPerc for running sandbox
 			duration := ts - oldCPUTs
 			if duration == 0 {
 				return errors.New("cpu stat is not updated during sample")
 			}
+
 			cpuPerc = float64(cpu-oldCPU) / float64(duration) * 100
 		}
+
 		d.display.AddRow([]string{
 			s.Attributes.GetMetadata().GetName(),
 			id,
@@ -246,6 +259,7 @@ func (d *podStatsDisplayer) displayPodStats(
 			units.HumanSize(float64(mem)),
 		})
 	}
+
 	d.display.ClearScreen()
 	d.display.Flush()
 
@@ -265,6 +279,7 @@ func getPodSandboxStats(
 	if err != nil {
 		return nil, fmt.Errorf("list pod sandbox stats: %w", err)
 	}
+
 	logrus.Debugf("Stats: %v", stats)
 
 	sort.Sort(podStatsByID(stats))

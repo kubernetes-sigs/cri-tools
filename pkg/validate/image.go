@@ -158,6 +158,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 				if img.Id == id {
 					Expect(img.RepoTags).To(HaveLen(1), "Should only have 1 repo tag")
 					Expect(img.RepoTags[0]).To(Equal(testDifferentTagDifferentImageList[i]), "Repo tag should be correct")
+
 					break
 				}
 			}
@@ -181,6 +182,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 			if img.Id == ids[0] {
 				sort.Strings(img.RepoTags)
 				Expect(img.RepoTags).To(Equal(testDifferentTagSameImageList), "Should have 3 repoTags in single image")
+
 				break
 			}
 		}
@@ -193,6 +195,7 @@ func testRemoveImage(c internalapi.ImageManagerService, imageName string) {
 	removeImage(c, imageName)
 
 	By("Check image list empty")
+
 	imageStatus := framework.ImageStatus(c, imageName)
 	Expect(imageStatus).To(BeNil(), "Should have none image in list")
 }
@@ -209,6 +212,7 @@ func testPullPublicImage(c internalapi.ImageManagerService, imageName string, po
 	Expect(imageStatus).NotTo(BeNil(), "Should have one image in list")
 	Expect(imageStatus.Id).NotTo(BeNil(), "Image Id should not be nil")
 	Expect(imageStatus.Size_).NotTo(BeNil(), "Image Size should not be nil")
+
 	if statusCheck != nil {
 		statusCheck(imageStatus)
 	}
@@ -221,6 +225,7 @@ func pullImageList(c internalapi.ImageManagerService, imageList []string, podCon
 	for _, imageName := range imageList {
 		ids = append(ids, framework.PullPublicImage(c, imageName, podConfig))
 	}
+
 	return ids
 }
 

@@ -93,6 +93,7 @@ var runPodCommand = &cli.Command{
 			return fmt.Errorf("run pod sandbox: %w", err)
 		}
 		fmt.Println(podID)
+
 		return nil
 	},
 }
@@ -116,6 +117,7 @@ var stopPodCommand = &cli.Command{
 				return fmt.Errorf("stopping the pod sandbox %q: %w", id, err)
 			}
 		}
+
 		return nil
 	},
 }
@@ -160,8 +162,10 @@ var removePodCommand = &cli.Command{
 		if len(ids) == 0 {
 			if ctx.Bool("all") {
 				logrus.Info("No pods to remove")
+
 				return nil
 			}
+
 			return cli.ShowSubcommandHelp(ctx)
 		}
 
@@ -276,6 +280,7 @@ var podStatusCommand = &cli.Command{
 
 		if len(ids) == 0 {
 			logrus.Error("No IDs provided or nothing found per filter")
+
 			return cli.ShowSubcommandHelp(c)
 		}
 
@@ -376,6 +381,7 @@ var listPodCommand = &cli.Command{
 		if err = OutputPodSandboxes(runtimeClient, opts); err != nil {
 			return fmt.Errorf("listing pod sandboxes: %w", err)
 		}
+
 		return nil
 	},
 }
@@ -388,13 +394,16 @@ func RunPodSandbox(client internalapi.RuntimeService, config *pb.PodSandboxConfi
 		RuntimeHandler: runtime,
 	}
 	logrus.Debugf("RunPodSandboxRequest: %v", request)
+
 	r, err := InterruptableRPC(nil, func(ctx context.Context) (string, error) {
 		return client.RunPodSandbox(ctx, config, runtime)
 	})
 	logrus.Debugf("RunPodSandboxResponse: %v", r)
+
 	if err != nil {
 		return "", err
 	}
+
 	return r, nil
 }
 
@@ -404,7 +413,9 @@ func StopPodSandbox(client internalapi.RuntimeService, id string) error {
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
+
 	logrus.Debugf("Stopping pod sandbox: %s", id)
+
 	if _, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
 		return nil, client.StopPodSandbox(ctx, id)
 	}); err != nil {
@@ -412,6 +423,7 @@ func StopPodSandbox(client internalapi.RuntimeService, id string) error {
 	}
 
 	fmt.Printf("Stopped sandbox %s\n", id)
+
 	return nil
 }
 
@@ -421,13 +433,17 @@ func RemovePodSandbox(client internalapi.RuntimeService, id string) error {
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
+
 	logrus.Debugf("Removing pod sandbox: %s", id)
+
 	if _, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
 		return nil, client.RemovePodSandbox(ctx, id)
 	}); err != nil {
 		return err
 	}
+
 	fmt.Printf("Removed sandbox %s\n", id)
+
 	return nil
 }
 
@@ -438,12 +454,16 @@ func marshalPodSandboxStatus(ps *pb.PodSandboxStatus) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	jsonMap := make(map[string]interface{})
+
 	err = json.Unmarshal([]byte(statusStr), &jsonMap)
 	if err != nil {
 		return "", err
 	}
+
 	jsonMap["createdAt"] = time.Unix(0, ps.CreatedAt).Format(time.RFC3339Nano)
+
 	return marshalMapInOrder(jsonMap, *ps)
 }
 
@@ -453,25 +473,30 @@ func marshalPodSandboxStatus(ps *pb.PodSandboxStatus) (string, error) {
 //nolint:dupl // pods and containers are similar, but still different
 func podSandboxStatus(client internalapi.RuntimeService, ids []string, output string, quiet bool, tmplStr string) error {
 	verbose := !(quiet)
+
 	if output == "" { // default to json output
 		output = outputTypeJSON
 	}
+
 	if len(ids) == 0 {
 		return errors.New("ID cannot be empty")
 	}
 
 	statuses := []statusData{}
+
 	for _, id := range ids {
 		request := &pb.PodSandboxStatusRequest{
 			PodSandboxId: id,
 			Verbose:      verbose,
 		}
 		logrus.Debugf("PodSandboxStatusRequest: %v", request)
+
 		r, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.PodSandboxStatusResponse, error) {
 			return client.PodSandboxStatus(ctx, id, verbose)
 		})
 
 		logrus.Debugf("PodSandboxStatusResponse: %v", r)
+
 		if err != nil {
 			return fmt.Errorf("get pod sandbox status: %w", err)
 		}
@@ -494,40 +519,51 @@ func podSandboxStatus(client internalapi.RuntimeService, ids []string, output st
 func outputPodSandboxStatusTable(r *pb.PodSandboxStatusResponse, verbose bool) {
 	// output in table format by default.
 	fmt.Printf("ID: %s\n", r.Status.Id)
+
 	if r.Status.Metadata != nil {
 		if r.Status.Metadata.Name != "" {
 			fmt.Printf("Name: %s\n", r.Status.Metadata.Name)
 		}
+
 		if r.Status.Metadata.Uid != "" {
 			fmt.Printf("UID: %s\n", r.Status.Metadata.Uid)
 		}
+
 		if r.Status.Metadata.Namespace != "" {
 			fmt.Printf("Namespace: %s\n", r.Status.Metadata.Namespace)
 		}
+
 		fmt.Printf("Attempt: %v\n", r.Status.Metadata.Attempt)
 	}
+
 	fmt.Printf("Status: %s\n", r.Status.State)
 	ctm := time.Unix(0, r.Status.CreatedAt)
 	fmt.Printf("Created: %v\n", ctm)
 
 	if r.Status.Network != nil {
 		fmt.Printf("IP Addresses: %v\n", r.Status.Network.Ip)
+
 		for _, ip := range r.Status.Network.AdditionalIps {
 			fmt.Printf("Additional IP: %v\n", ip.Ip)
 		}
 	}
+
 	if r.Status.Labels != nil {
 		fmt.Println("Labels:")
+
 		for _, k := range getSortedKeys(r.Status.Labels) {
 			fmt.Printf("\t%s -> %s\n", k, r.Status.Labels[k])
 		}
 	}
+
 	if r.Status.Annotations != nil {
 		fmt.Println("Annotations:")
+
 		for _, k := range getSortedKeys(r.Status.Annotations) {
 			fmt.Printf("\t%s -> %s\n", k, r.Status.Annotations[k])
 		}
 	}
+
 	if verbose {
 		fmt.Printf("Info: %v\n", r.GetInfo())
 	}
@@ -540,9 +576,11 @@ func ListPodSandboxes(client internalapi.RuntimeService, opts *listOptions) ([]*
 	if opts.id != "" {
 		filter.Id = opts.id
 	}
+
 	if opts.state != "" {
 		st := &pb.PodSandboxStateValue{}
 		st.State = pb.PodSandboxState_SANDBOX_NOTREADY
+
 		switch strings.ToLower(opts.state) {
 		case "ready":
 			st.State = pb.PodSandboxState_SANDBOX_READY
@@ -554,20 +592,25 @@ func ListPodSandboxes(client internalapi.RuntimeService, opts *listOptions) ([]*
 			log.Fatalf("--state should be ready or notready")
 		}
 	}
+
 	if opts.labels != nil {
 		filter.LabelSelector = opts.labels
 	}
+
 	request := &pb.ListPodSandboxRequest{
 		Filter: filter,
 	}
 	logrus.Debugf("ListPodSandboxRequest: %v", request)
+
 	r, err := InterruptableRPC(nil, func(ctx context.Context) ([]*pb.PodSandbox, error) {
 		return client.ListPodSandbox(ctx, filter)
 	})
 	logrus.Debugf("ListPodSandboxResponse: %v", r)
+
 	if err != nil {
 		return nil, fmt.Errorf("call list sandboxes RPC: %w", err)
 	}
+
 	return getSandboxesList(r, opts), nil
 }
 
@@ -602,19 +645,25 @@ func OutputPodSandboxes(client internalapi.RuntimeService, opts *listOptions) er
 			columnPodRuntime,
 		})
 	}
+
 	c := cases.Title(language.Und)
+
 	for _, pod := range r {
 		if opts.quiet {
 			fmt.Printf("%s\n", pod.Id)
+
 			continue
 		}
+
 		if !opts.verbose {
 			createdAt := time.Unix(0, pod.CreatedAt)
 			ctm := units.HumanDuration(time.Now().UTC().Sub(createdAt)) + " ago"
+
 			id := pod.Id
 			if !opts.noTrunc {
 				id = getTruncatedID(id, "")
 			}
+
 			display.AddRow([]string{
 				id,
 				ctm,
@@ -624,39 +673,50 @@ func OutputPodSandboxes(client internalapi.RuntimeService, opts *listOptions) er
 				strconv.FormatUint(uint64(pod.Metadata.Attempt), 10),
 				getSandboxesRuntimeHandler(pod),
 			})
+
 			continue
 		}
 
 		fmt.Printf("ID: %s\n", pod.Id)
+
 		if pod.Metadata != nil {
 			if pod.Metadata.Name != "" {
 				fmt.Printf("Name: %s\n", pod.Metadata.Name)
 			}
+
 			if pod.Metadata.Uid != "" {
 				fmt.Printf("UID: %s\n", pod.Metadata.Uid)
 			}
+
 			if pod.Metadata.Namespace != "" {
 				fmt.Printf("Namespace: %s\n", pod.Metadata.Namespace)
 			}
+
 			if pod.Metadata.Attempt != 0 {
 				fmt.Printf("Attempt: %v\n", pod.Metadata.Attempt)
 			}
 		}
+
 		fmt.Printf("Status: %s\n", convertPodState(pod.State))
 		ctm := time.Unix(0, pod.CreatedAt)
 		fmt.Printf("Created: %v\n", ctm)
+
 		if pod.Labels != nil {
 			fmt.Println("Labels:")
+
 			for _, k := range getSortedKeys(pod.Labels) {
 				fmt.Printf("\t%s -> %s\n", k, pod.Labels[k])
 			}
 		}
+
 		if pod.Annotations != nil {
 			fmt.Println("Annotations:")
+
 			for _, k := range getSortedKeys(pod.Annotations) {
 				fmt.Printf("\t%s -> %s\n", k, pod.Annotations[k])
 			}
 		}
+
 		fmt.Printf("%s: %s\n",
 			c.String(columnPodRuntime),
 			getSandboxesRuntimeHandler(pod))
@@ -665,6 +725,7 @@ func OutputPodSandboxes(client internalapi.RuntimeService, opts *listOptions) er
 	}
 
 	display.Flush()
+
 	return nil
 }
 
@@ -676,6 +737,7 @@ func convertPodState(state pb.PodSandboxState) string {
 		return "NotReady"
 	default:
 		log.Fatalf("Unknown pod state %q", state)
+
 		return ""
 	}
 }
@@ -684,11 +746,13 @@ func getSandboxesRuntimeHandler(sandbox *pb.PodSandbox) string {
 	if sandbox.RuntimeHandler == "" {
 		return "(default)"
 	}
+
 	return sandbox.RuntimeHandler
 }
 
 func getSandboxesList(sandboxesList []*pb.PodSandbox, opts *listOptions) []*pb.PodSandbox {
 	filtered := []*pb.PodSandbox{}
+
 	for _, p := range sandboxesList {
 		// Filter by pod name/namespace regular expressions.
 		if p.Metadata != nil && matchesRegex(opts.nameRegexp, p.Metadata.Name) &&
@@ -698,17 +762,21 @@ func getSandboxesList(sandboxesList []*pb.PodSandbox, opts *listOptions) []*pb.P
 	}
 
 	sort.Sort(sandboxByCreated(filtered))
+
 	n := len(filtered)
 	if opts.latest {
 		n = 1
 	}
+
 	if opts.last > 0 {
 		n = opts.last
 	}
+
 	n = func(a, b int) int {
 		if a < b {
 			return a
 		}
+
 		return b
 	}(n, len(filtered))
 

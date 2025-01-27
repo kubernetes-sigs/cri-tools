@@ -37,6 +37,7 @@ var _ = DescribeTable("ReadConfig",
 		readConfig, err := common.ReadConfig(f.Name())
 		if shouldFail {
 			Expect(err).To(HaveOccurred())
+
 			return
 		} else {
 			Expect(err).NotTo(HaveOccurred())
