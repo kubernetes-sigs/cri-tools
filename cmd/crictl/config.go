@@ -98,6 +98,7 @@ CRICTL OPTIONS:
 			default:
 				return fmt.Errorf("no configuration option named %s", get)
 			}
+
 			return nil
 		} else if c.IsSet("set") {
 			settings := c.StringSlice("set")
@@ -115,6 +116,7 @@ CRICTL OPTIONS:
 					}
 				}
 			}
+
 			return common.WriteConfig(config, configFile)
 		} else if c.Bool("list") {
 			display := newDefaultTableDisplay()
@@ -141,6 +143,7 @@ CRICTL OPTIONS:
 		if err := setValue(key, value, config); err != nil {
 			return fmt.Errorf("set %q to %q: %w", key, value, err)
 		}
+
 		return common.WriteConfig(config, configFile)
 	},
 }
@@ -156,27 +159,32 @@ func setValue(key, value string, config *common.Config) error {
 		if err != nil {
 			return fmt.Errorf("parse timeout value '%s': %w", value, err)
 		}
+
 		config.Timeout = n
 	case common.Debug:
 		debug, err := strconv.ParseBool(value)
 		if err != nil {
 			return fmt.Errorf("parse debug value '%s': %w", value, err)
 		}
+
 		config.Debug = debug
 	case common.PullImageOnCreate:
 		pi, err := strconv.ParseBool(value)
 		if err != nil {
 			return fmt.Errorf("parse pull-image-on-create value '%s': %w", value, err)
 		}
+
 		config.PullImageOnCreate = pi
 	case common.DisablePullOnRun:
 		pi, err := strconv.ParseBool(value)
 		if err != nil {
 			return fmt.Errorf("parse disable-pull-on-run value '%s': %w", value, err)
 		}
+
 		config.DisablePullOnRun = pi
 	default:
 		return fmt.Errorf("no configuration option named %s", key)
 	}
+
 	return nil
 }

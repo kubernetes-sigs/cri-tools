@@ -86,6 +86,7 @@ var _ = framework.KubeDescribe("Multiple Containers [Conformance]", func() {
 					if err != nil {
 						return false, err
 					}
+
 					return strings.Contains(string(content), expected), nil
 				}
 			}
@@ -126,6 +127,7 @@ func createMultiContainerTestPodSandbox(c internalapi.RuntimeService) (sandboxID
 			CgroupParent: common.GetCgroupParent(context.TODO(), c),
 		},
 	}
+
 	return framework.RunPodSandbox(c, podConfig), podConfig, logDir
 }
 
@@ -140,6 +142,7 @@ func createMultiContainerTestHttpdContainer(rc internalapi.RuntimeService, ic in
 		Linux:    &runtimeapi.LinuxContainerConfig{},
 		LogPath:  containerName + ".log",
 	}
+
 	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }
 
@@ -154,5 +157,6 @@ func createMultiContainerTestBusyboxContainer(rc internalapi.RuntimeService, ic 
 		Command:  []string{"sh", "-c", "echo " + defaultLog + "; sleep 1000"},
 		LogPath:  containerName + ".log",
 	}
+
 	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }

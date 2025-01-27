@@ -72,6 +72,7 @@ func Init(ctx context.Context, collectorAddress string, samplingRate int) (*trac
 	)
 
 	tmp := propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{})
+
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(tmp)
 

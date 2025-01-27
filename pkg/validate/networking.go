@@ -143,6 +143,7 @@ func createPodSandWithHostname(c internalapi.RuntimeService, hostname string) (s
 	}
 
 	podID := framework.RunPodSandbox(c, config)
+
 	return podID, config
 }
 
@@ -165,6 +166,7 @@ func createPodSandWithDNSConfig(c internalapi.RuntimeService) (string, *runtimea
 	}
 
 	podID := framework.RunPodSandbox(c, config)
+
 	return podID, config
 }
 
@@ -173,6 +175,7 @@ func createPodSandboxWithPortMapping(c internalapi.RuntimeService, portMappings 
 	podSandboxName := "create-PodSandbox-with-port-mapping" + framework.NewUUID()
 	uid := framework.DefaultUIDPrefix + framework.NewUUID()
 	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
+
 	config := &runtimeapi.PodSandboxConfig{
 		Metadata:     framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 		PortMappings: portMappings,
@@ -190,12 +193,14 @@ func createPodSandboxWithPortMapping(c internalapi.RuntimeService, portMappings 
 	}
 
 	podID := framework.RunPodSandbox(c, config)
+
 	return podID, config
 }
 
 // checkHostname checks the container hostname.
 func checkHostname(c internalapi.RuntimeService, containerID, hostname string) {
 	By("get the current hostname via execSync")
+
 	stdout, stderr, err := c.ExecSync(context.TODO(), containerID, getHostnameCmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	framework.ExpectNoError(err, "failed to execSync in container %q", containerID)
 	Expect(strings.EqualFold(strings.TrimSpace(string(stdout)), hostname)).To(BeTrue())
@@ -206,11 +211,14 @@ func checkHostname(c internalapi.RuntimeService, containerID, hostname string) {
 // checkDNSConfig checks the content of /etc/resolv.conf.
 func checkDNSConfig(c internalapi.RuntimeService, containerID string, expectedContent []string) {
 	By("get the current dns config via execSync")
+
 	stdout, stderr, err := c.ExecSync(context.TODO(), containerID, getDNSConfigCmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	framework.ExpectNoError(err, "failed to execSync in container %q", containerID)
+
 	for _, content := range expectedContent {
 		Expect(string(stdout)).To(ContainSubstring(content), "The stdout output of execSync should contain %q", content)
 	}
+
 	Expect(string(stderr)).To(BeEmpty(), "The stderr should be empty.")
 	framework.Logf("check DNS config succeed")
 }
@@ -223,6 +231,7 @@ func createWebServerContainer(rc internalapi.RuntimeService, ic internalapi.Imag
 		Image:    &runtimeapi.ImageSpec{Image: webServerImage},
 		Linux:    &runtimeapi.LinuxContainerConfig{},
 	}
+
 	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }
 
@@ -234,6 +243,7 @@ func createHostNetWebServerContainer(rc internalapi.RuntimeService, ic internala
 		Image:    &runtimeapi.ImageSpec{Image: hostNetWebServerImage},
 		Linux:    &runtimeapi.LinuxContainerConfig{},
 	}
+
 	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }
 
@@ -250,6 +260,7 @@ func checkMainPage(c internalapi.RuntimeService, podID string, hostPort, contain
 		Expect(status.GetNetwork().Ip).NotTo(BeNil(), "The IP should not be nil.")
 		url += status.GetNetwork().Ip + ":" + strconv.Itoa(int(containerPort))
 	}
+
 	framework.Logf("the IP:port is " + url)
 
 	By("check the content of " + url)
@@ -272,6 +283,7 @@ func checkMainPage(c internalapi.RuntimeService, podID string, hostPort, contain
 		}
 		defer resp.Body.Close()
 		respChan <- resp
+
 		return nil
 	}, time.Minute, time.Second).Should(Succeed())
 

@@ -205,6 +205,7 @@ func createHostPathForMountPropagation(podID string, propagationOpt runtimeapi.M
 
 	clearHostPath = func() {
 		By("clean up the TempDir")
+
 		err := unix.Unmount(propagationMntPoint, unix.MNT_DETACH)
 		framework.ExpectNoError(err, "failed to unmount \"propagationMntPoint\": %v", err)
 		err = unix.Unmount(mntSource, unix.MNT_DETACH)
@@ -230,6 +231,7 @@ func createMountPropagationContainer(
 	propagation runtimeapi.MountPropagation,
 ) string {
 	By("create a container with volume and name")
+
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
@@ -253,6 +255,7 @@ func createMountPropagationContainer(
 	containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 
 	By("verifying container status")
+
 	resp, err := rc.ContainerStatus(context.TODO(), containerID, true)
 	framework.ExpectNoError(err, "unable to get container status")
 	Expect(resp.Status.Mounts).To(HaveLen(1))
@@ -282,6 +285,7 @@ func createOOMKilledContainer(
 	podConfig *runtimeapi.PodSandboxConfig,
 ) string {
 	By("create a container that will be killed by OOMKiller")
+
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
@@ -302,6 +306,7 @@ func createOOMKilledContainer(
 	containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 
 	By("verifying container status")
+
 	_, err := rc.ContainerStatus(context.TODO(), containerID, true)
 	framework.ExpectNoError(err, "unable to get container status")
 
@@ -337,6 +342,7 @@ var _ = framework.KubeDescribe("Container Mount Readonly", func() {
 		testRRO := func(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, rro bool) {
 			if rro && !runtimeSupportsRRO(rc, framework.TestContext.RuntimeHandler) {
 				Skip("runtime does not implement recursive readonly mounts")
+
 				return
 			}
 
@@ -367,6 +373,7 @@ var _ = framework.KubeDescribe("Container Mount Readonly", func() {
 		testRROInvalidPropagation := func(prop runtimeapi.MountPropagation) {
 			if !runtimeSupportsRRO(rc, framework.TestContext.RuntimeHandler) {
 				Skip("runtime does not implement recursive readonly mounts")
+
 				return
 			}
 			hostPath, clearHostPath := createHostPathForRROMount(podID)
@@ -393,6 +400,7 @@ var _ = framework.KubeDescribe("Container Mount Readonly", func() {
 		It("should reject a recursive readonly mount with ReadOnly: false", func() {
 			if !runtimeSupportsRRO(rc, framework.TestContext.RuntimeHandler) {
 				Skip("runtime does not implement recursive readonly mounts")
+
 				return
 			}
 			hostPath, clearHostPath := createHostPathForRROMount(podID)
@@ -416,6 +424,7 @@ func runtimeSupportsRRO(rc internalapi.RuntimeService, runtimeHandlerName string
 	ctx := context.Background()
 	status, err := rc.Status(ctx, false)
 	framework.ExpectNoError(err, "failed to check runtime status")
+
 	for _, h := range status.RuntimeHandlers {
 		if h.Name == runtimeHandlerName {
 			if f := h.Features; f != nil {
@@ -423,6 +432,7 @@ func runtimeSupportsRRO(rc internalapi.RuntimeService, runtimeHandlerName string
 			}
 		}
 	}
+
 	return false
 }
 
@@ -442,6 +452,7 @@ func createHostPathForRROMount(podID string) (hostPath string, clearHostPath fun
 
 	clearHostPath = func() {
 		By("clean up the TempDir")
+
 		err := unix.Unmount(tmpfsMntPoint, unix.MNT_DETACH)
 		framework.ExpectNoError(err, "failed to unmount \"tmpfsMntPoint\": %v", err)
 		err = os.RemoveAll(hostPath)
@@ -468,6 +479,7 @@ func createRROMountContainer(
 			SelinuxRelabel:    true,
 		},
 	}
+
 	return createMountContainer(rc, ic, podID, podConfig, mounts, false)
 }
 
@@ -480,6 +492,7 @@ func createMountContainer(
 	expectErr bool,
 ) string {
 	By("create a container with volume and name")
+
 	containerName := "test-mount-" + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
@@ -491,12 +504,14 @@ func createMountContainer(
 	if expectErr {
 		_, err := framework.CreateContainerWithError(rc, ic, containerConfig, podID, podConfig)
 		Expect(err).To(HaveOccurred())
+
 		return ""
 	}
 
 	containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 
 	By("verifying container status")
+
 	resp, err := rc.ContainerStatus(context.TODO(), containerID, true)
 	framework.ExpectNoError(err, "unable to get container status")
 	Expect(resp.Status.Mounts).To(HaveLen(len(mounts)))

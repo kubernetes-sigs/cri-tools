@@ -197,14 +197,18 @@ func parseTimestamp(value string) (*metav1.Time, error) {
 	if value == "" {
 		return nil, nil
 	}
+
 	str, err := timetypes.GetTimestamp(value, time.Now())
 	if err != nil {
 		return nil, err
 	}
+
 	s, ns, err := timetypes.ParseTimestamps(str, 0)
 	if err != nil {
 		return nil, err
 	}
+
 	t := metav1.NewTime(time.Unix(s, ns))
+
 	return &t, nil
 }

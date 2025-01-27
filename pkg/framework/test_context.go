@@ -151,10 +151,12 @@ func RegisterFlags() {
 
 	svcaddr := ContainerdSockPathUnix
 	defaultConfigPath := "/etc/crictl.yaml"
+
 	if runtime.GOOS == OSWindows {
 		svcaddr = ContainerdSockPathWindows
 		defaultConfigPath = filepath.Join(os.Getenv("USERPROFILE"), ".crictl", "crictl.yaml")
 	}
+
 	flag.StringVar(&TestContext.ConfigPath, "config", defaultConfigPath, "Location of the client config file. If not specified and the default does not exist, the program's directory is searched as well")
 	flag.StringVar(&TestContext.RuntimeServiceAddr, "runtime-endpoint", svcaddr, "Runtime service socket for client to connect.")
 	flag.DurationVar(&TestContext.RuntimeServiceTimeout, "runtime-service-timeout", 300*time.Second, "Timeout when trying to connect to a runtime service.")
@@ -168,6 +170,7 @@ func RegisterFlags() {
 	} else {
 		TestContext.IsLcow = false
 	}
+
 	flag.StringVar(&TestContext.RegistryPrefix, "registry-prefix", DefaultRegistryPrefix, "A possible registry prefix added to all images, like 'localhost:5000'")
 }
 
@@ -180,6 +183,7 @@ func (tc *TestContextType) LoadYamlConfigFiles() error {
 			return fmt.Errorf("error loading custom test images file: %w", err)
 		}
 	}
+
 	Logf("Testing context container image list: %+v", TestContext.TestImageList)
 
 	// Attempt to load benchmark settings file:
@@ -189,6 +193,7 @@ func (tc *TestContextType) LoadYamlConfigFiles() error {
 			return err
 		}
 	}
+
 	Logf("Testing context benchmarking params: %+v", TestContext.BenchmarkingParams)
 
 	return nil

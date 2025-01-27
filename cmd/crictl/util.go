@@ -68,6 +68,7 @@ func SetupInterruptSignalHandler() <-chan struct{} {
 		signalIntStopCh = make(chan struct{})
 		c := make(chan os.Signal, 2)
 		signal.Notify(c, shutdownSignals...)
+
 		go func() {
 			<-c
 			close(signalIntStopCh)
@@ -75,6 +76,7 @@ func SetupInterruptSignalHandler() <-chan struct{} {
 			os.Exit(1) // Exit immediately on second signal
 		}()
 	})
+
 	return signalIntStopCh
 }
 
@@ -86,6 +88,7 @@ func InterruptableRPC[T any](
 		//nolint:contextcheck // creating a new context is intentional
 		ctx = context.Background()
 	}
+
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -96,6 +99,7 @@ func InterruptableRPC[T any](
 		res, err := rpcFunc(ctx)
 		if err != nil {
 			errCh <- err
+
 			return
 		}
 		resCh <- res
@@ -104,6 +108,7 @@ func InterruptableRPC[T any](
 	select {
 	case <-SetupInterruptSignalHandler():
 		cancel()
+
 		return res, fmt.Errorf("interrupted: %w", ctx.Err())
 	case err := <-errCh:
 		return res, err
@@ -191,6 +196,7 @@ func getSortedKeys(m map[string]string) []string {
 	for k := range m {
 		keys = append(keys, k)
 	}
+
 	sort.Strings(keys)
 
 	return keys
@@ -221,11 +227,14 @@ func loadContainerConfig(path string) (*pb.ContainerConfig, error) {
 
 func printJSONSchema(value any) error {
 	schema := jsonschema.Reflect(value)
+
 	data, err := json.MarshalIndent(schema, "", "  ")
 	if err != nil {
 		return fmt.Errorf("marshal JSON schema: %w", err)
 	}
+
 	fmt.Println(string(data))
+
 	return nil
 }
 
@@ -258,17 +267,21 @@ func openFile(path string) (*os.File, error) {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("config at %s not found", path)
 		}
+
 		return nil, err
 	}
+
 	return f, nil
 }
 
 func protobufObjectToJSON(obj protoiface.MessageV1) (string, error) {
 	msg := protoadapt.MessageV2Of(obj)
+
 	marshaledJSON, err := protojson.MarshalOptions{EmitDefaultValues: true, Indent: "  "}.Marshal(msg)
 	if err != nil {
 		return "", err
 	}
+
 	return string(marshaledJSON), nil
 }
 
@@ -279,6 +292,7 @@ func outputProtobufObjAsJSON(obj protoiface.MessageV1) error {
 	}
 
 	fmt.Println(marshaledJSON)
+
 	return nil
 }
 
@@ -287,12 +301,14 @@ func outputProtobufObjAsYAML(obj protoiface.MessageV1) error {
 	if err != nil {
 		return err
 	}
+
 	marshaledYAML, err := yaml.JSONToYAML([]byte(marshaledJSON))
 	if err != nil {
 		return err
 	}
 
 	fmt.Println(string(marshaledYAML))
+
 	return nil
 }
 
@@ -308,30 +324,37 @@ func outputStatusData(statuses []statusData, format, tmplStr string) (err error)
 	}
 
 	result := []map[string]any{}
+
 	for _, status := range statuses {
 		// Sort all keys
 		keys := []string{}
 		for k := range status.info {
 			keys = append(keys, k)
 		}
+
 		sort.Strings(keys)
+
 		infoMap := map[string]any{}
 
 		if status.json != "" {
 			var statusVal map[string]any
+
 			err := json.Unmarshal([]byte(status.json), &statusVal)
 			if err != nil {
 				return fmt.Errorf("unmarshal status JSON: %w", err)
 			}
+
 			infoMap["status"] = statusVal
 		}
 
 		if status.runtimeHandlers != "" {
 			var handlersVal []*any
+
 			err := json.Unmarshal([]byte(status.runtimeHandlers), &handlersVal)
 			if err != nil {
 				return fmt.Errorf("unmarshal runtime handlers: %w", err)
 			}
+
 			if handlersVal != nil {
 				infoMap["runtimeHandlers"] = handlersVal
 			}
@@ -346,6 +369,7 @@ func outputStatusData(statuses []statusData, format, tmplStr string) (err error)
 				if err := json.Unmarshal([]byte(val), &genericVal); err != nil {
 					return fmt.Errorf("unmarshal status info JSON: %w", err)
 				}
+
 				infoMap[k] = genericVal
 			} else {
 				// Assume a string and remove any double quotes
@@ -374,18 +398,21 @@ func outputStatusData(statuses []statusData, format, tmplStr string) (err error)
 		if err != nil {
 			return fmt.Errorf("JSON result to YAML: %w", err)
 		}
+
 		fmt.Println(string(yamlInfo))
 	case outputTypeJSON:
 		var output bytes.Buffer
 		if err := json.Indent(&output, jsonResult, "", "  "); err != nil {
 			return fmt.Errorf("indent JSON result: %w", err)
 		}
+
 		fmt.Println(output.String())
 	case outputTypeGoTemplate:
 		output, err := tmplExecuteRawJSON(tmplStr, string(jsonResult))
 		if err != nil {
 			return fmt.Errorf("execute template: %w", err)
 		}
+
 		fmt.Println(output)
 	default:
 		return fmt.Errorf("unsupported format: %q", format)
@@ -411,26 +438,32 @@ func outputEvent(event protoiface.MessageV1, format, tmplStr string) error {
 		if err != nil {
 			return err
 		}
+
 		output, err := tmplExecuteRawJSON(tmplStr, jsonEvent)
 		if err != nil {
 			return err
 		}
+
 		fmt.Println(output)
 	default:
 		fmt.Printf("Don't support %q format\n", format)
 	}
+
 	return nil
 }
 
 func parseLabelStringSlice(ss []string) (map[string]string, error) {
 	labels := make(map[string]string)
+
 	for _, s := range ss {
 		pair := strings.Split(s, "=")
 		if len(pair) != 2 {
 			return nil, fmt.Errorf("incorrectly specified label: %v", s)
 		}
+
 		labels[pair[0]] = pair[1]
 	}
+
 	return labels, nil
 }
 
@@ -438,36 +471,46 @@ func parseLabelStringSlice(ss []string) (map[string]string, error) {
 // data structure.
 func marshalMapInOrder(m map[string]interface{}, t interface{}) (string, error) {
 	s := "{"
+
 	v := reflect.ValueOf(t)
 	for i := range v.Type().NumField() {
 		field := jsonFieldFromTag(v.Type().Field(i).Tag)
 		if field == "" || field == "-" {
 			continue
 		}
+
 		value, err := json.Marshal(m[field])
 		if err != nil {
 			return "", err
 		}
+
 		s += fmt.Sprintf("%q:%s,", field, value)
 	}
+
 	s = s[:len(s)-1]
 	s += "}"
+
 	var buf bytes.Buffer
+
 	if err := json.Indent(&buf, []byte(s), "", "  "); err != nil {
 		return "", err
 	}
+
 	return buf.String(), nil
 }
 
 // jsonFieldFromTag gets json field name from field tag.
 func jsonFieldFromTag(tag reflect.StructTag) string {
 	field := strings.Split(tag.Get(outputTypeJSON), ",")[0]
+
 	for _, f := range strings.Split(tag.Get("protobuf"), ",") {
 		if !strings.HasPrefix(f, "json=") {
 			continue
 		}
+
 		field = strings.TrimPrefix(f, "json=")
 	}
+
 	return field
 }
 
@@ -476,6 +519,7 @@ func getTruncatedID(id, prefix string) string {
 	if len(id) > truncatedIDLen {
 		id = id[:truncatedIDLen]
 	}
+
 	return id
 }
 
@@ -483,11 +527,13 @@ func matchesRegex(pattern, target string) bool {
 	if pattern == "" {
 		return true
 	}
+
 	matched, err := regexp.MatchString(pattern, target)
 	if err != nil {
 		// Assume it's not a match if an error occurs.
 		return false
 	}
+
 	return matched
 }
 
@@ -495,18 +541,22 @@ func matchesImage(imageClient internalapi.ImageManagerService, image, containerI
 	if image == "" || imageClient == nil {
 		return true, nil
 	}
+
 	r1, err := ImageStatus(imageClient, image, false)
 	if err != nil {
 		return false, err
 	}
+
 	r2, err := ImageStatus(imageClient, containerImage, false)
 	if err != nil {
 		return false, err
 	}
+
 	if r1.Image == nil || r2.Image == nil {
 		// Always return not match if the image doesn't exist.
 		return false, nil
 	}
+
 	return r1.Image.Id == r2.Image.Id, nil
 }
 
@@ -515,9 +565,11 @@ func getRepoImage(imageClient internalapi.ImageManagerService, image string) (st
 	if err != nil {
 		return "", err
 	}
+
 	if len(r.Image.RepoTags) > 0 {
 		return r.Image.RepoTags[0], nil
 	}
+
 	return image, nil
 }
 
@@ -532,6 +584,7 @@ func handleDisplay(
 	}
 
 	displayErrCh := make(chan error, 1)
+
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 
@@ -545,6 +598,7 @@ func handleDisplay(
 		for range ticker.C {
 			if err := displayFunc(watchCtx, client); err != nil {
 				displayErrCh <- err
+
 				break
 			}
 		}
@@ -554,6 +608,7 @@ func handleDisplay(
 	select {
 	case <-SetupInterruptSignalHandler():
 		cancelFn()
+
 		return nil
 	case err := <-displayErrCh:
 		return err

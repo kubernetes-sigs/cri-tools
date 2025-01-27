@@ -89,6 +89,7 @@ func podSandboxFound(podSandboxs []*runtimeapi.PodSandbox, podID string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -102,6 +103,7 @@ func verifyPodSandboxStatus(c internalapi.RuntimeService, podID string, expected
 func testRunDefaultPodSandbox(c internalapi.RuntimeService) string {
 	podID := framework.RunDefaultPodSandbox(c, "PodSandbox-for-create-test-")
 	verifyPodSandboxStatus(c, podID, runtimeapi.PodSandboxState_SANDBOX_READY, "ready")
+
 	return podID
 }
 
@@ -110,6 +112,7 @@ func getPodSandboxStatus(c internalapi.RuntimeService, podID string) *runtimeapi
 	By("Get PodSandbox status for podID: " + podID)
 	status, err := c.PodSandboxStatus(context.TODO(), podID, false)
 	framework.ExpectNoError(err, "failed to get PodSandbox %q status: %v", podID, err)
+
 	return status.GetStatus()
 }
 
@@ -148,15 +151,18 @@ func listPodSandboxForID(c internalapi.RuntimeService, podID string) []*runtimea
 	filter := &runtimeapi.PodSandboxFilter{
 		Id: podID,
 	}
+
 	return listPodSandbox(c, filter)
 }
 
 // listPodSandbox lists PodSandbox.
 func listPodSandbox(c internalapi.RuntimeService, filter *runtimeapi.PodSandboxFilter) []*runtimeapi.PodSandbox {
 	By("List PodSandbox.")
+
 	pods, err := c.ListPodSandbox(context.TODO(), filter)
 	framework.ExpectNoError(err, "failed to list PodSandbox status: %v", err)
 	framework.Logf("List PodSandbox succeed")
+
 	return pods
 }
 
@@ -174,6 +180,7 @@ func createLogTempDir(podSandboxName string) (hostPath, podLogPath string) {
 // createPodSandboxWithLogDirectory creates a PodSandbox with log directory.
 func createPodSandboxWithLogDirectory(c internalapi.RuntimeService) (sandboxID string, podConfig *runtimeapi.PodSandboxConfig, hostPath string) {
 	By("create a PodSandbox with log directory")
+
 	podSandboxName := "PodSandbox-with-log-directory-" + framework.NewUUID()
 	uid := framework.DefaultUIDPrefix + framework.NewUUID()
 	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
@@ -186,5 +193,6 @@ func createPodSandboxWithLogDirectory(c internalapi.RuntimeService) (sandboxID s
 			CgroupParent: common.GetCgroupParent(context.TODO(), c),
 		},
 	}
+
 	return framework.RunPodSandbox(c, podConfig), podConfig, hostPath
 }

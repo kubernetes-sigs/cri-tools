@@ -62,6 +62,7 @@ var runtimeStatusCommand = &cli.Command{
 		if err = Info(c, runtimeClient); err != nil {
 			return fmt.Errorf("getting status of runtime: %w", err)
 		}
+
 		return nil
 	},
 }
@@ -70,10 +71,12 @@ var runtimeStatusCommand = &cli.Command{
 func Info(cliContext *cli.Context, client internalapi.RuntimeService) error {
 	request := &pb.StatusRequest{Verbose: !cliContext.Bool("quiet")}
 	logrus.Debugf("StatusRequest: %v", request)
+
 	r, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.StatusResponse, error) {
 		return client.Status(ctx, request.Verbose)
 	})
 	logrus.Debugf("StatusResponse: %v", r)
+
 	if err != nil {
 		return err
 	}
@@ -82,10 +85,13 @@ func Info(cliContext *cli.Context, client internalapi.RuntimeService) error {
 	if err != nil {
 		return fmt.Errorf("create status JSON: %w", err)
 	}
+
 	handlers, err := json.Marshal(r.RuntimeHandlers) // protobufObjectToJSON cannot be used
 	if err != nil {
 		return err
 	}
+
 	data := []statusData{{json: statusJSON, runtimeHandlers: string(handlers), info: r.Info}}
+
 	return outputStatusData(data, cliContext.String("output"), cliContext.String("template"))
 }

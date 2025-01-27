@@ -37,10 +37,12 @@ complete -F _crictl crictl`
 
 func bashCompletion(c *cli.Context) error {
 	subcommands := []string{}
+
 	for _, command := range c.App.Commands {
 		if command.Hidden {
 			continue
 		}
+
 		subcommands = append(subcommands, command.Names()...)
 	}
 
@@ -50,6 +52,7 @@ func bashCompletion(c *cli.Context) error {
 	}
 
 	fmt.Fprintln(c.App.Writer, fmt.Sprintf(bashCompletionTemplate, strings.Join(subcommands, "\n")))
+
 	return nil
 }
 
@@ -71,10 +74,12 @@ compdef _crictl crictl`
 
 func zshCompletion(c *cli.Context) error {
 	subcommands := []string{}
+
 	for _, command := range c.App.Commands {
 		if command.Hidden {
 			continue
 		}
+
 		for _, name := range command.Names() {
 			subcommands = append(subcommands, name+":"+command.Usage)
 		}
@@ -87,6 +92,7 @@ func zshCompletion(c *cli.Context) error {
 	}
 
 	fmt.Fprintln(c.App.Writer, fmt.Sprintf(zshCompletionTemplate, strings.Join(subcommands, "' '"), strings.Join(opts, "' '")))
+
 	return nil
 }
 
@@ -95,7 +101,9 @@ func fishCompletion(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+
 	fmt.Fprintln(c.App.Writer, completion)
+
 	return nil
 }
 

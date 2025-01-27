@@ -102,6 +102,7 @@ var runtimeAttachCommand = &cli.Command{
 		if err = Attach(ctx, runtimeClient, opts); err != nil {
 			return fmt.Errorf("attaching running container failed: %w", err)
 		}
+
 		return nil
 	},
 }
@@ -111,6 +112,7 @@ func Attach(ctx context.Context, client internalapi.RuntimeService, opts attachO
 	if opts.id == "" {
 		return errors.New("ID cannot be empty")
 	}
+
 	request := &pb.AttachRequest{
 		ContainerId: opts.id,
 		Tty:         opts.tty,
@@ -119,13 +121,16 @@ func Attach(ctx context.Context, client internalapi.RuntimeService, opts attachO
 		Stderr:      !opts.tty,
 	}
 	logrus.Debugf("AttachRequest: %v", request)
+
 	r, err := InterruptableRPC(ctx, func(ctx context.Context) (*pb.AttachResponse, error) {
 		return client.Attach(ctx, request)
 	})
 	logrus.Debugf("AttachResponse: %v", r)
+
 	if err != nil {
 		return err
 	}
+
 	attachURL := r.Url
 
 	URL, err := url.Parse(attachURL)
@@ -136,10 +141,12 @@ func Attach(ctx context.Context, client internalapi.RuntimeService, opts attachO
 	if URL.Host == "" {
 		URL.Host = kubeletURLHost
 	}
+
 	if URL.Scheme == "" {
 		URL.Scheme = kubeletURLSchema
 	}
 
 	logrus.Debugf("Attach URL: %v", URL)
+
 	return stream(ctx, opts.stdin, opts.tty, opts.transport, URL, opts.tlsConfig)
 }

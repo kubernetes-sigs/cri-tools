@@ -384,6 +384,7 @@ func containerFound(containers []*runtimeapi.Container, containerID string) bool
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -394,6 +395,7 @@ func statFound(stats []*runtimeapi.ContainerStats, containerID string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -402,6 +404,7 @@ func getContainerStatus(c internalapi.RuntimeService, containerID string) *runti
 	By("Get container status for containerID: " + containerID)
 	status, err := c.ContainerStatus(context.TODO(), containerID, false)
 	framework.ExpectNoError(err, "failed to get container %q status: %v", containerID, err)
+
 	return status.GetStatus()
 }
 
@@ -440,10 +443,12 @@ func testStartContainer(rc internalapi.RuntimeService, containerID string) {
 // stopContainer stops the container for containerID.
 func stopContainer(c internalapi.RuntimeService, containerID string, timeout int64) {
 	By("Stop container for containerID: " + containerID)
+
 	stopped := make(chan bool, 1)
 
 	go func() {
 		defer GinkgoRecover()
+
 		err := c.StopContainer(context.TODO(), containerID, timeout)
 		framework.ExpectNoError(err, "failed to stop container: %v", err)
 		stopped <- true
@@ -481,6 +486,7 @@ func listContainerForID(c internalapi.RuntimeService, containerID string) []*run
 	}
 	containers, err := c.ListContainers(context.TODO(), filter)
 	framework.ExpectNoError(err, "failed to list containers %q status: %v", containerID, err)
+
 	return containers
 }
 
@@ -498,6 +504,7 @@ func execSyncContainer(c internalapi.RuntimeService, containerID string, command
 // execSyncContainer test execSync for containerID and make sure the response is right.
 func verifyExecSyncOutput(c internalapi.RuntimeService, containerID string, command []string, expectedLogMessage string) {
 	By("verify execSync output")
+
 	stdout := execSyncContainer(c, containerID, command)
 	Expect(stdout).To(Equal(expectedLogMessage), "The stdout output of execSync should be %s", expectedLogMessage)
 	framework.Logf("verify Execsync output succeed")
@@ -519,12 +526,14 @@ func createHostPath(podID string) (hostPath string) {
 func createSymlink(path string) string {
 	symlinkPath := path + "-symlink"
 	framework.ExpectNoError(os.Symlink(path, symlinkPath), "failed to create symlink %q", symlinkPath)
+
 	return symlinkPath
 }
 
 // createVolumeContainer creates a container with volume and the prefix of containerName and fails if it gets error.
 func createVolumeContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix, podID string, podConfig *runtimeapi.PodSandboxConfig, hostPath string) string {
 	By("create a container with volume and name")
+
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
@@ -546,6 +555,7 @@ func createVolumeContainer(rc internalapi.RuntimeService, ic internalapi.ImageMa
 // createLogContainer creates a container with log and the prefix of containerName.
 func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix, podID string, podConfig *runtimeapi.PodSandboxConfig) (logPath, containerID string) {
 	By("create a container with log and name")
+
 	containerName := prefix + framework.NewUUID()
 	path := containerName + ".log"
 	containerConfig := &runtimeapi.ContainerConfig{
@@ -554,12 +564,14 @@ func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManag
 		Command:  logDefaultCmd,
 		LogPath:  path,
 	}
+
 	return containerConfig.LogPath, framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }
 
 // createKeepLoggingContainer creates a container keeps logging defaultLog to output.
 func createKeepLoggingContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix, podID string, podConfig *runtimeapi.PodSandboxConfig) (logPath, containerID string) {
 	By("create a container with log and name")
+
 	containerName := prefix + framework.NewUUID()
 	path := containerName + ".log"
 	containerConfig := &runtimeapi.ContainerConfig{
@@ -568,6 +580,7 @@ func createKeepLoggingContainer(rc internalapi.RuntimeService, ic internalapi.Im
 		Command:  loopLogDefaultCmd,
 		LogPath:  path,
 	}
+
 	return containerConfig.LogPath, framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }
 
@@ -577,10 +590,13 @@ func pathExists(path string) bool {
 	if err == nil {
 		return true
 	}
+
 	if errors.Is(err, os.ErrNotExist) {
 		return false
 	}
+
 	framework.ExpectNoError(err, "failed to check whether %q Exists: %v", path, err)
+
 	return false
 }
 
@@ -591,12 +607,15 @@ func pathExists(path string) bool {
 //	2016-10-06T00:17:10.113242941Z stderr F The content of the log entry 2
 func parseCRILog(log string, msg *logMessage) {
 	logMessage := strings.SplitN(log, " ", 4)
+
 	if len(log) < 4 {
 		err := errors.New("invalid CRI log")
 		framework.ExpectNoError(err, "failed to parse CRI log: %v", err)
 	}
+
 	timeStamp, err := time.Parse(time.RFC3339Nano, logMessage[0])
 	framework.ExpectNoError(err, "failed to parse timeStamp: %v", err)
+
 	stream := logMessage[1]
 
 	msg.timestamp = timeStamp
@@ -611,9 +630,11 @@ func parseLogLine(podConfig *runtimeapi.PodSandboxConfig, logPath string) []logM
 	f, err := os.Open(path)
 	framework.ExpectNoError(err, "failed to open log file: %v", err)
 	framework.Logf("Open log file %s", path)
+
 	defer f.Close()
 
 	var msg logMessage
+
 	var msgLog []logMessage
 
 	scanner := bufio.NewScanner(f)
@@ -625,6 +646,7 @@ func parseLogLine(podConfig *runtimeapi.PodSandboxConfig, logPath string) []logM
 	if err := scanner.Err(); err != nil {
 		framework.ExpectNoError(err, "failed to read log by row: %v", err)
 	}
+
 	framework.Logf("Parse container log succeed")
 
 	return msgLog
@@ -633,30 +655,38 @@ func parseLogLine(podConfig *runtimeapi.PodSandboxConfig, logPath string) []logM
 // verifyLogContents verifies the contents of container log.
 func verifyLogContents(podConfig *runtimeapi.PodSandboxConfig, logPath, log string, stream streamType) {
 	By("verify log contents")
+
 	msgs := parseLogLine(podConfig, logPath)
 
 	found := false
+
 	for _, msg := range msgs {
 		if msg.log == log && msg.stream == stream {
 			found = true
+
 			break
 		}
 	}
+
 	Expect(found).To(BeTrue(), "expected log %q (stream=%q) not found in logs %+v", log, stream, msgs)
 }
 
 // verifyLogContentsRe verifies the contents of container log using the provided regular expression pattern.
 func verifyLogContentsRe(podConfig *runtimeapi.PodSandboxConfig, logPath, pattern string, stream streamType) {
 	By("verify log contents using regex pattern")
+
 	msgs := parseLogLine(podConfig, logPath)
 
 	found := false
+
 	for _, msg := range msgs {
 		if matched, _ := regexp.MatchString(pattern, msg.log); matched && msg.stream == stream {
 			found = true
+
 			break
 		}
 	}
+
 	Expect(found).To(BeTrue(), "expected log pattern %q (stream=%q) to match logs %+v", pattern, stream, msgs)
 }
 
@@ -665,13 +695,16 @@ func listContainerStatsForID(c internalapi.RuntimeService, containerID string) *
 	By("List container stats for containerID: " + containerID)
 	stats, err := c.ContainerStats(context.TODO(), containerID)
 	framework.ExpectNoError(err, "failed to list container stats for %q status: %v", containerID, err)
+
 	return stats
 }
 
 // listContainerStats lists stats for containers based on filter.
 func listContainerStats(c internalapi.RuntimeService, filter *runtimeapi.ContainerStatsFilter) []*runtimeapi.ContainerStats {
 	By("List container stats for all containers:")
+
 	stats, err := c.ListContainerStats(context.TODO(), filter)
 	framework.ExpectNoError(err, "failed to list container stats for containers status: %v", err)
+
 	return stats
 }

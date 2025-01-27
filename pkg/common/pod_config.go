@@ -32,12 +32,15 @@ func GetCgroupParent(ctx context.Context, c internalapi.RuntimeService) string {
 	if err != nil {
 		return DefaultSystemdCgroupSlice
 	}
+
 	if runtimeConfig == nil || runtimeConfig.Linux == nil {
 		return DefaultSystemdCgroupSlice
 	}
+
 	cgroupDriver := runtimeConfig.Linux.GetCgroupDriver()
 	if cgroupDriver == runtimev1.CgroupDriver_CGROUPFS {
 		return ""
 	}
+
 	return DefaultSystemdCgroupSlice
 }

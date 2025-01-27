@@ -38,6 +38,7 @@ func getPodContainerBenchmarkTimeoutSeconds() int {
 	if framework.TestContext.BenchmarkingParams.PodContainerStartBenchmarkTimeoutSeconds > 0 {
 		timeout = framework.TestContext.BenchmarkingParams.PodContainerStartBenchmarkTimeoutSeconds
 	}
+
 	return timeout
 }
 

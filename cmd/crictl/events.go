@@ -80,13 +80,16 @@ func Events(cliContext *cli.Context, client internalapi.RuntimeService) error {
 	errCh := make(chan error, 1)
 
 	containerEventsCh := make(chan *pb.ContainerEventResponse)
+
 	go func() {
 		logrus.Debug("getting container events")
+
 		_, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
 			return nil, client.GetContainerEvents(ctx, containerEventsCh, nil)
 		})
 		if errors.Is(err, io.EOF) {
 			errCh <- nil
+
 			return
 		}
 		errCh <- err

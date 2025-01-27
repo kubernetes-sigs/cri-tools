@@ -785,17 +785,20 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			profileDir, err = createSeccompProfileDir()
 			if err != nil {
 				Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed creating seccomp profile directory: %v", err))
+
 				return
 			}
 			dirToCleanup = append(dirToCleanup, profileDir)
 			blockHostNameProfilePath, err = createSeccompProfile(seccompBlockHostNameProfile, "block-host-name.json", profileDir)
 			if err != nil {
 				Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed creating seccomp block hostname profile: %v", err))
+
 				return
 			}
 			blockchmodProfilePath, err = createSeccompProfile(seccompBlockChmodProfile, "block-chmod.json", profileDir)
 			if err != nil {
 				Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed creating seccomp block chmod profile: %v", err))
+
 				return
 			}
 		})
@@ -987,6 +990,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				if rh.GetName() == framework.TestContext.RuntimeHandler {
 					if rh.GetFeatures().GetUserNamespaces() {
 						supportsUserNamespaces = true
+
 						break
 					}
 				}
@@ -1128,11 +1132,13 @@ func matchContainerOutputRe(podConfig *runtimeapi.PodSandboxConfig, name, patter
 // createRunAsUserContainer creates the container with specified RunAsUser in ContainerConfig.
 func createRunAsUserContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) (containerID, expectedLogMessage string) {
 	By("create RunAsUser container")
+
 	var uidV runtimeapi.Int64Value
 	uidV.Value = 1001
 	expectedLogMessage = "1001\n"
 
 	By("create a container with RunAsUser")
+
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
@@ -1151,10 +1157,12 @@ func createRunAsUserContainer(rc internalapi.RuntimeService, ic internalapi.Imag
 // createRunAsUserNameContainer creates the container with specified RunAsUserName in ContainerConfig.
 func createRunAsUserNameContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) (containerID, expectedLogMessage string) {
 	By("create RunAsUserName container")
+
 	userName := "nobody"
 	expectedLogMessage = userName + "\n"
 
 	By("create a container with RunAsUserName")
+
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
@@ -1166,18 +1174,21 @@ func createRunAsUserNameContainer(rc internalapi.RuntimeService, ic internalapi.
 			},
 		},
 	}
+
 	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig), expectedLogMessage
 }
 
 // createRunAsGroupContainer creates the container with specified RunAsGroup in ContainerConfig.
 func createRunAsGroupContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, containerName string) (containerID, expectedLogMessage string) {
 	By("create RunAsGroup container")
+
 	var uidV, gidV runtimeapi.Int64Value
 	uidV.Value = 1001
 	gidV.Value = 1002
 	expectedLogMessage = "1001:1002\n"
 
 	By("create a container with RunAsUser and RunAsGroup")
+
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
@@ -1190,6 +1201,7 @@ func createRunAsGroupContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 		},
 		LogPath: containerName + ".log",
 	}
+
 	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig), expectedLogMessage
 }
 
@@ -1197,10 +1209,12 @@ func createRunAsGroupContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 // RunAsUser specified in ContainerConfig.
 func createInvalidRunAsGroupContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, containerName string) {
 	By("create invalid RunAsGroup container")
+
 	var gidV runtimeapi.Int64Value
 	gidV.Value = 1002
 
 	By("create a container with RunAsGroup without RunAsUser")
+
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
@@ -1218,6 +1232,7 @@ func createInvalidRunAsGroupContainer(rc internalapi.RuntimeService, ic internal
 // createNamespacePodSandbox creates a PodSandbox with different NamespaceOption config for creating containers.
 func createNamespacePodSandbox(rc internalapi.RuntimeService, podSandboxNamespace *runtimeapi.NamespaceOption, podSandboxName, podLogPath string) (string, *runtimeapi.PodSandboxConfig) {
 	By("create NamespaceOption podSandbox")
+
 	uid := framework.DefaultUIDPrefix + framework.NewUUID()
 	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
 	config := &runtimeapi.PodSandboxConfig{
@@ -1239,6 +1254,7 @@ func createNamespacePodSandbox(rc internalapi.RuntimeService, podSandboxNamespac
 // createNamespaceContainer creates container with different NamespaceOption config.
 func createNamespaceContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, containerName, image string, containerNamespace *runtimeapi.NamespaceOption, command []string, path string) (containerID, logPath string) {
 	By("create NamespaceOption container")
+
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
 		Image:    &runtimeapi.ImageSpec{Image: image},
@@ -1257,6 +1273,7 @@ func createNamespaceContainer(rc internalapi.RuntimeService, ic internalapi.Imag
 // createReadOnlyRootfsContainer creates the container with specified ReadOnlyRootfs in ContainerConfig.
 func createReadOnlyRootfsContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, readonly bool) (containerID, logPath string) {
 	By("create ReadOnlyRootfs container")
+
 	containerName := prefix + framework.NewUUID()
 	path := containerName + ".log"
 	containerConfig := &runtimeapi.ContainerConfig{
@@ -1290,6 +1307,7 @@ func checkRootfs(podConfig *runtimeapi.PodSandboxConfig, logpath string, readOnl
 // createPrivilegedPodSandbox creates a PodSandbox with Privileged of SecurityContext config.
 func createPrivilegedPodSandbox(rc internalapi.RuntimeService, privileged bool) (string, *runtimeapi.PodSandboxConfig) {
 	By("create Privileged podSandbox")
+
 	podSandboxName := "create-Privileged-PodSandbox-for-container-" + framework.NewUUID()
 	uid := framework.DefaultUIDPrefix + framework.NewUUID()
 	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
@@ -1310,6 +1328,7 @@ func createPrivilegedPodSandbox(rc internalapi.RuntimeService, privileged bool) 
 // createPrivilegedContainer creates container with specified Privileged in ContainerConfig.
 func createPrivilegedContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, privileged bool) string {
 	By("create Privileged container")
+
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
@@ -1342,6 +1361,7 @@ func checkNetworkManagement(rc internalapi.RuntimeService, containerID string, m
 // createCapabilityContainer creates container with specified Capability in ContainerConfig.
 func createCapabilityContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, add, drop []string) string {
 	By("create Capability container")
+
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
@@ -1362,10 +1382,12 @@ func createCapabilityContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 
 func createAndCheckHostNetwork(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podSandboxName, hostNetworkPort string, hostNetwork bool) (podID, podLogDir string) {
 	By(fmt.Sprintf("creating a podSandbox with hostNetwork %v", hostNetwork))
+
 	netNSMode := runtimeapi.NamespaceMode_POD
 	if hostNetwork {
 		netNSMode = runtimeapi.NamespaceMode_NODE
 	}
+
 	namespaceOptions := &runtimeapi.NamespaceOption{
 		Pid:     runtimeapi.NamespaceMode_POD,
 		Ipc:     runtimeapi.NamespaceMode_POD,
@@ -1375,6 +1397,7 @@ func createAndCheckHostNetwork(rc internalapi.RuntimeService, ic internalapi.Ima
 	podID, podConfig := createNamespacePodSandbox(rc, namespaceOptions, podSandboxName, podLogPath)
 
 	By("create a container in the sandbox")
+
 	command := []string{"sh", "-c", "netstat -ln"}
 	containerName := "container-with-HostNetwork-test-" + framework.NewUUID()
 	path := containerName + ".log"
@@ -1399,6 +1422,7 @@ func createAndCheckHostNetwork(rc internalapi.RuntimeService, ic internalapi.Ima
 		if hostNetwork {
 			return fmt.Errorf("host port %s should be in container's port list", hostNetworkPort)
 		}
+
 		return nil
 	}, time.Minute, time.Second).Should(Succeed())
 
@@ -1411,22 +1435,24 @@ func createSeccompProfileDir() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("create tempdir %q: %w", hostPath, err)
 	}
+
 	return hostPath, nil
 }
 
 // createSeccompProfile creates a seccomp test profile with profileContents.
 func createSeccompProfile(profileContents, profileName, hostPath string) (string, error) {
 	profilePath := filepath.Join(hostPath, profileName)
-	err := os.WriteFile(profilePath, []byte(profileContents), 0o644)
-	if err != nil {
+	if err := os.WriteFile(profilePath, []byte(profileContents), 0o644); err != nil {
 		return "", fmt.Errorf("create %s: %w", profilePath, err)
 	}
+
 	return profilePath, nil
 }
 
 // seccompTestContainer creates and starts a seccomp sandbox and a container.
 func seccompTestContainer(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, profile *runtimeapi.SecurityProfile) (podID, containerID string) {
 	By("create seccomp sandbox")
+
 	podSandboxName := "seccomp-sandbox-" + framework.NewUUID()
 	uid := framework.DefaultUIDPrefix + framework.NewUUID()
 	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
@@ -1443,6 +1469,7 @@ func seccompTestContainer(rc internalapi.RuntimeService, ic internalapi.ImageMan
 	podID = framework.RunPodSandbox(rc, podConfig)
 
 	By("create container")
+
 	containerNamePrefix := "seccomp-container-" + framework.NewUUID()
 	containerName := containerNamePrefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
@@ -1491,6 +1518,7 @@ func createSeccompContainer(rc internalapi.RuntimeService,
 	expectContainerCreateToPass bool,
 ) string {
 	By("create " + profile.GetProfileType().String() + " Seccomp container")
+
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
@@ -1527,11 +1555,14 @@ func createContainerWithExpectation(rc internalapi.RuntimeService,
 	if !strings.Contains(imageName, ":") {
 		imageName += ":latest"
 	}
+
 	status := framework.ImageStatus(ic, imageName)
 	if status == nil {
 		framework.PullPublicImage(ic, imageName, nil)
 	}
+
 	By("Create container.")
+
 	containerID, err := rc.CreateContainer(context.TODO(), podID, config, podConfig)
 
 	if !expectContainerCreateToPass {
@@ -1541,6 +1572,7 @@ func createContainerWithExpectation(rc internalapi.RuntimeService,
 		framework.ExpectNoError(err, "failed to create container: %v", err)
 		framework.Logf("Created container %q\n", containerID)
 	}
+
 	return containerID
 }
 
@@ -1566,6 +1598,7 @@ func runUserNamespaceContainer(
 	podConfig *runtimeapi.PodSandboxConfig,
 ) string {
 	By("create user namespaces container")
+
 	containerName := "user-namespaces-container-" + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
@@ -1631,19 +1664,24 @@ func supportsIDMap(path string) error {
 		UidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: usernsHostID, Size: usernsSize}},
 		GidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: usernsHostID, Size: usernsSize}},
 	}
+
 	if err := cmd.Start(); err != nil {
 		return err
 	}
+
 	defer func() {
 		_ = cmd.Process.Kill()
 		_ = cmd.Wait()
 	}()
 
 	usernsPath := fmt.Sprintf("/proc/%d/ns/user", cmd.Process.Pid)
+
 	var usernsFile *os.File
+
 	if usernsFile, err = os.Open(usernsPath); err != nil {
 		return err
 	}
+
 	defer usernsFile.Close()
 
 	attr := unix.MountAttr{
@@ -1664,6 +1702,7 @@ func supportsIDMap(path string) error {
 func rootfsPath(info map[string]string) string {
 	defaultPath := "/var/lib"
 	jsonCfg, ok := info["config"]
+
 	if !ok {
 		return defaultPath
 	}
@@ -1672,10 +1711,12 @@ func rootfsPath(info map[string]string) string {
 	type containerdConfig struct {
 		StateDir string `json:"stateDir"`
 	}
+
 	cfg := containerdConfig{}
 	if err := json.Unmarshal([]byte(jsonCfg), &cfg); err != nil {
 		return defaultPath
 	}
+
 	if cfg.StateDir == "" {
 		return defaultPath
 	}
@@ -1687,10 +1728,12 @@ func rootfsPath(info map[string]string) string {
 
 func hostUsernsContent() string {
 	uidMapPath := "/proc/self/uid_map"
+
 	uidMapContent, err := os.ReadFile(uidMapPath)
 	if err != nil {
 		return ""
 	}
+
 	return string(uidMapContent)
 }
 
@@ -1703,5 +1746,6 @@ func parseUsernsMappingLine(line string) []string {
 	m = slices.DeleteFunc(m, func(s string) bool {
 		return s == ""
 	})
+
 	return m
 }

@@ -27,6 +27,7 @@ import (
 
 func TestNameFilterByRegex(t *testing.T) {
 	t.Parallel()
+
 	testCases := []struct {
 		desc    string
 		pattern string
@@ -67,6 +68,7 @@ func TestNameFilterByRegex(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
+
 			r := matchesRegex(tc.pattern, tc.name)
 			if r != tc.isMatch {
 				t.Errorf("expected matched to be %v; actual result is %v", tc.isMatch, r)
@@ -103,6 +105,7 @@ func TestOutputStatusData(t *testing.T) {
 		]`
 		emptyResponse = ""
 	)
+
 	testCases := []struct {
 		name        string
 		status      string
@@ -159,10 +162,12 @@ func TestOutputStatusData(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			captureOutput := func(f func() error) (string, error) {
 				var err error
+
 				old := os.Stdout
 
 				r, w, _ := os.Pipe()
 				os.Stdout = w
+
 				defer func() {
 					os.Stdout = old
 				}()
@@ -178,15 +183,18 @@ func TestOutputStatusData(t *testing.T) {
 				}
 
 				out, err := io.ReadAll(r)
+
 				return strings.TrimRight(string(out), "\n"), err
 			}
 
 			outStr, err := captureOutput(func() error {
 				data := []statusData{{json: tc.status, runtimeHandlers: tc.handlers, info: tc.info}}
+
 				err := outputStatusData(data, tc.format, tc.tmplStr)
 				if err != nil {
 					t.Errorf("Unexpected error: %v", err)
 				}
+
 				return nil
 			})
 			if err != nil {

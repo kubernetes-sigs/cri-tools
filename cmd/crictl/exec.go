@@ -209,6 +209,7 @@ var runtimeExecCommand = &cli.Command{
 
 			if len(ids) == 0 {
 				logrus.Error("No containers found per filter flags")
+
 				return cli.ShowSubcommandHelp(c)
 			}
 		} else if c.NArg() < 2 {
@@ -262,6 +263,7 @@ var runtimeExecCommand = &cli.Command{
 
 		if ignoreErrors {
 			logrus.Debugf("Ignoring errors: %v", errs)
+
 			return nil
 		}
 
@@ -286,6 +288,7 @@ func tlsConfigFromFlags(ctx *cli.Context) (*rest.TLSClientConfig, error) {
 	if cfg.CAFile == "" && cfg.CertFile == "" && cfg.KeyFile == "" {
 		return &rest.TLSClientConfig{Insecure: true}, nil
 	}
+
 	if cfg.CertFile == "" || cfg.KeyFile == "" {
 		return nil, fmt.Errorf(
 			"all two flags --%s and --%s are required for TLS streaming, only --%s is optional",
@@ -306,22 +309,28 @@ func ExecSync(client internalapi.RuntimeService, opts *execOptions) (int, error)
 		Timeout:     opts.timeout,
 	}
 	logrus.Debugf("ExecSyncRequest: %v", request)
+
 	timeoutDuration := time.Duration(opts.timeout) * time.Second
+
 	type stdio struct {
 		stdout, stderr []byte
 	}
+
 	io, err := InterruptableRPC(nil, func(ctx context.Context) (*stdio, error) {
 		stdout, stderr, err := client.ExecSync(ctx, opts.id, opts.cmd, timeoutDuration)
 		if err != nil {
 			return nil, err
 		}
+
 		return &stdio{stdout, stderr}, nil
 	})
 	if err != nil {
 		return 1, err
 	}
+
 	fmt.Println(string(io.stdout))
 	fmt.Println(string(io.stderr))
+
 	return 0, nil
 }
 
@@ -337,13 +346,16 @@ func Exec(ctx context.Context, client internalapi.RuntimeService, opts *execOpti
 	}
 
 	logrus.Debugf("ExecRequest: %v", request)
+
 	r, err := InterruptableRPC(ctx, func(ctx context.Context) (*pb.ExecResponse, error) {
 		return client.Exec(ctx, request)
 	})
 	logrus.Debugf("ExecResponse: %v", r)
+
 	if err != nil {
 		return err
 	}
+
 	execURL := r.Url
 
 	URL, err := url.Parse(execURL)
@@ -360,6 +372,7 @@ func Exec(ctx context.Context, client internalapi.RuntimeService, opts *execOpti
 	}
 
 	logrus.Debugf("Exec URL: %v", URL)
+
 	return stream(ctx, opts.stdin, opts.tty, opts.transport, URL, opts.tlsConfig)
 }
 
@@ -375,22 +388,29 @@ func stream(ctx context.Context, in, tty bool, transport string, parsedURL *url.
 		Stderr: stderr,
 		Tty:    tty,
 	}
+
 	if in {
 		streamOptions.Stdin = stdin
 	}
+
 	logrus.Debugf("StreamOptions: %v", streamOptions)
+
 	if !tty {
 		return executor.StreamWithContext(ctx, streamOptions)
 	}
+
 	detachKeys, err := mobyterm.ToBytes(detachSequence)
 	if err != nil {
 		return errors.New("could not bind detach keys")
 	}
+
 	pr := mobyterm.NewEscapeProxy(streamOptions.Stdin, detachKeys)
 	streamOptions.Stdin = pr
+
 	if !in {
 		return errors.New("tty=true must be specified with interactive=true")
 	}
+
 	t := term.TTY{
 		In:  stdin,
 		Out: stdout,
@@ -399,7 +419,9 @@ func stream(ctx context.Context, in, tty bool, transport string, parsedURL *url.
 	if !t.IsTerminalIn() {
 		return errors.New("input is not a terminal")
 	}
+
 	streamOptions.TerminalSizeQueue = t.MonitorSize(t.GetSize())
+
 	return t.Safe(func() error { return executor.StreamWithContext(ctx, streamOptions) })
 }
 

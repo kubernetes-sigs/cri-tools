@@ -253,6 +253,7 @@ var createContainerCommand = &cli.Command{
 			return fmt.Errorf("creating container: %w", err)
 		}
 		fmt.Println(ctrID)
+
 		return nil
 	},
 }
@@ -276,6 +277,7 @@ var startContainerCommand = &cli.Command{
 				return fmt.Errorf("starting the container %q: %w", containerID, err)
 			}
 		}
+
 		return nil
 	},
 }
@@ -344,6 +346,7 @@ var updateContainerCommand = &cli.Command{
 				return fmt.Errorf("updating container resources for %q: %w", containerID, err)
 			}
 		}
+
 		return nil
 	},
 }
@@ -375,6 +378,7 @@ var stopContainerCommand = &cli.Command{
 				return fmt.Errorf("stopping the container %q: %w", containerID, err)
 			}
 		}
+
 		return nil
 	},
 }
@@ -424,8 +428,10 @@ var removeContainerCommand = &cli.Command{
 		if len(ids) == 0 {
 			if ctx.Bool("all") {
 				logrus.Info("No containers to remove")
+
 				return nil
 			}
+
 			return cli.ShowSubcommandHelp(ctx)
 		}
 
@@ -578,6 +584,7 @@ var containerStatusCommand = &cli.Command{
 
 		if len(ids) == 0 {
 			logrus.Error("No IDs provided or nothing found per filter")
+
 			return cli.ShowSubcommandHelp(c)
 		}
 
@@ -710,6 +717,7 @@ var listContainersCommand = &cli.Command{
 		if err = OutputContainers(runtimeClient, imageClient, opts); err != nil {
 			return fmt.Errorf("listing containers: %w", err)
 		}
+
 		return nil
 	},
 }
@@ -759,6 +767,7 @@ var runContainerCommand = &cli.Command{
 		if err = RunContainer(imageClient, runtimeClient, opts, c.String("runtime")); err != nil {
 			return fmt.Errorf("running container: %w", err)
 		}
+
 		return nil
 	},
 }
@@ -801,6 +810,7 @@ var checkpointContainerCommand = &cli.Command{
 				return fmt.Errorf("checkpointing the container %q failed: %w", containerID, err)
 			}
 		}
+
 		return nil
 	},
 }
@@ -826,6 +836,7 @@ func RunContainer(
 
 	// Create the container
 	containerOptions := createOptions{podID, &opts}
+
 	ctrID, err := CreateContainer(iClient, rClient, containerOptions)
 	if err != nil {
 		return fmt.Errorf("creating container failed: %w", err)
@@ -836,6 +847,7 @@ func RunContainer(
 	if err != nil {
 		return fmt.Errorf("starting the container %q: %w", ctrID, err)
 	}
+
 	return nil
 }
 
@@ -850,6 +862,7 @@ func CreateContainer(
 	if err != nil {
 		return "", err
 	}
+
 	var podConfig *pb.PodSandboxConfig
 	if opts.podConfig != "" {
 		podConfig, err = loadPodSandboxConfig(opts.podConfig)
@@ -899,13 +912,16 @@ func CreateContainer(
 		SandboxConfig: podConfig,
 	}
 	logrus.Debugf("CreateContainerRequest: %v", request)
+
 	r, err := InterruptableRPC(nil, func(ctx context.Context) (string, error) {
 		return rClient.CreateContainer(ctx, opts.podID, config, podConfig)
 	})
 	logrus.Debugf("CreateContainerResponse: %v", r)
+
 	if err != nil {
 		return "", err
 	}
+
 	return r, nil
 }
 
@@ -915,12 +931,15 @@ func StartContainer(client internalapi.RuntimeService, id string) error {
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
+
 	if _, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
 		return nil, client.StartContainer(ctx, id)
 	}); err != nil {
 		return err
 	}
+
 	fmt.Println(id)
+
 	return nil
 }
 
@@ -951,6 +970,7 @@ func UpdateContainerResources(client internalapi.RuntimeService, id string, opts
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
+
 	request := &pb.UpdateContainerResourcesRequest{
 		ContainerId: id,
 	}
@@ -972,14 +992,18 @@ func UpdateContainerResources(client internalapi.RuntimeService, id string, opts
 			MemoryLimitInBytes: opts.MemoryLimitInBytes,
 		}
 	}
+
 	logrus.Debugf("UpdateContainerResourcesRequest: %v", request)
 	resources := &pb.ContainerResources{Linux: request.Linux, Windows: request.Windows}
+
 	if _, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
 		return nil, client.UpdateContainerResources(ctx, id, resources)
 	}); err != nil {
 		return err
 	}
+
 	fmt.Println(id)
+
 	return nil
 }
 
@@ -989,13 +1013,17 @@ func StopContainer(client internalapi.RuntimeService, id string, timeout int64) 
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
+
 	logrus.Debugf("Stopping container: %s (timeout = %v)", id, timeout)
+
 	if _, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
 		return nil, client.StopContainer(ctx, id, timeout)
 	}); err != nil {
 		return err
 	}
+
 	fmt.Println(id)
+
 	return nil
 }
 
@@ -1008,18 +1036,22 @@ func CheckpointContainer(
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
+
 	request := &pb.CheckpointContainerRequest{
 		ContainerId: id,
 		Location:    export,
 	}
 	logrus.Debugf("CheckpointContainerRequest: %v", request)
+
 	_, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.ImageFsInfoResponse, error) {
 		return nil, rClient.CheckpointContainer(ctx, request)
 	})
 	if err != nil {
 		return err
 	}
+
 	fmt.Println(id)
+
 	return nil
 }
 
@@ -1029,13 +1061,17 @@ func RemoveContainer(client internalapi.RuntimeService, id string) error {
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
+
 	logrus.Debugf("Removing container: %s", id)
+
 	if _, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
 		return nil, client.RemoveContainer(ctx, id)
 	}); err != nil {
 		return err
 	}
+
 	fmt.Println(id)
+
 	return nil
 }
 
@@ -1046,27 +1082,33 @@ func marshalContainerStatus(cs *pb.ContainerStatus) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	jsonMap := make(map[string]interface{})
+
 	err = json.Unmarshal([]byte(statusStr), &jsonMap)
 	if err != nil {
 		return "", err
 	}
 
 	jsonMap["createdAt"] = time.Unix(0, cs.CreatedAt).Format(time.RFC3339Nano)
+
 	var startedAt, finishedAt time.Time
 	if cs.State != pb.ContainerState_CONTAINER_CREATED {
 		// If container is not in the created state, we have tried and
 		// started the container. Set the startedAt.
 		startedAt = time.Unix(0, cs.StartedAt)
 	}
+
 	if cs.State == pb.ContainerState_CONTAINER_EXITED ||
 		(cs.State == pb.ContainerState_CONTAINER_UNKNOWN && cs.FinishedAt > 0) {
 		// If container is in the exit state, set the finishedAt.
 		// Or if container is in the unknown state and FinishedAt > 0, set the finishedAt
 		finishedAt = time.Unix(0, cs.FinishedAt)
 	}
+
 	jsonMap["startedAt"] = startedAt.Format(time.RFC3339Nano)
 	jsonMap["finishedAt"] = finishedAt.Format(time.RFC3339Nano)
+
 	return marshalMapInOrder(jsonMap, *cs)
 }
 
@@ -1076,24 +1118,29 @@ func marshalContainerStatus(cs *pb.ContainerStatus) (string, error) {
 //nolint:dupl // pods and containers are similar, but still different
 func containerStatus(client internalapi.RuntimeService, ids []string, output, tmplStr string, quiet bool) error {
 	verbose := !(quiet)
+
 	if output == "" { // default to json output
 		output = outputTypeJSON
 	}
+
 	if len(ids) == 0 {
 		return errors.New("ID cannot be empty")
 	}
 
 	statuses := []statusData{}
+
 	for _, id := range ids {
 		request := &pb.ContainerStatusRequest{
 			ContainerId: id,
 			Verbose:     verbose,
 		}
 		logrus.Debugf("ContainerStatusRequest: %v", request)
+
 		r, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
 			return client.ContainerStatus(ctx, id, verbose)
 		})
 		logrus.Debugf("ContainerStatusResponse: %v", r)
+
 		if err != nil {
 			return fmt.Errorf("get container status: %w", err)
 		}
@@ -1115,40 +1162,51 @@ func containerStatus(client internalapi.RuntimeService, ids []string, output, tm
 
 func outputContainerStatusTable(r *pb.ContainerStatusResponse, verbose bool) {
 	fmt.Printf("ID: %s\n", r.Status.Id)
+
 	if r.Status.Metadata != nil {
 		if r.Status.Metadata.Name != "" {
 			fmt.Printf("Name: %s\n", r.Status.Metadata.Name)
 		}
+
 		if r.Status.Metadata.Attempt != 0 {
 			fmt.Printf("Attempt: %v\n", r.Status.Metadata.Attempt)
 		}
 	}
+
 	fmt.Printf("State: %s\n", r.Status.State)
 	ctm := time.Unix(0, r.Status.CreatedAt)
 	fmt.Printf("Created: %v\n", units.HumanDuration(time.Now().UTC().Sub(ctm))+" ago")
+
 	if r.Status.State != pb.ContainerState_CONTAINER_CREATED {
 		stm := time.Unix(0, r.Status.StartedAt)
 		fmt.Printf("Started: %v\n", units.HumanDuration(time.Now().UTC().Sub(stm))+" ago")
 	}
+
 	if r.Status.State == pb.ContainerState_CONTAINER_EXITED {
 		if r.Status.FinishedAt > 0 {
 			ftm := time.Unix(0, r.Status.FinishedAt)
 			fmt.Printf("Finished: %v\n", units.HumanDuration(time.Now().UTC().Sub(ftm))+" ago")
 		}
+
 		fmt.Printf("Exit Code: %v\n", r.Status.ExitCode)
 	}
+
 	if r.Status.Labels != nil {
 		fmt.Println("Labels:")
+
 		for _, k := range getSortedKeys(r.Status.Labels) {
 			fmt.Printf("\t%s -> %s\n", k, r.Status.Labels[k])
 		}
 	}
+
 	if r.Status.Annotations != nil {
 		fmt.Println("Annotations:")
+
 		for _, k := range getSortedKeys(r.Status.Annotations) {
 			fmt.Printf("\t%s -> %s\n", k, r.Status.Annotations[k])
 		}
 	}
+
 	if verbose {
 		fmt.Printf("Info: %v\n", r.GetInfo())
 	}
@@ -1161,16 +1219,20 @@ func ListContainers(runtimeClient internalapi.RuntimeService, imageClient intern
 	if opts.id != "" {
 		filter.Id = opts.id
 	}
+
 	if opts.podID != "" {
 		filter.PodSandboxId = opts.podID
 	}
+
 	st := &pb.ContainerStateValue{}
 	if !opts.all && opts.state == "" {
 		st.State = pb.ContainerState_CONTAINER_RUNNING
 		filter.State = st
 	}
+
 	if opts.state != "" {
 		st.State = pb.ContainerState_CONTAINER_UNKNOWN
+
 		switch strings.ToLower(opts.state) {
 		case "created":
 			st.State = pb.ContainerState_CONTAINER_CREATED
@@ -1188,20 +1250,25 @@ func ListContainers(runtimeClient internalapi.RuntimeService, imageClient intern
 			log.Fatalf("--state should be one of created, running, exited or unknown")
 		}
 	}
+
 	if opts.latest || opts.last > 0 {
 		// Do not filter by state if latest/last is specified.
 		filter.State = nil
 	}
+
 	if opts.labels != nil {
 		filter.LabelSelector = opts.labels
 	}
+
 	r, err := InterruptableRPC(nil, func(ctx context.Context) ([]*pb.Container, error) {
 		return runtimeClient.ListContainers(ctx, filter)
 	})
 	logrus.Debugf("ListContainerResponse: %v", r)
+
 	if err != nil {
 		return nil, fmt.Errorf("call list containers RPC: %w", err)
 	}
+
 	return getContainersList(imageClient, r, opts)
 }
 
@@ -1228,22 +1295,27 @@ func OutputContainers(runtimeClient internalapi.RuntimeService, imageClient inte
 	if !opts.verbose && !opts.quiet {
 		display.AddRow([]string{columnContainer, columnImage, columnCreated, columnState, columnName, columnAttempt, columnPodID, columnPodName, columnNamespace})
 	}
+
 	for _, c := range r {
 		if opts.quiet {
 			fmt.Printf("%s\n", c.Id)
+
 			continue
 		}
 
 		createdAt := time.Unix(0, c.CreatedAt)
 		ctm := units.HumanDuration(time.Now().UTC().Sub(createdAt)) + " ago"
 		podNamespace := getPodNamespaceFromLabels(c.Labels)
+
 		if !opts.verbose {
 			id := c.Id
 			podID := c.PodSandboxId
+
 			var image string
 			if c.Image != nil {
 				image = c.Image.Image
 			}
+
 			if !opts.noTrunc {
 				id = getTruncatedID(id, "")
 				podID = getTruncatedID(podID, "")
@@ -1252,51 +1324,66 @@ func OutputContainers(runtimeClient internalapi.RuntimeService, imageClient inte
 					image = getTruncatedID(digest.String(), string(digest.Algorithm())+":")
 				}
 			}
+
 			if opts.resolveImagePath {
 				orig, err := getRepoImage(imageClient, image)
 				if err != nil {
 					return fmt.Errorf("failed to fetch repo image %w", err)
 				}
+
 				image = orig
 			}
+
 			podName := getPodNameFromLabels(c.Labels)
 			display.AddRow([]string{
 				id, image, ctm, convertContainerState(c.State), c.Metadata.Name,
 				strconv.FormatUint(uint64(c.Metadata.Attempt), 10), podID, podName, podNamespace,
 			})
+
 			continue
 		}
 
 		fmt.Printf("ID: %s\n", c.Id)
 		fmt.Printf("PodID: %s\n", c.PodSandboxId)
 		fmt.Printf("Namespace: %s\n", podNamespace)
+
 		if c.Metadata != nil {
 			if c.Metadata.Name != "" {
 				fmt.Printf("Name: %s\n", c.Metadata.Name)
 			}
+
 			fmt.Printf("Attempt: %v\n", c.Metadata.Attempt)
 		}
+
 		fmt.Printf("State: %s\n", convertContainerState(c.State))
+
 		if c.Image != nil {
 			fmt.Printf("Image: %s\n", c.Image.Image)
 		}
+
 		fmt.Printf("Created: %v\n", ctm)
+
 		if c.Labels != nil {
 			fmt.Println("Labels:")
+
 			for _, k := range getSortedKeys(c.Labels) {
 				fmt.Printf("\t%s -> %s\n", k, c.Labels[k])
 			}
 		}
+
 		if c.Annotations != nil {
 			fmt.Println("Annotations:")
+
 			for _, k := range getSortedKeys(c.Annotations) {
 				fmt.Printf("\t%s -> %s\n", k, c.Annotations[k])
 			}
 		}
+
 		fmt.Println()
 	}
 
 	display.Flush()
+
 	return nil
 }
 
@@ -1312,6 +1399,7 @@ func convertContainerState(state pb.ContainerState) string {
 		return "Unknown"
 	default:
 		log.Fatalf("Unknown container state %q", state)
+
 		return ""
 	}
 }
@@ -1329,11 +1417,13 @@ func getFromLabels(labels map[string]string, label string) string {
 	if ok {
 		return value
 	}
+
 	return "unknown"
 }
 
 func getContainersList(imageClient internalapi.ImageManagerService, containersList []*pb.Container, opts *listOptions) ([]*pb.Container, error) {
 	filtered := []*pb.Container{}
+
 	for _, c := range containersList {
 		if match, err := matchesImage(imageClient, opts.image, c.GetImage().GetImage()); err != nil {
 			return nil, fmt.Errorf("check image match: %w", err)
@@ -1351,17 +1441,21 @@ func getContainersList(imageClient internalapi.ImageManagerService, containersLi
 	}
 
 	sort.Sort(containerByCreated(filtered))
+
 	n := len(filtered)
 	if opts.latest {
 		n = 1
 	}
+
 	if opts.last > 0 {
 		n = opts.last
 	}
+
 	n = func(a, b int) int {
 		if a < b {
 			return a
 		}
+
 		return b
 	}(n, len(filtered))
 

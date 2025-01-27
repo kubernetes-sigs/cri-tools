@@ -85,6 +85,7 @@ func podMetrics(
 	opts podMetricsOptions,
 ) error {
 	d := podMetricsDisplayer{opts}
+
 	return handleDisplay(c, client, opts.watch, d.displayPodMetrics)
 }
 
@@ -102,12 +103,14 @@ func (p *podMetricsDisplayer) displayPodMetrics(
 	}
 
 	response := &pb.ListPodSandboxMetricsResponse{PodMetrics: metrics}
+
 	switch p.opts.output {
 	case outputTypeJSON, "":
 		return outputProtobufObjAsJSON(response)
 	case outputTypeYAML:
 		return outputProtobufObjAsYAML(response)
 	}
+
 	return nil
 }
 
@@ -118,6 +121,7 @@ func podSandboxMetrics(ctx context.Context, client cri.RuntimeService) ([]*pb.Po
 	if err != nil {
 		return nil, fmt.Errorf("list pod sandbox metrics: %w", err)
 	}
+
 	logrus.Debugf("PodMetrics: %v", metrics)
 
 	return metrics, nil

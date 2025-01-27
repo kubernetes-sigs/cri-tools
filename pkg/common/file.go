@@ -64,15 +64,19 @@ func ReadConfig(filepath string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	yamlConfig := &yaml.Node{}
+
 	err = yaml.Unmarshal(data, yamlConfig)
 	if err != nil {
 		return nil, err
 	}
+
 	config, err := getConfigOptions(yamlConfig)
 	if err != nil {
 		return nil, err
 	}
+
 	return config, err
 }
 
@@ -82,6 +86,7 @@ func WriteConfig(c *Config, filepath string) error {
 	if c == nil {
 		c = &Config{}
 	}
+
 	if c.yamlData == nil {
 		c.yamlData = &yaml.Node{}
 	}
@@ -96,6 +101,7 @@ func WriteConfig(c *Config, filepath string) error {
 	if err := os.MkdirAll(gofilepath.Dir(filepath), 0o755); err != nil {
 		return err
 	}
+
 	return os.WriteFile(filepath, data, 0o644)
 }
 
@@ -107,6 +113,7 @@ func getConfigOptions(yamlData *yaml.Node) (*Config, error) {
 		yamlData.Content[0].Content == nil {
 		return config, nil
 	}
+
 	contentLen := len(yamlData.Content[0].Content)
 
 	// YAML representation contains 2 yaml ScalarNodes per config option.
@@ -117,7 +124,9 @@ func getConfigOptions(yamlData *yaml.Node) (*Config, error) {
 		configOption := yamlData.Content[0].Content[indx]
 		name := configOption.Value
 		value := yamlData.Content[0].Content[indx+1].Value
+
 		var err error
+
 		switch name {
 		case RuntimeEndpoint:
 			config.RuntimeEndpoint = value
@@ -146,6 +155,7 @@ func getConfigOptions(yamlData *yaml.Node) (*Config, error) {
 		default:
 			return nil, fmt.Errorf("Config option '%s' is not valid", name)
 		}
+
 		indx += 2
 	}
 
@@ -172,8 +182,10 @@ func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
 			Tag:  "!!map",
 		}
 	}
+
 	contentLen := 0
 	foundOption := false
+
 	if yamlData.Content[0].Content != nil {
 		contentLen = len(yamlData.Content[0].Content)
 	}
@@ -186,6 +198,7 @@ func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
 			yamlData.Content[0].Content[indx+1].Value = configValue
 			foundOption = true
 		}
+
 		indx += 2
 	}
 
@@ -201,12 +214,15 @@ func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
 			tagBool   = tagPrefix + "bool"
 			tagInt    = tagPrefix + "int"
 		)
+
 		name := &yaml.Node{
 			Kind:  yaml.ScalarNode,
 			Value: configName,
 			Tag:   tagStr,
 		}
+
 		var tagType string
+
 		switch configName {
 		case Timeout:
 			tagType = tagInt

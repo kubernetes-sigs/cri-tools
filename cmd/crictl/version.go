@@ -42,6 +42,7 @@ var runtimeVersionCommand = &cli.Command{
 		if err := Version(runtimeClient, string(remote.CRIVersionV1)); err != nil {
 			return fmt.Errorf("getting the runtime version: %w", err)
 		}
+
 		return nil
 	},
 }
@@ -50,16 +51,20 @@ var runtimeVersionCommand = &cli.Command{
 func Version(client internalapi.RuntimeService, version string) error {
 	request := &pb.VersionRequest{Version: version}
 	logrus.Debugf("VersionRequest: %v", request)
+
 	r, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.VersionResponse, error) {
 		return client.Version(ctx, version)
 	})
 	logrus.Debugf("VersionResponse: %v", r)
+
 	if err != nil {
 		return err
 	}
+
 	fmt.Println("Version: ", r.Version)
 	fmt.Println("RuntimeName: ", r.RuntimeName)
 	fmt.Println("RuntimeVersion: ", r.RuntimeVersion)
 	fmt.Println("RuntimeApiVersion: ", r.RuntimeApiVersion)
+
 	return nil
 }

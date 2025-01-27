@@ -120,6 +120,7 @@ var statsCommand = &cli.Command{
 		if err = ContainerStats(runtimeClient, opts); err != nil {
 			return fmt.Errorf("get container stats: %w", err)
 		}
+
 		return nil
 	},
 }
@@ -161,17 +162,21 @@ func (d containerStatsDisplayer) displayStats(ctx context.Context, client intern
 	if err != nil {
 		return err
 	}
+
 	switch d.opts.output {
 	case outputTypeJSON:
 		return outputProtobufObjAsJSON(r)
 	case outputTypeYAML:
 		return outputProtobufObjAsYAML(r)
 	}
+
 	oldStats := make(map[string]*pb.ContainerStats)
+
 	for _, s := range r.GetStats() {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+
 		oldStats[s.Attributes.Id] = s
 	}
 
@@ -183,10 +188,12 @@ func (d containerStatsDisplayer) displayStats(ctx context.Context, client intern
 	}
 
 	d.display.AddRow([]string{columnContainer, columnName, columnCPU, columnMemory, columnDisk, columnInodes, columnSwap})
+
 	for _, s := range r.GetStats() {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+
 		id := getTruncatedID(s.Attributes.Id, "")
 		name := s.GetAttributes().GetMetadata().GetName()
 		cpu := s.GetCpu().GetUsageCoreNanoSeconds().GetValue()
@@ -194,29 +201,36 @@ func (d containerStatsDisplayer) displayStats(ctx context.Context, client intern
 		disk := s.GetWritableLayer().GetUsedBytes().GetValue()
 		inodes := s.GetWritableLayer().GetInodesUsed().GetValue()
 		swap := s.GetSwap().GetSwapUsageBytes().GetValue()
+
 		if !d.opts.all && cpu == 0 && mem == 0 {
 			// Skip non-running container
 			continue
 		}
+
 		old, ok := oldStats[s.Attributes.Id]
 		if !ok {
 			// Skip new container
 			continue
 		}
+
 		var cpuPerc float64
+
 		if cpu != 0 {
 			// Only generate cpuPerc for running container
 			duration := s.GetCpu().GetTimestamp() - old.GetCpu().GetTimestamp()
 			if duration == 0 {
 				return errors.New("cpu stat is not updated during sample")
 			}
+
 			cpuPerc = float64(cpu-old.GetCpu().GetUsageCoreNanoSeconds().GetValue()) / float64(duration) * 100
 		}
+
 		d.display.AddRow([]string{
 			id, name, fmt.Sprintf("%.2f", cpuPerc), units.HumanSize(float64(mem)),
 			units.HumanSize(float64(disk)), strconv.FormatUint(inodes, 10), units.HumanSize(float64(swap)),
 		})
 	}
+
 	d.display.ClearScreen()
 	d.display.Flush()
 
@@ -225,13 +239,17 @@ func (d containerStatsDisplayer) displayStats(ctx context.Context, client intern
 
 func getContainerStats(ctx context.Context, client internalapi.RuntimeService, request *pb.ListContainerStatsRequest) (*pb.ListContainerStatsResponse, error) {
 	logrus.Debugf("ListContainerStatsRequest: %v", request)
+
 	r, err := InterruptableRPC(ctx, func(ctx context.Context) ([]*pb.ContainerStats, error) {
 		return client.ListContainerStats(ctx, request.Filter)
 	})
 	logrus.Debugf("ListContainerResponse: %v", r)
+
 	if err != nil {
 		return nil, err
 	}
+
 	sort.Sort(containerStatsByID(r))
+
 	return &pb.ListContainerStatsResponse{Stats: r}, nil
 }

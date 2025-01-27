@@ -45,6 +45,7 @@ type ServerConfiguration struct {
 // GetServerConfigFromFile returns the CRI server configuration from file.
 func GetServerConfigFromFile(configFileName, currentDir string) (*ServerConfiguration, error) {
 	serverConfig := ServerConfiguration{}
+
 	if _, err := os.Stat(configFileName); err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("load config file: %w", err)
@@ -54,6 +55,7 @@ func GetServerConfigFromFile(configFileName, currentDir string) (*ServerConfigur
 		// is placed with the cri tools binary.
 		nextConfigFileName := filepath.Join(filepath.Dir(currentDir), "crictl.yaml")
 		logrus.Warnf("Config %q does not exist, trying next: %q", configFileName, nextConfigFileName)
+
 		if _, err := os.Stat(nextConfigFileName); err != nil {
 			return nil, fmt.Errorf("load config file: %w", err)
 		}
@@ -72,5 +74,6 @@ func GetServerConfigFromFile(configFileName, currentDir string) (*ServerConfigur
 	serverConfig.Debug = config.Debug
 	serverConfig.PullImageOnCreate = config.PullImageOnCreate
 	serverConfig.DisablePullOnRun = config.DisablePullOnRun
+
 	return &serverConfig, nil
 }

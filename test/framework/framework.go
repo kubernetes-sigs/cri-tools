@@ -69,6 +69,7 @@ func (t *TestFramework) Describe(text string, body func()) bool {
 // Convenience method for command creation.
 func cmd(workDir, format string, args ...interface{}) *Session {
 	c := strings.Split(fmt.Sprintf(format, args...), " ")
+
 	command := exec.Command(c[0], c[1:]...)
 	if workDir != "" {
 		command.Dir = workDir
@@ -84,6 +85,7 @@ func crictlBinaryPathFlag() (path string) {
 	if crictlBinaryPath != "" {
 		return crictlBinaryPath
 	}
+
 	return "crictl"
 }
 
@@ -91,6 +93,7 @@ func crictlRuntimeEndpointFlag() string {
 	if crictlRuntimeEndpoint != "" {
 		return " --runtime-endpoint=" + crictlRuntimeEndpoint
 	}
+
 	return ""
 }
 
@@ -118,11 +121,13 @@ func (t *TestFramework) CrictlExpect(
 
 	// Then
 	Expect(res).To(Exit(exit))
+
 	if expectedOut == "" {
 		Expect(string(res.Out.Contents())).To(BeEmpty())
 	} else {
 		Expect(res.Out).To(Say(expectedOut))
 	}
+
 	if expectedErr == "" {
 		Expect(string(res.Err.Contents())).To(BeEmpty())
 	} else {
