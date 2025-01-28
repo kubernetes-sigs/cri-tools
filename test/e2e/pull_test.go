@@ -17,9 +17,9 @@ limitations under the License.
 package e2e
 
 import (
+	"strings"
+
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	. "github.com/onsi/gomega/gexec"
 )
 
 // The actual test suite.
@@ -27,29 +27,26 @@ var _ = t.Describe("pull", func() {
 	const (
 		imageSuccessText = "Image is up to date"
 		registry         = "gcr.io/k8s-staging-cri-tools/"
+
+		image1 = registry + "test-image-1"
+		image2 = registry + "test-image-1:latest"
+		image3 = registry + "test-image-digest@sha256:9700f9a2f5bf2c45f2f605a0bd3bce7cf37420ec9d3ed50ac2758413308766bf"
 	)
 
 	AfterEach(func() {
-		Expect(t.Crictl("rmi -a")).To(Exit(0))
+		t.Crictl("rmi " + strings.Join([]string{image1, image2, image3}, " "))
 	})
 
 	It("should succeed without tag or digest", func() {
-		t.CrictlExpectSuccess(
-			"pull "+registry+"test-image-1",
-			imageSuccessText)
+		t.CrictlExpectSuccess("pull "+image1, imageSuccessText)
 	})
 
 	It("should succeed with tag", func() {
-		t.CrictlExpectSuccess(
-			"pull "+registry+"test-image-1:latest",
-			imageSuccessText)
+		t.CrictlExpectSuccess("pull "+image2, imageSuccessText)
 	})
 
 	It("should succeed with digest", func() {
-		t.CrictlExpectSuccess(
-			"pull "+registry+"test-image-digest"+
-				"@sha256:9700f9a2f5bf2c45f2f605a0bd3bce7cf37420ec9d3ed50ac2758413308766bf",
-			imageSuccessText)
+		t.CrictlExpectSuccess("pull "+image3, imageSuccessText)
 	})
 
 	It("should succeed to show the help", func() {
