@@ -2,7 +2,7 @@
 
 CRI validation testing provides a test framework and a suite of tests to validate that the Container Runtime Interface (CRI) server implementation meets all the requirements. This allows the CRI runtime developers to verify that their runtime conforms to CRI, without needing to set up Kubernetes components or run Kubernetes end-to-end tests.
 
-CRI validation testing is currently Alpha and still under quick iterations. We encourage the CRI developers to report bugs or help extend the test coverage by adding more tests.
+CRI validation testing is GA since v1.11.0. We encourage the CRI developers to report bugs or help extend the test coverage by adding more tests.
 
 ## Install
 
@@ -57,4 +57,4 @@ critest connects to Unix: `unix:///run/containerd/containerd.sock` or Windows: `
 - `-runtime-endpoint`: Set the endpoint of runtime service. Default to `unix:///run/containerd/containerd.sock` or Windows: `npipe:////./pipe/containerd-containerd`.
 - `-ginkgo.skip`: Skip the tests that match the regular expression.
 - `-parallel`: The number of parallel test nodes to run (default 1). [ginkgo](https://github.com/onsi/ginkgo) must be installed to run parallel tests.
-- `-h`: Should help and all supported options.
+- `-h`: Show help and all supported options.
