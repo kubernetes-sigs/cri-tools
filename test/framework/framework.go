@@ -146,3 +146,15 @@ func (t *TestFramework) CrictlExpectFailure(
 ) {
 	t.CrictlExpect(args, 1, expectedOut, expectedErr)
 }
+
+// CrictlRemovePause can be uased to cleanup the pause images.
+func (t *TestFramework) CrictlRemovePauseImages() {
+	res := t.Crictl("images --filter reference=registry.k8s.io/pause -q")
+	Expect(res).To(Exit(0))
+
+	contents := res.Out.Contents()
+	if len(contents) > 0 {
+		output := strings.Split(string(contents), "\n")
+		t.CrictlExpectSuccess("rmi "+strings.TrimSpace(strings.Join(output, " ")), "Deleted")
+	}
+}

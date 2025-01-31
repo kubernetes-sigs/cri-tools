@@ -44,6 +44,8 @@ var _ = t.Describe("inspectp", func() {
 			res := t.Crictl("runp " + f.Name())
 			Expect(res).To(Exit(0))
 			sandboxes = append(sandboxes, string(bytes.TrimSpace(res.Out.Contents())))
+
+			Expect(os.RemoveAll(f.Name())).NotTo(HaveOccurred())
 		}
 	})
 
@@ -53,7 +55,7 @@ var _ = t.Describe("inspectp", func() {
 			res := t.Crictl("rmp -f " + sb)
 			Expect(res).To(Exit(0))
 		}
-		Expect(t.Crictl("rmi -q")).To(Exit(0))
+		t.CrictlRemovePauseImages()
 	})
 
 	It("should succeed", func() {
