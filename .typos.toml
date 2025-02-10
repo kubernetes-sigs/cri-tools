@@ -2,7 +2,6 @@
 extend-exclude = [
     "go.mod",
     "go.sum",
-    "vendor",
 ]
 ignore-hidden = true
 ignore-files = true

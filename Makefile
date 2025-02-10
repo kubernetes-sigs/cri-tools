@@ -21,14 +21,8 @@ ifeq ($(GOOS),windows)
 	BIN_EXT := .exe
 endif
 
-# test for go module support
-ifeq ($(shell go help mod >/dev/null 2>&1 && echo true), true)
-export GO_BUILD=GO111MODULE=on GOARCH=$(GOARCH) GOOS=$(GOOS) $(GO) build -mod=vendor
-export GO_TEST=GO111MODULE=on GOARCH=$(GOARCH) GOOS=$(GOOS) $(GO) test -mod=vendor
-else
 export GO_BUILD=GOARCH=$(GOARCH) GOOS=$(GOOS) $(GO) build
 export GO_TEST=GOARCH=$(GOARCH) GOOS=$(GOOS) $(GO) test
-endif
 
 PROJECT := sigs.k8s.io/cri-tools
 BINDIR ?= /usr/local/bin
@@ -40,11 +34,6 @@ GO_LDFLAGS := $(GO_LDFLAGS) -X $(PROJECT)/pkg/version.Version=$(VERSION)
 
 BUILD_PATH := $(shell pwd)/build
 BUILD_BIN_PATH := $(BUILD_PATH)/bin/$(GOOS)/$(GOARCH)
-
-define go-build
-	$(shell cd `pwd` && $(GO_BUILD) -o $(BUILD_BIN_PATH)/$(shell basename $(1)) $(1))
-	@echo > /dev/null
-endef
 
 define curl_to
 	curl -sSfL --retry 5 --retry-delay 3 "$(1)" -o $(2)
@@ -155,7 +144,7 @@ $(ZEITGEIST): $(BUILD_BIN_PATH)
 	$(call curl_to,https://storage.googleapis.com/k8s-artifacts-sig-release/kubernetes-sigs/zeitgeist/$(ZEITGEIST_VERSION)/zeitgeist-amd64-linux,$(ZEITGEIST))
 
 .PHONY: verify-go-modules
-verify-go-modules: ## Verify vendored golang modules.
+verify-go-modules: ## Verify golang modules.
 	hack/verify-go-modules.sh
 
 ##@ Test targets:
@@ -195,7 +184,8 @@ install.tools: $(GINKGO) $(GOLANGCI_LINT) ## Install all required verification t
 install.ginkgo: $(GINKGO) ## Install ginkgo.
 
 $(GINKGO):
-	$(call go-build,./vendor/github.com/onsi/ginkgo/v2/ginkgo)
+	GOBIN=$(abspath $(BUILD_BIN_PATH)) \
+		go install "github.com/onsi/ginkgo/v2/ginkgo@$$(go list -m -f {{.Version}} github.com/onsi/ginkgo/v2)"
 
 .PHONY: install.lint
 install.lint: $(GOLANGCI_LINT) ## Install golangci-lint.
@@ -206,13 +196,6 @@ $(GOLANGCI_LINT):
 		URL=https://raw.githubusercontent.com/golangci/golangci-lint \
 		BINDIR=${BUILD_BIN_PATH} && \
 	curl -sfL $$URL/$$VERSION/install.sh | sh -s $$VERSION
-
-.PHONY: vendor
-vendor: ## Update vendored golang modules.
-	export GO111MODULE=on GOSUMDB= && \
-		$(GO) mod tidy && \
-		$(GO) mod vendor && \
-		$(GO) mod verify
 
 .PHONY: release-notes
 release-notes: ## Build the release notes.

@@ -1,484 +1,379 @@
+.nh
 .TH Container Runtime Interface (CRI) CLI
-.PP
-\fB\fCcrictl\fR provides a CLI for CRI\-compatible container runtimes. This allows the CRI runtime developers to debug their runtime without needing to set up Kubernetes components.
+\fBcrictl\fR provides a CLI for CRI-compatible container runtimes. This allows the CRI runtime developers to debug their runtime without needing to set up Kubernetes components.
 
 .PP
-\fB\fCcrictl\fR has been GA since \fB\fCv1.11.0\fR and is currently under active development. It is hosted at the cri\-tools
-\[la]https://github.com/kubernetes-sigs/cri-tools\[ra] repository. We encourage the CRI developers to report bugs or help extend the coverage by adding more functionalities.
+\fBcrictl\fR has been GA since \fBv1.11.0\fR and is currently under active development. It is hosted at the cri-tools
+\[la]https://github.com/kubernetes\-sigs/cri\-tools\[ra] repository. We encourage the CRI developers to report bugs or help extend the coverage by adding more functionalities.
 
 .PP
 The tool expects JSON or YAML encoded files as input and passes them to the
 corresponding container runtime using the CRI API protocol
-\[la]/vendor/k8s.io/cri-api/pkg/apis/runtime/v1/api.proto\[ra]\&.
+\[la]https://github.com/kubernetes/cri\-api/blob/master/pkg/apis/runtime/v1/api.proto\[ra]\&.
 
 .SH Install crictl
 .PP
 .RS
 
 .PP
-\fBNOTE:\fP The below steps are based on linux\-amd64, however you can get downloads for all other platforms (Windows, ARM, etc) in the releases page
-\[la]https://github.com/kubernetes-sigs/cri-tools/releases\[ra]\&.
+\fBNOTE:\fP The below steps are based on linux-amd64, however you can get downloads for all other platforms (Windows, ARM, etc) in the releases page
+\[la]https://github.com/kubernetes\-sigs/cri\-tools/releases\[ra]\&.
+
 .RE
 
 .PP
-\fB\fCcrictl\fR can be downloaded from cri\-tools release page
-\[la]https://github.com/kubernetes-sigs/cri-tools/releases\[ra]:
-
-.RS
+\fBcrictl\fR can be downloaded from cri-tools release page
+\[la]https://github.com/kubernetes\-sigs/cri\-tools/releases\[ra]:
 .IP \(bu 2
+using \fBwget\fR:
 
-.PP
-using \fB\fCwget\fR:
-.PP
-.RS
-
-.nf
+.EX
 VERSION="v1.30.0" # check latest version in /releases page
-wget https://github.com/kubernetes\-sigs/cri\-tools/releases/download/$VERSION/crictl\-$VERSION\-linux\-amd64.tar.gz
-sudo tar zxvf crictl\-$VERSION\-linux\-amd64.tar.gz \-C /usr/local/bin
-rm \-f crictl\-$VERSION\-linux\-amd64.tar.gz
+wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux-amd64.tar.gz
+sudo tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
+rm -f crictl-$VERSION-linux-amd64.tar.gz
+.EE
 
-.fi
-.RE
 .IP \(bu 2
+using \fBcurl\fR:
 
-.PP
-using \fB\fCcurl\fR:
-.PP
-.RS
-
-.nf
+.EX
 VERSION="v1.30.0" # check latest version in /releases page
-curl \-L https://github.com/kubernetes\-sigs/cri\-tools/releases/download/$VERSION/crictl\-${VERSION}\-linux\-amd64.tar.gz \-\-output crictl\-${VERSION}\-linux\-amd64.tar.gz
-sudo tar zxvf crictl\-$VERSION\-linux\-amd64.tar.gz \-C /usr/local/bin
-rm \-f crictl\-$VERSION\-linux\-amd64.tar.gz
-
-.fi
-.RE
-
-.RE
+curl -L https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-${VERSION}-linux-amd64.tar.gz --output crictl-${VERSION}-linux-amd64.tar.gz
+sudo tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
+rm -f crictl-$VERSION-linux-amd64.tar.gz
+.EE
 
 .SH Usage
-.PP
-.RS
-
-.nf
+.EX
 crictl [global options] command [command options] [arguments...]
-
-.fi
-.RE
+.EE
 
 .PP
 COMMANDS:
-
-.RS
 .IP \(bu 2
-\fB\fCattach\fR: Attach to a running container
+\fBattach\fR: Attach to a running container
 .IP \(bu 2
-\fB\fCcreate\fR: Create a new container
+\fBcreate\fR: Create a new container
 .IP \(bu 2
-\fB\fCexec\fR: Run a command in a running container
+\fBexec\fR: Run a command in a running container
 .IP \(bu 2
-\fB\fCversion\fR: Display runtime version information
+\fBversion\fR: Display runtime version information
 .IP \(bu 2
-\fB\fCimages, image, img\fR: List images
+\fBimages, image, img\fR: List images
 .IP \(bu 2
-\fB\fCinspect\fR: Display the status of one or more containers
+\fBinspect\fR: Display the status of one or more containers
 .IP \(bu 2
-\fB\fCinspecti\fR: Return the status of one or more images
+\fBinspecti\fR: Return the status of one or more images
 .IP \(bu 2
-\fB\fCimagefsinfo\fR: Return image filesystem info
+\fBimagefsinfo\fR: Return image filesystem info
 .IP \(bu 2
-\fB\fCinspectp\fR: Display the status of one or more pods
+\fBinspectp\fR: Display the status of one or more pods
 .IP \(bu 2
-\fB\fClogs\fR: Fetch the logs of a container
+\fBlogs\fR: Fetch the logs of a container
 .IP \(bu 2
-\fB\fCport\-forward\fR: Forward local port to a pod
+\fBport-forward\fR: Forward local port to a pod
 .IP \(bu 2
-\fB\fCps\fR: List containers
+\fBps\fR: List containers
 .IP \(bu 2
-\fB\fCpull\fR: Pull an image from a registry
+\fBpull\fR: Pull an image from a registry
 .IP \(bu 2
-\fB\fCrun\fR: Run a new container inside a sandbox
+\fBrun\fR: Run a new container inside a sandbox
 .IP \(bu 2
-\fB\fCrunp\fR: Run a new pod
+\fBrunp\fR: Run a new pod
 .IP \(bu 2
-\fB\fCrm\fR: Remove one or more containers
+\fBrm\fR: Remove one or more containers
 .IP \(bu 2
-\fB\fCrmi\fR: Remove one or more images
+\fBrmi\fR: Remove one or more images
 .IP \(bu 2
-\fB\fCrmp\fR: Remove one or more pods
+\fBrmp\fR: Remove one or more pods
 .IP \(bu 2
-\fB\fCpods\fR: List pods
+\fBpods\fR: List pods
 .IP \(bu 2
-\fB\fCstart\fR: Start one or more created containers
+\fBstart\fR: Start one or more created containers
 .IP \(bu 2
-\fB\fCinfo\fR: Display information of the container runtime
+\fBinfo\fR: Display information of the container runtime
 .IP \(bu 2
-\fB\fCstop\fR: Stop one or more running containers
+\fBstop\fR: Stop one or more running containers
 .IP \(bu 2
-\fB\fCstopp\fR: Stop one or more running pods
+\fBstopp\fR: Stop one or more running pods
 .IP \(bu 2
-\fB\fCupdate\fR: Update one or more running containers
+\fBupdate\fR: Update one or more running containers
 .IP \(bu 2
-\fB\fCconfig\fR: Get and set \fB\fCcrictl\fR client configuration options
+\fBconfig\fR: Get and set \fBcrictl\fR client configuration options
 .IP \(bu 2
-\fB\fCstats\fR: List container(s) resource usage statistics
+\fBstats\fR: List container(s) resource usage statistics
 .IP \(bu 2
-\fB\fCstatsp\fR: List pod(s) resource usage statistics
+\fBstatsp\fR: List pod(s) resource usage statistics
 .IP \(bu 2
-\fB\fCcompletion\fR: Output bash shell completion code
+\fBcompletion\fR: Output bash shell completion code
 .IP \(bu 2
-\fB\fCcheckpoint\fR: Checkpoint one or more running containers
+\fBcheckpoint\fR: Checkpoint one or more running containers
 .IP \(bu 2
-\fB\fCevents, event\fR: Stream the events of containers
+\fBevents, event\fR: Stream the events of containers
 .IP \(bu 2
-\fB\fCupdate\-runtime\-config\fR Update the runtime configuration
+\fBupdate-runtime-config\fR Update the runtime configuration
 .IP \(bu 2
-\fB\fChelp, h\fR: Shows a list of commands or help for one command
-
-.RE
+\fBhelp, h\fR: Shows a list of commands or help for one command
 
 .PP
-\fB\fCcrictl\fR by default connects on Unix to:
-
-.RS
+\fBcrictl\fR by default connects on Unix to:
 .IP \(bu 2
-\fB\fCunix:///run/containerd/containerd.sock\fR or
+\fBunix:///run/containerd/containerd.sock\fR or
 .IP \(bu 2
-\fB\fCunix:///run/crio/crio.sock\fR or
+\fBunix:///run/crio/crio.sock\fR or
 .IP \(bu 2
-\fB\fCunix:///var/run/cri\-dockerd.sock\fR
-
-.RE
+\fBunix:///var/run/cri-dockerd.sock\fR
 
 .PP
 or on Windows to:
-
-.RS
 .IP \(bu 2
-\fB\fCnpipe:////./pipe/containerd\-containerd\fR or
+\fBnpipe:////./pipe/containerd-containerd\fR or
 .IP \(bu 2
-\fB\fCnpipe:////./pipe/cri\-dockerd\fR
-
-.RE
+\fBnpipe:////./pipe/cri-dockerd\fR
 
 .PP
 For other runtimes, use:
-
-.RS
 .IP \(bu 2
 frakti
-\[la]https://github.com/kubernetes/frakti\[ra]: \fB\fCunix:///var/run/frakti.sock\fR
-
-.RE
+\[la]https://github.com/kubernetes/frakti\[ra]: \fBunix:///var/run/frakti.sock\fR
 
 .PP
 The endpoint can be set in three ways:
-
-.RS
 .IP \(bu 2
-By setting global option flags \fB\fC\-\-runtime\-endpoint\fR (\fB\fC\-r\fR) and \fB\fC\-\-image\-endpoint\fR (\fB\fC\-i\fR)
+By setting global option flags \fB--runtime-endpoint\fR (\fB-r\fR) and \fB--image-endpoint\fR (\fB-i\fR)
 .IP \(bu 2
-By setting environment variables \fB\fCCONTAINER\_RUNTIME\_ENDPOINT\fR and \fB\fCIMAGE\_SERVICE\_ENDPOINT\fR
+By setting environment variables \fBCONTAINER_RUNTIME_ENDPOINT\fR and \fBIMAGE_SERVICE_ENDPOINT\fR
 .IP \(bu 2
-By setting the endpoint in the config file \fB\fC\-\-config=/etc/crictl.yaml\fR
-
-.RE
+By setting the endpoint in the config file \fB--config=/etc/crictl.yaml\fR
 
 .PP
 If the endpoint is not set then it works as follows:
-
-.RS
 .IP \(bu 2
-If the runtime endpoint is not set, \fB\fCcrictl\fR will by default try to connect using:
-
+If the runtime endpoint is not set, \fBcrictl\fR will by default try to connect using:
 .RS
 .IP \(bu 2
 containerd
 .IP \(bu 2
-cri\-o
+cri-o
 .IP \(bu 2
-cri\-dockerd
-
+cri-dockerd
 .RE
 .IP \(bu 2
-If the image endpoint is not set, \fB\fCcrictl\fR will by default use the runtime endpoint setting
-
-.RE
+If the image endpoint is not set, \fBcrictl\fR will by default use the runtime endpoint setting
 
 .PP
 .RS
 
 .PP
 Note: The default endpoints are now deprecated and the runtime endpoint should always be set instead.
-The performance maybe affected as each default connection attempt takes n\-seconds to complete before timing out and going to the next in sequence.
+The performance maybe affected as each default connection attempt takes n-seconds to complete before timing out and going to the next in sequence.
+
 .RE
 
 .PP
 Unix:
 
-.PP
-.RS
-
-.nf
+.EX
 $ cat /etc/crictl.yaml
-runtime\-endpoint: unix:///run/containerd/containerd.sock
-image\-endpoint: unix:///run/containerd/containerd.sock
+runtime-endpoint: unix:///run/containerd/containerd.sock
+image-endpoint: unix:///run/containerd/containerd.sock
 timeout: 2
 debug: true
-pull\-image\-on\-create: false
-
-.fi
-.RE
+pull-image-on-create: false
+.EE
 
 .PP
 Windows:
 
-.PP
-.RS
-
-.nf
+.EX
 C:\\> type %USERPROFILE%\\.crictl\\crictl.yaml
-runtime\-endpoint: npipe:////./pipe/containerd\-containerd
-image\-endpoint: npipe:////./pipe/containerd\-containerd
+runtime-endpoint: npipe:////./pipe/containerd-containerd
+image-endpoint: npipe:////./pipe/containerd-containerd
 timeout: 2
 debug: true
-pull\-image\-on\-create: false
-
-.fi
-.RE
+pull-image-on-create: false
+.EE
 
 .SS Connection troubleshooting
-.PP
 Some runtimes might use cmux
 \[la]https://github.com/soheilhy/cmux\[ra] for connection
 multiplexing, which can cause issues during the initial gRPC
 \[la]https://grpc.io\[ra]
 connection setup. If it does not seem to be possible to connect to the runtime
-\fB\fC*.sock\fR, then exporting the environment variable
-\fB\fCGRPC\_GO\_REQUIRE\_HANDSHAKE=off\fR might solve the issue. Please take into account
+\fB*.sock\fR, then exporting the environment variable
+\fBGRPC_GO_REQUIRE_HANDSHAKE=off\fR might solve the issue. Please take into account
 that the environment has to be preserved when running
-via sudo (\fB\fCsudo \-E crictl ...\fR).
+via sudo (\fBsudo -E crictl ...\fR).
 
 .SH Additional options
-.RS
 .IP \(bu 2
-\fB\fC\-\-timeout\fR, \fB\fC\-t\fR: Timeout of connecting to server in seconds (default: \fB\fC2s\fR).
+\fB--timeout\fR, \fB-t\fR: Timeout of connecting to server in seconds (default: \fB2s\fR).
 0 or less is interpreted as unset and converted to the default. There is no
-option for no timeout value set and the smallest supported timeout is \fB\fC1s\fR
+option for no timeout value set and the smallest supported timeout is \fB1s\fR
 .IP \(bu 2
-\fB\fC\-\-debug\fR, \fB\fC\-D\fR: Enable debug output
+\fB--debug\fR, \fB-D\fR: Enable debug output
 .IP \(bu 2
-\fB\fC\-\-help\fR, \fB\fC\-h\fR: show help
+\fB--help\fR, \fB-h\fR: show help
 .IP \(bu 2
-\fB\fC\-\-version\fR, \fB\fC\-v\fR: print the version information of \fB\fCcrictl\fR
+\fB--version\fR, \fB-v\fR: print the version information of \fBcrictl\fR
 .IP \(bu 2
-\fB\fC\-\-config\fR, \fB\fC\-c\fR: Location of the client config file (default: \fB\fC/etc/crictl.yaml\fR). Can be changed by setting \fB\fCCRI\_CONFIG\_FILE\fR environment variable. If not specified and the default does not exist, the program's directory is searched as well
-
-.RE
+\fB--config\fR, \fB-c\fR: Location of the client config file (default: \fB/etc/crictl.yaml\fR). Can be changed by setting \fBCRI_CONFIG_FILE\fR environment variable. If not specified and the default does not exist, the program's directory is searched as well
 
 .SH Client Configuration Options
-.PP
-Use the \fB\fCcrictl\fR config command to get and set the \fB\fCcrictl\fR client configuration
+Use the \fBcrictl\fR config command to get and set the \fBcrictl\fR client configuration
 options.
 
 .PP
 USAGE:
 
-.PP
-.RS
-
-.nf
+.EX
 crictl config [command options] [<crictl options>]
-
-.fi
-.RE
+.EE
 
 .PP
-For example \fB\fCcrictl config \-\-set debug=true\fR will enable debug mode when giving subsequent \fB\fCcrictl\fR commands.
+For example \fBcrictl config --set debug=true\fR will enable debug mode when giving subsequent \fBcrictl\fR commands.
 
 .PP
 COMMAND OPTIONS:
-
-.RS
 .IP \(bu 2
-\fB\fC\-\-get value\fR: Show the option value
+\fB--get value\fR: Show the option value
 .IP \(bu 2
-\fB\fC\-\-set value\fR: Set option (can specify multiple or separate values with commas: opt1=val1,opt2=val2)
+\fB--set value\fR: Set option (can specify multiple or separate values with commas: opt1=val1,opt2=val2)
 .IP \(bu 2
-\fB\fC\-\-help\fR, \fB\fC\-h\fR: Show help (default: \fB\fCfalse\fR)
-
-.RE
+\fB--help\fR, \fB-h\fR: Show help (default: \fBfalse\fR)
 
 .PP
-\fB\fCcrictl\fR OPTIONS:
-
-.RS
+\fBcrictl\fR OPTIONS:
 .IP \(bu 2
-\fB\fCruntime\-endpoint\fR: Container runtime endpoint (no default value)
+\fBruntime-endpoint\fR: Container runtime endpoint (no default value)
 .IP \(bu 2
-\fB\fCimage\-endpoint\fR: Image endpoint (no default value)
+\fBimage-endpoint\fR: Image endpoint (no default value)
 .IP \(bu 2
-\fB\fCtimeout\fR: Timeout of connecting to server (default: \fB\fC2s\fR)
+\fBtimeout\fR: Timeout of connecting to server (default: \fB2s\fR)
 .IP \(bu 2
-\fB\fCdebug\fR: Enable debug output (default: \fB\fCfalse\fR)
+\fBdebug\fR: Enable debug output (default: \fBfalse\fR)
 .IP \(bu 2
-\fB\fCpull\-image\-on\-create\fR: Enable pulling image on create requests (default: \fB\fCfalse\fR)
+\fBpull-image-on-create\fR: Enable pulling image on create requests (default: \fBfalse\fR)
 .IP \(bu 2
-\fB\fCdisable\-pull\-on\-run\fR: Disable pulling image on run requests (default: \fB\fCfalse\fR)
-
-.RE
+\fBdisable-pull-on-run\fR: Disable pulling image on run requests (default: \fBfalse\fR)
 
 .PP
 .RS
 
 .PP
-When enabled \fB\fCpull\-image\-on\-create\fR modifies the create container command to first pull the container's image.
+When enabled \fBpull-image-on-create\fR modifies the create container command to first pull the container's image.
 This feature is used as a helper to make creating containers easier and faster.
-Some users of \fB\fCcrictl\fR may desire to not pull the image necessary to create the container.
-For example, the image may have already been pulled or otherwise loaded into the container runtime, or the user may be running without a network. For this reason the default for \fB\fCpull\-image\-on\-create\fR is \fB\fCfalse\fR\&.
-.PP
-By default the run command first pulls the container image, and \fB\fCdisable\-pull\-on\-run\fR is \fB\fCfalse\fR\&.
-Some users of \fB\fCcrictl\fR may desire to set \fB\fCdisable\-pull\-on\-run\fR to \fB\fCtrue\fR to not pull the image by default when using the run command.
+Some users of \fBcrictl\fR may desire to not pull the image necessary to create the container.
+For example, the image may have already been pulled or otherwise loaded into the container runtime, or the user may be running without a network. For this reason the default for \fBpull-image-on-create\fR is \fBfalse\fR\&.
 
 .PP
-To override these default pull configuration settings, \fB\fC\-\-no\-pull\fR and \fB\fC\-\-with\-pull\fR options are provided for the create and run commands.
+By default the run command first pulls the container image, and \fBdisable-pull-on-run\fR is \fBfalse\fR\&.
+Some users of \fBcrictl\fR may desire to set \fBdisable-pull-on-run\fR to \fBtrue\fR to not pull the image by default when using the run command.
+
+.PP
+To override these default pull configuration settings, \fB--no-pull\fR and \fB--with-pull\fR options are provided for the create and run commands.
 
 .RE
 
 .SH Examples
-.RS
 .IP \(bu 2
 Run pod sandbox with config file
-\[la]#run-pod-sandbox-with-config-file\[ra]
+\[la]#run\-pod\-sandbox\-with\-config\-file\[ra]
 .IP \(bu 2
 Run pod sandbox with runtime handler
-\[la]#run-pod-sandbox-with-runtime-handler\[ra]
+\[la]#run\-pod\-sandbox\-with\-runtime\-handler\[ra]
 .IP \(bu 2
 Pull a busybox image
-\[la]#pull-a-busybox-image\[ra]
+\[la]#pull\-a\-busybox\-image\[ra]
 .IP \(bu 2
 Filter images
-\[la]#filter-images\[ra]
-
-.RE
+\[la]#filter\-images\[ra]
 
 .SS Run pod sandbox with config file
-.PP
-.RS
-
-.nf
-$ cat pod\-config.json
+.EX
+$ cat pod-config.json
 {
     "metadata": {
-        "name": "nginx\-sandbox",
+        "name": "nginx-sandbox",
         "namespace": "default",
         "attempt": 1,
         "uid": "hdishd83djaidwnduwk28bcsb"
     },
-    "log\_directory": "/tmp",
+    "log_directory": "/tmp",
     "linux": {
     }
 }
 
-$ crictl runp pod\-config.json
+$ crictl runp pod-config.json
 f84dd361f8dc51518ed291fbadd6db537b0496536c1d2d6c05ff943ce8c9a54f
-
-.fi
-.RE
+.EE
 
 .PP
 List pod sandboxes and check the sandbox is in Ready state:
 
-.PP
-.RS
-
-.nf
+.EX
 $ crictl pods
 POD ID              CREATED             STATE               NAME                NAMESPACE           ATTEMPT
-f84dd361f8dc5       17 seconds ago      Ready               nginx\-sandbox       default             1
-
-.fi
-.RE
+f84dd361f8dc5       17 seconds ago      Ready               nginx-sandbox       default             1
+.EE
 
 .SS Run pod sandbox with runtime handler
-.PP
-Runtime handler requires runtime support. The following example shows running a pod sandbox with \fB\fCrunsc\fR handler on containerd runtime.
+Runtime handler requires runtime support. The following example shows running a pod sandbox with \fBrunsc\fR handler on containerd runtime.
 
-.PP
-.RS
-
-.nf
-$ cat pod\-config.json
+.EX
+$ cat pod-config.json
 {
     "metadata": {
-        "name": "nginx\-runsc\-sandbox",
+        "name": "nginx-runsc-sandbox",
         "namespace": "default",
         "attempt": 1,
         "uid": "hdishd83djaidwnduwk28bcsb"
     },
-    "log\_directory": "/tmp",
+    "log_directory": "/tmp",
     "linux": {
     }
 }
 
-$ crictl runp \-\-runtime=runsc pod\-config.json
+$ crictl runp --runtime=runsc pod-config.json
 c112976cb6caa43a967293e2c62a2e0d9d8191d5109afef230f403411147548c
 
 $ crictl inspectp c112976cb6caa43a967293e2c62a2e0d9d8191d5109afef230f403411147548c
-...
+\&...
     "runtime": {
       "runtimeType": "io.containerd.runtime.v1.linux",
       "runtimeEngine": "/usr/local/sbin/runsc",
       "runtimeRoot": "/run/containerd/runsc"
     },
-...
-
-.fi
-.RE
+\&...
+.EE
 
 .SS Pull a busybox image
-.PP
-.RS
-
-.nf
+.EX
 $ crictl pull busybox
 Image is up to date for busybox@sha256:141c253bc4c3fd0a201d32dc1f493bcf3fff003b6df416dea4f41046e0f37d47
-
-.fi
-.RE
+.EE
 
 .PP
 List images and check the busybox image has been pulled:
 
-.PP
-.RS
-
-.nf
+.EX
 $ crictl images
 IMAGE               TAG                 IMAGE ID            SIZE
 busybox             latest              8c811b4aec35f       1.15MB
 k8s.gcr.io/pause    3.1                 da86e6ba6ca19       742kB
-
-.fi
-.RE
+.EE
 
 .SS Filter images
-.PP
-The following filters are available \fB\fC\-\-filter\fR, \fB\fC\-f\fR:
-
-.RS
+The following filters are available \fB--filter\fR, \fB-f\fR:
 .IP "  1." 5
-\fB\fCbefore=<image\-name>[:<tag>]|<image id>|<image@digest>\fR
+\fBbefore=<image-name>[:<tag>]|<image id>|<image@digest>\fR
 .IP "  2." 5
-\fB\fCdangling=(true/false)\fR
+\fBdangling=(true/false)\fR
 .IP "  3." 5
-\fB\fCreference=/regex/\fR
+\fBreference=/regex/\fR
 .IP "  4." 5
-\fB\fCsince=<image\-name>[:<tag>]|<image id>|<image@digest>\fR
-
-.RE
+\fBsince=<image-name>[:<tag>]|<image id>|<image@digest>\fR
 
 .PP
 Filters can be combined and are applied in the order provided.
@@ -486,153 +381,115 @@ Filters can be combined and are applied in the order provided.
 .PP
 List all images:
 
-.PP
-.RS
-
-.nf
-$ crictl images \-\-digests
+.EX
+$ crictl images --digests
 IMAGE                                                      TAG                 DIGEST              IMAGE ID            SIZE
 docker.io/library/busybox                                  latest              538721340ded1       3f57d9401f8d4       4.5MB
 docker.io/library/nginx                                    latest              05aa73005987c       e4720093a3c13       191MB
-gcr.io/k8s\-staging\-cri\-tools/hostnet\-nginx\-amd64           latest              aa74ea387dbbe       1ee3f9825c42b       147MB
-gcr.io/k8s\-staging\-cri\-tools/test\-image\-predefined\-group   latest              2b2fc189c502a       84410ab6e30d9       5.11MB
-registry.k8s.io/e2e\-test\-images/busybox                    1.29\-2              c318242786b13       84eebb9ca1734       1.37MB
-registry.k8s.io/e2e\-test\-images/httpd                      2.4.39\-4            3fe7acf013d12       444b9e2765dc9       132MB
-registry.k8s.io/e2e\-test\-images/nginx                      1.14\-2              13616070e3f29       02e45a31af51c       17.2MB
-registry.k8s.io/e2e\-test\-images/nonewprivs                 1.3                 8ac1264691820       3e3d1785c0b6e       7.37MB
+gcr.io/k8s-staging-cri-tools/hostnet-nginx-amd64           latest              aa74ea387dbbe       1ee3f9825c42b       147MB
+gcr.io/k8s-staging-cri-tools/test-image-predefined-group   latest              2b2fc189c502a       84410ab6e30d9       5.11MB
+registry.k8s.io/e2e-test-images/busybox                    1.29-2              c318242786b13       84eebb9ca1734       1.37MB
+registry.k8s.io/e2e-test-images/httpd                      2.4.39-4            3fe7acf013d12       444b9e2765dc9       132MB
+registry.k8s.io/e2e-test-images/nginx                      1.14-2              13616070e3f29       02e45a31af51c       17.2MB
+registry.k8s.io/e2e-test-images/nonewprivs                 1.3                 8ac1264691820       3e3d1785c0b6e       7.37MB
 registry.k8s.io/pause                                      3.9                 7031c1b283388       e6f1816883972       750kB
-
-.fi
-.RE
+.EE
 
 .PP
-List images by \fB\fCreference\fR:
+List images by \fBreference\fR:
 
-.PP
-.RS
-
-.nf
-$ crictl images \-\-filter 'reference=k8s'
+.EX
+$ crictl images --filter 'reference=k8s'
 IMAGE                                                      TAG                 IMAGE ID            SIZE
-gcr.io/k8s\-staging\-cri\-tools/hostnet\-nginx\-amd64           latest              1ee3f9825c42b       147MB
-gcr.io/k8s\-staging\-cri\-tools/test\-image\-predefined\-group   latest              84410ab6e30d9       5.11MB
-registry.k8s.io/e2e\-test\-images/busybox                    1.29\-2              84eebb9ca1734       1.37MB
-registry.k8s.io/e2e\-test\-images/httpd                      2.4.39\-4            444b9e2765dc9       132MB
-registry.k8s.io/e2e\-test\-images/nginx                      1.14\-2              02e45a31af51c       17.2MB
-registry.k8s.io/e2e\-test\-images/nonewprivs                 1.3                 3e3d1785c0b6e       7.37MB
+gcr.io/k8s-staging-cri-tools/hostnet-nginx-amd64           latest              1ee3f9825c42b       147MB
+gcr.io/k8s-staging-cri-tools/test-image-predefined-group   latest              84410ab6e30d9       5.11MB
+registry.k8s.io/e2e-test-images/busybox                    1.29-2              84eebb9ca1734       1.37MB
+registry.k8s.io/e2e-test-images/httpd                      2.4.39-4            444b9e2765dc9       132MB
+registry.k8s.io/e2e-test-images/nginx                      1.14-2              02e45a31af51c       17.2MB
+registry.k8s.io/e2e-test-images/nonewprivs                 1.3                 3e3d1785c0b6e       7.37MB
 registry.k8s.io/pause                                      3.9                 e6f1816883972       750kB
-
-.fi
-.RE
+.EE
 
 .PP
-List images by \fB\fCreference\fR using a regular expression:
+List images by \fBreference\fR using a regular expression:
 
-.PP
-.RS
-
-.nf
-$ crictl images \-\-filter 'reference=nginx'
+.EX
+$ crictl images --filter 'reference=nginx'
 IMAGE                                              TAG                 IMAGE ID            SIZE
 docker.io/library/nginx                            latest              e4720093a3c13       191MB
-gcr.io/k8s\-staging\-cri\-tools/hostnet\-nginx\-amd64   latest              1ee3f9825c42b       147MB
-registry.k8s.io/e2e\-test\-images/nginx              1.14\-2              02e45a31af51c       17.2MB
-$ crictl images \-\-filter 'reference=.*(nginx)$'
+gcr.io/k8s-staging-cri-tools/hostnet-nginx-amd64   latest              1ee3f9825c42b       147MB
+registry.k8s.io/e2e-test-images/nginx              1.14-2              02e45a31af51c       17.2MB
+$ crictl images --filter 'reference=.*(nginx)$'
 IMAGE                                   TAG                 IMAGE ID            SIZE
 docker.io/library/nginx                 latest              e4720093a3c13       191MB
-registry.k8s.io/e2e\-test\-images/nginx   1.14\-2              02e45a31af51c       17.2MB
-
-.fi
-.RE
+registry.k8s.io/e2e-test-images/nginx   1.14-2              02e45a31af51c       17.2MB
+.EE
 
 .PP
-Combine multiple \fB\fC\-\-filter\fR arguments together:
+Combine multiple \fB--filter\fR arguments together:
 
-.PP
-.RS
-
-.nf
-$ crictl images \-\-filter 'reference=nginx' \-\-filter 'reference=\\.k8s\\.'
+.EX
+$ crictl images --filter 'reference=nginx' --filter 'reference=\\.k8s\\.'
 IMAGE                                   TAG                 IMAGE ID            SIZE
-registry.k8s.io/e2e\-test\-images/nginx   1.14\-2              02e45a31af51c       17.2MB
-$ crictl images \-\-filter 'since=registry.k8s.io/e2e\-test\-images/busybox@sha256:c318242786b139d18676b1c09a0ad7f15fc17f8f16a5b2e625cd0dc8c9703daf' \-\-filter 'reference=nginx'
+registry.k8s.io/e2e-test-images/nginx   1.14-2              02e45a31af51c       17.2MB
+$ crictl images --filter 'since=registry.k8s.io/e2e-test-images/busybox@sha256:c318242786b139d18676b1c09a0ad7f15fc17f8f16a5b2e625cd0dc8c9703daf' --filter 'reference=nginx'
 IMAGE                                              TAG                 IMAGE ID            SIZE
 docker.io/library/nginx                            latest              e4720093a3c13       191MB
-gcr.io/k8s\-staging\-cri\-tools/hostnet\-nginx\-amd64   latest              1ee3f9825c42b       147MB
-
-.fi
-.RE
+gcr.io/k8s-staging-cri-tools/hostnet-nginx-amd64   latest              1ee3f9825c42b       147MB
+.EE
 
 .PP
-List images \fB\fCbefore=<image\-name>[:<tag>]\fR:
+List images \fBbefore=<image-name>[:<tag>]\fR:
 
-.PP
-.RS
-
-.nf
-$ crictl images \-\-filter 'before=gcr.io/k8s\-staging\-cri\-tools/hostnet\-nginx\-amd64:latest'
+.EX
+$ crictl images --filter 'before=gcr.io/k8s-staging-cri-tools/hostnet-nginx-amd64:latest'
 IMAGE                                                      TAG                 IMAGE ID            SIZE
-gcr.io/k8s\-staging\-cri\-tools/test\-image\-predefined\-group   latest              84410ab6e30d9       5.11MB
-registry.k8s.io/e2e\-test\-images/busybox                    1.29\-2              84eebb9ca1734       1.37MB
-registry.k8s.io/e2e\-test\-images/httpd                      2.4.39\-4            444b9e2765dc9       132MB
-registry.k8s.io/e2e\-test\-images/nginx                      1.14\-2              02e45a31af51c       17.2MB
-registry.k8s.io/e2e\-test\-images/nonewprivs                 1.3                 3e3d1785c0b6e       7.37MB
+gcr.io/k8s-staging-cri-tools/test-image-predefined-group   latest              84410ab6e30d9       5.11MB
+registry.k8s.io/e2e-test-images/busybox                    1.29-2              84eebb9ca1734       1.37MB
+registry.k8s.io/e2e-test-images/httpd                      2.4.39-4            444b9e2765dc9       132MB
+registry.k8s.io/e2e-test-images/nginx                      1.14-2              02e45a31af51c       17.2MB
+registry.k8s.io/e2e-test-images/nonewprivs                 1.3                 3e3d1785c0b6e       7.37MB
 registry.k8s.io/pause                                      3.9                 e6f1816883972       750kB
-
-.fi
-.RE
+.EE
 
 .PP
-List images \fB\fCsince=<image\-name>[:<tag>]\fR:
+List images \fBsince=<image-name>[:<tag>]\fR:
 
-.PP
-.RS
-
-.nf
-$ crictl images \-\-filter 'since=gcr.io/k8s\-staging\-cri\-tools/hostnet\-nginx\-amd64:latest'
+.EX
+$ crictl images --filter 'since=gcr.io/k8s-staging-cri-tools/hostnet-nginx-amd64:latest'
 IMAGE                       TAG                 IMAGE ID            SIZE
 docker.io/library/busybox   latest              3f57d9401f8d4       4.5MB
 docker.io/library/nginx     latest              e4720093a3c13       191MB
-
-.fi
-.RE
+.EE
 
 .PP
-List images \fB\fCsince=<image@digest>\fR:
+List images \fBsince=<image@digest>\fR:
 
-.PP
-.RS
-
-.nf
-crictl images \-\-filter 'since=registry.k8s.io/e2e\-test\-images/busybox@sha256:c318242786b139d18676b1c09a0ad7f15fc17f8f16a5b2e625cd0dc8c9703daf'
+.EX
+crictl images --filter 'since=registry.k8s.io/e2e-test-images/busybox@sha256:c318242786b139d18676b1c09a0ad7f15fc17f8f16a5b2e625cd0dc8c9703daf'
 IMAGE                                                      TAG                 IMAGE ID            SIZE
 docker.io/library/busybox                                  latest              3f57d9401f8d4       4.5MB
 docker.io/library/nginx                                    latest              e4720093a3c13       191MB
-gcr.io/k8s\-staging\-cri\-tools/hostnet\-nginx\-amd64           latest              1ee3f9825c42b       147MB
-gcr.io/k8s\-staging\-cri\-tools/test\-image\-predefined\-group   latest              84410ab6e30d9       5.11MB
-
-.fi
-.RE
+gcr.io/k8s-staging-cri-tools/hostnet-nginx-amd64           latest              1ee3f9825c42b       147MB
+gcr.io/k8s-staging-cri-tools/test-image-predefined-group   latest              84410ab6e30d9       5.11MB
+.EE
 
 .SS Create container in the pod sandbox with config file
-.PP
-.RS
-
-.nf
-$ cat pod\-config.json
+.EX
+$ cat pod-config.json
 {
     "metadata": {
-        "name": "nginx\-sandbox",
+        "name": "nginx-sandbox",
         "namespace": "default",
         "attempt": 1,
         "uid": "hdishd83djaidwnduwk28bcsb"
     },
-    "log\_directory": "/tmp",
+    "log_directory": "/tmp",
     "linux": {
     }
 }
 
-$ cat container\-config.json
+$ cat container-config.json
 {
   "metadata": {
       "name": "busybox"
@@ -643,80 +500,59 @@ $ cat container\-config.json
   "command": [
       "top"
   ],
-  "log\_path":"busybox.0.log",
+  "log_path":"busybox.0.log",
   "linux": {
   }
 }
 
-$ crictl create f84dd361f8dc51518ed291fbadd6db537b0496536c1d2d6c05ff943ce8c9a54f container\-config.json pod\-config.json
+$ crictl create f84dd361f8dc51518ed291fbadd6db537b0496536c1d2d6c05ff943ce8c9a54f container-config.json pod-config.json
 3e025dd50a72d956c4f14881fbb5b1080c9275674e95fb67f965f6478a957d60
-
-.fi
-.RE
+.EE
 
 .PP
 List containers and check the container is in Created state:
 
-.PP
-.RS
-
-.nf
-$ crictl ps \-a
+.EX
+$ crictl ps -a
 CONTAINER ID        IMAGE               CREATED             STATE               NAME                ATTEMPT
 3e025dd50a72d       busybox             32 seconds ago      Created             busybox             0
-
-.fi
-.RE
+.EE
 
 .SS Start container
-.PP
-.RS
-
-.nf
+.EX
 $ crictl start 3e025dd50a72d956c4f14881fbb5b1080c9275674e95fb67f965f6478a957d60
 3e025dd50a72d956c4f14881fbb5b1080c9275674e95fb67f965f6478a957d60
 
 $ crictl ps
 CONTAINER ID        IMAGE               CREATED              STATE               NAME                ATTEMPT
 3e025dd50a72d       busybox             About a minute ago   Running             busybox             0
-
-.fi
-.RE
+.EE
 
 .SS Exec a command in container
-.PP
-.RS
-
-.nf
-crictl exec \-i \-t 3e025dd50a72d956c4f14881fbb5b1080c9275674e95fb67f965f6478a957d60 ls
+.EX
+crictl exec -i -t 3e025dd50a72d956c4f14881fbb5b1080c9275674e95fb67f965f6478a957d60 ls
 bin   dev   etc   home  proc  root  sys   tmp   usr   var
-
-.fi
-.RE
+.EE
 
 .SS Create and start a container within one command
-.PP
 It is possible to start a container within a single command, whereas the image
 will be pulled automatically, too:
 
-.PP
-.RS
-
-.nf
-$ cat pod\-config.json
+.EX
+$ cat pod-config.json
 {
     "metadata": {
-        "name": "nginx\-sandbox",
+        "name": "nginx-sandbox",
         "namespace": "default",
         "attempt": 1,
         "uid": "hdishd83djaidwnduwk28bcsb"
     },
-    "log\_directory": "/tmp",
+    "log_directory": "/tmp",
     "linux": {
     }
 }
 
-$ cat container\-config.json
+$ cat container-config.json
 {
   "metadata": {
       "name": "busybox"
@@ -727,51 +563,36 @@ $ cat container\-config.json
   "command": [
       "top"
   ],
-  "log\_path":"busybox.0.log",
+  "log_path":"busybox.0.log",
   "linux": {
   }
 }
 
-$ crictl run container\-config.json pod\-config.json
+$ crictl run container-config.json pod-config.json
 b25b4f26e342969eb40d05e98130eee0846557d667e93deac992471a3b8f1cf4
-
-.fi
-.RE
+.EE
 
 .PP
 List containers and check the container is in Running state:
 
-.PP
-.RS
-
-.nf
+.EX
 $ crictl ps
 CONTAINER           IMAGE               CREATED             STATE               NAME                ATTEMPT             POD ID
 b25b4f26e3429       busybox:latest      14 seconds ago      Running             busybox             0                   158d7a6665ff3
-
-.fi
-.RE
+.EE
 
 .SS Checkpoint a running container
-.PP
-.RS
-
-.nf
-$ crictl checkpoint \-\-export=/path/to/checkpoint.tar 39fcdd7a4f1d4
+.EX
+$ crictl checkpoint --export=/path/to/checkpoint.tar 39fcdd7a4f1d4
 39fcdd7a4f1d4
 $ ls /path/to/checkpoint.tar
 /path/to/checkpoint.tar
-
-.fi
-.RE
+.EE
 
 .SH More information
-.RS
 .IP \(bu 2
 See the Kubernetes.io Debugging Kubernetes nodes with crictl doc
-\[la]https://kubernetes.io/docs/tasks/debug-application-cluster/crictl/\[ra]
+\[la]https://kubernetes.io/docs/tasks/debug\-application\-cluster/crictl/\[ra]
 .IP \(bu 2
-Visit kubernetes\-sigs/cri\-tools
-\[la]https://github.com/kubernetes-sigs/cri-tools\[ra] for more information.
-
-.RE
+Visit kubernetes-sigs/cri-tools
+\[la]https://github.com/kubernetes\-sigs/cri\-tools\[ra] for more information.

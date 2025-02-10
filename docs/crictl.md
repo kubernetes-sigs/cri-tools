@@ -5,7 +5,7 @@
 `crictl` has been GA since `v1.11.0` and is currently under active development. It is hosted at the [cri-tools](https://github.com/kubernetes-sigs/cri-tools) repository. We encourage the CRI developers to report bugs or help extend the coverage by adding more functionalities.
 
 The tool expects JSON or YAML encoded files as input and passes them to the
-corresponding container runtime using the [CRI API protocol](/vendor/k8s.io/cri-api/pkg/apis/runtime/v1/api.proto).
+corresponding container runtime using the [CRI API protocol](https://github.com/kubernetes/cri-api/blob/master/pkg/apis/runtime/v1/api.proto).
 
 ## Install crictl
 

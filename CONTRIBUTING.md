@@ -24,7 +24,7 @@ Follow either of the two links above to access the appropriate CLA and instructi
 ### Adding dependencies
 
 If your patch depends on new packages, add that package to the `go.mod` file,
-run `make vendor` and commit the changes.
+run `go mod tidy` and commit the changes.
 
 ## Becoming a reviewer and approver
 

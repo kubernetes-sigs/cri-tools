@@ -34,3 +34,4 @@ Session.vim
 /build
 release-notes.md
 test/e2e/e2e.test
+hack/go-md2man

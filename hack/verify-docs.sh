@@ -16,13 +16,16 @@
 
 set -euo pipefail
 
-if ! command -v go-md2man >/dev/null; then
+HACK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+GO_MD2MAN=go-md2man
+
+if ! command -v ${GO_MD2MAN} >/dev/null; then
     echo "Installing go-md2man"
-    HACK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-    go install -C ${HACK_DIR}/tools github.com/cpuguy83/go-md2man
+    GOBIN=${HACK_DIR} go install github.com/cpuguy83/${GO_MD2MAN}/v2@latest
+    GO_MD2MAN=${HACK_DIR}/${GO_MD2MAN}
 fi
 
-go-md2man -in docs/crictl.md -out docs/crictl.1
+${GO_MD2MAN} -in docs/crictl.md -out docs/crictl.1
 
 STATUS=$(git status --porcelain)
 if [[ -z $STATUS ]]; then
