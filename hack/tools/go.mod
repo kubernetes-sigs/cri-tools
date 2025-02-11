@@ -4,7 +4,7 @@ go 1.22.1
 
 require (
 	github.com/Mirantis/cri-dockerd v0.3.14
-	github.com/cpuguy83/go-md2man v1.0.10
+	github.com/cpuguy83/go-md2man/v2 v2.0.3
 )
 
 require (
@@ -79,7 +79,7 @@ require (
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.39.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
-	github.com/russross/blackfriday v1.6.0 // indirect
+	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/cobra v1.8.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
@@ -167,4 +167,4 @@ replace (
 	k8s.io/mount-utils => k8s.io/mount-utils v0.27.8
 	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.27.8
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.27.8
- )
+)
