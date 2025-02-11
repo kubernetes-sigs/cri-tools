@@ -20,5 +20,5 @@ package tools
 
 import (
 	_ "github.com/Mirantis/cri-dockerd"
-	_ "github.com/cpuguy83/go-md2man"
+	_ "github.com/cpuguy83/go-md2man/v2"
 )
