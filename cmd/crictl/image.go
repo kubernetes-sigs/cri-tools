@@ -632,7 +632,7 @@ func getAuth(creds, auth, username string) (*pb.AuthConfig, error) {
 	if creds != "" {
 		username, password, err := parseCreds(creds)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("parse credentials: %w", err)
 		}
 
 		return &pb.AuthConfig{
@@ -641,13 +641,7 @@ func getAuth(creds, auth, username string) (*pb.AuthConfig, error) {
 		}, nil
 	}
 
-	if auth != "" {
-		return &pb.AuthConfig{
-			Auth: auth,
-		}, nil
-	}
-
-	return nil, nil
+	return &pb.AuthConfig{Auth: auth}, nil
 }
 
 // Ideally repo tag should always be image:tag.
