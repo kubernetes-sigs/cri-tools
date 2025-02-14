@@ -91,7 +91,12 @@ func Info(cliContext *cli.Context, client internalapi.RuntimeService) error {
 		return err
 	}
 
-	data := []statusData{{json: statusJSON, runtimeHandlers: string(handlers), info: r.Info}}
+	features, err := json.Marshal(r.Features) // protobufObjectToJSON cannot be used
+	if err != nil {
+		return err
+	}
+
+	data := []statusData{{json: statusJSON, runtimeHandlers: string(handlers), features: string(features), info: r.Info}}
 
 	return outputStatusData(data, cliContext.String("output"), cliContext.String("template"))
 }
