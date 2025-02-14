@@ -103,6 +103,9 @@ func TestOutputStatusData(t *testing.T) {
 				"name": "crun"
 			}
 		]`
+		featuresResponse = `{
+			"supplemental_groups_policy": true
+		}`
 		emptyResponse = ""
 	)
 
@@ -110,6 +113,7 @@ func TestOutputStatusData(t *testing.T) {
 		name        string
 		status      string
 		handlers    string
+		features    string
 		info        map[string]string
 		format      string
 		tmplStr     string
@@ -119,10 +123,11 @@ func TestOutputStatusData(t *testing.T) {
 			name:        "YAML format",
 			status:      statusResponse,
 			handlers:    handlerResponse,
+			features:    featuresResponse,
 			info:        map[string]string{"key1": `{"foo": "bar"}`, "key2": `{"bar": "baz"}`},
 			format:      outputTypeYAML,
 			tmplStr:     "",
-			expectedOut: "key1:\n  foo: bar\nkey2:\n  bar: baz\nruntimeHandlers:\n- features:\n    recursive_read_only_mounts: true\n  name: runc\n- features:\n    recursive_read_only_mounts: true\n    user_namespaces: true\n  name: crun\nstatus:\n  conditions:\n  - message: no network config found in C:\\Program Files\n    reason: NetworkPluginNotReady\n    status: false\n    type: NetworkReady",
+			expectedOut: "features:\n  supplemental_groups_policy: true\nkey1:\n  foo: bar\nkey2:\n  bar: baz\nruntimeHandlers:\n- features:\n    recursive_read_only_mounts: true\n  name: runc\n- features:\n    recursive_read_only_mounts: true\n    user_namespaces: true\n  name: crun\nstatus:\n  conditions:\n  - message: no network config found in C:\\Program Files\n    reason: NetworkPluginNotReady\n    status: false\n    type: NetworkReady",
 		},
 		{
 			name:        "YAML format with empty status response",
@@ -139,6 +144,15 @@ func TestOutputStatusData(t *testing.T) {
 			format:      outputTypeYAML,
 			tmplStr:     "",
 			expectedOut: "status:\n  conditions:\n  - message: no network config found in C:\\Program Files\n    reason: NetworkPluginNotReady\n    status: false\n    type: NetworkReady",
+		},
+		{
+			name:        "YAML format with empty features response",
+			status:      statusResponse,
+			handlers:    handlerResponse,
+			features:    emptyResponse,
+			format:      outputTypeYAML,
+			tmplStr:     "",
+			expectedOut: "runtimeHandlers:\n- features:\n    recursive_read_only_mounts: true\n  name: runc\n- features:\n    recursive_read_only_mounts: true\n    user_namespaces: true\n  name: crun\nstatus:\n  conditions:\n  - message: no network config found in C:\\Program Files\n    reason: NetworkPluginNotReady\n    status: false\n    type: NetworkReady",
 		},
 		{
 			name:        "JSON format",
@@ -188,7 +202,7 @@ func TestOutputStatusData(t *testing.T) {
 			}
 
 			outStr, err := captureOutput(func() error {
-				data := []statusData{{json: tc.status, runtimeHandlers: tc.handlers, info: tc.info}}
+				data := []statusData{{json: tc.status, runtimeHandlers: tc.handlers, features: tc.features, info: tc.info}}
 
 				err := outputStatusData(data, tc.format, tc.tmplStr)
 				if err != nil {
