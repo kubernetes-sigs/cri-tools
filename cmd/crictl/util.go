@@ -467,7 +467,7 @@ func parseLabelStringSlice(ss []string) (map[string]string, error) {
 	return labels, nil
 }
 
-// marshalMapInOrder marshalls a map into json in the order of the original
+// marshalMapInOrder marshals a map into JSON in the order of the original
 // data structure.
 func marshalMapInOrder(m map[string]interface{}, t interface{}) (string, error) {
 	s := "{"
