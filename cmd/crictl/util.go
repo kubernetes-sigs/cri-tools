@@ -315,6 +315,7 @@ func outputProtobufObjAsYAML(obj protoiface.MessageV1) error {
 type statusData struct {
 	json            string
 	runtimeHandlers string
+	features        string
 	info            map[string]string
 }
 
@@ -357,6 +358,19 @@ func outputStatusData(statuses []statusData, format, tmplStr string) (err error)
 
 			if handlersVal != nil {
 				infoMap["runtimeHandlers"] = handlersVal
+			}
+		}
+
+		if status.features != "" {
+			var featuresVal map[string]any = map[string]any{}
+
+			err := json.Unmarshal([]byte(status.features), &featuresVal)
+			if err != nil {
+				return fmt.Errorf("unmarshal features JSON: %w", err)
+			}
+
+			if featuresVal != nil {
+				infoMap["features"] = featuresVal
 			}
 		}
 
