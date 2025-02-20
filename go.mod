@@ -25,14 +25,14 @@ require (
 	google.golang.org/grpc v1.70.0
 	google.golang.org/protobuf v1.36.5
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/api v0.33.0-alpha.1
-	k8s.io/apimachinery v0.33.0-alpha.1
-	k8s.io/client-go v0.33.0-alpha.1
-	k8s.io/cri-api v0.33.0-alpha.1
-	k8s.io/cri-client v0.33.0-alpha.1
+	k8s.io/api v0.33.0-alpha.2
+	k8s.io/apimachinery v0.33.0-alpha.2
+	k8s.io/client-go v0.33.0-alpha.2
+	k8s.io/cri-api v0.33.0-alpha.2
+	k8s.io/cri-client v0.33.0-alpha.2
 	k8s.io/klog/v2 v2.130.1
-	k8s.io/kubectl v0.33.0-alpha.1
-	k8s.io/kubelet v0.33.0-alpha.1
+	k8s.io/kubectl v0.33.0-alpha.2
+	k8s.io/kubelet v0.33.0-alpha.2
 	sigs.k8s.io/yaml v1.4.0
 )
 
@@ -59,7 +59,6 @@ require (
 	github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.25.1 // indirect
-	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
@@ -74,7 +73,6 @@ require (
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/spf13/cobra v1.8.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
@@ -92,8 +90,8 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20250115164207-1a7da9e5054f // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250115164207-1a7da9e5054f // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	k8s.io/cli-runtime v0.33.0-alpha.1 // indirect
-	k8s.io/component-base v0.33.0-alpha.1 // indirect
+	k8s.io/cli-runtime v0.33.0-alpha.2 // indirect
+	k8s.io/component-base v0.33.0-alpha.2 // indirect
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.2 // indirect
