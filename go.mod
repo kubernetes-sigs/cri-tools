@@ -1,6 +1,7 @@
 module sigs.k8s.io/cri-tools
 
-go 1.24
+go 1.24.0
+
 require (
 	github.com/distribution/reference v0.6.0
 	github.com/docker/docker v28.0.1+incompatible
