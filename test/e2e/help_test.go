@@ -45,15 +45,15 @@ var _ = t.Describe("help", func() {
 // The actual test suite.
 var _ = t.Describe("help subcommand", func() {
 	It("should show help running rm without params", func() {
-		t.CrictlExpectSuccess("rm", "crictl rm command")
+		t.CrictlExpectSuccess("rm", "crictl rm")
 	})
 
 	It("should show help running rmi without params", func() {
-		t.CrictlExpectSuccess("rmi", "crictl rmi command")
+		t.CrictlExpectSuccess("rmi", "crictl rmi")
 	})
 
 	It("should show help running rmp without params", func() {
-		t.CrictlExpectSuccess("rmp", "crictl rmp command")
+		t.CrictlExpectSuccess("rmp", "crictl rmp")
 	})
 
 	It("should not show help running rm -a", func() {
