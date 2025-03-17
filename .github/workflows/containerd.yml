@@ -6,8 +6,6 @@ on:
     branches:
       - master
   pull_request:
-env:
-  GO_VERSION: "1.24"
 jobs:
   #
   # Run CRI tests against containerd
@@ -55,10 +53,15 @@ jobs:
     name: ${{ format(matrix.version, '/') }} / ${{ matrix.os }} / ${{matrix.runtime}} / ${{matrix.runc}}
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Checkout cri-tools for this commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          path: ${{github.workspace}}/src/github.com/kubernetes-sigs/cri-tools
+
       - name: Install Go
         uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: ${{github.workspace}}/src/github.com/kubernetes-sigs/cri-tools/go.mod
           cache: false
 
       - name: Set env
@@ -81,11 +84,6 @@ jobs:
         with:
           repository: Microsoft/hcsshim
           path: src/github.com/Microsoft/hcsshim
-
-      - name: Checkout cri-tools for this commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          path: ${{github.workspace}}/src/github.com/kubernetes-sigs/cri-tools
 
       - name: Cache go modules and build cache
         uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2

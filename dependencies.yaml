@@ -11,14 +11,6 @@ dependencies:
     refPaths:
       - path: go.mod
         match: go
-      - path: .github/workflows/build.yml
-        match: GO_VERSION
-      - path: .github/workflows/containerd.yml
-        match: GO_VERSION
-      - path: .github/workflows/crio.yml
-        match: GO_VERSION
-      - path: .github/workflows/release.yml
-        match: GO_VERSION
 
   - name: zeitgeist
     version: v0.5.3
