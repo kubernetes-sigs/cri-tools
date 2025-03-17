@@ -6,8 +6,6 @@ on:
     branches:
       - master
   pull_request:
-env:
-  GO_VERSION: "1.24"
 jobs:
   images:
     runs-on: ubuntu-latest
@@ -33,7 +31,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: go.mod
       - run: make verify-${{ matrix.run }}
 
   test:
@@ -45,7 +43,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: go.mod
       - run: make test-crictl
 
   releases:
@@ -66,7 +64,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: go.mod
       - name: Make release
         run: make release
 
