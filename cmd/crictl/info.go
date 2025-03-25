@@ -72,7 +72,7 @@ func Info(cliContext *cli.Context, client internalapi.RuntimeService) error {
 	request := &pb.StatusRequest{Verbose: !cliContext.Bool("quiet")}
 	logrus.Debugf("StatusRequest: %v", request)
 
-	r, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.StatusResponse, error) {
+	r, err := InterruptableRPC(context.Background(), func(ctx context.Context) (*pb.StatusResponse, error) {
 		return client.Status(ctx, request.Verbose)
 	})
 	logrus.Debugf("StatusResponse: %v", r)

@@ -183,7 +183,7 @@ func (d *podStatsDisplayer) displayPodStats(
 		return err
 	}
 
-	d.display.AddRow([]string{columnPodName, columnPodID, columnCPU, columnMemory})
+	d.AddRow([]string{columnPodName, columnPodID, columnCPU, columnMemory})
 
 	for _, s := range stats {
 		if c.Err() != nil {
@@ -252,7 +252,7 @@ func (d *podStatsDisplayer) displayPodStats(
 			cpuPerc = float64(cpu-oldCPU) / float64(duration) * 100
 		}
 
-		d.display.AddRow([]string{
+		d.AddRow([]string{
 			s.Attributes.GetMetadata().GetName(),
 			id,
 			fmt.Sprintf("%.2f", cpuPerc),
@@ -260,8 +260,8 @@ func (d *podStatsDisplayer) displayPodStats(
 		})
 	}
 
-	d.display.ClearScreen()
-	d.display.Flush()
+	d.ClearScreen()
+	d.Flush()
 
 	return nil
 }

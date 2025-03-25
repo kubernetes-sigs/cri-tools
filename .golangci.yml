@@ -1,9 +1,8 @@
----
+version: "2"
 run:
   concurrency: 6
-  timeout: 5m
 linters:
-  disable-all: true
+  default: none
   enable:
     - asasalint
     - asciicheck
@@ -27,7 +26,6 @@ linters:
     - exptostd
     - fatcontext
     - forcetypeassert
-    - gci
     - ginkgolinter
     - gocheckcompilerdirectives
     - gochecksumtype
@@ -37,14 +35,10 @@ linters:
     - gocyclo
     - godot
     - godox
-    - gofmt
-    - gofumpt
     - goheader
-    - goimports
     - gomoddirectives
     - gomodguard
     - goprintffuncname
-    - gosimple
     - gosmopolitan
     - govet
     - grouper
@@ -82,14 +76,12 @@ linters:
     - spancheck
     - sqlclosecheck
     - staticcheck
-    - stylecheck
     - tagalign
     - tagliatelle
     - testableexamples
     - testifylint
     - thelper
     - tparallel
-    - typecheck
     - unconvert
     - unparam
     - unused
@@ -115,36 +107,64 @@ linters:
     # - testpackage
     # - varnamelen
     # - wrapcheck
-linters-settings:
-  stylecheck:
-    checks:
-      - all
-      - -ST1001 # dot imports
-  revive:
-    rules:
-      - name: dot-imports
-        disabled: true
-  nestif:
-    min-complexity: 17
-  maintidx:
-    under: 10
-  godox:
-    keywords:
-      - BUG
-      - FIXME
-      - HACK
-  gocyclo:
-    min-complexity: 35
-  cyclop:
-    max-complexity: 37
-  gocognit:
-    min-complexity: 71
-  gci:
-    sections:
-      - standard
-      - default
-      - localmodule
-  staticcheck:
-    checks: ["SA1019"]
-  gocritic:
-    enable-all: true
+  settings:
+    cyclop:
+      max-complexity: 37
+    gocognit:
+      min-complexity: 71
+    gocritic:
+      enable-all: true
+    gocyclo:
+      min-complexity: 35
+    godox:
+      keywords:
+        - BUG
+        - FIXME
+        - HACK
+    maintidx:
+      under: 10
+    nestif:
+      min-complexity: 17
+    revive:
+      rules:
+        - name: dot-imports
+          disabled: true
+    staticcheck:
+      dot-import-whitelist:
+        - github.com/onsi/ginkgo/v2
+        - github.com/onsi/gomega
+        - github.com/onsi/gomega/gbytes
+        - github.com/onsi/gomega/gexec
+      checks:
+        - -ST1001
+        - SA1019
+        - all
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - localmodule
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

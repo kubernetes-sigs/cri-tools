@@ -45,7 +45,7 @@ var runtimeConfigCommand = &cli.Command{
 
 // Attach sends an AttachRequest to server, and parses the returned AttachResponse.
 func runtimeConfig(client internalapi.RuntimeService) error {
-	resp, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.RuntimeConfigResponse, error) {
+	resp, err := InterruptableRPC(context.Background(), func(ctx context.Context) (*pb.RuntimeConfigResponse, error) {
 		return client.RuntimeConfig(ctx)
 	})
 	if err != nil {

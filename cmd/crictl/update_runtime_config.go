@@ -55,7 +55,7 @@ var updateRuntimeConfigCommand = &cli.Command{
 			return err
 		}
 
-		if _, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
+		if _, err := InterruptableRPC(context.Background(), func(ctx context.Context) (any, error) {
 			return nil, runtimeClient.UpdateRuntimeConfig(ctx, runtimeConfig)
 		}); err != nil {
 			return fmt.Errorf("update runtime config: %w", err)

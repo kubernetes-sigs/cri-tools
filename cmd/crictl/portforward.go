@@ -104,7 +104,7 @@ func PortForward(client internalapi.RuntimeService, opts portforwardOptions) err
 	}
 	logrus.Debugf("PortForwardRequest: %v", request)
 
-	r, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.PortForwardResponse, error) {
+	r, err := InterruptableRPC(context.Background(), func(ctx context.Context) (*pb.PortForwardResponse, error) {
 		return client.PortForward(ctx, request)
 	})
 	logrus.Debugf("PortForwardResponse; %v", r)

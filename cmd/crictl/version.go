@@ -52,7 +52,7 @@ func Version(client internalapi.RuntimeService, version string) error {
 	request := &pb.VersionRequest{Version: version}
 	logrus.Debugf("VersionRequest: %v", request)
 
-	r, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.VersionResponse, error) {
+	r, err := InterruptableRPC(context.Background(), func(ctx context.Context) (*pb.VersionResponse, error) {
 		return client.Version(ctx, version)
 	})
 	logrus.Debugf("VersionResponse: %v", r)

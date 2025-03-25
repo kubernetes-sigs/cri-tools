@@ -84,11 +84,6 @@ func InterruptableRPC[T any](
 	ctx context.Context,
 	rpcFunc func(context.Context) (T, error),
 ) (res T, err error) {
-	if ctx == nil {
-		//nolint:contextcheck // creating a new context is intentional
-		ctx = context.Background()
-	}
-
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -362,7 +357,7 @@ func outputStatusData(statuses []statusData, format, tmplStr string) (err error)
 		}
 
 		if status.features != "" {
-			var featuresVal map[string]any = map[string]any{}
+			featuresVal := map[string]any{}
 
 			err := json.Unmarshal([]byte(status.features), &featuresVal)
 			if err != nil {
