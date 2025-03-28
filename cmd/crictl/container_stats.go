@@ -187,7 +187,7 @@ func (d containerStatsDisplayer) displayStats(ctx context.Context, client intern
 		return err
 	}
 
-	d.display.AddRow([]string{columnContainer, columnName, columnCPU, columnMemory, columnDisk, columnInodes, columnSwap})
+	d.AddRow([]string{columnContainer, columnName, columnCPU, columnMemory, columnDisk, columnInodes, columnSwap})
 
 	for _, s := range r.GetStats() {
 		if ctx.Err() != nil {
@@ -225,14 +225,14 @@ func (d containerStatsDisplayer) displayStats(ctx context.Context, client intern
 			cpuPerc = float64(cpu-old.GetCpu().GetUsageCoreNanoSeconds().GetValue()) / float64(duration) * 100
 		}
 
-		d.display.AddRow([]string{
+		d.AddRow([]string{
 			id, name, fmt.Sprintf("%.2f", cpuPerc), units.HumanSize(float64(mem)),
 			units.HumanSize(float64(disk)), strconv.FormatUint(inodes, 10), units.HumanSize(float64(swap)),
 		})
 	}
 
-	d.display.ClearScreen()
-	d.display.Flush()
+	d.ClearScreen()
+	d.Flush()
 
 	return nil
 }

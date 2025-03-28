@@ -103,7 +103,7 @@ var logsCommand = &cli.Command{
 		}
 
 		if c.Bool("reopen") {
-			if _, err := InterruptableRPC(nil, func(ctx context.Context) (any, error) {
+			if _, err := InterruptableRPC(context.Background(), func(ctx context.Context) (any, error) {
 				return nil, runtimeService.ReopenContainerLog(ctx, containerID)
 			}); err != nil {
 				return fmt.Errorf("reopen container logs: %w", err)
@@ -137,7 +137,7 @@ var logsCommand = &cli.Command{
 			SinceTime:  since,
 			Timestamps: timestamp,
 		}, time.Now())
-		status, err := InterruptableRPC(nil, func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
+		status, err := InterruptableRPC(context.Background(), func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
 			return runtimeService.ContainerStatus(ctx, containerID, false)
 		})
 		if err != nil {

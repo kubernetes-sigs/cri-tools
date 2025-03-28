@@ -597,7 +597,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("skip if the runtime does not support SupplementalGroupsPolicy")
 			statusResponse, err := rc.Status(ctx, false)
 			Expect(err).NotTo(HaveOccurred())
-			if !(statusResponse.Features != nil && statusResponse.Features.SupplementalGroupsPolicy) {
+			if statusResponse.Features == nil || !statusResponse.Features.SupplementalGroupsPolicy {
 				Skip("The runtime does not support SupplementalGroupsPolicy feature")
 			}
 		})

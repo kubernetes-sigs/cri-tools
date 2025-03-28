@@ -232,14 +232,21 @@ var runtimeExecCommand = &cli.Command{
 		funcs := []func() error{}
 		for _, id := range ids {
 			funcs = append(funcs, func() error {
-				optsCopy := *&opts
-				optsCopy.id = id
+				optsCopy := &execOptions{
+					id:        id,
+					cmd:       opts.cmd,
+					stdin:     opts.stdin,
+					timeout:   opts.timeout,
+					tlsConfig: opts.tlsConfig,
+					transport: opts.transport,
+					tty:       opts.tty,
+				}
 
 				if outputContainerID {
 					fmt.Println(id + ":")
 				}
 				if c.Bool("sync") {
-					exitCode, err := ExecSync(runtimeClient, &optsCopy)
+					exitCode, err := ExecSync(runtimeClient, optsCopy)
 					if err != nil {
 						return fmt.Errorf("execing command in container %s synchronously: %w", id, err)
 					}
@@ -249,7 +256,7 @@ var runtimeExecCommand = &cli.Command{
 				} else {
 					ctx, cancel := context.WithCancel(c.Context)
 					defer cancel()
-					err = Exec(ctx, runtimeClient, &optsCopy)
+					err = Exec(ctx, runtimeClient, optsCopy)
 					if err != nil {
 						return fmt.Errorf("execing command in container %s: %w", id, err)
 					}
@@ -316,7 +323,7 @@ func ExecSync(client internalapi.RuntimeService, opts *execOptions) (int, error)
 		stdout, stderr []byte
 	}
 
-	io, err := InterruptableRPC(nil, func(ctx context.Context) (*stdio, error) {
+	io, err := InterruptableRPC(context.Background(), func(ctx context.Context) (*stdio, error) {
 		stdout, stderr, err := client.ExecSync(ctx, opts.id, opts.cmd, timeoutDuration)
 		if err != nil {
 			return nil, err
