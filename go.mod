@@ -31,7 +31,7 @@ require (
 	k8s.io/apimachinery v0.33.0-beta.0
 	k8s.io/client-go v0.33.0-beta.0
 	k8s.io/cri-api v0.33.0-beta.0.0.20250324233632-87ee4e17aba6 // TODO: pin to the next release when available
-	k8s.io/cri-client v0.31.0-alpha.0.0.20250321074236-bc20b67fdb8f
+	k8s.io/cri-client v0.33.0-beta.0
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kubectl v0.33.0-beta.0
 	k8s.io/kubelet v0.33.0-beta.0

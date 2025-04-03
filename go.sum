@@ -244,12 +244,12 @@ k8s.io/component-base v0.33.0-beta.0 h1:EEEzTLuzO1Li+YNHcDLQJgxX6AhfxAZqusYRGbIH
 k8s.io/component-base v0.33.0-beta.0/go.mod h1:J9MYu3hIiNSNAhjiax9ktqplTpXPLP2RLXhzfJj1ahY=
 k8s.io/cri-api v0.33.0-beta.0.0.20250324233632-87ee4e17aba6 h1:91EJUQoR6rcMaSANiMMqvOdkkkC6vO0YPrUzD04dAe8=
 k8s.io/cri-api v0.33.0-beta.0.0.20250324233632-87ee4e17aba6/go.mod h1:AWeYLzfWgDAsuMDuL4Cdv4QN6w8I38Skhl7VL5Kt88Y=
-k8s.io/cri-client v0.31.0-alpha.0.0.20250321074236-bc20b67fdb8f h1:mAVvu6TLYvnIuJZXbsmb1ABX8TBrpJ0F5byH1wyjo/o=
-k8s.io/cri-client v0.31.0-alpha.0.0.20250321074236-bc20b67fdb8f/go.mod h1:0BiO2DF4FAuvZwvu65LVv6OlcOCOGCGK4/XpSOR8OqI=
+k8s.io/cri-client v0.33.0-beta.0 h1:qXUQfgZjVOJJZi5da3sSLpSrzRhr0Fl3D9nUZNYjxRk=
+k8s.io/cri-client v0.33.0-beta.0/go.mod h1:9+kkuFbEClFEziyj3+Ia4Tt3cGQpdL1QMAn5Jxp7i6Q=
 k8s.io/klog/v2 v2.130.1 h1:n9Xl7H1Xvksem4KFG4PYbdQCQxqc/tTUyrgXaOhHSzk=
 k8s.io/klog/v2 v2.130.1/go.mod h1:3Jpz1GvMt720eyJH1ckRHK1EDfpxISzJ7I9OYgaDtPE=
-k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff h1:/usPimJzUKKu+m+TE36gUyGcf03XZEP0ZIKgKj35LS4=
-k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff/go.mod h1:5jIi+8yX4RIb8wk3XwBo5Pq2ccx4FP10ohkbSKCZoK8=
+k8s.io/kube-openapi v0.0.0-20250304201544-e5f78fe3ede9 h1:t0huyHnz6HsokckRxAF1bY0cqPFwzINKCL7yltEjZQc=
+k8s.io/kube-openapi v0.0.0-20250304201544-e5f78fe3ede9/go.mod h1:5jIi+8yX4RIb8wk3XwBo5Pq2ccx4FP10ohkbSKCZoK8=
 k8s.io/kubectl v0.33.0-beta.0 h1:iUj3GRRJoNYDs+33Ty6OO+dk/oMui8g3fgyenx2H0as=
 k8s.io/kubectl v0.33.0-beta.0/go.mod h1:nq1RKFPc1wBQKbqV4hKRfCCt+ND46a0Q1moiCm3+EE4=
 k8s.io/kubelet v0.33.0-beta.0 h1:Lvv7unOCBbq2Pat3nhos7G7IO8FAxnV9ipu72t8wDHU=
