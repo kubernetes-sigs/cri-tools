@@ -222,6 +222,7 @@ func main() {
 		statsCommand,
 		podStatsCommand,
 		podMetricsCommand,
+		metricDescriptorsCommand,
 		completionCommand,
 		checkpointContainerCommand,
 		runtimeConfigCommand,
