@@ -158,3 +158,7 @@ func (t *TestFramework) CrictlRemovePauseImages() {
 		t.CrictlExpectSuccess("rmi "+strings.TrimSpace(strings.Join(output, " ")), "Deleted")
 	}
 }
+
+func (t *TestFramework) IsContainerd() bool {
+	return strings.Contains(crictlRuntimeEndpoint, "containerd")
+}
