@@ -832,10 +832,10 @@ func (d *decoder) mapping(n *Node, out reflect.Value) (good bool) {
 		if d.unmarshal(n.Content[i], k) {
 			if mergedFields != nil {
 				ki := k.Interface()
-				if d.getPossiblyUnhashableKey(mergedFields, ki) {
+				if mergedFields[ki] {
 					continue
 				}
-				d.setPossiblyUnhashableKey(mergedFields, ki, true)
+				mergedFields[ki] = true
 			}
 			kkind := k.Kind()
 			if kkind == reflect.Interface {
@@ -956,24 +956,6 @@ func failWantMap() {
 	failf("map merge requires map or sequence of maps as the value")
 }
 
-func (d *decoder) setPossiblyUnhashableKey(m map[interface{}]bool, key interface{}, value bool) {
-	defer func() {
-		if err := recover(); err != nil {
-			failf("%v", err)
-		}
-	}()
-	m[key] = value
-}
-
-func (d *decoder) getPossiblyUnhashableKey(m map[interface{}]bool, key interface{}) bool {
-	defer func() {
-		if err := recover(); err != nil {
-			failf("%v", err)
-		}
-	}()
-	return m[key]
-}
-
 func (d *decoder) merge(parent *Node, merge *Node, out reflect.Value) {
 	mergedFields := d.mergedFields
 	if mergedFields == nil {
@@ -981,7 +963,7 @@ func (d *decoder) merge(parent *Node, merge *Node, out reflect.Value) {
 		for i := 0; i < len(parent.Content); i += 2 {
 			k := reflect.New(ifaceType).Elem()
 			if d.unmarshal(parent.Content[i], k) {
-				d.setPossiblyUnhashableKey(d.mergedFields, k.Interface(), true)
+				d.mergedFields[k.Interface()] = true
 			}
 		}
 	}
