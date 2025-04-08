@@ -22,7 +22,7 @@ import (
 	gofilepath "path/filepath"
 	"strconv"
 
-	"gopkg.in/yaml.v3"
+	yaml "sigs.k8s.io/yaml/goyaml.v3"
 )
 
 // Config is the internal representation of the yaml that defines
