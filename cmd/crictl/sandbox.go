@@ -147,7 +147,7 @@ var removePodCommand = &cli.Command{
 
 		ids := ctx.Args().Slice()
 		if ctx.Bool("all") {
-			r, err := InterruptableRPC(context.Background(), func(ctx context.Context) ([]*pb.PodSandbox, error) {
+			r, err := InterruptableRPC(ctx.Context, func(ctx context.Context) ([]*pb.PodSandbox, error) {
 				return runtimeClient.ListPodSandbox(ctx, nil)
 			})
 			if err != nil {
@@ -172,7 +172,7 @@ var removePodCommand = &cli.Command{
 		funcs := []func() error{}
 		for _, id := range ids {
 			funcs = append(funcs, func() error {
-				resp, err := InterruptableRPC(context.Background(), func(ctx context.Context) (*pb.PodSandboxStatusResponse, error) {
+				resp, err := InterruptableRPC(ctx.Context, func(ctx context.Context) (*pb.PodSandboxStatusResponse, error) {
 					return runtimeClient.PodSandboxStatus(ctx, id, false)
 				})
 				if err != nil {

@@ -418,7 +418,7 @@ var removeContainerCommand = &cli.Command{
 
 		ids := ctx.Args().Slice()
 		if ctx.Bool("all") {
-			r, err := InterruptableRPC(context.Background(), func(ctx context.Context) ([]*pb.Container, error) {
+			r, err := InterruptableRPC(ctx.Context, func(ctx context.Context) ([]*pb.Container, error) {
 				return runtimeClient.ListContainers(ctx, nil)
 			})
 			if err != nil {
@@ -443,7 +443,7 @@ var removeContainerCommand = &cli.Command{
 		funcs := []func() error{}
 		for _, id := range ids {
 			funcs = append(funcs, func() error {
-				resp, err := InterruptableRPC(context.Background(), func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
+				resp, err := InterruptableRPC(ctx.Context, func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
 					return runtimeClient.ContainerStatus(ctx, id, false)
 				})
 				if err != nil {
