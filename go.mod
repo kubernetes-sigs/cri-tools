@@ -26,7 +26,7 @@ require (
 	golang.org/x/text v0.24.0
 	google.golang.org/grpc v1.71.1
 	google.golang.org/protobuf v1.36.6
-	gopkg.in/yaml.v3 v3.0.1
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.33.0-beta.0
 	k8s.io/apimachinery v0.33.0-beta.0
 	k8s.io/client-go v0.33.0-beta.0
