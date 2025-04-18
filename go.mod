@@ -6,7 +6,7 @@ toolchain go1.24.1
 
 require (
 	github.com/distribution/reference v0.6.0
-	github.com/docker/docker v28.0.4+incompatible
+	github.com/docker/docker v28.1.0+incompatible
 	github.com/docker/go-units v0.5.0
 	github.com/google/uuid v1.6.0
 	github.com/invopop/jsonschema v0.13.0
