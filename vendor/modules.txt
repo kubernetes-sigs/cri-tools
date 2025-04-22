@@ -555,7 +555,7 @@ k8s.io/component-base/version
 ## explicit; go 1.24.0
 k8s.io/cri-api/pkg/apis
 k8s.io/cri-api/pkg/apis/runtime/v1
-# k8s.io/cri-client v0.34.0-alpha.0
+# k8s.io/cri-client v0.33.0-rc.0
 ## explicit; go 1.24.0
 k8s.io/cri-client/pkg
 k8s.io/cri-client/pkg/internal
@@ -570,7 +570,7 @@ k8s.io/klog/v2/internal/dbg
 k8s.io/klog/v2/internal/serialize
 k8s.io/klog/v2/internal/severity
 k8s.io/klog/v2/internal/sloghandler
-# k8s.io/kubectl v0.34.0-alpha.0
+# k8s.io/kubectl v0.33.0-rc.0
 ## explicit; go 1.24.0
 k8s.io/kubectl/pkg/util/interrupt
 k8s.io/kubectl/pkg/util/term

@@ -1,8 +1,6 @@
 module sigs.k8s.io/cri-tools
 
-go 1.24.0
-
-toolchain go1.24.1
+go 1.24.1
 
 require (
 	github.com/distribution/reference v0.6.0
@@ -30,10 +28,10 @@ require (
 	k8s.io/api v0.34.0-alpha.0
 	k8s.io/apimachinery v0.34.0-alpha.0
 	k8s.io/client-go v0.34.0-alpha.0
-	k8s.io/cri-api v0.34.0-alpha.0 // TODO: pin to the next release when available
-	k8s.io/cri-client v0.34.0-alpha.0
+	k8s.io/cri-api v0.34.0-alpha.0
+	k8s.io/cri-client v0.33.0-rc.0
 	k8s.io/klog/v2 v2.130.1
-	k8s.io/kubectl v0.34.0-alpha.0
+	k8s.io/kubectl v0.33.0-rc.0
 	k8s.io/kubelet v0.34.0-alpha.0
 	sigs.k8s.io/yaml v1.4.0
 )
