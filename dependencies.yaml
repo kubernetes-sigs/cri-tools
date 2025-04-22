@@ -31,7 +31,7 @@ dependencies:
         match: REPO_INFRA_VERSION
 
   - name: release-notes
-    version: v0.17.8
+    version: v0.18.0
     refPaths:
       - path: hack/release-notes.sh
         match: VERSION
