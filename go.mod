@@ -6,7 +6,7 @@ toolchain go1.24.1
 
 require (
 	github.com/distribution/reference v0.6.0
-	github.com/docker/docker v28.0.4+incompatible
+	github.com/docker/docker v28.1.1+incompatible
 	github.com/docker/go-units v0.5.0
 	github.com/google/uuid v1.6.0
 	github.com/invopop/jsonschema v0.13.0
@@ -24,17 +24,17 @@ require (
 	golang.org/x/sys v0.32.0
 	golang.org/x/term v0.31.0
 	golang.org/x/text v0.24.0
-	google.golang.org/grpc v1.71.1
+	google.golang.org/grpc v1.72.0
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/api v0.33.0-beta.0
-	k8s.io/apimachinery v0.33.0-beta.0
-	k8s.io/client-go v0.33.0-beta.0
-	k8s.io/cri-api v0.33.0-beta.0.0.20250324233632-87ee4e17aba6 // TODO: pin to the next release when available
-	k8s.io/cri-client v0.31.0-alpha.0.0.20250321074236-bc20b67fdb8f
+	k8s.io/api v0.34.0-alpha.0
+	k8s.io/apimachinery v0.34.0-alpha.0
+	k8s.io/client-go v0.34.0-alpha.0
+	k8s.io/cri-api v0.34.0-alpha.0 // TODO: pin to the next release when available
+	k8s.io/cri-client v0.34.0-alpha.0
 	k8s.io/klog/v2 v2.130.1
-	k8s.io/kubectl v0.33.0-beta.0
-	k8s.io/kubelet v0.33.0-beta.0
+	k8s.io/kubectl v0.34.0-alpha.0
+	k8s.io/kubelet v0.34.0-alpha.0
 	sigs.k8s.io/yaml v1.4.0
 )
 
@@ -58,7 +58,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/pprof v0.0.0-20250403155104-27863c87afa6 // indirect
-	github.com/gorilla/websocket v1.5.3 // indirect
+	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
@@ -85,15 +85,15 @@ require (
 	go.opentelemetry.io/otel/metric v1.35.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.5.0 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
-	golang.org/x/net v0.37.0 // indirect
+	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/oauth2 v0.27.0 // indirect
 	golang.org/x/time v0.9.0 // indirect
 	golang.org/x/tools v0.31.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250218202821-56aae31c358a // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250218202821-56aae31c358a // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	k8s.io/cli-runtime v0.33.0-beta.0 // indirect
-	k8s.io/component-base v0.33.0-beta.0 // indirect
+	k8s.io/cli-runtime v0.34.0-alpha.0 // indirect
+	k8s.io/component-base v0.34.0-alpha.0 // indirect
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
