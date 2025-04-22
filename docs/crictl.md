@@ -49,6 +49,8 @@ COMMANDS:
 - `imagefsinfo`: Return image filesystem info
 - `inspectp`: Display the status of one or more pods
 - `logs`: Fetch the logs of a container
+- `metricsp`: List pod metrics. Metrics are unstructured key/value pairs gathered by CRI meant to replace cAdvisor's /metrics/cadvisor endpoint.
+- `metricdescs`: List metric descriptors. Returns information about the metrics available through the CRI.
 - `port-forward`: Forward local port to a pod
 - `ps`: List containers
 - `pull`: Pull an image from a registry
