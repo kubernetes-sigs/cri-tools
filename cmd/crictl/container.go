@@ -564,9 +564,9 @@ var containerStatusCommand = &cli.Command{
 
 		if len(ids) == 0 {
 			opts := &listOptions{
-				nameRegexp:         c.String("name"),
+				nameRegexp:         c.String("^name$"),
 				podID:              c.String("pod"),
-				podNamespaceRegexp: c.String("namespace"),
+				podNamespaceRegexp: c.String("^namespace$"),
 				image:              c.String("image"),
 				state:              c.String("state"),
 				latest:             c.Bool("latest"),
