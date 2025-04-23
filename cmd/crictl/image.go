@@ -423,7 +423,7 @@ var removeImageCommand = &cli.Command{
 
 		// Add all available images to the ID selector
 		if all || prune {
-			r, err := InterruptableRPC(context.Background(), func(ctx context.Context) ([]*pb.Image, error) {
+			r, err := InterruptableRPC(cliCtx.Context, func(ctx context.Context) ([]*pb.Image, error) {
 				return imageClient.ListImages(ctx, nil)
 			})
 			if err != nil {
@@ -449,7 +449,7 @@ var removeImageCommand = &cli.Command{
 			}
 
 			// Container images
-			containers, err := InterruptableRPC(context.Background(), func(ctx context.Context) ([]*pb.Container, error) {
+			containers, err := InterruptableRPC(cliCtx.Context, func(ctx context.Context) ([]*pb.Container, error) {
 				return runtimeClient.ListContainers(ctx, nil)
 			})
 			if err != nil {
