@@ -24,14 +24,14 @@ require (
 	golang.org/x/text v0.24.0
 	google.golang.org/grpc v1.72.0
 	google.golang.org/protobuf v1.36.6
-	k8s.io/api v0.33.0-rc.0
-	k8s.io/apimachinery v0.33.0-rc.0
-	k8s.io/client-go v0.33.0-rc.0
-	k8s.io/cri-api v0.33.0-rc.0
-	k8s.io/cri-client v0.33.0-rc.0
+	k8s.io/api v0.33.0
+	k8s.io/apimachinery v0.33.0
+	k8s.io/client-go v0.33.0
+	k8s.io/cri-api v0.33.0
+	k8s.io/cri-client v0.33.0
 	k8s.io/klog/v2 v2.130.1
-	k8s.io/kubectl v0.33.0-rc.0
-	k8s.io/kubelet v0.33.0-rc.0
+	k8s.io/kubectl v0.33.0
+	k8s.io/kubelet v0.33.0
 	sigs.k8s.io/yaml v1.4.0
 )
 
@@ -66,7 +66,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
-	github.com/prometheus/client_golang v1.22.0-rc.0 // indirect
+	github.com/prometheus/client_golang v1.22.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
@@ -90,8 +90,8 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250218202821-56aae31c358a // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/cli-runtime v0.33.0-rc.0 // indirect
-	k8s.io/component-base v0.33.0-rc.0 // indirect
+	k8s.io/cli-runtime v0.33.0 // indirect
+	k8s.io/component-base v0.33.0 // indirect
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
