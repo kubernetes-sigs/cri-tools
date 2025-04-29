@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -49,7 +50,7 @@ func fakeContainer(name string, createdAt int64) *pb.Container {
 
 var _ = DescribeTable("getContainersList",
 	func(input []*pb.Container, options *listOptions, indexes []int) {
-		actual, err := getContainersList(nil, input, options)
+		actual, err := getContainersList(context.Background(), nil, input, options)
 		Expect(err).NotTo(HaveOccurred())
 		var expected []*pb.Container
 		for _, i := range indexes {
