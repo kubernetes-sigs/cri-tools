@@ -198,7 +198,7 @@ var runtimeExecCommand = &cli.Command{
 				return err
 			}
 
-			ctrs, err := ListContainers(runtimeClient, imageClient, opts)
+			ctrs, err := ListContainers(c.Context, runtimeClient, imageClient, opts)
 			if err != nil {
 				return fmt.Errorf("listing containers: %w", err)
 			}
@@ -246,7 +246,7 @@ var runtimeExecCommand = &cli.Command{
 					fmt.Println(id + ":")
 				}
 				if c.Bool("sync") {
-					exitCode, err := ExecSync(runtimeClient, optsCopy)
+					exitCode, err := ExecSync(c.Context, runtimeClient, optsCopy)
 					if err != nil {
 						return fmt.Errorf("execing command in container %s synchronously: %w", id, err)
 					}
@@ -309,7 +309,7 @@ func tlsConfigFromFlags(ctx *cli.Context) (*rest.TLSClientConfig, error) {
 // ExecSync sends an ExecSyncRequest to the server, and parses
 // the returned ExecSyncResponse. The function returns the corresponding exit
 // code beside an general error.
-func ExecSync(client internalapi.RuntimeService, opts *execOptions) (int, error) {
+func ExecSync(ctx context.Context, client internalapi.RuntimeService, opts *execOptions) (int, error) {
 	request := &pb.ExecSyncRequest{
 		ContainerId: opts.id,
 		Cmd:         opts.cmd,
@@ -323,7 +323,7 @@ func ExecSync(client internalapi.RuntimeService, opts *execOptions) (int, error)
 		stdout, stderr []byte
 	}
 
-	io, err := InterruptableRPC(context.Background(), func(ctx context.Context) (*stdio, error) {
+	io, err := InterruptableRPC(ctx, func(ctx context.Context) (*stdio, error) {
 		stdout, stderr, err := client.ExecSync(ctx, opts.id, opts.cmd, timeoutDuration)
 		if err != nil {
 			return nil, err

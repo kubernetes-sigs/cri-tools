@@ -248,7 +248,7 @@ var createContainerCommand = &cli.Command{
 			return err
 		}
 
-		ctrID, err := CreateContainer(imageClient, runtimeClient, opts)
+		ctrID, err := CreateContainer(c.Context, imageClient, runtimeClient, opts)
 		if err != nil {
 			return fmt.Errorf("creating container: %w", err)
 		}
@@ -273,7 +273,7 @@ var startContainerCommand = &cli.Command{
 
 		for i := range c.NArg() {
 			containerID := c.Args().Get(i)
-			if err := StartContainer(runtimeClient, containerID); err != nil {
+			if err := StartContainer(c.Context, runtimeClient, containerID); err != nil {
 				return fmt.Errorf("starting the container %q: %w", containerID, err)
 			}
 		}
@@ -347,7 +347,7 @@ var updateContainerCommand = &cli.Command{
 
 		for i := range c.NArg() {
 			containerID := c.Args().Get(i)
-			if err := UpdateContainerResources(runtimeClient, containerID, options); err != nil {
+			if err := UpdateContainerResources(c.Context, runtimeClient, containerID, options); err != nil {
 				return fmt.Errorf("updating container resources for %q: %w", containerID, err)
 			}
 		}
@@ -379,7 +379,7 @@ var stopContainerCommand = &cli.Command{
 
 		for i := range c.NArg() {
 			containerID := c.Args().Get(i)
-			if err := StopContainer(runtimeClient, containerID, c.Int64("timeout")); err != nil {
+			if err := StopContainer(c.Context, runtimeClient, containerID, c.Int64("timeout")); err != nil {
 				return fmt.Errorf("stopping the container %q: %w", containerID, err)
 			}
 		}
@@ -451,7 +451,7 @@ var removeContainerCommand = &cli.Command{
 				}
 				if resp.GetStatus().GetState() == pb.ContainerState_CONTAINER_RUNNING {
 					if ctx.Bool("force") {
-						if err := StopContainer(runtimeClient, id, 0); err != nil {
+						if err := StopContainer(ctx.Context, runtimeClient, id, 0); err != nil {
 							return fmt.Errorf("stopping the container %q: %w", id, err)
 						}
 					} else {
@@ -459,7 +459,7 @@ var removeContainerCommand = &cli.Command{
 					}
 				}
 
-				err = RemoveContainer(runtimeClient, id)
+				err = RemoveContainer(ctx.Context, runtimeClient, id)
 				if err != nil {
 					return fmt.Errorf("removing container %q: %w", id, err)
 				} else if !ctx.Bool("keep-logs") {
@@ -578,7 +578,7 @@ var containerStatusCommand = &cli.Command{
 				return err
 			}
 
-			ctrs, err := ListContainers(runtimeClient, imageClient, opts)
+			ctrs, err := ListContainers(c.Context, runtimeClient, imageClient, opts)
 			if err != nil {
 				return fmt.Errorf("listing containers: %w", err)
 			}
@@ -594,6 +594,7 @@ var containerStatusCommand = &cli.Command{
 		}
 
 		if err := containerStatus(
+			c.Context,
 			runtimeClient,
 			ids,
 			c.String("output"),
@@ -719,7 +720,7 @@ var listContainersCommand = &cli.Command{
 			return err
 		}
 
-		if err = OutputContainers(runtimeClient, imageClient, opts); err != nil {
+		if err = OutputContainers(c.Context, runtimeClient, imageClient, opts); err != nil {
 			return fmt.Errorf("listing containers: %w", err)
 		}
 
@@ -769,7 +770,7 @@ var runContainerCommand = &cli.Command{
 			return err
 		}
 
-		if err = RunContainer(imageClient, runtimeClient, opts, c.String("runtime")); err != nil {
+		if err = RunContainer(c.Context, imageClient, runtimeClient, opts, c.String("runtime")); err != nil {
 			return fmt.Errorf("running container: %w", err)
 		}
 
@@ -807,6 +808,7 @@ var checkpointContainerCommand = &cli.Command{
 		for i := range c.NArg() {
 			containerID := c.Args().Get(i)
 			err := CheckpointContainer(
+				c.Context,
 				runtimeClient,
 				containerID,
 				c.String("export"),
@@ -822,6 +824,7 @@ var checkpointContainerCommand = &cli.Command{
 
 // RunContainer starts a container in the provided sandbox.
 func RunContainer(
+	ctx context.Context,
 	iClient internalapi.ImageManagerService,
 	rClient internalapi.RuntimeService,
 	opts runOptions,
@@ -834,7 +837,7 @@ func RunContainer(
 	}
 	// set the timeout for the RunPodSandbox request to 0, because the
 	// timeout option is documented as being for container creation.
-	podID, err := RunPodSandbox(rClient, podSandboxConfig, runtime)
+	podID, err := RunPodSandbox(ctx, rClient, podSandboxConfig, runtime)
 	if err != nil {
 		return fmt.Errorf("run pod sandbox: %w", err)
 	}
@@ -842,13 +845,13 @@ func RunContainer(
 	// Create the container
 	containerOptions := createOptions{podID, &opts}
 
-	ctrID, err := CreateContainer(iClient, rClient, containerOptions)
+	ctrID, err := CreateContainer(ctx, iClient, rClient, containerOptions)
 	if err != nil {
 		return fmt.Errorf("creating container failed: %w", err)
 	}
 
 	// Start the container
-	err = StartContainer(rClient, ctrID)
+	err = StartContainer(ctx, rClient, ctrID)
 	if err != nil {
 		return fmt.Errorf("starting the container %q: %w", ctrID, err)
 	}
@@ -859,6 +862,7 @@ func RunContainer(
 // CreateContainer sends a CreateContainerRequest to the server, and parses
 // the returned CreateContainerResponse.
 func CreateContainer(
+	ctx context.Context,
 	iClient internalapi.ImageManagerService,
 	rClient internalapi.RuntimeService,
 	opts createOptions,
@@ -905,7 +909,7 @@ func CreateContainer(
 		}
 
 		for _, image := range images {
-			if _, err := PullImageWithSandbox(iClient, image, auth, podConfig, config.GetImage().GetAnnotations(), opts.pullOptions.timeout); err != nil {
+			if _, err := PullImageWithSandbox(ctx, iClient, image, auth, podConfig, config.GetImage().GetAnnotations(), opts.pullOptions.timeout); err != nil {
 				return "", err
 			}
 		}
@@ -918,7 +922,7 @@ func CreateContainer(
 	}
 	logrus.Debugf("CreateContainerRequest: %v", request)
 
-	r, err := InterruptableRPC(context.Background(), func(ctx context.Context) (string, error) {
+	r, err := InterruptableRPC(ctx, func(ctx context.Context) (string, error) {
 		return rClient.CreateContainer(ctx, opts.podID, config, podConfig)
 	})
 	logrus.Debugf("CreateContainerResponse: %v", r)
@@ -932,12 +936,12 @@ func CreateContainer(
 
 // StartContainer sends a StartContainerRequest to the server, and parses
 // the returned StartContainerResponse.
-func StartContainer(client internalapi.RuntimeService, id string) error {
+func StartContainer(ctx context.Context, client internalapi.RuntimeService, id string) error {
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
 
-	if _, err := InterruptableRPC(context.Background(), func(ctx context.Context) (any, error) {
+	if _, err := InterruptableRPC(ctx, func(ctx context.Context) (any, error) {
 		return nil, client.StartContainer(ctx, id)
 	}); err != nil {
 		return err
@@ -971,7 +975,7 @@ type updateOptions struct {
 
 // UpdateContainerResources sends an UpdateContainerResourcesRequest to the server, and parses
 // the returned UpdateContainerResourcesResponse.
-func UpdateContainerResources(client internalapi.RuntimeService, id string, opts *updateOptions) error {
+func UpdateContainerResources(ctx context.Context, client internalapi.RuntimeService, id string, opts *updateOptions) error {
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
@@ -1001,7 +1005,7 @@ func UpdateContainerResources(client internalapi.RuntimeService, id string, opts
 	logrus.Debugf("UpdateContainerResourcesRequest: %v", request)
 	resources := &pb.ContainerResources{Linux: request.Linux, Windows: request.Windows}
 
-	if _, err := InterruptableRPC(context.Background(), func(ctx context.Context) (any, error) {
+	if _, err := InterruptableRPC(ctx, func(ctx context.Context) (any, error) {
 		return nil, client.UpdateContainerResources(ctx, id, resources)
 	}); err != nil {
 		return err
@@ -1014,14 +1018,14 @@ func UpdateContainerResources(client internalapi.RuntimeService, id string, opts
 
 // StopContainer sends a StopContainerRequest to the server, and parses
 // the returned StopContainerResponse.
-func StopContainer(client internalapi.RuntimeService, id string, timeout int64) error {
+func StopContainer(ctx context.Context, client internalapi.RuntimeService, id string, timeout int64) error {
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
 
 	logrus.Debugf("Stopping container: %s (timeout = %v)", id, timeout)
 
-	if _, err := InterruptableRPC(context.Background(), func(ctx context.Context) (any, error) {
+	if _, err := InterruptableRPC(ctx, func(ctx context.Context) (any, error) {
 		return nil, client.StopContainer(ctx, id, timeout)
 	}); err != nil {
 		return err
@@ -1034,6 +1038,7 @@ func StopContainer(client internalapi.RuntimeService, id string, timeout int64) 
 
 // CheckpointContainer sends a CheckpointContainerRequest to the server.
 func CheckpointContainer(
+	ctx context.Context,
 	rClient internalapi.RuntimeService,
 	id string,
 	export string,
@@ -1048,7 +1053,7 @@ func CheckpointContainer(
 	}
 	logrus.Debugf("CheckpointContainerRequest: %v", request)
 
-	_, err := InterruptableRPC(context.Background(), func(ctx context.Context) (*pb.ImageFsInfoResponse, error) {
+	_, err := InterruptableRPC(ctx, func(ctx context.Context) (*pb.ImageFsInfoResponse, error) {
 		return nil, rClient.CheckpointContainer(ctx, request)
 	})
 	if err != nil {
@@ -1062,14 +1067,14 @@ func CheckpointContainer(
 
 // RemoveContainer sends a RemoveContainerRequest to the server, and parses
 // the returned RemoveContainerResponse.
-func RemoveContainer(client internalapi.RuntimeService, id string) error {
+func RemoveContainer(ctx context.Context, client internalapi.RuntimeService, id string) error {
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
 
 	logrus.Debugf("Removing container: %s", id)
 
-	if _, err := InterruptableRPC(context.Background(), func(ctx context.Context) (any, error) {
+	if _, err := InterruptableRPC(ctx, func(ctx context.Context) (any, error) {
 		return nil, client.RemoveContainer(ctx, id)
 	}); err != nil {
 		return err
@@ -1121,7 +1126,7 @@ func marshalContainerStatus(cs *pb.ContainerStatus) (string, error) {
 // the returned ContainerStatusResponse.
 //
 //nolint:dupl // pods and containers are similar, but still different
-func containerStatus(client internalapi.RuntimeService, ids []string, output, tmplStr string, quiet bool) error {
+func containerStatus(ctx context.Context, client internalapi.RuntimeService, ids []string, output, tmplStr string, quiet bool) error {
 	verbose := !(quiet)
 
 	if output == "" { // default to json output
@@ -1141,7 +1146,7 @@ func containerStatus(client internalapi.RuntimeService, ids []string, output, tm
 		}
 		logrus.Debugf("ContainerStatusRequest: %v", request)
 
-		r, err := InterruptableRPC(context.Background(), func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
+		r, err := InterruptableRPC(ctx, func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
 			return client.ContainerStatus(ctx, id, verbose)
 		})
 		logrus.Debugf("ContainerStatusResponse: %v", r)
@@ -1219,7 +1224,7 @@ func outputContainerStatusTable(r *pb.ContainerStatusResponse, verbose bool) {
 
 // ListContainers sends a ListContainerRequest to the server, and parses
 // the returned ListContainerResponse.
-func ListContainers(runtimeClient internalapi.RuntimeService, imageClient internalapi.ImageManagerService, opts *listOptions) ([]*pb.Container, error) {
+func ListContainers(ctx context.Context, runtimeClient internalapi.RuntimeService, imageClient internalapi.ImageManagerService, opts *listOptions) ([]*pb.Container, error) {
 	filter := &pb.ContainerFilter{}
 	if opts.id != "" {
 		filter.Id = opts.id
@@ -1265,7 +1270,7 @@ func ListContainers(runtimeClient internalapi.RuntimeService, imageClient intern
 		filter.LabelSelector = opts.labels
 	}
 
-	r, err := InterruptableRPC(context.Background(), func(ctx context.Context) ([]*pb.Container, error) {
+	r, err := InterruptableRPC(ctx, func(ctx context.Context) ([]*pb.Container, error) {
 		return runtimeClient.ListContainers(ctx, filter)
 	})
 	logrus.Debugf("ListContainerResponse: %v", r)
@@ -1274,13 +1279,13 @@ func ListContainers(runtimeClient internalapi.RuntimeService, imageClient intern
 		return nil, fmt.Errorf("call list containers RPC: %w", err)
 	}
 
-	return getContainersList(imageClient, r, opts)
+	return getContainersList(ctx, imageClient, r, opts)
 }
 
 // OutputContainers sends a ListContainerRequest to the server, and parses
 // the returned ListContainerResponse for output.
-func OutputContainers(runtimeClient internalapi.RuntimeService, imageClient internalapi.ImageManagerService, opts *listOptions) error {
-	r, err := ListContainers(runtimeClient, imageClient, opts)
+func OutputContainers(ctx context.Context, runtimeClient internalapi.RuntimeService, imageClient internalapi.ImageManagerService, opts *listOptions) error {
+	r, err := ListContainers(ctx, runtimeClient, imageClient, opts)
 	if err != nil {
 		return fmt.Errorf("list containers: %w", err)
 	}
@@ -1331,7 +1336,7 @@ func OutputContainers(runtimeClient internalapi.RuntimeService, imageClient inte
 			}
 
 			if opts.resolveImagePath {
-				orig, err := getRepoImage(imageClient, image)
+				orig, err := getRepoImage(ctx, imageClient, image)
 				if err != nil {
 					return fmt.Errorf("failed to fetch repo image %w", err)
 				}
@@ -1426,11 +1431,11 @@ func getFromLabels(labels map[string]string, label string) string {
 	return "unknown"
 }
 
-func getContainersList(imageClient internalapi.ImageManagerService, containersList []*pb.Container, opts *listOptions) ([]*pb.Container, error) {
+func getContainersList(ctx context.Context, imageClient internalapi.ImageManagerService, containersList []*pb.Container, opts *listOptions) ([]*pb.Container, error) {
 	filtered := []*pb.Container{}
 
 	for _, c := range containersList {
-		if match, err := matchesImage(imageClient, opts.image, c.GetImage().GetImage()); err != nil {
+		if match, err := matchesImage(ctx, imageClient, opts.image, c.GetImage().GetImage()); err != nil {
 			return nil, fmt.Errorf("check image match: %w", err)
 		} else if !match {
 			continue

@@ -35,7 +35,7 @@ var runtimeConfigCommand = &cli.Command{
 			return fmt.Errorf("get runtime client: %w", err)
 		}
 
-		if err := runtimeConfig(runtimeClient); err != nil {
+		if err := runtimeConfig(c.Context, runtimeClient); err != nil {
 			return fmt.Errorf("get runtime config: %w", err)
 		}
 
@@ -44,8 +44,8 @@ var runtimeConfigCommand = &cli.Command{
 }
 
 // Attach sends an AttachRequest to server, and parses the returned AttachResponse.
-func runtimeConfig(client internalapi.RuntimeService) error {
-	resp, err := InterruptableRPC(context.Background(), func(ctx context.Context) (*pb.RuntimeConfigResponse, error) {
+func runtimeConfig(ctx context.Context, client internalapi.RuntimeService) error {
+	resp, err := InterruptableRPC(ctx, func(ctx context.Context) (*pb.RuntimeConfigResponse, error) {
 		return client.RuntimeConfig(ctx)
 	})
 	if err != nil {

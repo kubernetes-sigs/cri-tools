@@ -88,7 +88,7 @@ var runPodCommand = &cli.Command{
 		}
 
 		// Test RuntimeServiceClient.RunPodSandbox
-		podID, err := RunPodSandbox(runtimeClient, podSandboxConfig, c.String("runtime"))
+		podID, err := RunPodSandbox(c.Context, runtimeClient, podSandboxConfig, c.String("runtime"))
 		if err != nil {
 			return fmt.Errorf("run pod sandbox: %w", err)
 		}
@@ -112,7 +112,7 @@ var stopPodCommand = &cli.Command{
 		}
 		for i := range c.NArg() {
 			id := c.Args().Get(i)
-			err := StopPodSandbox(runtimeClient, id)
+			err := StopPodSandbox(c.Context, runtimeClient, id)
 			if err != nil {
 				return fmt.Errorf("stopping the pod sandbox %q: %w", id, err)
 			}
@@ -180,7 +180,7 @@ var removePodCommand = &cli.Command{
 				}
 				if resp.Status.State == pb.PodSandboxState_SANDBOX_READY {
 					if ctx.Bool("force") {
-						if err := StopPodSandbox(runtimeClient, id); err != nil {
+						if err := StopPodSandbox(ctx.Context, runtimeClient, id); err != nil {
 							return fmt.Errorf("stopping the pod sandbox %q failed: %w", id, err)
 						}
 					} else {
@@ -188,7 +188,7 @@ var removePodCommand = &cli.Command{
 					}
 				}
 
-				err = RemovePodSandbox(runtimeClient, id)
+				err = RemovePodSandbox(ctx.Context, runtimeClient, id)
 				if err != nil {
 					return fmt.Errorf("removing the pod sandbox %q: %w", id, err)
 				}
@@ -269,7 +269,7 @@ var podStatusCommand = &cli.Command{
 			if err != nil {
 				return fmt.Errorf("parse label string slice: %w", err)
 			}
-			sbs, err := ListPodSandboxes(runtimeClient, opts)
+			sbs, err := ListPodSandboxes(c.Context, runtimeClient, opts)
 			if err != nil {
 				return fmt.Errorf("listing pod sandboxes: %w", err)
 			}
@@ -285,6 +285,7 @@ var podStatusCommand = &cli.Command{
 		}
 
 		if err := podSandboxStatus(
+			c.Context,
 			runtimeClient,
 			ids,
 			c.String("output"),
@@ -378,7 +379,7 @@ var listPodCommand = &cli.Command{
 		if err != nil {
 			return err
 		}
-		if err = OutputPodSandboxes(runtimeClient, opts); err != nil {
+		if err = OutputPodSandboxes(c.Context, runtimeClient, opts); err != nil {
 			return fmt.Errorf("listing pod sandboxes: %w", err)
 		}
 
@@ -388,14 +389,14 @@ var listPodCommand = &cli.Command{
 
 // RunPodSandbox sends a RunPodSandboxRequest to the server, and parses
 // the returned RunPodSandboxResponse.
-func RunPodSandbox(client internalapi.RuntimeService, config *pb.PodSandboxConfig, runtime string) (string, error) {
+func RunPodSandbox(ctx context.Context, client internalapi.RuntimeService, config *pb.PodSandboxConfig, runtime string) (string, error) {
 	request := &pb.RunPodSandboxRequest{
 		Config:         config,
 		RuntimeHandler: runtime,
 	}
 	logrus.Debugf("RunPodSandboxRequest: %v", request)
 
-	r, err := InterruptableRPC(context.Background(), func(ctx context.Context) (string, error) {
+	r, err := InterruptableRPC(ctx, func(ctx context.Context) (string, error) {
 		return client.RunPodSandbox(ctx, config, runtime)
 	})
 	logrus.Debugf("RunPodSandboxResponse: %v", r)
@@ -409,14 +410,14 @@ func RunPodSandbox(client internalapi.RuntimeService, config *pb.PodSandboxConfi
 
 // StopPodSandbox sends a StopPodSandboxRequest to the server, and parses
 // the returned StopPodSandboxResponse.
-func StopPodSandbox(client internalapi.RuntimeService, id string) error {
+func StopPodSandbox(ctx context.Context, client internalapi.RuntimeService, id string) error {
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
 
 	logrus.Debugf("Stopping pod sandbox: %s", id)
 
-	if _, err := InterruptableRPC(context.Background(), func(ctx context.Context) (any, error) {
+	if _, err := InterruptableRPC(ctx, func(ctx context.Context) (any, error) {
 		return nil, client.StopPodSandbox(ctx, id)
 	}); err != nil {
 		return err
@@ -429,14 +430,14 @@ func StopPodSandbox(client internalapi.RuntimeService, id string) error {
 
 // RemovePodSandbox sends a RemovePodSandboxRequest to the server, and parses
 // the returned RemovePodSandboxResponse.
-func RemovePodSandbox(client internalapi.RuntimeService, id string) error {
+func RemovePodSandbox(ctx context.Context, client internalapi.RuntimeService, id string) error {
 	if id == "" {
 		return errors.New("ID cannot be empty")
 	}
 
 	logrus.Debugf("Removing pod sandbox: %s", id)
 
-	if _, err := InterruptableRPC(context.Background(), func(ctx context.Context) (any, error) {
+	if _, err := InterruptableRPC(ctx, func(ctx context.Context) (any, error) {
 		return nil, client.RemovePodSandbox(ctx, id)
 	}); err != nil {
 		return err
@@ -471,7 +472,7 @@ func marshalPodSandboxStatus(ps *pb.PodSandboxStatus) (string, error) {
 // the returned PodSandboxStatusResponse.
 //
 //nolint:dupl // pods and containers are similar, but still different
-func podSandboxStatus(client internalapi.RuntimeService, ids []string, output string, quiet bool, tmplStr string) error {
+func podSandboxStatus(ctx context.Context, client internalapi.RuntimeService, ids []string, output string, quiet bool, tmplStr string) error {
 	verbose := !(quiet)
 
 	if output == "" { // default to json output
@@ -491,7 +492,7 @@ func podSandboxStatus(client internalapi.RuntimeService, ids []string, output st
 		}
 		logrus.Debugf("PodSandboxStatusRequest: %v", request)
 
-		r, err := InterruptableRPC(context.Background(), func(ctx context.Context) (*pb.PodSandboxStatusResponse, error) {
+		r, err := InterruptableRPC(ctx, func(ctx context.Context) (*pb.PodSandboxStatusResponse, error) {
 			return client.PodSandboxStatus(ctx, id, verbose)
 		})
 
@@ -571,7 +572,7 @@ func outputPodSandboxStatusTable(r *pb.PodSandboxStatusResponse, verbose bool) {
 
 // ListPodSandboxes sends a ListPodSandboxRequest to the server, and parses
 // the returned ListPodSandboxResponse.
-func ListPodSandboxes(client internalapi.RuntimeService, opts *listOptions) ([]*pb.PodSandbox, error) {
+func ListPodSandboxes(ctx context.Context, client internalapi.RuntimeService, opts *listOptions) ([]*pb.PodSandbox, error) {
 	filter := &pb.PodSandboxFilter{}
 	if opts.id != "" {
 		filter.Id = opts.id
@@ -602,7 +603,7 @@ func ListPodSandboxes(client internalapi.RuntimeService, opts *listOptions) ([]*
 	}
 	logrus.Debugf("ListPodSandboxRequest: %v", request)
 
-	r, err := InterruptableRPC(context.Background(), func(ctx context.Context) ([]*pb.PodSandbox, error) {
+	r, err := InterruptableRPC(ctx, func(ctx context.Context) ([]*pb.PodSandbox, error) {
 		return client.ListPodSandbox(ctx, filter)
 	})
 	logrus.Debugf("ListPodSandboxResponse: %v", r)
@@ -616,8 +617,8 @@ func ListPodSandboxes(client internalapi.RuntimeService, opts *listOptions) ([]*
 
 // OutputPodSandboxes sends a ListPodSandboxRequest to the server, and parses
 // the returned ListPodSandboxResponse for output.
-func OutputPodSandboxes(client internalapi.RuntimeService, opts *listOptions) error {
-	r, err := ListPodSandboxes(client, opts)
+func OutputPodSandboxes(ctx context.Context, client internalapi.RuntimeService, opts *listOptions) error {
+	r, err := ListPodSandboxes(ctx, client, opts)
 	if err != nil {
 		return fmt.Errorf("list pod sandboxes: %w", err)
 	}
