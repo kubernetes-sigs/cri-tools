@@ -326,10 +326,7 @@ jobs:
           sudo mount
 
           TEST_RC=0
-          # TODO: re-enable the host port test when
-          # https://github.com/kubernetes-sigs/cri-tools/issues/1821
-          # got resolved.
-          sudo -E PATH=$PATH critest --ginkgo.vv --runtime-endpoint=unix:///${BDIR}/c.sock --parallel=8 --ginkgo.skip 'should support port mapping with host port and container port' || TEST_RC=$?
+          sudo -E PATH=$PATH critest --ginkgo.vv --runtime-endpoint=unix:///${BDIR}/c.sock --parallel=8 || TEST_RC=$?
           test $TEST_RC -ne 0 && cat ${BDIR}/containerd-cri.log
           sudo pkill containerd
           echo "CONTD_CRI_DIR=$BDIR" >> $GITHUB_ENV
