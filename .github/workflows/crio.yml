@@ -34,7 +34,8 @@ jobs:
       - name: Setup system
         run: |
           # enable necessary kernel modules
-          sudo ip6tables --list >/dev/null
+          sudo modprobe br_netfilter
+          sudo sysctl -p /etc/sysctl.conf
 
           # enable necessary sysctls
           sudo sysctl -w net.ipv4.conf.all.route_localnet=1
