@@ -321,6 +321,11 @@ jobs:
           # Remove possibly existing containerd configuration
           sudo rm -rf /etc/containerd
           sudo PATH=$PATH bash -c "/usr/local/bin/containerd -a ${BDIR}/c.sock -root ${BDIR}/root -state ${BDIR}/state -log-level debug &> ${BDIR}/containerd-cri.log &"
+
+          while ! grep -q 'containerd successfully booted' ${BDIR}/containerd-cri.log; do
+              sleep 1
+          done
+
           sudo /usr/local/bin/ctr -a ${BDIR}/c.sock version
           sudo /usr/local/sbin/runc --version
           sudo mount
@@ -350,6 +355,10 @@ jobs:
 
           containerd -log-level debug &> "${REPORT_DIR}/containerd-cri.log" &
           pid=$!
+
+          while ! grep -q 'containerd successfully booted' ${REPORT_DIR}/containerd-cri.log; do
+              sleep 1
+          done
           ctr version
 
           set +o errexit
