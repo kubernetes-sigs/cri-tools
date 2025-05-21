@@ -92,7 +92,7 @@ Learn how to engage with the Kubernetes community on the [community page](http:/
 You can reach the maintainers of this project at:
 
 - Slack: #sig-node
-- Mailing List: <https://groups.google.com/forum/#!forum/kubernetes-sig-node>
+- Mailing List: <https://groups.google.com/a/kubernetes.io/g/sig-node>
 
 ## Contributing
 
