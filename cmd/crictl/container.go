@@ -367,18 +367,52 @@ var stopContainerCommand = &cli.Command{
 			Aliases: []string{"t"},
 			Usage:   "Seconds to wait to kill the container after a graceful stop is requested",
 		},
+		&cli.BoolFlag{
+			Name:    "all",
+			Aliases: []string{"a"},
+			Usage:   "Stop all running containers",
+		},
 	},
 	Action: func(c *cli.Context) error {
-		if c.NArg() == 0 {
-			return errors.New("ID cannot be empty")
-		}
 		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
 			return err
 		}
 
-		for i := range c.NArg() {
-			containerID := c.Args().Get(i)
+		if c.Bool("all") && c.NArg() > 0 {
+			return cli.Exit("cannot specify CONTAINER-ID(s) when using --all", 1)
+		}
+
+		var containerIDs []string
+
+		if c.Bool("all") {
+			opts := &listOptions{
+				all:   false, // Only stop running containers
+				state: "running",
+			}
+
+			containers, err := ListContainers(c.Context, runtimeClient, nil, opts)
+			if err != nil {
+				return fmt.Errorf("listing containers: %w", err)
+			}
+
+			if len(containers) == 0 {
+				fmt.Println("No running containers found.")
+
+				return nil
+			}
+
+			for _, container := range containers {
+				containerIDs = append(containerIDs, container.Id)
+			}
+		} else {
+			if c.NArg() == 0 {
+				return cli.Exit("you must specify at least one CONTAINER-ID or use --all", 1)
+			}
+			containerIDs = c.Args().Slice()
+		}
+
+		for _, containerID := range containerIDs {
 			if err := StopContainer(c.Context, runtimeClient, containerID, c.Int64("timeout")); err != nil {
 				return fmt.Errorf("stopping the container %q: %w", containerID, err)
 			}
