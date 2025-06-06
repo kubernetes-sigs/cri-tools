@@ -59,6 +59,8 @@ func GetServerConfigFromFile(configFileName, currentDir string) (*ServerConfigur
 		if _, err := os.Stat(nextConfigFileName); err != nil {
 			return nil, fmt.Errorf("load config file: %w", err)
 		}
+
+		configFileName = nextConfigFileName
 	}
 
 	// Get config from file.
