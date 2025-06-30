@@ -26,6 +26,8 @@ import (
 	"github.com/urfave/cli/v2"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
+
+	"sigs.k8s.io/cri-tools/pkg/common"
 )
 
 var runtimeAttachCommand = &cli.Command{
@@ -47,8 +49,8 @@ var runtimeAttachCommand = &cli.Command{
 		&cli.StringFlag{
 			Name:    transportFlag,
 			Aliases: []string{"r"},
-			Value:   transportSpdy,
-			Usage:   fmt.Sprintf("Transport protocol to use, one of: %s|%s", transportSpdy, transportWebsocket),
+			Value:   common.TransportSpdy,
+			Usage:   fmt.Sprintf("Transport protocol to use, one of: %s|%s", common.TransportSpdy, common.TransportWebsocket),
 		},
 		&cli.StringFlag{
 			Name:    flagTLSSNI,
