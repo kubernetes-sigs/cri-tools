@@ -32,6 +32,8 @@ import (
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/kubectl/pkg/util/term"
+
+	"sigs.k8s.io/cri-tools/pkg/common"
 )
 
 const (
@@ -39,9 +41,7 @@ const (
 	kubeletURLSchema = "http"
 	kubeletURLHost   = "http://127.0.0.1:10250"
 
-	transportFlag      = "transport"
-	transportWebsocket = "websocket"
-	transportSpdy      = "spdy"
+	transportFlag = "transport"
 
 	detachSequence = "ctrl-p,ctrl-q"
 )
@@ -76,8 +76,8 @@ var runtimeExecCommand = &cli.Command{
 		&cli.StringFlag{
 			Name:    transportFlag,
 			Aliases: []string{"r"},
-			Value:   transportSpdy,
-			Usage:   fmt.Sprintf("Transport protocol to use, one of: %s|%s", transportSpdy, transportWebsocket),
+			Value:   common.TransportSpdy,
+			Usage:   fmt.Sprintf("Transport protocol to use, one of: %s|%s", common.TransportSpdy, common.TransportWebsocket),
 		},
 		&cli.StringFlag{
 			Name:  "name",
@@ -384,7 +384,7 @@ func Exec(ctx context.Context, client internalapi.RuntimeService, opts *execOpti
 }
 
 func stream(ctx context.Context, in, tty bool, transport string, parsedURL *url.URL, tlsConfig *rest.TLSClientConfig) error {
-	executor, err := getExecutor(transport, parsedURL, tlsConfig)
+	executor, err := common.GetExecutor(transport, parsedURL, tlsConfig)
 	if err != nil {
 		return fmt.Errorf("get executor: %w", err)
 	}
@@ -430,19 +430,4 @@ func stream(ctx context.Context, in, tty bool, transport string, parsedURL *url.
 	streamOptions.TerminalSizeQueue = t.MonitorSize(t.GetSize())
 
 	return t.Safe(func() error { return executor.StreamWithContext(ctx, streamOptions) })
-}
-
-func getExecutor(transport string, parsedURL *url.URL, tlsConfig *rest.TLSClientConfig) (exec remoteclient.Executor, err error) {
-	config := &rest.Config{TLSClientConfig: *tlsConfig}
-
-	switch transport {
-	case transportSpdy:
-		return remoteclient.NewSPDYExecutor(config, "POST", parsedURL)
-
-	case transportWebsocket:
-		return remoteclient.NewWebSocketExecutor(config, "GET", parsedURL.String())
-
-	default:
-		return nil, fmt.Errorf("unknown transport: %s", transport)
-	}
 }

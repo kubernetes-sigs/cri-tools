@@ -20,18 +20,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"net/url"
 	"os"
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"k8s.io/apimachinery/pkg/util/httpstream"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
-	"k8s.io/client-go/transport/spdy"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
+
+	"sigs.k8s.io/cri-tools/pkg/common"
 )
 
 var runtimePortForwardCommand = &cli.Command{
@@ -42,8 +40,8 @@ var runtimePortForwardCommand = &cli.Command{
 		&cli.StringFlag{
 			Name:    transportFlag,
 			Aliases: []string{"r"},
-			Value:   transportSpdy,
-			Usage:   fmt.Sprintf("Transport protocol to use, one of: %s|%s", transportSpdy, transportWebsocket),
+			Value:   common.TransportSpdy,
+			Usage:   fmt.Sprintf("Transport protocol to use, one of: %s|%s", common.TransportSpdy, common.TransportWebsocket),
 		},
 		&cli.StringFlag{
 			Name:    flagTLSSNI,
@@ -128,7 +126,7 @@ func PortForward(ctx context.Context, client internalapi.RuntimeService, opts po
 
 	logrus.Debugf("PortForward URL: %v", parsedURL)
 
-	dialer, err := getDialer(opts.transport, parsedURL, opts.tlsConfig)
+	dialer, err := common.GetDialer(opts.transport, parsedURL, opts.tlsConfig)
 	if err != nil {
 		return fmt.Errorf("get dialer: %w", err)
 	}
@@ -143,24 +141,4 @@ func PortForward(ctx context.Context, client internalapi.RuntimeService, opts po
 	}
 
 	return pf.ForwardPorts()
-}
-
-func getDialer(transport string, parsedURL *url.URL, tlsConfig *rest.TLSClientConfig) (exec httpstream.Dialer, err error) {
-	config := &rest.Config{TLSClientConfig: *tlsConfig}
-
-	switch transport {
-	case transportSpdy:
-		tr, upgrader, err := spdy.RoundTripperFor(config)
-		if err != nil {
-			return nil, fmt.Errorf("get SPDY round tripper: %w", err)
-		}
-
-		return spdy.NewDialer(upgrader, &http.Client{Transport: tr}, "POST", parsedURL), nil
-
-	case transportWebsocket:
-		return portforward.NewSPDYOverWebsocketDialer(parsedURL, config)
-
-	default:
-		return nil, fmt.Errorf("unknown transport: %s", transport)
-	}
 }

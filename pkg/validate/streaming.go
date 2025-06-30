@@ -21,7 +21,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"strings"
 	"sync"
@@ -32,10 +31,10 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
 	remoteclient "k8s.io/client-go/tools/remotecommand"
-	"k8s.io/client-go/transport/spdy"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
+	"sigs.k8s.io/cri-tools/pkg/common"
 	"sigs.k8s.io/cri-tools/pkg/framework"
 )
 
@@ -187,7 +186,13 @@ func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, stdou
 	// Only http is supported now.
 	// TODO: support streaming APIs via tls.
 	parsedURL := parseURL(c, execServerURL)
-	e, err := remoteclient.NewSPDYExecutor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}, "POST", parsedURL)
+
+	transport := common.TransportSpdy
+	if framework.TestContext.UseWebsocketForExec {
+		transport = common.TransportWebsocket
+	}
+
+	e, err := common.GetExecutor(transport, parsedURL, &rest.TLSClientConfig{Insecure: true})
 	framework.ExpectNoError(err, "failed to create executor for %q", execServerURL)
 
 	streamOptions := remoteclient.StreamOptions{
@@ -310,7 +315,13 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 	// Only http is supported now.
 	// TODO: support streaming APIs via tls.
 	parsedURL := parseURL(c, attachServerURL)
-	e, err := remoteclient.NewSPDYExecutor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}}, "POST", parsedURL)
+
+	transport := common.TransportSpdy
+	if framework.TestContext.UseWebsocketForAttach {
+		transport = common.TransportWebsocket
+	}
+
+	e, err := common.GetExecutor(transport, parsedURL, &rest.TLSClientConfig{Insecure: true})
 	framework.ExpectNoError(err, "failed to create executor for %q", attachServerURL)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -346,11 +357,15 @@ func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string, 
 	readyChan := make(chan struct{})
 	defer close(stopChan)
 
-	transport, upgrader, err := spdy.RoundTripperFor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}})
-	framework.ExpectNoError(err, "failed to create spdy round tripper")
-
 	parsedURL := parseURL(c, portForwardSeverURL)
-	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", parsedURL)
+
+	transport := common.TransportSpdy
+	if framework.TestContext.UseWebsocketForPortForward {
+		transport = common.TransportWebsocket
+	}
+
+	dialer, err := common.GetDialer(transport, parsedURL, &rest.TLSClientConfig{Insecure: true})
+	framework.ExpectNoError(err, "failed to create port forward dialer for %q", portForwardSeverURL)
 
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}

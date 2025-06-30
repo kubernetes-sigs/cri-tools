@@ -112,6 +112,11 @@ type TestContextType struct {
 	IsLcow bool
 
 	RegistryPrefix string
+
+	// Use websocket connections over than SPDY for streaming tests.
+	UseWebsocketForExec        bool
+	UseWebsocketForAttach      bool
+	UseWebsocketForPortForward bool
 }
 
 // TestContext is a test context.
@@ -172,6 +177,10 @@ func RegisterFlags() {
 	}
 
 	flag.StringVar(&TestContext.RegistryPrefix, "registry-prefix", DefaultRegistryPrefix, "A possible registry prefix added to all images, like 'localhost:5000'")
+
+	flag.BoolVar(&TestContext.UseWebsocketForExec, "websocket-exec", false, "Use websocket connections over SPDY for exec streaming tests.")
+	flag.BoolVar(&TestContext.UseWebsocketForAttach, "websocket-attach", false, "Use websocket connections over SPDY for attach streaming tests.")
+	flag.BoolVar(&TestContext.UseWebsocketForPortForward, "websocket-portforward", false, "Use websocket connections over SPDY for portforward streaming tests.")
 }
 
 // Loads any external file-based parameters into the TestContextType.
