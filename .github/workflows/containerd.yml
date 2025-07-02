@@ -23,7 +23,7 @@ jobs:
         # ╟──────────────────┼───────────┼─────────╢
         # ║ hcshim           │           │ runhcs  ║
         # ╚══════════════════╧═══════════╧═════════╝
-        os: [ubuntu-22.04, windows-2019]
+        os: [ubuntu-22.04, windows-2025]
         # not every command likes the slash in branch name.
         # So will use format command to replace to either `_` or '/'
         version: [main, "release{0}1.6", "release{0}1.7"]
@@ -37,11 +37,11 @@ jobs:
         runc: [runc, crun]
         exclude:
           - runtime: io.containerd.runc.v1
-            os: windows-2019
+            os: windows-2025
           - runtime: io.containerd.runc.v2
-            os: windows-2019
+            os: windows-2025
           - runtime: io.containerd.runtime.v1.linux
-            os: windows-2019
+            os: windows-2025
           - runtime: containerd-shim-runhcs-v1
             os: ubuntu-22.04
           - runtime: io.containerd.runc.v1
@@ -49,7 +49,7 @@ jobs:
           - runtime: io.containerd.runtime.v1.linux
             runc: crun
           - runc: crun
-            os: windows-2019
+            os: windows-2025
     name: ${{ format(matrix.version, '/') }} / ${{ matrix.os }} / ${{matrix.runtime}} / ${{matrix.runc}}
     runs-on: ${{ matrix.os }}
     steps:
