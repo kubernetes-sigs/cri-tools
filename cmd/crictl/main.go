@@ -295,6 +295,7 @@ func main() {
 	}
 
 	var cpuProfile *os.File
+
 	defer func() {
 		if cpuProfile != nil {
 			pprof.StopCPUProfile()

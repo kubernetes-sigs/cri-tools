@@ -92,6 +92,7 @@ func Events(cliContext *cli.Context, client internalapi.RuntimeService) error {
 
 			return
 		}
+
 		errCh <- err
 	}()
 

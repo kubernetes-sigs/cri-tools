@@ -51,14 +51,17 @@ func (a containerByCreated) Less(i, j int) bool {
 }
 
 type createOptions struct {
-	// podID of the container
-	podID string
-
 	// the config and pod options
 	*runOptions
+
+	// podID of the container
+	podID string
 }
 
 type runOptions struct {
+	// the image pull options
+	*pullOptions
+
 	// configPath is path to the config for container
 	configPath string
 
@@ -67,9 +70,6 @@ type runOptions struct {
 
 	// the create timeout
 	timeout time.Duration
-
-	// the image pull options
-	*pullOptions
 }
 
 type pullOptions struct {
@@ -877,7 +877,7 @@ func RunContainer(
 	}
 
 	// Create the container
-	containerOptions := createOptions{podID, &opts}
+	containerOptions := createOptions{&opts, podID}
 
 	ctrID, err := CreateContainer(ctx, iClient, rClient, containerOptions)
 	if err != nil {

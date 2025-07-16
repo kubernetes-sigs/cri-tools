@@ -97,6 +97,7 @@ func InterruptableRPC[T any](
 
 			return
 		}
+
 		resCh <- res
 	}()
 

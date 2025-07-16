@@ -98,43 +98,6 @@ func NewLifecycleBenchmarksResultsManager(initialResultsSet LifecycleBenchmarksR
 	return &lbrm
 }
 
-// Function which continuously consumes results from the resultsChannel until receiving a nil.
-func (lbrm *LifecycleBenchmarksResultsManager) awaitResult() {
-	numOperations := len(lbrm.resultsSet.OperationsNames)
-
-	for {
-		var res *LifecycleBenchmarkDatapoint
-
-		timeout := time.After(time.Duration(lbrm.resultsChannelTimeoutSeconds) * time.Second)
-
-		select {
-		case res = <-lbrm.resultsChannel:
-			// Receiving nil indicates results are over:
-			if res == nil {
-				logrus.Info("Results ended")
-
-				lbrm.resultsConsumerRunning = false
-				lbrm.resultsOverChannel <- true
-
-				return
-			}
-
-			// Warn if an improper number of results was received:
-			if len(res.OperationsDurationsNs) != numOperations {
-				logrus.Warnf("Received improper number of datapoints for operations %+v: %+v", lbrm.resultsSet.OperationsNames, res.OperationsDurationsNs)
-			}
-
-			// Register the result:
-			lbrm.resultsSet.Datapoints = append(lbrm.resultsSet.Datapoints, *res)
-
-		case <-timeout:
-			err := fmt.Errorf("timed out after waiting %d seconds for new results", lbrm.resultsChannelTimeoutSeconds)
-			logrus.Error(err.Error())
-			panic(err)
-		}
-	}
-}
-
 // Starts the results consumer goroutine and returns the channel to write results to.
 // A nil value must be sent after all other results were sent to indicate the end of the result
 // stream.
@@ -183,4 +146,41 @@ func (lbrm *LifecycleBenchmarksResultsManager) WriteResultsFile(filepath string)
 	}
 
 	return nil
+}
+
+// Function which continuously consumes results from the resultsChannel until receiving a nil.
+func (lbrm *LifecycleBenchmarksResultsManager) awaitResult() {
+	numOperations := len(lbrm.resultsSet.OperationsNames)
+
+	for {
+		var res *LifecycleBenchmarkDatapoint
+
+		timeout := time.After(time.Duration(lbrm.resultsChannelTimeoutSeconds) * time.Second)
+
+		select {
+		case res = <-lbrm.resultsChannel:
+			// Receiving nil indicates results are over:
+			if res == nil {
+				logrus.Info("Results ended")
+
+				lbrm.resultsConsumerRunning = false
+				lbrm.resultsOverChannel <- true
+
+				return
+			}
+
+			// Warn if an improper number of results was received:
+			if len(res.OperationsDurationsNs) != numOperations {
+				logrus.Warnf("Received improper number of datapoints for operations %+v: %+v", lbrm.resultsSet.OperationsNames, res.OperationsDurationsNs)
+			}
+
+			// Register the result:
+			lbrm.resultsSet.Datapoints = append(lbrm.resultsSet.Datapoints, *res)
+
+		case <-timeout:
+			err := fmt.Errorf("timed out after waiting %d seconds for new results", lbrm.resultsChannelTimeoutSeconds)
+			logrus.Error(err.Error())
+			panic(err)
+		}
+	}
 }

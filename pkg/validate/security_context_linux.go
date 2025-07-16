@@ -1134,6 +1134,7 @@ func createRunAsUserContainer(rc internalapi.RuntimeService, ic internalapi.Imag
 	By("create RunAsUser container")
 
 	var uidV runtimeapi.Int64Value
+
 	uidV.Value = 1001
 	expectedLogMessage = "1001\n"
 
@@ -1183,6 +1184,7 @@ func createRunAsGroupContainer(rc internalapi.RuntimeService, ic internalapi.Ima
 	By("create RunAsGroup container")
 
 	var uidV, gidV runtimeapi.Int64Value
+
 	uidV.Value = 1001
 	gidV.Value = 1002
 	expectedLogMessage = "1001:1002\n"
@@ -1211,6 +1213,7 @@ func createInvalidRunAsGroupContainer(rc internalapi.RuntimeService, ic internal
 	By("create invalid RunAsGroup container")
 
 	var gidV runtimeapi.Int64Value
+
 	gidV.Value = 1002
 
 	By("create a container with RunAsGroup without RunAsUser")

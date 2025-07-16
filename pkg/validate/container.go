@@ -451,6 +451,7 @@ func stopContainer(c internalapi.RuntimeService, containerID string, timeout int
 
 		err := c.StopContainer(context.TODO(), containerID, timeout)
 		framework.ExpectNoError(err, "failed to stop container: %v", err)
+
 		stopped <- true
 	}()
 
