@@ -344,6 +344,7 @@ func createDefaultPortForward(c internalapi.RuntimeService, podID string) string
 func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string, hostPort, containerPort int32) {
 	stopChan := make(chan struct{}, 1)
 	readyChan := make(chan struct{})
+
 	defer close(stopChan)
 
 	transport, upgrader, err := spdy.RoundTripperFor(&rest.Config{TLSClientConfig: rest.TLSClientConfig{Insecure: true}})
@@ -360,6 +361,7 @@ func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string, 
 
 	go func() {
 		defer GinkgoRecover()
+
 		By("start port forward")
 
 		err := pf.ForwardPorts()

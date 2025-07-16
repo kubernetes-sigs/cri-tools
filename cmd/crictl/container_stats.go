@@ -134,9 +134,10 @@ func (c containerStatsByID) Less(i, j int) bool {
 }
 
 type containerStatsDisplayer struct {
+	*display
+
 	opts    *statsOptions
 	request *pb.ListContainerStatsRequest
-	*display
 }
 
 // ContainerStats sends a ListContainerStatsRequest to the server, and

@@ -19,7 +19,7 @@ dependencies:
         match: ZEITGEIST_VERSION
 
   - name: golangci-lint
-    version: v2.0.1
+    version: v2.2.2
     refPaths:
       - path: Makefile
         match: GOLANGCI_LINT_VERSION

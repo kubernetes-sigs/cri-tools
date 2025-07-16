@@ -120,9 +120,10 @@ func (c podStatsByID) Less(i, j int) bool {
 }
 
 type podStatsDisplayer struct {
+	*display
+
 	filter *pb.PodSandboxStatsFilter
 	opts   podStatsOptions
-	*display
 }
 
 func podStats(

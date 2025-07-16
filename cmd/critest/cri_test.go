@@ -165,6 +165,7 @@ func runParallelTestSuite(t *testing.T) {
 	})
 
 	var args []string
+
 	args = append(args, ginkgoArgs...)
 	args = append(args, tempFileName, "--")
 	args = append(args, testArgs...)

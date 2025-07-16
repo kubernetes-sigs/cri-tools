@@ -37,6 +37,7 @@ func Init(ctx context.Context, collectorAddress string, samplingRate int) (*trac
 	}
 
 	const serviceName = "cri-tools"
+
 	res := resource.NewWithAttributes(
 		semconv.SchemaURL,
 		semconv.ServiceNameKey.String(serviceName),
