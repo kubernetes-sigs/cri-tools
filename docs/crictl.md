@@ -208,6 +208,24 @@ $ cat pod-config.json
     "linux": {
     }
 }
+```
+
+If the runtime uses systemd as the cgroup driver, set the `"cgroup_parent"` field in the pod-config, similar to
+
+```sh
+$ cat pod-config.json
+{
+    "metadata": {
+        "name": "nginx-sandbox",
+        "namespace": "default",
+        "attempt": 1,
+        "uid": "hdishd83djaidwnduwk28bcsb"
+    },
+    "log_directory": "/tmp",
+    "linux": {
+      "cgroup_parent": "/test.slice"
+    }
+}
 
 $ crictl runp pod-config.json
 f84dd361f8dc51518ed291fbadd6db537b0496536c1d2d6c05ff943ce8c9a54f
