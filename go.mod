@@ -24,14 +24,14 @@ require (
 	golang.org/x/text v0.27.0
 	google.golang.org/grpc v1.74.0
 	google.golang.org/protobuf v1.36.6
-	k8s.io/api v0.33.2
-	k8s.io/apimachinery v0.33.2
-	k8s.io/client-go v0.33.2
-	k8s.io/cri-api v0.33.2
-	k8s.io/cri-client v0.33.2
+	k8s.io/api v0.33.3
+	k8s.io/apimachinery v0.33.3
+	k8s.io/client-go v0.33.3
+	k8s.io/cri-api v0.33.3
+	k8s.io/cri-client v0.33.3
 	k8s.io/klog/v2 v2.130.1
-	k8s.io/kubectl v0.33.2
-	k8s.io/kubelet v0.33.2
+	k8s.io/kubectl v0.33.3
+	k8s.io/kubelet v0.33.3
 	sigs.k8s.io/yaml v1.5.0
 )
 
@@ -92,8 +92,8 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/cli-runtime v0.33.2 // indirect
-	k8s.io/component-base v0.33.2 // indirect
+	k8s.io/cli-runtime v0.33.3 // indirect
+	k8s.io/component-base v0.33.3 // indirect
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
