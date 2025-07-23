@@ -32,6 +32,7 @@ import (
 	"time"
 
 	"github.com/invopop/jsonschema"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/protoadapt"
 	"google.golang.org/protobuf/runtime/protoiface"
@@ -252,6 +253,10 @@ func loadPodSandboxConfig(path string) (*pb.PodSandboxConfig, error) {
 
 	if config.Metadata.Name == "" || config.Metadata.Namespace == "" || config.Metadata.Uid == "" {
 		return nil, fmt.Errorf("name, namespace or uid is not in metadata %q", config.Metadata)
+	}
+
+	if config.Linux != nil && config.Linux.CgroupParent == "" {
+		logrus.Warn("cgroup_parent is not set. Use `runtime-config` to get the runtime cgroup driver")
 	}
 
 	return &config, nil
