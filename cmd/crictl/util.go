@@ -31,6 +31,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -251,8 +252,12 @@ func loadPodSandboxConfig(path string) (*pb.PodSandboxConfig, error) {
 		return nil, errors.New("metadata is not set")
 	}
 
-	if config.Metadata.Name == "" || config.Metadata.Namespace == "" || config.Metadata.Uid == "" {
-		return nil, fmt.Errorf("name, namespace or uid is not in metadata %q", config.Metadata)
+	if config.Metadata.Uid == "" {
+		config.Metadata.Uid = uuid.New().String()
+	}
+
+	if config.Metadata.Name == "" || config.Metadata.Namespace == "" {
+		return nil, fmt.Errorf("name or namespace is not in metadata %q", config.Metadata)
 	}
 
 	if config.Linux != nil && config.Linux.CgroupParent == "" {
