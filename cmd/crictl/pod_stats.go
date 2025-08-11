@@ -116,7 +116,7 @@ type podStatsByID []*pb.PodSandboxStats
 func (c podStatsByID) Len() int      { return len(c) }
 func (c podStatsByID) Swap(i, j int) { c[i], c[j] = c[j], c[i] }
 func (c podStatsByID) Less(i, j int) bool {
-	return c[i].Attributes.Id < c[j].Attributes.Id
+	return c[i].GetAttributes().GetId() < c[j].GetAttributes().GetId()
 }
 
 type podStatsDisplayer struct {
@@ -174,7 +174,7 @@ func (d *podStatsDisplayer) displayPodStats(
 			return c.Err()
 		}
 
-		oldStats[s.Attributes.Id] = s
+		oldStats[s.GetAttributes().GetId()] = s
 	}
 
 	time.Sleep(d.opts.sample)
@@ -191,7 +191,7 @@ func (d *podStatsDisplayer) displayPodStats(
 			return c.Err()
 		}
 
-		id := getTruncatedID(s.Attributes.Id, "")
+		id := getTruncatedID(s.GetAttributes().GetId(), "")
 
 		var cpu, mem uint64
 
@@ -224,7 +224,7 @@ func (d *podStatsDisplayer) displayPodStats(
 			oldCPUTs int64
 		)
 
-		old, ok := oldStats[s.Attributes.Id]
+		old, ok := oldStats[s.GetAttributes().GetId()]
 		if !ok {
 			// Skip new pod
 			continue
@@ -254,7 +254,7 @@ func (d *podStatsDisplayer) displayPodStats(
 		}
 
 		d.AddRow([]string{
-			s.Attributes.GetMetadata().GetName(),
+			s.GetAttributes().GetMetadata().GetName(),
 			id,
 			fmt.Sprintf("%.2f", cpuPerc),
 			units.HumanSize(float64(mem)),

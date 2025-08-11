@@ -42,7 +42,7 @@ type sandboxByCreated []*pb.PodSandbox
 func (a sandboxByCreated) Len() int      { return len(a) }
 func (a sandboxByCreated) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (a sandboxByCreated) Less(i, j int) bool {
-	return a[i].CreatedAt > a[j].CreatedAt
+	return a[i].GetCreatedAt() > a[j].GetCreatedAt()
 }
 
 var runPodCommand = &cli.Command{
@@ -178,7 +178,7 @@ var removePodCommand = &cli.Command{
 				if err != nil {
 					return fmt.Errorf("getting sandbox status of pod %q: %w", id, err)
 				}
-				if resp.Status.State == pb.PodSandboxState_SANDBOX_READY {
+				if resp.GetStatus().GetState() == pb.PodSandboxState_SANDBOX_READY {
 					if ctx.Bool("force") {
 						if err := StopPodSandbox(ctx.Context, runtimeClient, id); err != nil {
 							return fmt.Errorf("stopping the pod sandbox %q failed: %w", id, err)
@@ -463,8 +463,9 @@ func marshalPodSandboxStatus(ps *pb.PodSandboxStatus) (string, error) {
 		return "", err
 	}
 
-	jsonMap["createdAt"] = time.Unix(0, ps.CreatedAt).Format(time.RFC3339Nano)
+	jsonMap["createdAt"] = time.Unix(0, ps.GetCreatedAt()).Format(time.RFC3339Nano)
 
+	//nolint:govet // copying the lock is not harmful in this place
 	return marshalMapInOrder(jsonMap, *ps)
 }
 
@@ -502,7 +503,7 @@ func podSandboxStatus(ctx context.Context, client internalapi.RuntimeService, id
 			return fmt.Errorf("get pod sandbox status: %w", err)
 		}
 
-		statusJSON, err := marshalPodSandboxStatus(r.Status)
+		statusJSON, err := marshalPodSandboxStatus(r.GetStatus())
 		if err != nil {
 			return fmt.Errorf("marshal pod sandbox status: %w", err)
 		}
@@ -510,7 +511,7 @@ func podSandboxStatus(ctx context.Context, client internalapi.RuntimeService, id
 		if output == outputTypeTable {
 			outputPodSandboxStatusTable(r, verbose)
 		} else {
-			statuses = append(statuses, statusData{json: statusJSON, info: r.Info})
+			statuses = append(statuses, statusData{json: statusJSON, info: r.GetInfo()})
 		}
 	}
 
@@ -519,49 +520,49 @@ func podSandboxStatus(ctx context.Context, client internalapi.RuntimeService, id
 
 func outputPodSandboxStatusTable(r *pb.PodSandboxStatusResponse, verbose bool) {
 	// output in table format by default.
-	fmt.Printf("ID: %s\n", r.Status.Id)
+	fmt.Printf("ID: %s\n", r.GetStatus().GetId())
 
-	if r.Status.Metadata != nil {
-		if r.Status.Metadata.Name != "" {
-			fmt.Printf("Name: %s\n", r.Status.Metadata.Name)
+	if r.GetStatus().GetMetadata() != nil {
+		if r.GetStatus().GetMetadata().GetName() != "" {
+			fmt.Printf("Name: %s\n", r.GetStatus().GetMetadata().GetName())
 		}
 
-		if r.Status.Metadata.Uid != "" {
-			fmt.Printf("UID: %s\n", r.Status.Metadata.Uid)
+		if r.GetStatus().GetMetadata().GetUid() != "" {
+			fmt.Printf("UID: %s\n", r.GetStatus().GetMetadata().GetUid())
 		}
 
-		if r.Status.Metadata.Namespace != "" {
-			fmt.Printf("Namespace: %s\n", r.Status.Metadata.Namespace)
+		if r.GetStatus().GetMetadata().GetNamespace() != "" {
+			fmt.Printf("Namespace: %s\n", r.GetStatus().GetMetadata().GetNamespace())
 		}
 
-		fmt.Printf("Attempt: %v\n", r.Status.Metadata.Attempt)
+		fmt.Printf("Attempt: %v\n", r.GetStatus().GetMetadata().GetAttempt())
 	}
 
-	fmt.Printf("Status: %s\n", r.Status.State)
-	ctm := time.Unix(0, r.Status.CreatedAt)
+	fmt.Printf("Status: %s\n", r.GetStatus().GetState())
+	ctm := time.Unix(0, r.GetStatus().GetCreatedAt())
 	fmt.Printf("Created: %v\n", ctm)
 
-	if r.Status.Network != nil {
-		fmt.Printf("IP Addresses: %v\n", r.Status.Network.Ip)
+	if r.GetStatus().GetNetwork() != nil {
+		fmt.Printf("IP Addresses: %v\n", r.GetStatus().GetNetwork().GetIp())
 
-		for _, ip := range r.Status.Network.AdditionalIps {
-			fmt.Printf("Additional IP: %v\n", ip.Ip)
+		for _, ip := range r.GetStatus().GetNetwork().GetAdditionalIps() {
+			fmt.Printf("Additional IP: %v\n", ip.GetIp())
 		}
 	}
 
 	if r.Status.Labels != nil {
 		fmt.Println("Labels:")
 
-		for _, k := range getSortedKeys(r.Status.Labels) {
-			fmt.Printf("\t%s -> %s\n", k, r.Status.Labels[k])
+		for _, k := range getSortedKeys(r.GetStatus().GetLabels()) {
+			fmt.Printf("\t%s -> %s\n", k, r.GetStatus().GetLabels()[k])
 		}
 	}
 
 	if r.Status.Annotations != nil {
 		fmt.Println("Annotations:")
 
-		for _, k := range getSortedKeys(r.Status.Annotations) {
-			fmt.Printf("\t%s -> %s\n", k, r.Status.Annotations[k])
+		for _, k := range getSortedKeys(r.GetStatus().GetAnnotations()) {
+			fmt.Printf("\t%s -> %s\n", k, r.GetStatus().GetAnnotations()[k])
 		}
 	}
 
@@ -651,16 +652,16 @@ func OutputPodSandboxes(ctx context.Context, client internalapi.RuntimeService, 
 
 	for _, pod := range r {
 		if opts.quiet {
-			fmt.Printf("%s\n", pod.Id)
+			fmt.Printf("%s\n", pod.GetId())
 
 			continue
 		}
 
 		if !opts.verbose {
-			createdAt := time.Unix(0, pod.CreatedAt)
+			createdAt := time.Unix(0, pod.GetCreatedAt())
 			ctm := units.HumanDuration(time.Now().UTC().Sub(createdAt)) + " ago"
 
-			id := pod.Id
+			id := pod.GetId()
 			if !opts.noTrunc {
 				id = getTruncatedID(id, "")
 			}
@@ -668,53 +669,53 @@ func OutputPodSandboxes(ctx context.Context, client internalapi.RuntimeService, 
 			display.AddRow([]string{
 				id,
 				ctm,
-				convertPodState(pod.State),
-				pod.Metadata.Name,
-				pod.Metadata.Namespace,
-				strconv.FormatUint(uint64(pod.Metadata.Attempt), 10),
+				convertPodState(pod.GetState()),
+				pod.GetMetadata().GetName(),
+				pod.GetMetadata().GetNamespace(),
+				strconv.FormatUint(uint64(pod.GetMetadata().GetAttempt()), 10),
 				getSandboxesRuntimeHandler(pod),
 			})
 
 			continue
 		}
 
-		fmt.Printf("ID: %s\n", pod.Id)
+		fmt.Printf("ID: %s\n", pod.GetId())
 
-		if pod.Metadata != nil {
-			if pod.Metadata.Name != "" {
-				fmt.Printf("Name: %s\n", pod.Metadata.Name)
+		if pod.GetMetadata() != nil {
+			if pod.GetMetadata().GetName() != "" {
+				fmt.Printf("Name: %s\n", pod.GetMetadata().GetName())
 			}
 
-			if pod.Metadata.Uid != "" {
-				fmt.Printf("UID: %s\n", pod.Metadata.Uid)
+			if pod.GetMetadata().GetUid() != "" {
+				fmt.Printf("UID: %s\n", pod.GetMetadata().GetUid())
 			}
 
-			if pod.Metadata.Namespace != "" {
-				fmt.Printf("Namespace: %s\n", pod.Metadata.Namespace)
+			if pod.GetMetadata().GetNamespace() != "" {
+				fmt.Printf("Namespace: %s\n", pod.GetMetadata().GetNamespace())
 			}
 
-			if pod.Metadata.Attempt != 0 {
-				fmt.Printf("Attempt: %v\n", pod.Metadata.Attempt)
+			if pod.GetMetadata().GetAttempt() != 0 {
+				fmt.Printf("Attempt: %v\n", pod.GetMetadata().GetAttempt())
 			}
 		}
 
-		fmt.Printf("Status: %s\n", convertPodState(pod.State))
-		ctm := time.Unix(0, pod.CreatedAt)
+		fmt.Printf("Status: %s\n", convertPodState(pod.GetState()))
+		ctm := time.Unix(0, pod.GetCreatedAt())
 		fmt.Printf("Created: %v\n", ctm)
 
 		if pod.Labels != nil {
 			fmt.Println("Labels:")
 
-			for _, k := range getSortedKeys(pod.Labels) {
-				fmt.Printf("\t%s -> %s\n", k, pod.Labels[k])
+			for _, k := range getSortedKeys(pod.GetLabels()) {
+				fmt.Printf("\t%s -> %s\n", k, pod.GetLabels()[k])
 			}
 		}
 
 		if pod.Annotations != nil {
 			fmt.Println("Annotations:")
 
-			for _, k := range getSortedKeys(pod.Annotations) {
-				fmt.Printf("\t%s -> %s\n", k, pod.Annotations[k])
+			for _, k := range getSortedKeys(pod.GetAnnotations()) {
+				fmt.Printf("\t%s -> %s\n", k, pod.GetAnnotations()[k])
 			}
 		}
 
@@ -744,11 +745,11 @@ func convertPodState(state pb.PodSandboxState) string {
 }
 
 func getSandboxesRuntimeHandler(sandbox *pb.PodSandbox) string {
-	if sandbox.RuntimeHandler == "" {
+	if sandbox.GetRuntimeHandler() == "" {
 		return "(default)"
 	}
 
-	return sandbox.RuntimeHandler
+	return sandbox.GetRuntimeHandler()
 }
 
 func getSandboxesList(sandboxesList []*pb.PodSandbox, opts *listOptions) []*pb.PodSandbox {
@@ -756,8 +757,8 @@ func getSandboxesList(sandboxesList []*pb.PodSandbox, opts *listOptions) []*pb.P
 
 	for _, p := range sandboxesList {
 		// Filter by pod name/namespace regular expressions.
-		if p.Metadata != nil && matchesRegex(opts.nameRegexp, p.Metadata.Name) &&
-			matchesRegex(opts.podNamespaceRegexp, p.Metadata.Namespace) {
+		if p.GetMetadata() != nil && matchesRegex(opts.nameRegexp, p.GetMetadata().GetName()) &&
+			matchesRegex(opts.podNamespaceRegexp, p.GetMetadata().GetNamespace()) {
 			filtered = append(filtered, p)
 		}
 	}

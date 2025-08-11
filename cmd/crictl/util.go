@@ -212,12 +212,12 @@ func loadContainerConfig(path string) (*pb.ContainerConfig, error) {
 		return nil, err
 	}
 
-	if config.Metadata == nil {
+	if config.GetMetadata() == nil {
 		return nil, errors.New("metadata is not set")
 	}
 
-	if config.Metadata.Name == "" {
-		return nil, fmt.Errorf("name is not in metadata %q", config.Metadata)
+	if config.GetMetadata().GetName() == "" {
+		return nil, fmt.Errorf("name is not in metadata %q", config.GetMetadata())
 	}
 
 	return &config, nil
@@ -248,19 +248,19 @@ func loadPodSandboxConfig(path string) (*pb.PodSandboxConfig, error) {
 		return nil, err
 	}
 
-	if config.Metadata == nil {
+	if config.GetMetadata() == nil {
 		return nil, errors.New("metadata is not set")
 	}
 
-	if config.Metadata.Uid == "" {
+	if config.GetMetadata().GetUid() == "" {
 		config.Metadata.Uid = uuid.New().String()
 	}
 
-	if config.Metadata.Name == "" || config.Metadata.Namespace == "" {
-		return nil, fmt.Errorf("name or namespace is not in metadata %q", config.Metadata)
+	if config.GetMetadata().GetName() == "" || config.GetMetadata().GetNamespace() == "" {
+		return nil, fmt.Errorf("name or namespace is not in metadata %q", config.GetMetadata())
 	}
 
-	if config.Linux != nil && config.Linux.CgroupParent == "" {
+	if config.GetLinux() != nil && config.GetLinux().GetCgroupParent() == "" {
 		logrus.Warn("cgroup_parent is not set. Use `runtime-config` to get the runtime cgroup driver")
 	}
 
@@ -572,12 +572,12 @@ func matchesImage(ctx context.Context, imageClient internalapi.ImageManagerServi
 		return false, err
 	}
 
-	if r1.Image == nil || r2.Image == nil {
+	if r1.GetImage() == nil || r2.GetImage() == nil {
 		// Always return not match if the image doesn't exist.
 		return false, nil
 	}
 
-	return r1.Image.Id == r2.Image.Id, nil
+	return r1.GetImage().GetId() == r2.GetImage().GetId(), nil
 }
 
 func getRepoImage(ctx context.Context, imageClient internalapi.ImageManagerService, image string) (string, error) {
@@ -586,8 +586,8 @@ func getRepoImage(ctx context.Context, imageClient internalapi.ImageManagerServi
 		return "", err
 	}
 
-	if len(r.Image.RepoTags) > 0 {
-		return r.Image.RepoTags[0], nil
+	if len(r.GetImage().GetRepoTags()) > 0 {
+		return r.GetImage().GetRepoTags()[0], nil
 	}
 
 	return image, nil

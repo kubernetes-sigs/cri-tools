@@ -130,7 +130,7 @@ type containerStatsByID []*pb.ContainerStats
 func (c containerStatsByID) Len() int      { return len(c) }
 func (c containerStatsByID) Swap(i, j int) { c[i], c[j] = c[j], c[i] }
 func (c containerStatsByID) Less(i, j int) bool {
-	return c[i].Attributes.Id < c[j].Attributes.Id
+	return c[i].GetAttributes().GetId() < c[j].GetAttributes().GetId()
 }
 
 type containerStatsDisplayer struct {
@@ -178,7 +178,7 @@ func (d containerStatsDisplayer) displayStats(ctx context.Context, client intern
 			return ctx.Err()
 		}
 
-		oldStats[s.Attributes.Id] = s
+		oldStats[s.GetAttributes().GetId()] = s
 	}
 
 	time.Sleep(d.opts.sample)
@@ -195,7 +195,7 @@ func (d containerStatsDisplayer) displayStats(ctx context.Context, client intern
 			return ctx.Err()
 		}
 
-		id := getTruncatedID(s.Attributes.Id, "")
+		id := getTruncatedID(s.GetAttributes().GetId(), "")
 		name := s.GetAttributes().GetMetadata().GetName()
 		cpu := s.GetCpu().GetUsageCoreNanoSeconds().GetValue()
 		mem := s.GetMemory().GetWorkingSetBytes().GetValue()
@@ -208,7 +208,7 @@ func (d containerStatsDisplayer) displayStats(ctx context.Context, client intern
 			continue
 		}
 
-		old, ok := oldStats[s.Attributes.Id]
+		old, ok := oldStats[s.GetAttributes().GetId()]
 		if !ok {
 			// Skip new container
 			continue
@@ -242,7 +242,7 @@ func getContainerStats(ctx context.Context, client internalapi.RuntimeService, r
 	logrus.Debugf("ListContainerStatsRequest: %v", request)
 
 	r, err := InterruptableRPC(ctx, func(ctx context.Context) ([]*pb.ContainerStats, error) {
-		return client.ListContainerStats(ctx, request.Filter)
+		return client.ListContainerStats(ctx, request.GetFilter())
 	})
 	logrus.Debugf("ListContainerResponse: %v", r)
 

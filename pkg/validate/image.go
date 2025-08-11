@@ -45,7 +45,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 
 	It("public image with tag should be pulled and removed [Conformance]", func() {
 		testPullPublicImage(c, testImageWithTag, testImagePodSandbox, func(s *runtimeapi.Image) {
-			Expect(s.RepoTags).To(Equal([]string{testImageWithTag}))
+			Expect(s.GetRepoTags()).To(Equal([]string{testImageWithTag}))
 		})
 	})
 
@@ -66,14 +66,14 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 
 	It("public image without tag should be pulled and removed [Conformance]", func() {
 		testPullPublicImage(c, testImageWithoutTag, testImagePodSandbox, func(s *runtimeapi.Image) {
-			Expect(s.RepoTags).To(Equal([]string{testImageWithoutTag + ":latest"}))
+			Expect(s.GetRepoTags()).To(Equal([]string{testImageWithoutTag + ":latest"}))
 		})
 	})
 
 	It("public image with digest should be pulled and removed [Conformance]", func() {
 		testPullPublicImage(c, testImageWithDigest, testImagePodSandbox, func(s *runtimeapi.Image) {
-			Expect(s.RepoTags).To(BeEmpty())
-			Expect(s.RepoDigests).To(Equal([]string{testImageWithDigest}))
+			Expect(s.GetRepoTags()).To(BeEmpty())
+			Expect(s.GetRepoDigests()).To(Equal([]string{testImageWithDigest}))
 		})
 	})
 
@@ -155,9 +155,9 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 
 		for i, id := range ids {
 			for _, img := range images {
-				if img.Id == id {
-					Expect(img.RepoTags).To(HaveLen(1), "Should only have 1 repo tag")
-					Expect(img.RepoTags[0]).To(Equal(testDifferentTagDifferentImageList[i]), "Repo tag should be correct")
+				if img.GetId() == id {
+					Expect(img.GetRepoTags()).To(HaveLen(1), "Should only have 1 repo tag")
+					Expect(img.GetRepoTags()[0]).To(Equal(testDifferentTagDifferentImageList[i]), "Repo tag should be correct")
 
 					break
 				}
@@ -179,9 +179,9 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 
 		sort.Strings(testDifferentTagSameImageList)
 		for _, img := range images {
-			if img.Id == ids[0] {
-				sort.Strings(img.RepoTags)
-				Expect(img.RepoTags).To(Equal(testDifferentTagSameImageList), "Should have 3 repoTags in single image")
+			if img.GetId() == ids[0] {
+				sort.Strings(img.GetRepoTags())
+				Expect(img.GetRepoTags()).To(Equal(testDifferentTagSameImageList), "Should have 3 repoTags in single image")
 
 				break
 			}
@@ -210,8 +210,8 @@ func testPullPublicImage(c internalapi.ImageManagerService, imageName string, po
 	By("Check image list to make sure pulling image success : " + imageName)
 	imageStatus := framework.ImageStatus(c, imageName)
 	Expect(imageStatus).NotTo(BeNil(), "Should have one image in list")
-	Expect(imageStatus.Id).NotTo(BeNil(), "Image Id should not be nil")
-	Expect(imageStatus.Size_).NotTo(BeNil(), "Image Size should not be nil")
+	Expect(imageStatus.GetId()).NotTo(BeNil(), "Image Id should not be nil")
+	Expect(imageStatus.GetSize()).NotTo(BeNil(), "Image Size should not be nil")
 
 	if statusCheck != nil {
 		statusCheck(imageStatus)
@@ -242,9 +242,9 @@ func removeImage(c internalapi.ImageManagerService, imageName string) {
 	image, err := c.ImageStatus(context.TODO(), &runtimeapi.ImageSpec{Image: imageName}, false)
 	framework.ExpectNoError(err, "failed to get image status: %v", err)
 
-	if image.Image != nil {
-		By("Remove image by ID : " + image.Image.Id)
-		err = c.RemoveImage(context.TODO(), &runtimeapi.ImageSpec{Image: image.Image.Id})
+	if image.GetImage() != nil {
+		By("Remove image by ID : " + image.GetImage().GetId())
+		err = c.RemoveImage(context.TODO(), &runtimeapi.ImageSpec{Image: image.GetImage().GetId()})
 		framework.ExpectNoError(err, "failed to remove image: %v", err)
 	}
 }

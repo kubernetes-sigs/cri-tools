@@ -33,11 +33,11 @@ func GetCgroupParent(ctx context.Context, c internalapi.RuntimeService) string {
 		return DefaultSystemdCgroupSlice
 	}
 
-	if runtimeConfig == nil || runtimeConfig.Linux == nil {
+	if runtimeConfig == nil || runtimeConfig.GetLinux() == nil {
 		return DefaultSystemdCgroupSlice
 	}
 
-	cgroupDriver := runtimeConfig.Linux.GetCgroupDriver()
+	cgroupDriver := runtimeConfig.GetLinux().GetCgroupDriver()
 	if cgroupDriver == runtimev1.CgroupDriver_CGROUPFS {
 		return ""
 	}

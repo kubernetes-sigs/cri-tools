@@ -184,10 +184,10 @@ var _ = framework.KubeDescribe("Container", func() {
 
 			By("test container stats")
 			stats := listContainerStatsForID(rc, containerID)
-			Expect(stats.Attributes.Id).To(Equal(containerID))
-			Expect(stats.Attributes.Metadata.Name).To(ContainSubstring("container-for-stats-"))
-			Expect(stats.Cpu.Timestamp).NotTo(BeZero())
-			Expect(stats.Memory.Timestamp).NotTo(BeZero())
+			Expect(stats.GetAttributes().GetId()).To(Equal(containerID))
+			Expect(stats.GetAttributes().GetMetadata().GetName()).To(ContainSubstring("container-for-stats-"))
+			Expect(stats.GetCpu().GetTimestamp()).NotTo(BeZero())
+			Expect(stats.GetMemory().GetTimestamp()).NotTo(BeZero())
 		})
 
 		It("runtime should support listing stats for started containers [Conformance]", func() {
@@ -337,7 +337,7 @@ var _ = framework.KubeDescribe("Container", func() {
 			startContainer(rc, containerID)
 			// wait container exited and check the status.
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
 
 			By("check the log context")
@@ -358,13 +358,13 @@ var _ = framework.KubeDescribe("Container", func() {
 
 			By("rename container log")
 			newLogPath := logPath + ".new"
-			Expect(os.Rename(filepath.Join(podConfig.LogDirectory, logPath),
-				filepath.Join(podConfig.LogDirectory, newLogPath))).To(Succeed())
+			Expect(os.Rename(filepath.Join(podConfig.GetLogDirectory(), logPath),
+				filepath.Join(podConfig.GetLogDirectory(), newLogPath))).To(Succeed())
 
 			By("reopen container log")
 			Expect(rc.ReopenContainerLog(context.TODO(), containerID)).To(Succeed())
 
-			Expect(pathExists(filepath.Join(podConfig.LogDirectory, logPath))).To(
+			Expect(pathExists(filepath.Join(podConfig.GetLogDirectory(), logPath))).To(
 				BeTrue(), "new container log file should be created")
 			Eventually(func() []logMessage {
 				return parseLogLine(podConfig, logPath)
@@ -380,7 +380,7 @@ var _ = framework.KubeDescribe("Container", func() {
 // containerFound returns whether containers is found.
 func containerFound(containers []*runtimeapi.Container, containerID string) bool {
 	for _, container := range containers {
-		if container.Id == containerID {
+		if container.GetId() == containerID {
 			return true
 		}
 	}
@@ -391,7 +391,7 @@ func containerFound(containers []*runtimeapi.Container, containerID string) bool
 // statFound returns whether stat is found.
 func statFound(stats []*runtimeapi.ContainerStats, containerID string) bool {
 	for _, stat := range stats {
-		if stat.Attributes.Id == containerID {
+		if stat.GetAttributes().GetId() == containerID {
 			return true
 		}
 	}
@@ -436,7 +436,7 @@ func startContainer(c internalapi.RuntimeService, containerID string) {
 func testStartContainer(rc internalapi.RuntimeService, containerID string) {
 	startContainer(rc, containerID)
 	Eventually(func() runtimeapi.ContainerState {
-		return getContainerStatus(rc, containerID).State
+		return getContainerStatus(rc, containerID).GetState()
 	}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 }
 
@@ -467,7 +467,7 @@ func stopContainer(c internalapi.RuntimeService, containerID string, timeout int
 func testStopContainer(c internalapi.RuntimeService, containerID string) {
 	stopContainer(c, containerID, defaultStopContainerTimeout)
 	Eventually(func() runtimeapi.ContainerState {
-		return getContainerStatus(c, containerID).State
+		return getContainerStatus(c, containerID).GetState()
 	}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
 }
 
@@ -566,7 +566,7 @@ func createLogContainer(rc internalapi.RuntimeService, ic internalapi.ImageManag
 		LogPath:  path,
 	}
 
-	return containerConfig.LogPath, framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
+	return containerConfig.GetLogPath(), framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }
 
 // createKeepLoggingContainer creates a container keeps logging defaultLog to output.
@@ -582,7 +582,7 @@ func createKeepLoggingContainer(rc internalapi.RuntimeService, ic internalapi.Im
 		LogPath:  path,
 	}
 
-	return containerConfig.LogPath, framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
+	return containerConfig.GetLogPath(), framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 }
 
 // pathExists check whether 'path' does exist or not.
@@ -627,7 +627,7 @@ func parseCRILog(log string, msg *logMessage) {
 
 // parseLogLine parses log by row.
 func parseLogLine(podConfig *runtimeapi.PodSandboxConfig, logPath string) []logMessage {
-	path := filepath.Join(podConfig.LogDirectory, logPath)
+	path := filepath.Join(podConfig.GetLogDirectory(), logPath)
 	f, err := os.Open(path)
 	framework.ExpectNoError(err, "failed to open log file: %v", err)
 	framework.Logf("Open log file %s", path)

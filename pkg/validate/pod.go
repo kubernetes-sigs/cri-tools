@@ -85,7 +85,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 // podSandboxFound returns whether PodSandbox is found.
 func podSandboxFound(podSandboxs []*runtimeapi.PodSandbox, podID string) bool {
 	for _, podSandbox := range podSandboxs {
-		if podSandbox.Id == podID {
+		if podSandbox.GetId() == podID {
 			return true
 		}
 	}
@@ -96,7 +96,7 @@ func podSandboxFound(podSandboxs []*runtimeapi.PodSandbox, podID string) bool {
 // verifyPodSandboxStatus verifies whether PodSandbox status for given podID matches.
 func verifyPodSandboxStatus(c internalapi.RuntimeService, podID string, expectedStatus runtimeapi.PodSandboxState, statusName string) {
 	status := getPodSandboxStatus(c, podID)
-	Expect(status.State).To(Equal(expectedStatus), "PodSandbox state should be "+statusName)
+	Expect(status.GetState()).To(Equal(expectedStatus), "PodSandbox state should be "+statusName)
 }
 
 // testRunDefaultPodSandbox runs a PodSandbox and make sure it is ready.

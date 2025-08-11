@@ -296,7 +296,7 @@ func CreatePauseContainer(rc internalapi.RuntimeService, ic internalapi.ImageMan
 // CreateContainerWithError creates a container but leave error check to caller.
 func CreateContainerWithError(rc internalapi.RuntimeService, ic internalapi.ImageManagerService, config *runtimeapi.ContainerConfig, podID string, podConfig *runtimeapi.PodSandboxConfig) (string, error) {
 	// Pull the image if it does not exist.
-	imageName := config.Image.Image
+	imageName := config.GetImage().GetImage()
 	if !strings.Contains(imageName, ":") {
 		imageName += ":latest"
 
@@ -308,7 +308,7 @@ func CreateContainerWithError(rc internalapi.RuntimeService, ic internalapi.Imag
 		PullPublicImage(ic, imageName, podConfig)
 	}
 
-	if config.Image.UserSpecifiedImage == "" {
+	if config.GetImage().GetUserSpecifiedImage() == "" {
 		config.Image.UserSpecifiedImage = imageName
 	}
 

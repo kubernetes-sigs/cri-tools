@@ -42,15 +42,15 @@ type imageByRef []*pb.Image
 func (a imageByRef) Len() int      { return len(a) }
 func (a imageByRef) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (a imageByRef) Less(i, j int) bool {
-	if len(a[i].RepoTags) > 0 && len(a[j].RepoTags) > 0 {
-		return a[i].RepoTags[0] < a[j].RepoTags[0]
+	if len(a[i].GetRepoTags()) > 0 && len(a[j].GetRepoTags()) > 0 {
+		return a[i].GetRepoTags()[0] < a[j].GetRepoTags()[0]
 	}
 
-	if len(a[i].RepoDigests) > 0 && len(a[j].RepoDigests) > 0 {
-		return a[i].RepoDigests[0] < a[j].RepoDigests[0]
+	if len(a[i].GetRepoDigests()) > 0 && len(a[j].GetRepoDigests()) > 0 {
+		return a[i].GetRepoDigests()[0] < a[j].GetRepoDigests()[0]
 	}
 
-	return a[i].Id < a[j].Id
+	return a[i].GetId() < a[j].GetId()
 }
 
 var pullImageCommand = &cli.Command{
@@ -139,7 +139,7 @@ var pullImageCommand = &cli.Command{
 		if err != nil {
 			return fmt.Errorf("pulling image: %w", err)
 		}
-		fmt.Printf("Image is up to date for %s\n", r.ImageRef)
+		fmt.Printf("Image is up to date for %s\n", r.GetImageRef())
 
 		return nil
 	},
@@ -225,17 +225,17 @@ var listImageCommand = &cli.Command{
 			}
 			display.AddRow(row)
 		}
-		for _, image := range r.Images {
+		for _, image := range r.GetImages() {
 			if quiet {
-				fmt.Printf("%s\n", image.Id)
+				fmt.Printf("%s\n", image.GetId())
 
 				continue
 			}
 			if !verbose {
-				imageName, repoDigest := normalizeRepoDigest(image.RepoDigests)
-				repoTagPairs := normalizeRepoTagPair(image.RepoTags, imageName)
-				size := units.HumanSizeWithPrecision(float64(image.GetSize_()), 3)
-				id := image.Id
+				imageName, repoDigest := normalizeRepoDigest(image.GetRepoDigests())
+				repoTagPairs := normalizeRepoTagPair(image.GetRepoTags(), imageName)
+				size := units.HumanSizeWithPrecision(float64(image.GetSize()), 3)
+				id := image.GetId()
 				if !noTrunc {
 					id = getTruncatedID(id, "sha256:")
 					repoDigest = getTruncatedID(repoDigest, "sha256:")
@@ -247,31 +247,31 @@ var listImageCommand = &cli.Command{
 					}
 					row = append(row, id, size)
 					if showPinned {
-						row = append(row, strconv.FormatBool(image.Pinned))
+						row = append(row, strconv.FormatBool(image.GetPinned()))
 					}
 					display.AddRow(row)
 				}
 
 				continue
 			}
-			fmt.Printf("ID: %s\n", image.Id)
-			for _, tag := range image.RepoTags {
+			fmt.Printf("ID: %s\n", image.GetId())
+			for _, tag := range image.GetRepoTags() {
 				fmt.Printf("RepoTags: %s\n", tag)
 			}
-			for _, digest := range image.RepoDigests {
+			for _, digest := range image.GetRepoDigests() {
 				fmt.Printf("RepoDigests: %s\n", digest)
 			}
-			if image.Size_ != 0 {
-				fmt.Printf("Size: %d\n", image.Size_)
+			if image.GetSize() != 0 {
+				fmt.Printf("Size: %d\n", image.GetSize())
 			}
-			if image.Uid != nil {
-				fmt.Printf("Uid: %v\n", image.Uid)
+			if image.GetUid() != nil {
+				fmt.Printf("Uid: %v\n", image.GetUid())
 			}
-			if image.Username != "" {
-				fmt.Printf("Username: %v\n", image.Username)
+			if image.GetUsername() != "" {
+				fmt.Printf("Username: %v\n", image.GetUsername())
 			}
-			if image.Pinned {
-				fmt.Printf("Pinned: %v\n", image.Pinned)
+			if image.GetPinned() {
+				fmt.Printf("Pinned: %v\n", image.GetPinned())
 			}
 			fmt.Printf("\n")
 		}
@@ -349,11 +349,11 @@ var imageStatusCommand = &cli.Command{
 				return fmt.Errorf("image status for %q request: %w", id, err)
 			}
 
-			if r.Image == nil {
+			if r.GetImage() == nil {
 				return fmt.Errorf("no such image %q present", id)
 			}
 
-			statusJSON, err := protobufObjectToJSON(r.Image)
+			statusJSON, err := protobufObjectToJSON(r.GetImage())
 			if err != nil {
 				return fmt.Errorf("marshal status to JSON for %q: %w", id, err)
 			}
@@ -361,7 +361,7 @@ var imageStatusCommand = &cli.Command{
 			if output == outputTypeTable {
 				outputImageStatusTable(r, verbose)
 			} else {
-				statuses = append(statuses, statusData{json: statusJSON, info: r.Info})
+				statuses = append(statuses, statusData{json: statusJSON, info: r.GetInfo()})
 			}
 		}
 
@@ -371,17 +371,17 @@ var imageStatusCommand = &cli.Command{
 
 func outputImageStatusTable(r *pb.ImageStatusResponse, verbose bool) {
 	// otherwise output in table format
-	fmt.Printf("ID: %s\n", r.Image.Id)
+	fmt.Printf("ID: %s\n", r.GetImage().GetId())
 
-	for _, tag := range r.Image.RepoTags {
+	for _, tag := range r.GetImage().GetRepoTags() {
 		fmt.Printf("Tag: %s\n", tag)
 	}
 
-	for _, digest := range r.Image.RepoDigests {
+	for _, digest := range r.GetImage().GetRepoDigests() {
 		fmt.Printf("Digest: %s\n", digest)
 	}
 
-	size := units.HumanSizeWithPrecision(float64(r.Image.GetSize_()), 3)
+	size := units.HumanSizeWithPrecision(float64(r.GetImage().GetSize()), 3)
 	fmt.Printf("Size: %s\n", size)
 
 	if verbose {
@@ -431,7 +431,7 @@ var removeImageCommand = &cli.Command{
 			}
 			for _, img := range r {
 				// Pinned images should not be removed on prune.
-				if prune && img.Pinned {
+				if prune && img.GetPinned() {
 					logrus.Debugf("Excluding pinned container image: %v", img.GetId())
 
 					continue
@@ -456,7 +456,7 @@ var removeImageCommand = &cli.Command{
 				return err
 			}
 			for _, container := range containers {
-				img := container.GetImage().Image
+				img := container.GetImage().GetImage()
 				imageStatus, err := ImageStatus(cliCtx.Context, imageClient, img, false)
 				if err != nil {
 					logrus.Errorf(
@@ -492,7 +492,7 @@ var removeImageCommand = &cli.Command{
 				if err != nil {
 					return fmt.Errorf("image status request for %q failed: %w", id, err)
 				}
-				if status.Image == nil {
+				if status.GetImage() == nil {
 					return fmt.Errorf("no such image %s", id)
 				}
 
@@ -505,16 +505,16 @@ var removeImageCommand = &cli.Command{
 
 					return nil
 				}
-				if len(status.Image.RepoTags) == 0 {
+				if len(status.GetImage().GetRepoTags()) == 0 {
 					// RepoTags is nil when pulling image by repoDigest,
 					// so print deleted using that instead.
-					for _, repoDigest := range status.Image.RepoDigests {
+					for _, repoDigest := range status.GetImage().GetRepoDigests() {
 						fmt.Printf("Deleted: %s\n", repoDigest)
 					}
 
 					return nil
 				}
-				for _, repoTag := range status.Image.RepoTags {
+				for _, repoTag := range status.GetImage().GetRepoTags() {
 					fmt.Printf("Deleted: %s\n", repoTag)
 				}
 
@@ -577,15 +577,15 @@ func outputImageFsInfoTable(r *pb.ImageFsInfoResponse) {
 		fmt.Printf("%s Filesystem \n", fileLabel)
 
 		for i, val := range filesystem {
-			fmt.Printf("TimeStamp[%d]: %d\n", i, val.Timestamp)
-			fmt.Printf("Disk[%d]: %s\n", i, units.HumanSize(float64(val.UsedBytes.GetValue())))
-			fmt.Printf("Inodes[%d]: %d\n", i, val.InodesUsed.GetValue())
-			fmt.Printf("Mountpoint[%d]: %s\n", i, val.FsId.Mountpoint)
+			fmt.Printf("TimeStamp[%d]: %d\n", i, val.GetTimestamp())
+			fmt.Printf("Disk[%d]: %s\n", i, units.HumanSize(float64(val.GetUsedBytes().GetValue())))
+			fmt.Printf("Inodes[%d]: %d\n", i, val.GetInodesUsed().GetValue())
+			fmt.Printf("Mountpoint[%d]: %s\n", i, val.GetFsId().GetMountpoint())
 		}
 	}
 	// otherwise output in table format
-	tablePrintFileSystem("Container", r.ContainerFilesystems)
-	tablePrintFileSystem("Image", r.ImageFilesystems)
+	tablePrintFileSystem("Container", r.GetContainerFilesystems())
+	tablePrintFileSystem("Image", r.GetImageFilesystems())
 }
 
 func parseCreds(creds string) (username, password string, err error) {
@@ -720,7 +720,7 @@ func PullImageWithSandbox(ctx context.Context, client internalapi.ImageManagerSe
 	}
 
 	res, err := InterruptableRPC(ctx, func(ctx context.Context) (string, error) {
-		return client.PullImage(ctx, request.Image, request.Auth, request.SandboxConfig)
+		return client.PullImage(ctx, request.GetImage(), request.GetAuth(), request.GetSandboxConfig())
 	})
 	if err != nil {
 		return nil, err
@@ -739,7 +739,7 @@ func ListImages(ctx context.Context, client internalapi.ImageManagerService, nam
 	logrus.Debugf("ListImagesRequest: %v", request)
 
 	res, err := InterruptableRPC(ctx, func(ctx context.Context) ([]*pb.Image, error) {
-		return client.ListImages(ctx, request.Filter)
+		return client.ListImages(ctx, request.GetFilter())
 	})
 	if err != nil {
 		return nil, err
@@ -748,10 +748,10 @@ func ListImages(ctx context.Context, client internalapi.ImageManagerService, nam
 	resp := &pb.ListImagesResponse{Images: res}
 	logrus.Debugf("ListImagesResponse: %v", resp)
 
-	sort.Sort(imageByRef(resp.Images))
+	sort.Sort(imageByRef(resp.GetImages()))
 
-	if len(conditionFilters) > 0 && len(resp.Images) > 0 {
-		resp.Images, err = filterImagesList(resp.Images, conditionFilters)
+	if len(conditionFilters) > 0 && len(resp.GetImages()) > 0 {
+		resp.Images, err = filterImagesList(resp.GetImages(), conditionFilters)
 		if err != nil {
 			return nil, fmt.Errorf("filter images: %w", err)
 		}
@@ -795,9 +795,9 @@ func filterByBeforeSince(filterValue string, imageList []*pb.Image) []*pb.Image 
 	for _, img := range imageList {
 		// Filter by <image-name>[:<tag>]
 		if strings.Contains(filterValue, ":") && !strings.Contains(filterValue, "@") {
-			imageName, _ := normalizeRepoDigest(img.RepoDigests)
+			imageName, _ := normalizeRepoDigest(img.GetRepoDigests())
 
-			repoTagPairs := normalizeRepoTagPair(img.RepoTags, imageName)
+			repoTagPairs := normalizeRepoTagPair(img.GetRepoTags(), imageName)
 			if strings.Join(repoTagPairs[0], ":") == filterValue {
 				break
 			}
@@ -806,7 +806,7 @@ func filterByBeforeSince(filterValue string, imageList []*pb.Image) []*pb.Image 
 		}
 		// Filter by <image id>
 		if !strings.Contains(filterValue, ":") && !strings.Contains(filterValue, "@") {
-			if strings.HasPrefix(img.Id, filterValue) {
+			if strings.HasPrefix(img.GetId(), filterValue) {
 				break
 			}
 
@@ -814,8 +814,8 @@ func filterByBeforeSince(filterValue string, imageList []*pb.Image) []*pb.Image 
 		}
 		// Filter by <image@sha>
 		if strings.Contains(filterValue, ":") && strings.Contains(filterValue, "@") {
-			if len(img.RepoDigests) > 0 {
-				if strings.HasPrefix(img.RepoDigests[0], filterValue) {
+			if len(img.GetRepoDigests()) > 0 {
+				if strings.HasPrefix(img.GetRepoDigests()[0], filterValue) {
 					break
 				}
 
@@ -836,7 +836,7 @@ func filterByReference(filterValue string, imageList []*pb.Image) ([]*pb.Image, 
 	}
 
 	for _, img := range imageList {
-		imgName, _ := normalizeRepoDigest(img.RepoDigests)
+		imgName, _ := normalizeRepoDigest(img.GetRepoDigests())
 		if re.MatchString(imgName) || imgName == filterValue {
 			filtered = append(filtered, img)
 		}
@@ -849,11 +849,11 @@ func filterByDangling(filterValue string, imageList []*pb.Image) []*pb.Image {
 	filtered := []*pb.Image{}
 
 	for _, img := range imageList {
-		if filterValue == "true" && len(img.RepoTags) == 0 {
+		if filterValue == "true" && len(img.GetRepoTags()) == 0 {
 			filtered = append(filtered, img)
 		}
 
-		if filterValue == "false" && len(img.RepoTags) > 0 {
+		if filterValue == "false" && len(img.GetRepoTags()) > 0 {
 			filtered = append(filtered, img)
 		}
 	}
@@ -871,7 +871,7 @@ func ImageStatus(ctx context.Context, client internalapi.ImageManagerService, im
 	logrus.Debugf("ImageStatusRequest: %v", request)
 
 	res, err := InterruptableRPC(ctx, func(ctx context.Context) (*pb.ImageStatusResponse, error) {
-		return client.ImageStatus(ctx, request.Image, request.Verbose)
+		return client.ImageStatus(ctx, request.GetImage(), request.GetVerbose())
 	})
 	if err != nil {
 		return nil, err
@@ -893,7 +893,7 @@ func RemoveImage(ctx context.Context, client internalapi.ImageManagerService, im
 	logrus.Debugf("RemoveImageRequest: %v", request)
 
 	_, err := InterruptableRPC(ctx, func(ctx context.Context) (*pb.RemoveImageResponse, error) {
-		return nil, client.RemoveImage(ctx, request.Image)
+		return nil, client.RemoveImage(ctx, request.GetImage())
 	})
 
 	return err

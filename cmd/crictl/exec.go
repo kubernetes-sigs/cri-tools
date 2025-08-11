@@ -363,7 +363,7 @@ func Exec(ctx context.Context, client internalapi.RuntimeService, opts *execOpti
 		return err
 	}
 
-	execURL := r.Url
+	execURL := r.GetUrl()
 
 	URL, err := url.Parse(execURL)
 	if err != nil {

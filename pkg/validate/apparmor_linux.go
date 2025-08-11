@@ -249,7 +249,7 @@ func createContainerWithAppArmor(rc internalapi.RuntimeService, ic internalapi.I
 
 		// wait container started and check the status.
 		Eventually(func() runtimeapi.ContainerState {
-			return getContainerStatus(rc, containerID).State
+			return getContainerStatus(rc, containerID).GetState()
 		}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
 	} else {
 		Expect(err).To(HaveOccurred())

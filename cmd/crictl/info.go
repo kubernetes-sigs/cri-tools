@@ -73,7 +73,7 @@ func Info(cliContext *cli.Context, client internalapi.RuntimeService) error {
 	logrus.Debugf("StatusRequest: %v", request)
 
 	r, err := InterruptableRPC(cliContext.Context, func(ctx context.Context) (*pb.StatusResponse, error) {
-		return client.Status(ctx, request.Verbose)
+		return client.Status(ctx, request.GetVerbose())
 	})
 	logrus.Debugf("StatusResponse: %v", r)
 
@@ -81,22 +81,22 @@ func Info(cliContext *cli.Context, client internalapi.RuntimeService) error {
 		return err
 	}
 
-	statusJSON, err := protobufObjectToJSON(r.Status)
+	statusJSON, err := protobufObjectToJSON(r.GetStatus())
 	if err != nil {
 		return fmt.Errorf("create status JSON: %w", err)
 	}
 
-	handlers, err := json.Marshal(r.RuntimeHandlers) // protobufObjectToJSON cannot be used
+	handlers, err := json.Marshal(r.GetRuntimeHandlers()) // protobufObjectToJSON cannot be used
 	if err != nil {
 		return err
 	}
 
-	features, err := json.Marshal(r.Features) // protobufObjectToJSON cannot be used
+	features, err := json.Marshal(r.GetFeatures()) // protobufObjectToJSON cannot be used
 	if err != nil {
 		return err
 	}
 
-	data := []statusData{{json: statusJSON, runtimeHandlers: string(handlers), features: string(features), info: r.Info}}
+	data := []statusData{{json: statusJSON, runtimeHandlers: string(handlers), features: string(features), info: r.GetInfo()}}
 
 	return outputStatusData(data, cliContext.String("output"), cliContext.String("template"))
 }

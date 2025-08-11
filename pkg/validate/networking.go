@@ -257,8 +257,8 @@ func checkMainPage(c internalapi.RuntimeService, podID string, hostPort, contain
 	} else {
 		status := getPodSandboxStatus(c, podID)
 		Expect(status.GetNetwork()).NotTo(BeNil(), "The network in status should not be nil.")
-		Expect(status.GetNetwork().Ip).NotTo(BeNil(), "The IP should not be nil.")
-		url += status.GetNetwork().Ip + ":" + strconv.Itoa(int(containerPort))
+		Expect(status.GetNetwork().GetIp()).NotTo(BeNil(), "The IP should not be nil.")
+		url += status.GetNetwork().GetIp() + ":" + strconv.Itoa(int(containerPort))
 	}
 
 	framework.Logf("the IP:port is " + url)

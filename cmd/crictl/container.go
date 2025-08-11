@@ -47,7 +47,7 @@ type containerByCreated []*pb.Container
 func (a containerByCreated) Len() int      { return len(a) }
 func (a containerByCreated) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (a containerByCreated) Less(i, j int) bool {
-	return a[i].CreatedAt > a[j].CreatedAt
+	return a[i].GetCreatedAt() > a[j].GetCreatedAt()
 }
 
 type createOptions struct {
@@ -403,7 +403,7 @@ var stopContainerCommand = &cli.Command{
 			}
 
 			for _, container := range containers {
-				containerIDs = append(containerIDs, container.Id)
+				containerIDs = append(containerIDs, container.GetId())
 			}
 		} else {
 			if c.NArg() == 0 {
@@ -915,7 +915,7 @@ func CreateContainer(
 	}
 
 	image := config.GetImage().GetImage()
-	if config.Image.UserSpecifiedImage == "" {
+	if config.GetImage().GetUserSpecifiedImage() == "" {
 		config.Image.UserSpecifiedImage = image
 	}
 
@@ -935,10 +935,10 @@ func CreateContainer(
 		logrus.Infof("Pulling container image: %s", image)
 
 		// Add possible OCI volume mounts
-		for _, m := range config.Mounts {
-			if m.Image != nil && m.Image.Image != "" {
-				logrus.Infof("Pulling image %s to be mounted to container path: %s", image, m.ContainerPath)
-				images = append(images, m.Image.Image)
+		for _, m := range config.GetMounts() {
+			if m.GetImage() != nil && m.GetImage().GetImage() != "" {
+				logrus.Infof("Pulling image %s to be mounted to container path: %s", image, m.GetContainerPath())
+				images = append(images, m.GetImage().GetImage())
 			}
 		}
 
@@ -1037,7 +1037,7 @@ func UpdateContainerResources(ctx context.Context, client internalapi.RuntimeSer
 	}
 
 	logrus.Debugf("UpdateContainerResourcesRequest: %v", request)
-	resources := &pb.ContainerResources{Linux: request.Linux, Windows: request.Windows}
+	resources := &pb.ContainerResources{Linux: request.GetLinux(), Windows: request.GetWindows()}
 
 	if _, err := InterruptableRPC(ctx, func(ctx context.Context) (any, error) {
 		return nil, client.UpdateContainerResources(ctx, id, resources)
@@ -1134,25 +1134,26 @@ func marshalContainerStatus(cs *pb.ContainerStatus) (string, error) {
 		return "", err
 	}
 
-	jsonMap["createdAt"] = time.Unix(0, cs.CreatedAt).Format(time.RFC3339Nano)
+	jsonMap["createdAt"] = time.Unix(0, cs.GetCreatedAt()).Format(time.RFC3339Nano)
 
 	var startedAt, finishedAt time.Time
-	if cs.State != pb.ContainerState_CONTAINER_CREATED {
+	if cs.GetState() != pb.ContainerState_CONTAINER_CREATED {
 		// If container is not in the created state, we have tried and
 		// started the container. Set the startedAt.
-		startedAt = time.Unix(0, cs.StartedAt)
+		startedAt = time.Unix(0, cs.GetStartedAt())
 	}
 
-	if cs.State == pb.ContainerState_CONTAINER_EXITED ||
-		(cs.State == pb.ContainerState_CONTAINER_UNKNOWN && cs.FinishedAt > 0) {
+	if cs.GetState() == pb.ContainerState_CONTAINER_EXITED ||
+		(cs.GetState() == pb.ContainerState_CONTAINER_UNKNOWN && cs.GetFinishedAt() > 0) {
 		// If container is in the exit state, set the finishedAt.
 		// Or if container is in the unknown state and FinishedAt > 0, set the finishedAt
-		finishedAt = time.Unix(0, cs.FinishedAt)
+		finishedAt = time.Unix(0, cs.GetFinishedAt())
 	}
 
 	jsonMap["startedAt"] = startedAt.Format(time.RFC3339Nano)
 	jsonMap["finishedAt"] = finishedAt.Format(time.RFC3339Nano)
 
+	//nolint:govet // copying the lock is not harmful in this place
 	return marshalMapInOrder(jsonMap, *cs)
 }
 
@@ -1189,7 +1190,7 @@ func containerStatus(ctx context.Context, client internalapi.RuntimeService, ids
 			return fmt.Errorf("get container status: %w", err)
 		}
 
-		statusJSON, err := marshalContainerStatus(r.Status)
+		statusJSON, err := marshalContainerStatus(r.GetStatus())
 		if err != nil {
 			return fmt.Errorf("marshal container status: %w", err)
 		}
@@ -1197,7 +1198,7 @@ func containerStatus(ctx context.Context, client internalapi.RuntimeService, ids
 		if output == outputTypeTable {
 			outputContainerStatusTable(r, verbose)
 		} else {
-			statuses = append(statuses, statusData{json: statusJSON, info: r.Info})
+			statuses = append(statuses, statusData{json: statusJSON, info: r.GetInfo()})
 		}
 	}
 
@@ -1205,49 +1206,49 @@ func containerStatus(ctx context.Context, client internalapi.RuntimeService, ids
 }
 
 func outputContainerStatusTable(r *pb.ContainerStatusResponse, verbose bool) {
-	fmt.Printf("ID: %s\n", r.Status.Id)
+	fmt.Printf("ID: %s\n", r.GetStatus().GetId())
 
-	if r.Status.Metadata != nil {
-		if r.Status.Metadata.Name != "" {
-			fmt.Printf("Name: %s\n", r.Status.Metadata.Name)
+	if r.GetStatus().GetMetadata() != nil {
+		if r.GetStatus().GetMetadata().GetName() != "" {
+			fmt.Printf("Name: %s\n", r.GetStatus().GetMetadata().GetName())
 		}
 
-		if r.Status.Metadata.Attempt != 0 {
-			fmt.Printf("Attempt: %v\n", r.Status.Metadata.Attempt)
+		if r.GetStatus().GetMetadata().GetAttempt() != 0 {
+			fmt.Printf("Attempt: %v\n", r.GetStatus().GetMetadata().GetAttempt())
 		}
 	}
 
-	fmt.Printf("State: %s\n", r.Status.State)
-	ctm := time.Unix(0, r.Status.CreatedAt)
+	fmt.Printf("State: %s\n", r.GetStatus().GetState())
+	ctm := time.Unix(0, r.GetStatus().GetCreatedAt())
 	fmt.Printf("Created: %v\n", units.HumanDuration(time.Now().UTC().Sub(ctm))+" ago")
 
-	if r.Status.State != pb.ContainerState_CONTAINER_CREATED {
-		stm := time.Unix(0, r.Status.StartedAt)
+	if r.GetStatus().GetState() != pb.ContainerState_CONTAINER_CREATED {
+		stm := time.Unix(0, r.GetStatus().GetStartedAt())
 		fmt.Printf("Started: %v\n", units.HumanDuration(time.Now().UTC().Sub(stm))+" ago")
 	}
 
-	if r.Status.State == pb.ContainerState_CONTAINER_EXITED {
-		if r.Status.FinishedAt > 0 {
-			ftm := time.Unix(0, r.Status.FinishedAt)
+	if r.GetStatus().GetState() == pb.ContainerState_CONTAINER_EXITED {
+		if r.GetStatus().GetFinishedAt() > 0 {
+			ftm := time.Unix(0, r.GetStatus().GetFinishedAt())
 			fmt.Printf("Finished: %v\n", units.HumanDuration(time.Now().UTC().Sub(ftm))+" ago")
 		}
 
-		fmt.Printf("Exit Code: %v\n", r.Status.ExitCode)
+		fmt.Printf("Exit Code: %v\n", r.GetStatus().GetExitCode())
 	}
 
 	if r.Status.Labels != nil {
 		fmt.Println("Labels:")
 
-		for _, k := range getSortedKeys(r.Status.Labels) {
-			fmt.Printf("\t%s -> %s\n", k, r.Status.Labels[k])
+		for _, k := range getSortedKeys(r.GetStatus().GetLabels()) {
+			fmt.Printf("\t%s -> %s\n", k, r.GetStatus().GetLabels()[k])
 		}
 	}
 
 	if r.Status.Annotations != nil {
 		fmt.Println("Annotations:")
 
-		for _, k := range getSortedKeys(r.Status.Annotations) {
-			fmt.Printf("\t%s -> %s\n", k, r.Status.Annotations[k])
+		for _, k := range getSortedKeys(r.GetStatus().GetAnnotations()) {
+			fmt.Printf("\t%s -> %s\n", k, r.GetStatus().GetAnnotations()[k])
 		}
 	}
 
@@ -1342,22 +1343,22 @@ func OutputContainers(ctx context.Context, runtimeClient internalapi.RuntimeServ
 
 	for _, c := range r {
 		if opts.quiet {
-			fmt.Printf("%s\n", c.Id)
+			fmt.Printf("%s\n", c.GetId())
 
 			continue
 		}
 
-		createdAt := time.Unix(0, c.CreatedAt)
+		createdAt := time.Unix(0, c.GetCreatedAt())
 		ctm := units.HumanDuration(time.Now().UTC().Sub(createdAt)) + " ago"
-		podNamespace := getPodNamespaceFromLabels(c.Labels)
+		podNamespace := getPodNamespaceFromLabels(c.GetLabels())
 
 		if !opts.verbose {
-			id := c.Id
-			podID := c.PodSandboxId
+			id := c.GetId()
+			podID := c.GetPodSandboxId()
 
 			var image string
-			if c.Image != nil {
-				image = c.Image.Image
+			if c.GetImage() != nil {
+				image = c.GetImage().GetImage()
 			}
 
 			if !opts.noTrunc {
@@ -1378,31 +1379,31 @@ func OutputContainers(ctx context.Context, runtimeClient internalapi.RuntimeServ
 				image = orig
 			}
 
-			podName := getPodNameFromLabels(c.Labels)
+			podName := getPodNameFromLabels(c.GetLabels())
 			display.AddRow([]string{
-				id, image, ctm, convertContainerState(c.State), c.Metadata.Name,
-				strconv.FormatUint(uint64(c.Metadata.Attempt), 10), podID, podName, podNamespace,
+				id, image, ctm, convertContainerState(c.GetState()), c.GetMetadata().GetName(),
+				strconv.FormatUint(uint64(c.GetMetadata().GetAttempt()), 10), podID, podName, podNamespace,
 			})
 
 			continue
 		}
 
-		fmt.Printf("ID: %s\n", c.Id)
-		fmt.Printf("PodID: %s\n", c.PodSandboxId)
+		fmt.Printf("ID: %s\n", c.GetId())
+		fmt.Printf("PodID: %s\n", c.GetPodSandboxId())
 		fmt.Printf("Namespace: %s\n", podNamespace)
 
-		if c.Metadata != nil {
-			if c.Metadata.Name != "" {
-				fmt.Printf("Name: %s\n", c.Metadata.Name)
+		if c.GetMetadata() != nil {
+			if c.GetMetadata().GetName() != "" {
+				fmt.Printf("Name: %s\n", c.GetMetadata().GetName())
 			}
 
-			fmt.Printf("Attempt: %v\n", c.Metadata.Attempt)
+			fmt.Printf("Attempt: %v\n", c.GetMetadata().GetAttempt())
 		}
 
-		fmt.Printf("State: %s\n", convertContainerState(c.State))
+		fmt.Printf("State: %s\n", convertContainerState(c.GetState()))
 
-		if c.Image != nil {
-			fmt.Printf("Image: %s\n", c.Image.Image)
+		if c.GetImage() != nil {
+			fmt.Printf("Image: %s\n", c.GetImage().GetImage())
 		}
 
 		fmt.Printf("Created: %v\n", ctm)
@@ -1410,16 +1411,16 @@ func OutputContainers(ctx context.Context, runtimeClient internalapi.RuntimeServ
 		if c.Labels != nil {
 			fmt.Println("Labels:")
 
-			for _, k := range getSortedKeys(c.Labels) {
-				fmt.Printf("\t%s -> %s\n", k, c.Labels[k])
+			for _, k := range getSortedKeys(c.GetLabels()) {
+				fmt.Printf("\t%s -> %s\n", k, c.GetLabels()[k])
 			}
 		}
 
 		if c.Annotations != nil {
 			fmt.Println("Annotations:")
 
-			for _, k := range getSortedKeys(c.Annotations) {
-				fmt.Printf("\t%s -> %s\n", k, c.Annotations[k])
+			for _, k := range getSortedKeys(c.GetAnnotations()) {
+				fmt.Printf("\t%s -> %s\n", k, c.GetAnnotations()[k])
 			}
 		}
 
@@ -1475,10 +1476,10 @@ func getContainersList(ctx context.Context, imageClient internalapi.ImageManager
 			continue
 		}
 
-		podNamespace := getPodNamespaceFromLabels(c.Labels)
+		podNamespace := getPodNamespaceFromLabels(c.GetLabels())
 		// Filter by pod name/namespace regular expressions.
-		if c.Metadata != nil &&
-			matchesRegex(opts.nameRegexp, c.Metadata.Name) &&
+		if c.GetMetadata() != nil &&
+			matchesRegex(opts.nameRegexp, c.GetMetadata().GetName()) &&
 			matchesRegex(opts.podNamespaceRegexp, podNamespace) {
 			filtered = append(filtered, c)
 		}
