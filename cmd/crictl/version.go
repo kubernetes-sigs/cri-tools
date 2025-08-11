@@ -61,10 +61,10 @@ func Version(ctx context.Context, client internalapi.RuntimeService, version str
 		return err
 	}
 
-	fmt.Println("Version: ", r.Version)
-	fmt.Println("RuntimeName: ", r.RuntimeName)
-	fmt.Println("RuntimeVersion: ", r.RuntimeVersion)
-	fmt.Println("RuntimeApiVersion: ", r.RuntimeApiVersion)
+	fmt.Println("Version: ", r.GetVersion())
+	fmt.Println("RuntimeName: ", r.GetRuntimeName())
+	fmt.Println("RuntimeVersion: ", r.GetRuntimeVersion())
+	fmt.Println("RuntimeApiVersion: ", r.GetRuntimeApiVersion())
 
 	return nil
 }

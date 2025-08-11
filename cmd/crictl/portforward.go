@@ -111,7 +111,7 @@ func PortForward(ctx context.Context, client internalapi.RuntimeService, opts po
 		return err
 	}
 
-	parsedURL, err := url.Parse(r.Url)
+	parsedURL, err := url.Parse(r.GetUrl())
 	if err != nil {
 		return err
 	}

@@ -148,9 +148,9 @@ var logsCommand = &cli.Command{
 			return errors.New("the container has not set log path")
 		}
 		if previous {
-			containerAttempt := status.GetStatus().GetMetadata().Attempt
+			containerAttempt := status.GetStatus().GetMetadata().GetAttempt()
 			if containerAttempt == uint32(0) {
-				return fmt.Errorf("previous terminated container %s not found", status.GetStatus().GetMetadata().Name)
+				return fmt.Errorf("previous terminated container %s not found", status.GetStatus().GetMetadata().GetName())
 			}
 			logPath = fmt.Sprintf("%s%s%s", logPath[:strings.LastIndex(logPath, "/")+1], strconv.FormatUint(uint64(containerAttempt-1), 10),
 				logPath[strings.LastIndex(logPath, "."):])

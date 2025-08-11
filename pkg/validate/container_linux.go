@@ -153,16 +153,16 @@ var _ = framework.KubeDescribe("Container OOM", func() {
 
 			By("container is stopped because of OOM")
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
 
 			state := getContainerStatus(rc, containerID)
 
 			By("exit code is 137")
-			Expect(state.ExitCode).To(BeEquivalentTo(137))
+			Expect(state.GetExitCode()).To(BeEquivalentTo(137))
 
 			By("reason is OOMKilled")
-			Expect(state.Reason).To(Equal("OOMKilled"))
+			Expect(state.GetReason()).To(Equal("OOMKilled"))
 		})
 	})
 })
@@ -258,14 +258,14 @@ func createMountPropagationContainer(
 
 	resp, err := rc.ContainerStatus(context.TODO(), containerID, true)
 	framework.ExpectNoError(err, "unable to get container status")
-	Expect(resp.Status.Mounts).To(HaveLen(1))
-	Expect(resp.Status.Mounts[0].ContainerPath).To(Equal(hostPath))
-	Expect(resp.Status.Mounts[0].HostPath).To(Equal(hostPath))
-	Expect(resp.Status.Mounts[0].Readonly).To(BeFalse())
-	Expect(resp.Status.Mounts[0].SelinuxRelabel).To(BeFalse())
+	Expect(resp.GetStatus().GetMounts()).To(HaveLen(1))
+	Expect(resp.GetStatus().GetMounts()[0].GetContainerPath()).To(Equal(hostPath))
+	Expect(resp.GetStatus().GetMounts()[0].GetHostPath()).To(Equal(hostPath))
+	Expect(resp.GetStatus().GetMounts()[0].GetReadonly()).To(BeFalse())
+	Expect(resp.GetStatus().GetMounts()[0].GetSelinuxRelabel()).To(BeFalse())
 
 	By("verifying container status mount propagation")
-	Expect(resp.Status.Mounts[0].Propagation).To(Equal(propagation))
+	Expect(resp.GetStatus().GetMounts()[0].GetPropagation()).To(Equal(propagation))
 
 	return containerID
 }
@@ -425,10 +425,10 @@ func runtimeSupportsRRO(rc internalapi.RuntimeService, runtimeHandlerName string
 	status, err := rc.Status(ctx, false)
 	framework.ExpectNoError(err, "failed to check runtime status")
 
-	for _, h := range status.RuntimeHandlers {
-		if h.Name == runtimeHandlerName {
-			if f := h.Features; f != nil {
-				return f.RecursiveReadOnlyMounts
+	for _, h := range status.GetRuntimeHandlers() {
+		if h.GetName() == runtimeHandlerName {
+			if f := h.GetFeatures(); f != nil {
+				return f.GetRecursiveReadOnlyMounts()
 			}
 		}
 	}
@@ -514,7 +514,7 @@ func createMountContainer(
 
 	resp, err := rc.ContainerStatus(context.TODO(), containerID, true)
 	framework.ExpectNoError(err, "unable to get container status")
-	Expect(resp.Status.Mounts).To(HaveLen(len(mounts)))
+	Expect(resp.GetStatus().GetMounts()).To(HaveLen(len(mounts)))
 
 	return containerID
 }

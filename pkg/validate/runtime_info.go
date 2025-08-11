@@ -54,10 +54,10 @@ var _ = framework.KubeDescribe("Runtime info", func() {
 // TestGetVersion test if we can get runtime version info.
 func TestGetVersion(c internalapi.RuntimeService) {
 	version := getVersion(c)
-	Expect(version.Version).To(Not(BeNil()), "Version should not be nil")
-	Expect(version.RuntimeName).To(Not(BeNil()), "RuntimeName should not be nil")
-	Expect(version.RuntimeVersion).To(Not(BeNil()), "RuntimeVersion should not be nil")
-	Expect(version.RuntimeApiVersion).To(Not(BeNil()), "RuntimeApiVersion should not be nil")
+	Expect(version.GetVersion()).To(Not(BeNil()), "Version should not be nil")
+	Expect(version.GetRuntimeName()).To(Not(BeNil()), "RuntimeName should not be nil")
+	Expect(version.GetRuntimeVersion()).To(Not(BeNil()), "RuntimeVersion should not be nil")
+	Expect(version.GetRuntimeApiVersion()).To(Not(BeNil()), "RuntimeApiVersion should not be nil")
 	framework.Logf("Get version info succeed")
 }
 
@@ -68,12 +68,12 @@ func TestGetRuntimeStatus(c internalapi.RuntimeService) {
 	status, err := c.Status(context.TODO(), false)
 	framework.ExpectNoError(err, "failed to get runtime conditions: %v", err)
 
-	for _, condition := range status.Status.Conditions {
-		if condition.Type == "RuntimeReady" && condition.Status {
+	for _, condition := range status.GetStatus().GetConditions() {
+		if condition.GetType() == "RuntimeReady" && condition.GetStatus() {
 			count++
 		}
 
-		if condition.Type == "NetworkReady" && condition.Status {
+		if condition.GetType() == "NetworkReady" && condition.GetStatus() {
 			count++
 		}
 	}

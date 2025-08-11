@@ -96,7 +96,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("start container")
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("get nginx container pid")
@@ -114,7 +114,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("start container")
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("should show its pid in the hostPID namespace container")
@@ -155,7 +155,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("start container")
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("check if the shared memory segment is (not) included in the container")
@@ -186,7 +186,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			namespaceOption := &runtimeapi.NamespaceOption{
 				Pid: runtimeapi.NamespaceMode_POD,
 			}
-			framework.Logf("Pid namespace is %q", namespaceOption.Pid)
+			framework.Logf("Pid namespace is %q", namespaceOption.GetPid())
 			podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podSandboxName, "")
 
 			By("create nginx container")
@@ -197,7 +197,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("start container")
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("get nginx container pid")
@@ -212,7 +212,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			namespaceOption := &runtimeapi.NamespaceOption{
 				Pid: runtimeapi.NamespaceMode_CONTAINER,
 			}
-			framework.Logf("Pid namespace is %q", namespaceOption.Pid)
+			framework.Logf("Pid namespace is %q", namespaceOption.GetPid())
 			podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podSandboxName, "")
 
 			By("create nginx container")
@@ -223,7 +223,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("start container")
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("get nginx container pid")
@@ -299,7 +299,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("start container")
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("verify SupplementalGroups for container")
@@ -320,7 +320,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("start container")
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("verify RunAsUser for container")
@@ -338,7 +338,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("start container")
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("verify RunAsUserName for container")
@@ -357,7 +357,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("start container")
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
 
 			By("verify RunAsGroup for container")
@@ -384,7 +384,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("start container")
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
 
 			By("Check whether rootfs is writable")
@@ -402,7 +402,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("start container")
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
 
 			By("Check whether rootfs is read-only")
@@ -420,7 +420,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("start container")
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("check the Privileged container")
@@ -438,7 +438,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("start container")
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			By("check the Privileged container")
@@ -454,7 +454,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			checkNetworkManagement(rc, containerID, true)
@@ -464,7 +464,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			checkNetworkManagement(rc, containerID, false)
@@ -479,7 +479,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			stdout, stderr, err := rc.ExecSync(
@@ -500,7 +500,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			stdout, stderr, err := rc.ExecSync(
@@ -521,7 +521,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			stdout, stderr, err := rc.ExecSync(
@@ -553,7 +553,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			cmd := []string{"/bin/sh", "-c", "ls"}
@@ -582,7 +582,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			containerID := framework.CreateContainer(rc, ic, containerConfig, podID, podConfig)
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 			cmd := []string{"touch", "/tmp/test"}
@@ -597,7 +597,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			By("skip if the runtime does not support SupplementalGroupsPolicy")
 			statusResponse, err := rc.Status(ctx, false)
 			Expect(err).NotTo(HaveOccurred())
-			if statusResponse.Features == nil || !statusResponse.Features.SupplementalGroupsPolicy {
+			if statusResponse.GetFeatures() == nil || !statusResponse.GetFeatures().GetSupplementalGroupsPolicy() {
 				Skip("The runtime does not support SupplementalGroupsPolicy feature")
 			}
 		})
@@ -630,7 +630,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 				Eventually(func(g Gomega) {
 					containerStatus := getContainerStatus(rc, containerID)
-					g.Expect(containerStatus.State).To(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+					g.Expect(containerStatus.GetState()).To(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 					// In testImagePreDefinedGroup,
 					// - its default user is default-user(uid=1000)
 					// - default-user belongs to group-defined-in-image(gid=50000) in /etc/group
@@ -643,10 +643,10 @@ var _ = framework.KubeDescribe("Security Context", func() {
 					//   - 1000: self
 					//   - 1234: SupplementalGroups
 					//   - 50000: groups defined in the container image (/etc/group)
-					if containerStatus.User != nil && containerStatus.User.Linux != nil {
-						slices.Sort(containerStatus.User.Linux.SupplementalGroups)
+					if containerStatus.GetUser() != nil && containerStatus.GetUser().GetLinux() != nil {
+						slices.Sort(containerStatus.GetUser().GetLinux().GetSupplementalGroups())
 					}
-					g.Expect(containerStatus.User).To(BeEquivalentTo(&runtimeapi.ContainerUser{
+					g.Expect(containerStatus.GetUser()).To(BeEquivalentTo(&runtimeapi.ContainerUser{
 						Linux: &runtimeapi.LinuxContainerUser{
 							Uid:                imagePredefinedGroupUID,
 							Gid:                imagePredefinedGroupUID,
@@ -698,7 +698,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 				Eventually(func(g Gomega) {
 					containerStatus := getContainerStatus(rc, containerID)
-					g.Expect(containerStatus.State).To(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
+					g.Expect(containerStatus.GetState()).To(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 					// In testImagePreDefinedGroup,
 					// - its default user is default-user(uid=1000)
 					// - default-user belongs to group-defined-in-image(gid=50000) in /etc/group
@@ -711,10 +711,10 @@ var _ = framework.KubeDescribe("Security Context", func() {
 					// - supplementary groups
 					//   - 1000: self
 					//   - 1234: SupplementalGroups
-					if containerStatus.User != nil && containerStatus.User.Linux != nil {
-						slices.Sort(containerStatus.User.Linux.SupplementalGroups)
+					if containerStatus.GetUser() != nil && containerStatus.GetUser().GetLinux() != nil {
+						slices.Sort(containerStatus.GetUser().GetLinux().GetSupplementalGroups())
 					}
-					g.Expect(containerStatus.User).To(BeEquivalentTo(&runtimeapi.ContainerUser{
+					g.Expect(containerStatus.GetUser()).To(BeEquivalentTo(&runtimeapi.ContainerUser{
 						Linux: &runtimeapi.LinuxContainerUser{
 							Uid:                imagePredefinedGroupUID,
 							Gid:                imagePredefinedGroupUID,
@@ -862,7 +862,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				seccompProfile, sysAdminCap, privileged, expectContainerCreateToPass)
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 			checkSetHostname(rc, containerID, true)
 		})
@@ -883,7 +883,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				seccompProfile, sysAdminCap, privileged, expectContainerCreateToPass)
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 			checkSetHostname(rc, containerID, false)
 		})
@@ -903,7 +903,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				seccompProfile, nil, privileged, expectContainerCreateToPass)
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 			checkSetHostname(rc, containerID, true)
 		})
@@ -934,7 +934,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			// wait container started and check the status.
 			startContainer(rc, containerID)
 			Eventually(func() runtimeapi.ContainerState {
-				return getContainerStatus(rc, containerID).State
+				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
 
 			return containerID
@@ -1270,7 +1270,7 @@ func createNamespaceContainer(rc internalapi.RuntimeService, ic internalapi.Imag
 		LogPath: path,
 	}
 
-	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig), containerConfig.LogPath
+	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig), containerConfig.GetLogPath()
 }
 
 // createReadOnlyRootfsContainer creates the container with specified ReadOnlyRootfs in ContainerConfig.
@@ -1291,7 +1291,7 @@ func createReadOnlyRootfsContainer(rc internalapi.RuntimeService, ic internalapi
 		LogPath: path,
 	}
 
-	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig), containerConfig.LogPath
+	return framework.CreateContainer(rc, ic, containerConfig, podID, podConfig), containerConfig.GetLogPath()
 }
 
 // checkRootfs checks whether the rootfs parameter of the ContainerConfig is working properly.
@@ -1490,7 +1490,7 @@ func seccompTestContainer(rc internalapi.RuntimeService, ic internalapi.ImageMan
 	By("start container")
 	startContainer(rc, containerID)
 	Eventually(func() runtimeapi.ContainerState {
-		return getContainerStatus(rc, containerID).State
+		return getContainerStatus(rc, containerID).GetState()
 	}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 	return podID, containerID
@@ -1554,7 +1554,7 @@ func createContainerWithExpectation(rc internalapi.RuntimeService,
 	expectContainerCreateToPass bool,
 ) string {
 	// Pull the image if it does not exist. (don't fail for inability to pull image)
-	imageName := config.Image.Image
+	imageName := config.GetImage().GetImage()
 	if !strings.Contains(imageName, ":") {
 		imageName += ":latest"
 	}
@@ -1613,7 +1613,7 @@ func runUserNamespaceContainer(
 		LogPath: containerName + ".log",
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
-				NamespaceOptions: podConfig.Linux.SecurityContext.NamespaceOptions,
+				NamespaceOptions: podConfig.GetLinux().GetSecurityContext().GetNamespaceOptions(),
 			},
 		},
 	}
@@ -1622,7 +1622,7 @@ func runUserNamespaceContainer(
 	startContainer(rc, containerID)
 
 	Eventually(func() runtimeapi.ContainerState {
-		return getContainerStatus(rc, containerID).State
+		return getContainerStatus(rc, containerID).GetState()
 	}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
 
 	return containerName

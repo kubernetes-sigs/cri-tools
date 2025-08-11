@@ -193,7 +193,7 @@ func createContainerWithSelinux(rc internalapi.RuntimeService, ic internalapi.Im
 
 	// wait container running
 	Eventually(func() runtimeapi.ContainerState {
-		return getContainerStatus(rc, containerID).State
+		return getContainerStatus(rc, containerID).GetState()
 	}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_RUNNING))
 
 	return containerID

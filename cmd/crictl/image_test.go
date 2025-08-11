@@ -31,7 +31,7 @@ func assert(input []*pb.Image, options, images []string) {
 	expected := []string{}
 
 	for _, img := range actual {
-		expected = append(expected, img.Id)
+		expected = append(expected, img.GetId())
 	}
 
 	Expect(images).To(Equal(expected))

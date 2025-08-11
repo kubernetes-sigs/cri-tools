@@ -148,12 +148,12 @@ var _ = framework.KubeDescribe("Streaming", func() {
 })
 
 func createExec(c internalapi.RuntimeService, execReq *runtimeapi.ExecRequest) string {
-	By("exec given command in container: " + execReq.ContainerId)
+	By("exec given command in container: " + execReq.GetContainerId())
 	resp, err := c.Exec(context.TODO(), execReq)
-	framework.ExpectNoError(err, "failed to exec in container %q", execReq.ContainerId)
-	framework.Logf("Get exec URL: " + resp.Url)
+	framework.ExpectNoError(err, "failed to exec in container %q", execReq.GetContainerId())
+	framework.Logf("Get exec URL: " + resp.GetUrl())
 
-	return resp.Url
+	return resp.GetUrl()
 }
 
 func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, stdoutExactMatch, isTty bool) {
@@ -226,7 +226,7 @@ func parseURL(c internalapi.RuntimeService, serverURL string) *url.URL {
 	framework.ExpectNoError(err, "failed to parse URL:  %q", serverURL)
 
 	version := getVersion(c)
-	if version.RuntimeName == "docker" {
+	if version.GetRuntimeName() == "docker" {
 		if parsedURL.Host == "" {
 			parsedURL.Host = defaultStreamServerAddress
 		}
@@ -254,9 +254,9 @@ func createDefaultAttach(c internalapi.RuntimeService, containerID string) strin
 
 	resp, err := c.Attach(context.TODO(), req)
 	framework.ExpectNoError(err, "failed to attach in container %q", containerID)
-	framework.Logf("Get attach URL: " + resp.Url)
+	framework.Logf("Get attach URL: " + resp.GetUrl())
 
-	return resp.Url
+	return resp.GetUrl()
 }
 
 // safeBuffer is a goroutine safe bytes.Buffer.
@@ -347,9 +347,9 @@ func createDefaultPortForward(c internalapi.RuntimeService, podID string) string
 
 	resp, err := c.PortForward(context.TODO(), req)
 	framework.ExpectNoError(err, "failed to port forward PodSandbox %q", podID)
-	framework.Logf("Get port forward URL: " + resp.Url)
+	framework.Logf("Get port forward URL: " + resp.GetUrl())
 
-	return resp.Url
+	return resp.GetUrl()
 }
 
 func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string, hostPort, containerPort int32) {

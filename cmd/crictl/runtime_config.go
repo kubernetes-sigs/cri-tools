@@ -53,8 +53,8 @@ func runtimeConfig(ctx context.Context, client internalapi.RuntimeService) error
 	}
 
 	display := newTableDisplay(10, 1, 3, ' ', 0)
-	if resp.Linux != nil {
-		display.AddRow([]string{"cgroup driver:", resp.Linux.CgroupDriver.String()})
+	if resp.GetLinux() != nil {
+		display.AddRow([]string{"cgroup driver:", resp.GetLinux().GetCgroupDriver().String()})
 	}
 
 	if err := display.Flush(); err != nil {

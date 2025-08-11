@@ -133,7 +133,7 @@ func Attach(ctx context.Context, client internalapi.RuntimeService, opts attachO
 		return err
 	}
 
-	attachURL := r.Url
+	attachURL := r.GetUrl()
 
 	URL, err := url.Parse(attachURL)
 	if err != nil {
