@@ -170,7 +170,7 @@ func runParallelTestSuite(t *testing.T) {
 	args = append(args, tempFileName, "--")
 	args = append(args, testArgs...)
 
-	cmd := exec.Command("ginkgo", args...)
+	cmd := exec.CommandContext(t.Context(), "ginkgo", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -222,7 +222,7 @@ func generateGinkgoRunFlags() ([]string, error) {
 	flags := ginkgotypes.SuiteConfigFlags
 	flags = flags.CopyAppend(ginkgotypes.ReporterConfigFlags...)
 
-	bindings := map[string]interface{}{
+	bindings := map[string]any{
 		"S": &suiteConfig,
 		"R": &reporterConfig,
 	}

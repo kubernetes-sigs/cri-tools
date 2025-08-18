@@ -1661,7 +1661,7 @@ func supportsIDMap(path string) error {
 	// So we use just some random mapping, it doesn't really matter which one.
 	// For the helper command, we just need something that is alive while we
 	// test this, a sleep 5 will do it.
-	cmd := exec.Command("sleep", "5")
+	cmd := exec.CommandContext(context.TODO(), "sleep", "5")
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Cloneflags:  syscall.CLONE_NEWUSER,
 		UidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: usernsHostID, Size: usernsSize}},

@@ -26,7 +26,6 @@ ARCHITECTURES=(
     arm64
     ppc64le
     s390x
-    mips64le
 )
 
 # Prepare the system

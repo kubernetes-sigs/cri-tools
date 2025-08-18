@@ -163,24 +163,24 @@ func nowStamp() string {
 	return time.Now().Format(time.StampMilli)
 }
 
-func logf(level, format string, args ...interface{}) {
+func logf(level, format string, args ...any) {
 	fmt.Fprintf(GinkgoWriter, nowStamp()+": "+level+": "+format+"\n", args...)
 }
 
 // Logf prints a info message.
-func Logf(format string, args ...interface{}) {
+func Logf(format string, args ...any) {
 	logf("INFO", format, args...)
 }
 
 // Failf prints an error message.
-func Failf(format string, args ...interface{}) {
+func Failf(format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
 	logf("INFO", msg)
 	Fail(nowStamp()+": "+msg, 1)
 }
 
 // ExpectNoError reports error if err is not nil.
-func ExpectNoError(err error, explain ...interface{}) {
+func ExpectNoError(err error, explain ...any) {
 	if err != nil {
 		Logf("Unexpected error occurred: %v", err)
 	}
@@ -393,7 +393,7 @@ func PullPublicImage(c internalapi.ImageManagerService, imageName string, podCon
 }
 
 // LoadYamlFile attempts to load the given YAML file into the given struct.
-func LoadYamlFile(filepath string, obj interface{}) error {
+func LoadYamlFile(filepath string, obj any) error {
 	Logf("Attempting to load YAML file %q into %+v", filepath, obj)
 
 	fileContent, err := os.ReadFile(filepath)

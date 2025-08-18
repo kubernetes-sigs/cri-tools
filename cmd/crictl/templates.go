@@ -41,7 +41,7 @@ func builtinTmplFuncs() template.FuncMap {
 }
 
 // jsonBuiltinTmplFunc allows to jsonify result of template execution.
-func jsonBuiltinTmplFunc(v interface{}) string {
+func jsonBuiltinTmplFunc(v any) string {
 	o := new(bytes.Buffer)
 
 	enc := json.NewEncoder(o)
@@ -52,7 +52,7 @@ func jsonBuiltinTmplFunc(v interface{}) string {
 	return o.String()
 }
 
-// tmplExecuteRawJSON executes the template with interface{} with decoded by
+// tmplExecuteRawJSON executes the template with any with decoded by
 // rawJSON string.
 func tmplExecuteRawJSON(tmplStr, rawJSON string) (string, error) {
 	dec := json.NewDecoder(
@@ -60,7 +60,7 @@ func tmplExecuteRawJSON(tmplStr, rawJSON string) (string, error) {
 	)
 	dec.UseNumber()
 
-	var raw interface{}
+	var raw any
 	if err := dec.Decode(&raw); err != nil {
 		return "", fmt.Errorf("failed to decode json: %w", err)
 	}
