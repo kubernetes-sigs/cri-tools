@@ -1127,7 +1127,7 @@ func marshalContainerStatus(cs *pb.ContainerStatus) (string, error) {
 		return "", err
 	}
 
-	jsonMap := make(map[string]interface{})
+	jsonMap := make(map[string]any)
 
 	err = json.Unmarshal([]byte(statusStr), &jsonMap)
 	if err != nil {

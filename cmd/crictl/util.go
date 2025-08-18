@@ -489,7 +489,7 @@ func parseLabelStringSlice(ss []string) (map[string]string, error) {
 
 // marshalMapInOrder marshals a map into JSON in the order of the original
 // data structure.
-func marshalMapInOrder(m map[string]interface{}, t interface{}) (string, error) {
+func marshalMapInOrder(m map[string]any, t any) (string, error) {
 	s := "{"
 
 	v := reflect.ValueOf(t)

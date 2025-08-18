@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM busybox:1.36.1
+FROM busybox:1.37.0
 ARG TEST
 ADD ${TEST} ${TEST}

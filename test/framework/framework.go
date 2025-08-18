@@ -17,6 +17,7 @@ limitations under the License.
 package framework
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os/exec"
@@ -67,10 +68,10 @@ func (t *TestFramework) Describe(text string, body func()) bool {
 }
 
 // Convenience method for command creation.
-func cmd(workDir, format string, args ...interface{}) *Session {
+func cmd(workDir, format string, args ...any) *Session {
 	c := strings.Split(fmt.Sprintf(format, args...), " ")
 
-	command := exec.Command(c[0], c[1:]...)
+	command := exec.CommandContext(context.TODO(), c[0], c[1:]...)
 	if workDir != "" {
 		command.Dir = workDir
 	}
@@ -98,7 +99,7 @@ func crictlRuntimeEndpointFlag() string {
 }
 
 // Convenience method for command creation in the current working directory.
-func lcmd(format string, args ...interface{}) *Session {
+func lcmd(format string, args ...any) *Session {
 	return cmd("", format, args...)
 }
 

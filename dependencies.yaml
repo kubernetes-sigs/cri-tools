@@ -19,7 +19,7 @@ dependencies:
         match: ZEITGEIST_VERSION
 
   - name: golangci-lint
-    version: v2.2.2
+    version: v2.4.0
     refPaths:
       - path: Makefile
         match: GOLANGCI_LINT_VERSION
@@ -35,3 +35,13 @@ dependencies:
     refPaths:
       - path: hack/release-notes.sh
         match: VERSION
+
+  - name: busybox
+    version: 1.37.0
+    refPaths:
+      - path: images/image-test/Dockerfile
+        match: FROM
+      - path: images/image-user/Dockerfile
+        match: FROM
+      - path: images/image-predefined-group/Dockerfile
+        match: FROM

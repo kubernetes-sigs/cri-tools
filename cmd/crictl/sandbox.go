@@ -456,7 +456,7 @@ func marshalPodSandboxStatus(ps *pb.PodSandboxStatus) (string, error) {
 		return "", err
 	}
 
-	jsonMap := make(map[string]interface{})
+	jsonMap := make(map[string]any)
 
 	err = json.Unmarshal([]byte(statusStr), &jsonMap)
 	if err != nil {

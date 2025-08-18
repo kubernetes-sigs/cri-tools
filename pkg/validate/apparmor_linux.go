@@ -286,7 +286,7 @@ func loadTestProfiles() error {
 	}
 
 	// load apparmor profiles into kernel.
-	cmd := exec.Command("sudo", "apparmor_parser", "-r", "-W", f.Name())
+	cmd := exec.CommandContext(context.TODO(), "sudo", "apparmor_parser", "-r", "-W", f.Name())
 	stderr := &bytes.Buffer{}
 	cmd.Stderr = stderr
 	out, err := cmd.Output()
