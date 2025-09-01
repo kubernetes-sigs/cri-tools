@@ -121,6 +121,7 @@ jobs:
         shell: bash
         if: startsWith(matrix.os, 'windows')
         run: |
+          git fetch --prune
           mingw32-make.exe
           mingw32-make.exe install
         working-directory: ${{ github.workspace }}/src/github.com/containerd/containerd
