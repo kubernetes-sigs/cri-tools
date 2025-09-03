@@ -17,7 +17,7 @@ jobs:
       - run: make release-notes release
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-      - uses: ncipollo/release-action@1c89adf39833729d8f85a31ccbc451b078733c80 # v1.19.1
+      - uses: ncipollo/release-action@b7eabc95ff50cbeeedec83973935c8f306dfcd0b # v1.20.0
         with:
           allowUpdates: true
           artifacts: _output/releases/*
