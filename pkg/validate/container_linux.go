@@ -156,13 +156,13 @@ var _ = framework.KubeDescribe("Container OOM", func() {
 				return getContainerStatus(rc, containerID).GetState()
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
 
+			Eventually(func() string {
+				return getContainerStatus(rc, containerID).GetReason()
+			}, time.Minute, time.Second*4).Should(Equal("OOMKilled"))
 			state := getContainerStatus(rc, containerID)
 
 			By("exit code is 137")
 			Expect(state.GetExitCode()).To(BeEquivalentTo(137))
-
-			By("reason is OOMKilled")
-			Expect(state.GetReason()).To(Equal("OOMKilled"))
 		})
 	})
 })
