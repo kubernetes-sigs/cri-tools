@@ -120,10 +120,10 @@ func getConfigOptions(yamlData *yaml.Node) (*Config, error) {
 	// One is config option name and other is the value of the option
 	// These ScalarNodes help preserve comments associated with
 	// the YAML entry
-	for indx := 0; indx < contentLen-1; {
-		configOption := yamlData.Content[0].Content[indx]
+	for index := 0; index < contentLen-1; {
+		configOption := yamlData.Content[0].Content[index]
 		name := configOption.Value
-		value := yamlData.Content[0].Content[indx+1].Value
+		value := yamlData.Content[0].Content[index+1].Value
 
 		var err error
 
@@ -156,7 +156,7 @@ func getConfigOptions(yamlData *yaml.Node) (*Config, error) {
 			return nil, fmt.Errorf("Config option '%s' is not valid", name)
 		}
 
-		indx += 2
+		index += 2
 	}
 
 	return config, nil
@@ -191,15 +191,15 @@ func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
 	}
 
 	// Set value on existing config option
-	for indx := 0; indx < contentLen-1; {
-		name := yamlData.Content[0].Content[indx].Value
+	for index := 0; index < contentLen-1; {
+		name := yamlData.Content[0].Content[index].Value
 		if name == configName {
 			// Set the value, even if we have the option defined multiple times.
-			yamlData.Content[0].Content[indx+1].Value = configValue
+			yamlData.Content[0].Content[index+1].Value = configValue
 			foundOption = true
 		}
 
-		indx += 2
+		index += 2
 	}
 
 	// New config option to set
