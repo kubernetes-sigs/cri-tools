@@ -39,6 +39,6 @@ CRI tools is composed of two components:
 - Benchmark test suites, e.g.
   - Latency
   - resource usage (CPU, memory, disk IO, network IO)
-- UX improvin, e.g.
+- UX improving, e.g.
   - support more output formats: -o json|yaml
 - Debugging
