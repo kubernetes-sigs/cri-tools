@@ -74,11 +74,6 @@ sudo tar zxvf critest-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
 rm -f critest-$VERSION-linux-amd64.tar.gz
 ```
 
-### deb/rpm packages
-
-Packages for various distributions using deb's and rpm's are available in the
-[OBS repository](https://build.opensuse.org/package/show/devel:kubic:libcontainers:stable/cri-tools).
-
 ## Documentation
 
 - **[CRI `crictl` CLI](docs/crictl.md)**
