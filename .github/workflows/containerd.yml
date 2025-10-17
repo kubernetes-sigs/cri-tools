@@ -26,7 +26,8 @@ jobs:
         os: [ubuntu-22.04, windows-2025]
         # not every command likes the slash in branch name.
         # So will use format command to replace to either `_` or '/'
-        version: [main, "release{0}1.6", "release{0}1.7"]
+        # There is no LTS version of 2.0+ containerd. So main testing covers the latest.
+        version: [main, "release{0}1.7"]
         runtime:
           [
             io.containerd.runtime.v1.linux,
