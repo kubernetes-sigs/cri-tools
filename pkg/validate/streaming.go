@@ -165,10 +165,8 @@ func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, stdou
 		wg                        sync.WaitGroup
 	)
 
-	wg.Add(1)
 	// Wait until output read and then shutdown localIn pipe.
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		defer localInWrite.Close()
 
 		ticker := time.NewTicker(defaultExecStdinCloseTimeout)
@@ -176,7 +174,7 @@ func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, stdou
 		case <-testDone:
 		case <-ticker.C:
 		}
-	}()
+	})
 
 	defer func() {
 		close(testDone)

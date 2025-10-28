@@ -1046,7 +1046,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 					Fail("failed to get host userns content")
 				}
 				// The userns mapping can have several lines, we match each of them.
-				for _, line := range strings.Split(expectedOutput, "\n") {
+				for line := range strings.SplitSeq(expectedOutput, "\n") {
 					if line == "" {
 						continue
 					}
