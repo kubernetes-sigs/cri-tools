@@ -56,8 +56,8 @@ jobs:
       - name: Configure CRI-O
         run: |
           sudo mkdir -p /etc/crio/crio.conf.d
-          printf '[crio.runtime]\nlog_level = "debug"\n[crio.image]\nshort_name_mode = "disabled"\n' | sudo tee /etc/crio/crio.conf.d/01-log-level.conf
-
+          printf '[crio.runtime]\nlog_level = "debug"\n[crio.image]\nshort_name_mode = "disabled"\n' | sudo tee -a /etc/crio/crio.conf.d/01-base.conf
+          printf '[crio.stats]\nincluded_pod_metrics = [\n"disk",\n"diskIO",\n"network",\n"cpu",\n"hugetlb",\n"memory",\n"oom",\n"process",\n"spec",\n]\n' | sudo tee -a /etc/crio/crio.conf.d/01-base.conf
       - name: Configure CRI-O to use conmon-rs intead of the default conmon
         if: ${{matrix.monitor == 'conmon-rs'}}
         run: |
