@@ -103,8 +103,8 @@ CRICTL OPTIONS:
 		} else if c.IsSet("set") {
 			settings := c.StringSlice("set")
 			for _, setting := range settings {
-				options := strings.Split(setting, ",")
-				for _, option := range options {
+				options := strings.SplitSeq(setting, ",")
+				for option := range options {
 					pair := strings.Split(option, "=")
 					if len(pair) != 2 {
 						return fmt.Errorf("incorrectly specified option: %v", setting)

@@ -532,7 +532,7 @@ func marshalMapInOrder(m map[string]any, t any) (string, error) {
 func jsonFieldFromTag(tag reflect.StructTag) string {
 	field := strings.Split(tag.Get(outputTypeJSON), ",")[0]
 
-	for _, f := range strings.Split(tag.Get("protobuf"), ",") {
+	for f := range strings.SplitSeq(tag.Get("protobuf"), ",") {
 		if !strings.HasPrefix(f, "json=") {
 			continue
 		}
