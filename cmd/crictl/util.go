@@ -490,10 +490,14 @@ func parseLabelStringSlice(ss []string) (map[string]string, error) {
 // marshalMapInOrder marshals a map into JSON in the order of the original
 // data structure.
 func marshalMapInOrder(m map[string]any, t any) (string, error) {
-	s := "{"
+	var sb strings.Builder
+	sb.WriteString("{")
 
 	v := reflect.ValueOf(t)
-	for i := range v.Type().NumField() {
+	numFields := v.Type().NumField()
+	fieldCount := 0
+
+	for i := range numFields {
 		field := jsonFieldFromTag(v.Type().Field(i).Tag)
 		if field == "" || field == "-" {
 			continue
@@ -504,15 +508,20 @@ func marshalMapInOrder(m map[string]any, t any) (string, error) {
 			return "", err
 		}
 
-		s += fmt.Sprintf("%q:%s,", field, value)
+		if fieldCount > 0 {
+			sb.WriteString(",")
+		}
+
+		fmt.Fprintf(&sb, "%q:%s", field, value)
+
+		fieldCount++
 	}
 
-	s = s[:len(s)-1]
-	s += "}"
+	sb.WriteString("}")
 
 	var buf bytes.Buffer
 
-	if err := json.Indent(&buf, []byte(s), "", "  "); err != nil {
+	if err := json.Indent(&buf, []byte(sb.String()), "", "  "); err != nil {
 		return "", err
 	}
 
