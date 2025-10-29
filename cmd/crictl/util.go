@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -421,8 +420,10 @@ func outputStatusData(statuses []statusData, format, tmplStr string) (err error)
 
 		fmt.Println(string(yamlInfo))
 	case outputTypeJSON:
-		var output bytes.Buffer
-		if err := json.Indent(&output, jsonResult, "", "  "); err != nil {
+		output := getJSONBuffer()
+		defer putJSONBuffer(output)
+
+		if err := json.Indent(output, jsonResult, "", "  "); err != nil {
 			return fmt.Errorf("indent JSON result: %w", err)
 		}
 
@@ -519,9 +520,10 @@ func marshalMapInOrder(m map[string]any, t any) (string, error) {
 
 	sb.WriteString("}")
 
-	var buf bytes.Buffer
+	buf := getJSONBuffer()
+	defer putJSONBuffer(buf)
 
-	if err := json.Indent(&buf, []byte(sb.String()), "", "  "); err != nil {
+	if err := json.Indent(buf, []byte(sb.String()), "", "  "); err != nil {
 		return "", err
 	}
 
