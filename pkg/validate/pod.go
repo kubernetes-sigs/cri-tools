@@ -38,7 +38,6 @@ import (
 // on kubernetes 1.35.
 var expectedMetricDescriptorNames = []string{
 	"container_blkio_device_usage_total",
-	"container_cpu_load_average_10s",
 	"container_cpu_system_seconds_total",
 	"container_cpu_usage_seconds_total",
 	"container_cpu_user_seconds_total",
@@ -75,7 +74,6 @@ var expectedMetricDescriptorNames = []string{
 	"container_spec_memory_reservation_limit_bytes",
 	"container_spec_memory_swap_limit_bytes",
 	"container_start_time_seconds",
-	"container_tasks_state",
 	"container_threads",
 	"container_threads_max",
 	"container_ulimits_soft",
