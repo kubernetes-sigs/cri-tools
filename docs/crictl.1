@@ -104,17 +104,19 @@ COMMANDS:
 .IP \(bu 2
 \fBupdate\fR: Update one or more running containers
 .IP \(bu 2
-\fBconfig\fR: Get and set \fBcrictl\fR client configuration options
+\fBconfig\fR: Get, set and list crictl configuration options
 .IP \(bu 2
 \fBstats\fR: List container(s) resource usage statistics
 .IP \(bu 2
-\fBstatsp\fR: List pod(s) resource usage statistics
+\fBstatsp\fR: List pod statistics. Stats represent a structured API that will fulfill the Kubelet's /stats/summary endpoint.
 .IP \(bu 2
 \fBcompletion\fR: Output bash shell completion code
 .IP \(bu 2
 \fBcheckpoint\fR: Checkpoint one or more running containers
 .IP \(bu 2
 \fBevents, event\fR: Stream the events of containers
+.IP \(bu 2
+\fBruntime-config\fR: Retrieve the container runtime configuration
 .IP \(bu 2
 \fBupdate-runtime-config\fR Update the runtime configuration
 .IP \(bu 2
@@ -223,9 +225,19 @@ option for no timeout value set and the smallest supported timeout is \fB1s\fR
 \fB--version\fR, \fB-v\fR: print the version information of \fBcrictl\fR
 .IP \(bu 2
 \fB--config\fR, \fB-c\fR: Location of the client config file (default: \fB/etc/crictl.yaml\fR). Can be changed by setting \fBCRI_CONFIG_FILE\fR environment variable. If not specified and the default does not exist, the program's directory is searched as well
+.IP \(bu 2
+\fB--enable-tracing\fR: Enable OpenTelemetry tracing (default: \fBfalse\fR)
+.IP \(bu 2
+\fB--tracing-endpoint\fR: Address to which the gRPC tracing collector will send spans to (default: \fB127.0.0.1:4317\fR)
+.IP \(bu 2
+\fB--tracing-sampling-rate-per-million\fR: Number of samples to collect per million OpenTelemetry spans. Set to 1000000 or -1 to always sample (default: \fB-1\fR)
+.IP \(bu 2
+\fB--profile-cpu\fR: Write a pprof CPU profile to the provided path
+.IP \(bu 2
+\fB--profile-mem\fR: Write a pprof memory profile to the provided path
 
 .SH Client Configuration Options
-Use the \fBcrictl\fR config command to get and set the \fBcrictl\fR client configuration
+Use the \fBcrictl\fR config command to get, set and list the \fBcrictl\fR client configuration
 options.
 
 .PP
@@ -244,6 +256,8 @@ COMMAND OPTIONS:
 \fB--get value\fR: Show the option value
 .IP \(bu 2
 \fB--set value\fR: Set option (can specify multiple or separate values with commas: opt1=val1,opt2=val2)
+.IP \(bu 2
+\fB--list\fR: Show all option values (default: \fBfalse\fR)
 .IP \(bu 2
 \fB--help\fR, \fB-h\fR: Show help (default: \fBfalse\fR)
 

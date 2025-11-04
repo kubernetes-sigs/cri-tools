@@ -65,12 +65,13 @@ COMMANDS:
 - `stop`: Stop one or more running containers
 - `stopp`: Stop one or more running pods
 - `update`: Update one or more running containers
-- `config`: Get and set `crictl` client configuration options
+- `config`: Get, set and list crictl configuration options
 - `stats`: List container(s) resource usage statistics
-- `statsp`: List pod(s) resource usage statistics
+- `statsp`: List pod statistics. Stats represent a structured API that will fulfill the Kubelet's /stats/summary endpoint.
 - `completion`: Output bash shell completion code
 - `checkpoint`: Checkpoint one or more running containers
 - `events, event`: Stream the events of containers
+- `runtime-config`: Retrieve the container runtime configuration
 - `update-runtime-config` Update the runtime configuration
 - `help, h`: Shows a list of commands or help for one command
 
@@ -147,10 +148,15 @@ via sudo (`sudo -E crictl ...`).
 - `--help`, `-h`: show help
 - `--version`, `-v`: print the version information of `crictl`
 - `--config`, `-c`: Location of the client config file (default: `/etc/crictl.yaml`). Can be changed by setting `CRI_CONFIG_FILE` environment variable. If not specified and the default does not exist, the program's directory is searched as well
+- `--enable-tracing`: Enable OpenTelemetry tracing (default: `false`)
+- `--tracing-endpoint`: Address to which the gRPC tracing collector will send spans to (default: `127.0.0.1:4317`)
+- `--tracing-sampling-rate-per-million`: Number of samples to collect per million OpenTelemetry spans. Set to 1000000 or -1 to always sample (default: `-1`)
+- `--profile-cpu`: Write a pprof CPU profile to the provided path
+- `--profile-mem`: Write a pprof memory profile to the provided path
 
 ## Client Configuration Options
 
-Use the `crictl` config command to get and set the `crictl` client configuration
+Use the `crictl` config command to get, set and list the `crictl` client configuration
 options.
 
 USAGE:
@@ -165,6 +171,7 @@ COMMAND OPTIONS:
 
 - `--get value`: Show the option value
 - `--set value`: Set option (can specify multiple or separate values with commas: opt1=val1,opt2=val2)
+- `--list`: Show all option values (default: `false`)
 - `--help`, `-h`: Show help (default: `false`)
 
 `crictl` OPTIONS:
