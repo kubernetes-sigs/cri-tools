@@ -72,4 +72,4 @@ critest connects to Unix: `unix:///run/containerd/containerd.sock` or Windows: `
 - `-benchmarking-output-dir`: optional path to a pre-existing directory in which to write JSON
   files detailing the results of the benchmarks.
 - `-ginkgo.skip`: Skip the tests that match the regular expression.
-- `-h`: Should help and all supported options.
+- `-h`: Show help and all supported options.
