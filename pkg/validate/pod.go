@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -166,16 +167,26 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 			By("create container in pod")
 			ic := f.CRIClient.CRIImageClient
-			containerID := framework.CreatePauseContainer(rc, ic, podID, podConfig, "container-for-metrics-")
+			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-metrics-")
 
 			By("start container")
 			startContainer(rc, containerID)
+
+			_, _, err := rc.ExecSync(
+				context.TODO(), containerID, []string{"/bin/sh", "-c", "for i in $(seq 1 10); do echo hi >> /var/lib/mydisktest/inode_test_file_$i; done; sync"},
+				time.Duration(defaultExecSyncTimeout)*time.Second,
+			)
+
+			Expect(err).ToNot(HaveOccurred())
+
+			By("list metric descriptors")
+			descs := listMetricDescriptors(rc)
 
 			By("list pod sandbox metrics")
 			metrics := listPodSandboxMetrics(rc)
 
 			By("verify pod metrics are present")
-			testPodSandboxMetrics(metrics, podID)
+			testPodSandboxMetrics(metrics, descs, podID)
 		})
 	})
 })
@@ -309,6 +320,7 @@ func createPodSandboxWithLogDirectory(c internalapi.RuntimeService) (sandboxID s
 // testMetricDescriptors verifies that all expected metric descriptors are present.
 func testMetricDescriptors(descs []*runtimeapi.MetricDescriptor) {
 	returnedDescriptors := make(map[string]*runtimeapi.MetricDescriptor)
+
 	for _, desc := range descs {
 		returnedDescriptors[desc.GetName()] = desc
 		Expect(desc.GetHelp()).NotTo(BeEmpty(), "Metric descriptor %q should have help text", desc.GetName())
@@ -339,7 +351,7 @@ func listPodSandboxMetrics(c internalapi.RuntimeService) []*runtimeapi.PodSandbo
 }
 
 // testPodSandboxMetrics verifies that metrics are present for the specified pod.
-func testPodSandboxMetrics(allMetrics []*runtimeapi.PodSandboxMetrics, podID string) {
+func testPodSandboxMetrics(allMetrics []*runtimeapi.PodSandboxMetrics, descs []*runtimeapi.MetricDescriptor, podID string) {
 	var podMetrics *runtimeapi.PodSandboxMetrics
 
 	for _, m := range allMetrics {
@@ -352,18 +364,18 @@ func testPodSandboxMetrics(allMetrics []*runtimeapi.PodSandboxMetrics, podID str
 
 	Expect(podMetrics).NotTo(BeNil(), "Metrics for pod %q should be present", podID)
 
-	metricNamesFound := make(map[string]bool)
+	metricNamesFound := make(map[string][]string)
 
 	for _, metric := range podMetrics.GetMetrics() {
-		if !metricNamesFound[metric.GetName()] {
-			metricNamesFound[metric.GetName()] = true
+		if len(metricNamesFound[metric.GetName()]) == 0 {
+			metricNamesFound[metric.GetName()] = metric.GetLabelValues()
 		}
 	}
 
 	for _, containerMetric := range podMetrics.GetContainerMetrics() {
 		for _, metric := range containerMetric.GetMetrics() {
-			if !metricNamesFound[metric.GetName()] {
-				metricNamesFound[metric.GetName()] = true
+			if len(metricNamesFound[metric.GetName()]) == 0 {
+				metricNamesFound[metric.GetName()] = metric.GetLabelValues()
 			}
 		}
 	}
@@ -371,10 +383,19 @@ func testPodSandboxMetrics(allMetrics []*runtimeapi.PodSandboxMetrics, podID str
 	missingMetrics := []string{}
 
 	for _, expectedName := range expectedMetricDescriptorNames {
-		if !metricNamesFound[expectedName] {
+		if len(metricNamesFound[expectedName]) == 0 {
 			missingMetrics = append(missingMetrics, expectedName)
 		}
 	}
 
 	Expect(missingMetrics).To(BeEmpty(), "Expected %s metrics to be present and they were not", strings.Join(missingMetrics, " "))
+
+	mismatchedLabels := []string{}
+	for _, desc := range descs {
+		if len(metricNamesFound[desc.GetName()]) != len(desc.GetLabelKeys()) {
+			mismatchedLabels = append(mismatchedLabels, desc.GetName())
+		}
+	}
+
+	Expect(mismatchedLabels).To(BeEmpty(), "Expected %s metrics to have same set of labels in ListMetricDescriptors and ListPodSandboxMetrics", strings.Join(mismatchedLabels, ","))
 }
