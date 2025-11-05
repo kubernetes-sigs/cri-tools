@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -166,10 +167,17 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 			By("create container in pod")
 			ic := f.CRIClient.CRIImageClient
-			containerID := framework.CreatePauseContainer(rc, ic, podID, podConfig, "container-for-metrics-")
+			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-metrics-")
 
 			By("start container")
 			startContainer(rc, containerID)
+
+			_, _, err := rc.ExecSync(
+				context.TODO(), containerID, []string{"/bin/sh", "-c", "for i in $(seq 1 10); do echo hi >> /var/lib/mydisktest/inode_test_file_$i; done; sync"},
+				time.Duration(defaultExecSyncTimeout)*time.Second,
+			)
+
+			Expect(err).ToNot(HaveOccurred())
 
 			By("list pod sandbox metrics")
 			metrics := listPodSandboxMetrics(rc)
