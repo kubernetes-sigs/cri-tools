@@ -16,7 +16,11 @@ jobs:
           - critest
         oci-runtime:
           - crun
-          - runc
+          # TODO: Re-enable runc integration tests when mitigation is found
+          # Disabled due to AppArmor issue in nested environments
+          # See: https://github.com/cri-o/cri-o/issues/9573
+          # See: https://github.com/opencontainers/runc/issues/4968
+          # - runc
         monitor:
           - conmon
           - conmon-rs
