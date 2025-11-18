@@ -51,7 +51,7 @@ type LifecycleBenchmarkDatapoint struct {
 	MetaInfo map[string]string `json:"metaInfo"`
 }
 
-// LifecycleBenchmarkResultsSet houses results for benchmarks involving resource lifecycles
+// LifecycleBenchmarksResultsSet houses results for benchmarks involving resource lifecycles
 // which include multiple benchmarked iterations of the cycle.
 type LifecycleBenchmarksResultsSet struct {
 	// Slice of string operation names which represent one cycle.
@@ -65,7 +65,7 @@ type LifecycleBenchmarksResultsSet struct {
 	Datapoints []LifecycleBenchmarkDatapoint `json:"datapoints"`
 }
 
-// Type which tracks lifecycle benchmark results through channels.
+// LifecycleBenchmarksResultsManager tracks lifecycle benchmark results through channels.
 type LifecycleBenchmarksResultsManager struct {
 	// The LifecycleBenchmarksResultsSet where results are added.
 	resultsSet LifecycleBenchmarksResultsSet
@@ -83,7 +83,7 @@ type LifecycleBenchmarksResultsManager struct {
 	resultsChannelTimeoutSeconds int
 }
 
-// Instantiates a new LifecycleBenchmarksResultsManager and its internal channels/structures.
+// NewLifecycleBenchmarksResultsManager instantiates a new LifecycleBenchmarksResultsManager and its internal channels/structures.
 func NewLifecycleBenchmarksResultsManager(initialResultsSet LifecycleBenchmarksResultsSet, resultsChannelTimeoutSeconds int) *LifecycleBenchmarksResultsManager {
 	lbrm := LifecycleBenchmarksResultsManager{
 		resultsSet:                   initialResultsSet,
@@ -98,7 +98,7 @@ func NewLifecycleBenchmarksResultsManager(initialResultsSet LifecycleBenchmarksR
 	return &lbrm
 }
 
-// Starts the results consumer goroutine and returns the channel to write results to.
+// StartResultsConsumer starts the results consumer goroutine and returns the channel to write results to.
 // A nil value must be sent after all other results were sent to indicate the end of the result
 // stream.
 func (lbrm *LifecycleBenchmarksResultsManager) StartResultsConsumer() chan *LifecycleBenchmarkDatapoint {
@@ -110,7 +110,7 @@ func (lbrm *LifecycleBenchmarksResultsManager) StartResultsConsumer() chan *Life
 	return lbrm.resultsChannel
 }
 
-// Waits for the result consumer goroutine and returns all the results registered insofar.
+// AwaitAllResults waits for the result consumer goroutine and returns all the results registered insofar.
 func (lbrm *LifecycleBenchmarksResultsManager) AwaitAllResults(timeoutSeconds int) error {
 	if !lbrm.resultsConsumerRunning {
 		return nil
@@ -129,7 +129,7 @@ func (lbrm *LifecycleBenchmarksResultsManager) AwaitAllResults(timeoutSeconds in
 	}
 }
 
-// Saves the results gathered so far as JSON under the given filepath.
+// WriteResultsFile saves the results gathered so far as JSON under the given filepath.
 func (lbrm *LifecycleBenchmarksResultsManager) WriteResultsFile(filepath string) error {
 	if lbrm.resultsConsumerRunning {
 		return errors.New("results consumer is still running and expecting results")

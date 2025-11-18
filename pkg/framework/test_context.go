@@ -183,7 +183,7 @@ func RegisterFlags() {
 	flag.BoolVar(&TestContext.UseWebsocketForPortForward, "websocket-portforward", false, "Use websocket connections over SPDY for portforward streaming tests.")
 }
 
-// Loads any external file-based parameters into the TestContextType.
+// LoadYamlConfigFiles loads any external file-based parameters into the TestContextType.
 func (tc *TestContextType) LoadYamlConfigFiles() error {
 	// Attempt to load custom images file:
 	if testImagesFilePath != "" {
