@@ -1,5 +1,4 @@
 //go:build !windows && !freebsd
-// +build !windows,!freebsd
 
 /*
 Copyright 2017 The Kubernetes Authors.

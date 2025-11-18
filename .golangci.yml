@@ -36,6 +36,7 @@ linters:
     - goconst
     - gocritic
     - gocyclo
+    - godoclint
     - godot
     - godox
     - goheader
@@ -51,11 +52,13 @@ linters:
     - ineffassign
     - interfacebloat
     - intrange
+    - iotamixing
     - loggercheck
     - maintidx
     - makezero
     - mirror
     - misspell
+    - modernize
     - musttag
     - nakedret
     - nestif
@@ -87,6 +90,7 @@ linters:
     - tparallel
     - unconvert
     - unparam
+    - unqueryvet
     - unused
     - usestdlibvars
     - usetesting

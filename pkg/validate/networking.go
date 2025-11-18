@@ -282,6 +282,7 @@ func checkMainPage(c internalapi.RuntimeService, podID string, hostPort, contain
 			return err
 		}
 		defer resp.Body.Close()
+
 		respChan <- resp
 
 		return nil

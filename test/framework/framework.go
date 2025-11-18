@@ -103,17 +103,17 @@ func lcmd(format string, args ...any) *Session {
 	return cmd("", format, args...)
 }
 
-// Run crictl on the specified endpoint and return the resulting session.
+// Crictl runs crictl on the specified endpoint and returns the resulting session.
 func (t *TestFramework) Crictl(args string) *Session {
 	return lcmd("%s%s %s", crictlBinaryPathFlag(), crictlRuntimeEndpointFlag(), args).Wait(time.Minute)
 }
 
-// Run crictl on the specified endpoint and return the resulting session without wait.
+// CrictlNoWait runs crictl on the specified endpoint and returns the resulting session without wait.
 func (t *TestFramework) CrictlNoWait(args string) *Session {
 	return lcmd("%s%s %s", crictlBinaryPathFlag(), crictlRuntimeEndpointFlag(), args)
 }
 
-// Run crictl and expect exit, expectedOut, expectedErr.
+// CrictlExpect runs crictl and expects exit, expectedOut, expectedErr.
 func (t *TestFramework) CrictlExpect(
 	args string, exit int, expectedOut, expectedErr string,
 ) {
@@ -136,19 +136,19 @@ func (t *TestFramework) CrictlExpect(
 	}
 }
 
-// Run crictl and expect success containing the specified output.
+// CrictlExpectSuccess runs crictl and expects success containing the specified output.
 func (t *TestFramework) CrictlExpectSuccess(args, expectedOut string) {
 	t.CrictlExpect(args, 0, expectedOut, "")
 }
 
-// Run crictl and expect error containing the specified outputs.
+// CrictlExpectFailure runs crictl and expects error containing the specified outputs.
 func (t *TestFramework) CrictlExpectFailure(
 	args string, expectedOut, expectedErr string,
 ) {
 	t.CrictlExpect(args, 1, expectedOut, expectedErr)
 }
 
-// CrictlRemovePause can be uased to cleanup the pause images.
+// CrictlRemovePauseImages can be used to cleanup the pause images.
 func (t *TestFramework) CrictlRemovePauseImages() {
 	res := t.Crictl("images --filter reference=registry.k8s.io/pause -q")
 	Expect(res).To(Exit(0))

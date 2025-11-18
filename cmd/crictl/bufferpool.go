@@ -25,7 +25,7 @@ import (
 // This reduces GC pressure by reusing buffers instead of allocating new ones
 // for each JSON indentation operation.
 var jsonBufferPool = sync.Pool{
-	New: func() interface{} {
+	New: func() any {
 		return new(bytes.Buffer)
 	},
 }
