@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM mcr.microsoft.com/windows/nanoserver:1809
+FROM mcr.microsoft.com/windows/nanoserver:ltsc2022
 ARG TEST
 ADD ${TEST} ${TEST}

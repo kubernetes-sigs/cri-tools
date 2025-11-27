@@ -19,6 +19,7 @@ package e2e
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -39,7 +40,22 @@ var _ = t.Describe("inspecti", func() {
 	})
 
 	AfterEach(func() {
-		Expect(t.Crictl(fmt.Sprintf("rmi %s %s", image1, image2))).To(Exit(0))
+		// Remove images by tag first
+		t.Crictl(fmt.Sprintf("rmi %s %s", image1, image2))
+
+		// Remove any remaining digest references for these images
+		res := t.Crictl("images --filter reference=" + image1 + " -q")
+		contents := res.Out.Contents()
+		if len(contents) > 0 {
+			output := strings.Split(string(contents), "\n")
+			t.Crictl("rmi " + strings.TrimSpace(strings.Join(output, " ")))
+		}
+		res = t.Crictl("images --filter reference=" + image2 + " -q")
+		contents = res.Out.Contents()
+		if len(contents) > 0 {
+			output := strings.Split(string(contents), "\n")
+			t.Crictl("rmi " + strings.TrimSpace(strings.Join(output, " ")))
+		}
 	})
 
 	It("should succeed", func() {
