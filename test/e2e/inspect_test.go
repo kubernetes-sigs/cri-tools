@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -55,7 +56,18 @@ var _ = t.Describe("inspect", func() {
 
 	AfterEach(func() {
 		Expect(t.Crictl("rmp -f " + sandbox)).To(Exit(0))
-		Expect(t.Crictl("rmi " + imageLatest)).To(Exit(0))
+
+		// Remove image by tag first
+		t.Crictl("rmi " + imageLatest)
+
+		// Remove any remaining digest references for this image
+		res := t.Crictl("images --filter reference=" + imageLatest + " -q")
+		contents := res.Out.Contents()
+		if len(contents) > 0 {
+			output := strings.Split(string(contents), "\n")
+			t.Crictl("rmi " + strings.TrimSpace(strings.Join(output, " ")))
+		}
+
 		t.CrictlRemovePauseImages()
 	})
 
