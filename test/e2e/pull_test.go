@@ -34,7 +34,17 @@ var _ = t.Describe("pull", func() {
 	)
 
 	AfterEach(func() {
+		// Remove images by tag/digest first
 		t.Crictl("rmi " + strings.Join([]string{image1, image2, image3}, " "))
+
+		// Remove any remaining digest references for test-image-1
+		// Note: image1 and image2 both refer to test-image-1
+		res := t.Crictl("images --filter reference=" + image1 + " -q")
+		contents := res.Out.Contents()
+		if len(contents) > 0 {
+			output := strings.Split(string(contents), "\n")
+			t.Crictl("rmi " + strings.TrimSpace(strings.Join(output, " ")))
+		}
 	})
 
 	It("should succeed without tag or digest", func() {
