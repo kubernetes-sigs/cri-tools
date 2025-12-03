@@ -55,7 +55,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout cri-tools for this commit
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           path: ${{github.workspace}}/src/github.com/kubernetes-sigs/cri-tools
 
@@ -73,14 +73,14 @@ jobs:
           echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
 
       - name: Checkout containerd/containerd ${{ format(matrix.version, '/') }}
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           path: ${{ github.workspace }}/src/github.com/containerd/containerd
           repository: containerd/containerd
           ref: ${{ format(matrix.version, '/') }}
 
       - name: Checkout Microsoft/hcsshim
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         if: startsWith(matrix.os, 'windows')
         with:
           repository: Microsoft/hcsshim
