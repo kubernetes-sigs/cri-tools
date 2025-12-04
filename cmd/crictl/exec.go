@@ -427,7 +427,28 @@ func stream(ctx context.Context, in, tty bool, transport string, parsedURL *url.
 		return errors.New("input is not a terminal")
 	}
 
-	streamOptions.TerminalSizeQueue = t.MonitorSize(t.GetSize())
+	streamOptions.TerminalSizeQueue = &terminalSizeQueueAdapter{queue: t.MonitorSize(t.GetSize())}
 
 	return t.Safe(func() error { return executor.StreamWithContext(ctx, streamOptions) })
+}
+
+// terminalSizeQueueAdapter adapts k8s.io/kubectl/pkg/util/term.TerminalSizeQueue
+// to k8s.io/client-go/tools/remotecommand.TerminalSizeQueue.
+// TODO: Remove this adapter once kubernetes/kubernetes#135587 is merged and vendored.
+// After the fix, both types will be aliases to the same shared type, making this unnecessary.
+type terminalSizeQueueAdapter struct {
+	queue term.TerminalSizeQueue
+}
+
+// Next returns the next terminal size in the queue.
+func (t *terminalSizeQueueAdapter) Next() *remoteclient.TerminalSize {
+	size := t.queue.Next()
+	if size == nil {
+		return nil
+	}
+
+	return &remoteclient.TerminalSize{
+		Width:  size.Width,
+		Height: size.Height,
+	}
 }
