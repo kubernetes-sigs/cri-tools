@@ -219,6 +219,14 @@ func loadContainerConfig(path string) (*pb.ContainerConfig, error) {
 		return nil, fmt.Errorf("name is not in metadata %q", config.GetMetadata())
 	}
 
+	if config.GetImage() == nil {
+		return nil, errors.New("image is not set")
+	}
+
+	if config.GetImage().GetImage() == "" {
+		return nil, fmt.Errorf("image field is not set in image %q", config.GetImage())
+	}
+
 	return &config, nil
 }
 
