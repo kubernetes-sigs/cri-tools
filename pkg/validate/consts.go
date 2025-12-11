@@ -133,9 +133,11 @@ var (
 	// image list where different tags refer to the same image.
 	testDifferentTagSameImageList []string
 
+	// image list with the same image from different registries.
+	testSameImageDifferentRegistries []string
+
 	// pod sandbox to use when pulling images.
 	testImagePodSandbox *runtimeapi.PodSandboxConfig
-
 	// Linux defaults.
 	testLinuxDifferentTagDifferentImageList = []string{
 		registry + "test-image-1:latest",
@@ -176,6 +178,10 @@ var _ = framework.AddBeforeSuiteCallback(func() {
 		testImageWithAllReferences = testWindowsImageWithAllReferences
 		testDifferentTagDifferentImageList = testWindowsDifferentTagDifferentImageList
 		testDifferentTagSameImageList = testWindowsDifferentTagSameImageList
+	}
+	testSameImageDifferentRegistries = []string{
+		"registry.k8s.io/pause:3.9",
+		"k8s.gcr.io/pause:3.9",
 	}
 	testImagePodSandbox = &runtimeapi.PodSandboxConfig{
 		Labels: framework.DefaultPodLabels,

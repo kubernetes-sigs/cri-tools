@@ -43,13 +43,13 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 		c = f.CRIClient.CRIImageClient
 	})
 
-	It("public image with tag should be pulled and removed [Conformance]", func() {
+	It("public image with tag should be pulled and removed [Conformance]", Serial, func() {
 		testPullPublicImage(c, testImageWithTag, testImagePodSandbox, func(s *runtimeapi.Image) {
 			Expect(s.GetRepoTags()).To(Equal([]string{testImageWithTag}))
 		})
 	})
 
-	It("public image should timeout if requested [Conformance]", func() {
+	It("public image should timeout if requested [Conformance]", Serial, func() {
 		imageName := framework.PrepareImageName(testImageWithTag)
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond)
@@ -64,20 +64,20 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 		Expect(statusErr.Code()).To(Equal(codes.DeadlineExceeded))
 	})
 
-	It("public image without tag should be pulled and removed [Conformance]", func() {
+	It("public image without tag should be pulled and removed [Conformance]", Serial, func() {
 		testPullPublicImage(c, testImageWithoutTag, testImagePodSandbox, func(s *runtimeapi.Image) {
 			Expect(s.GetRepoTags()).To(Equal([]string{testImageWithoutTag + ":latest"}))
 		})
 	})
 
-	It("public image with digest should be pulled and removed [Conformance]", func() {
+	It("public image with digest should be pulled and removed [Conformance]", Serial, func() {
 		testPullPublicImage(c, testImageWithDigest, testImagePodSandbox, func(s *runtimeapi.Image) {
 			Expect(s.GetRepoTags()).To(BeEmpty())
 			Expect(s.GetRepoDigests()).To(Equal([]string{testImageWithDigest}))
 		})
 	})
 
-	It("image status should support all kinds of references [Conformance]", func() {
+	It("image status should support all kinds of references [Conformance]", Serial, func() {
 		imageName := testImageWithAllReferences
 		// Make sure image does not exist before testing.
 		removeImage(c, imageName)
@@ -101,7 +101,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 	})
 
 	if runtime.GOOS != framework.OSWindows || framework.TestContext.IsLcow {
-		It("image status get image fields should not have Uid|Username empty [Conformance]", func() {
+		It("image status get image fields should not have Uid|Username empty [Conformance]", Serial, func() {
 			for _, item := range []struct {
 				description string
 				image       string
@@ -143,7 +143,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 		})
 	}
 
-	It("listImage should get exactly 3 image in the result list [Conformance]", func() {
+	It("listImage should get exactly 3 image in the result list [Conformance]", Serial, func() {
 		// Make sure test image does not exist.
 		removeImageList(c, testDifferentTagDifferentImageList)
 		ids := pullImageList(c, testDifferentTagDifferentImageList, testImagePodSandbox)
@@ -165,7 +165,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 		}
 	})
 
-	It("listImage should get exactly 3 repoTags in the result image [Conformance]", func() {
+	It("listImage should get exactly 3 repoTags in the result image [Conformance]", Serial, func() {
 		// Make sure test image does not exist.
 		removeImageList(c, testDifferentTagSameImageList)
 		ids := pullImageList(c, testDifferentTagSameImageList, testImagePodSandbox)
@@ -187,12 +187,104 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 			}
 		}
 	})
+
+	It("removing image by one tag should remove all tags [Conformance]", Serial, func() {
+		imageName1 := testDifferentTagSameImageList[0]
+		imageName2 := testDifferentTagSameImageList[1]
+		imageName3 := testDifferentTagSameImageList[2]
+
+		// Ensure images are absent before test
+		removeImageList(c, []string{imageName1, imageName2, imageName3})
+
+		By("Pulling image with multiple tags")
+		pullImageList(c, []string{imageName1, imageName2, imageName3}, testImagePodSandbox)
+
+		By("Verifying all tags are present on a single image")
+		images := framework.ListImage(c, &runtimeapi.ImageFilter{})
+		var foundImage *runtimeapi.Image
+		for _, img := range images {
+			// Check if the image has one of our tags. Since they all point to the same image, finding one is enough.
+			if slices.Contains(img.GetRepoTags(), imageName1) {
+				foundImage = img
+			}
+			if foundImage != nil {
+				break
+			}
+		}
+		Expect(foundImage).NotTo(BeNil(), "Should find the pulled image")
+		Expect(foundImage.GetRepoTags()).To(HaveLen(3), "Should have exactly three tags")
+		Expect(foundImage.GetRepoTags()).To(ContainElements(imageName1, imageName2, imageName3), "Should contain all three tags")
+
+		imageID := foundImage.GetId() // Get the ID for later verification
+
+		By("Removing image by a single tag: " + imageName1)
+		removeImage(c, imageName1)
+
+		By("Verifying the image is completely removed")
+		status1 := framework.ImageStatus(c, imageName1)
+		Expect(status1).To(BeNil(), "Image should be gone when checking by first tag")
+		status2 := framework.ImageStatus(c, imageName2)
+		Expect(status2).To(BeNil(), "Image should be gone when checking by second tag")
+		status3 := framework.ImageStatus(c, imageName3)
+		Expect(status3).To(BeNil(), "Image should be gone when checking by third tag")
+
+		idStatus := framework.ImageStatus(c, imageID)
+		Expect(idStatus).To(BeNil(), "Image should be gone when checking by its ID")
+	})
+
+	It("removing image from one registry should remove all tags from other registries [Conformance]", Serial, func() {
+		imageName1 := testSameImageDifferentRegistries[0]
+		imageName2 := testSameImageDifferentRegistries[1]
+
+		// Ensure images are absent before test
+		removeImageList(c, []string{imageName1, imageName2})
+
+		By("Pulling the same image from different registries")
+		pullImageList(c, []string{imageName1, imageName2}, testImagePodSandbox)
+
+		By("Verifying all tags are present on a single image")
+		images := framework.ListImage(c, &runtimeapi.ImageFilter{})
+		var foundImage *runtimeapi.Image
+		for _, img := range images {
+			// Check if the image has one of our tags. Since they all point to the same image, finding one is enough.
+			if slices.Contains(img.GetRepoTags(), imageName1) {
+				foundImage = img
+			}
+			if foundImage != nil {
+				break
+			}
+		}
+		Expect(foundImage).NotTo(BeNil(), "Should find the pulled image")
+		Expect(foundImage.GetRepoTags()).To(HaveLen(2), "Should have exactly two tags")
+		Expect(foundImage.GetRepoTags()).To(ContainElements(imageName1, imageName2), "Should contain tags from both registries")
+
+		imageID := foundImage.GetId() // Get the ID for later verification
+
+		By("Removing image by a single tag: " + imageName1)
+		removeImage(c, imageName1)
+
+		By("Verifying the image is completely removed")
+		status1 := framework.ImageStatus(c, imageName1)
+		Expect(status1).To(BeNil(), "Image should be gone when checking by first tag")
+		status2 := framework.ImageStatus(c, imageName2)
+		Expect(status2).To(BeNil(), "Image should be gone when checking by second tag")
+
+		idStatus := framework.ImageStatus(c, imageID)
+		Expect(idStatus).To(BeNil(), "Image should be gone when checking by its ID")
+	})
 })
 
 // testRemoveImage removes the image name imageName and check if it successes.
 func testRemoveImage(c internalapi.ImageManagerService, imageName string) {
 	By("Remove image : " + imageName)
-	removeImage(c, imageName)
+	image, err := c.ImageStatus(context.TODO(), &runtimeapi.ImageSpec{Image: imageName}, false)
+	framework.ExpectNoError(err, "failed to get image status: %v", err)
+
+	if image.GetImage() != nil {
+		By("Remove image by ID : " + image.GetImage().GetId())
+		err = c.RemoveImage(context.TODO(), &runtimeapi.ImageSpec{Image: image.GetImage().GetId()})
+		framework.ExpectNoError(err, "failed to remove image: %v", err)
+	}
 
 	By("Check image list empty")
 
