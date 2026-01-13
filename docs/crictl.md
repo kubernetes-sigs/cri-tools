@@ -293,6 +293,47 @@ busybox             latest              8c811b4aec35f       1.15MB
 k8s.gcr.io/pause    3.1                 da86e6ba6ca19       742kB
 ```
 
+### Remove images
+
+The `crictl rmi` command removes one or more images by ID or reference:
+
+```sh
+$ crictl rmi busybox:latest
+```
+
+**Important Note**: Due to CRI API limitations, when you specify an image by tag (e.g., `localhost/test:latest`), the entire image will be removed along with **all** of its tags, not just the specified tag. This behavior differs from `docker rmi`, `nerdctl rmi`, and `ctr image rm`, which only remove the specified tag.
+
+If you need to remove only a specific tag while keeping the image and other tags, use the container runtime's native CLI tool instead:
+
+- For containerd: `nerdctl image rm <tag>` or `ctr image rm <tag>`
+- For CRI-O, use Podman: `podman rmi <tag>`
+- For Docker: `docker rmi <tag>`
+
+Example showing the difference:
+
+```sh
+# Image with multiple tags
+$ crictl images
+IMAGE                TAG                 IMAGE ID            SIZE
+localhost/test       latest              abc123def456        10MB
+localhost/test       v1.0                abc123def456        10MB
+localhost/base       latest              abc123def456        10MB
+
+# Running crictl rmi will remove ALL tags
+$ crictl rmi localhost/test:latest
+WARN[0000] Image "localhost/test:latest" has multiple tags. Removing this image will delete all of the following tags:
+WARN[0000]   localhost/test:latest
+WARN[0000]   localhost/test:v1.0
+WARN[0000]   localhost/base:latest
+Deleted: localhost/test:latest
+Deleted: localhost/test:v1.0
+Deleted: localhost/base:latest
+
+# All tags are now gone
+$ crictl images
+IMAGE                TAG                 IMAGE ID            SIZE
+```
+
 ### Filter images
 
 The following filters are available `--filter`, `-f`:
