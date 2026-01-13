@@ -390,9 +390,16 @@ func outputImageStatusTable(r *pb.ImageStatusResponse, verbose bool) {
 }
 
 var removeImageCommand = &cli.Command{
-	Name:                   "rmi",
-	Usage:                  "Remove one or more images",
-	ArgsUsage:              "IMAGE-ID [IMAGE-ID...]",
+	Name:      "rmi",
+	Usage:     "Remove one or more images",
+	ArgsUsage: "IMAGE-ID [IMAGE-ID...]",
+	Description: `Remove one or more images by ID or reference.
+
+NOTE: Due to CRI API limitations, when you specify an image by tag (e.g., 'localhost/test:latest'),
+the entire image will be removed along with ALL of its tags, not just the specified tag.
+This behavior differs from 'docker rmi', 'nerdctl rmi', and 'ctr image rm', which only remove
+the specified tag. To remove only a specific tag, use the container runtime's native CLI tool
+(e.g., 'nerdctl', 'ctr', or 'podman').`,
 	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
@@ -494,6 +501,20 @@ var removeImageCommand = &cli.Command{
 				}
 				if status.GetImage() == nil {
 					return fmt.Errorf("no such image %s", id)
+				}
+
+				// Warn if the user specified a tag and multiple tags would be removed
+				repoTags := status.GetImage().GetRepoTags()
+				if len(repoTags) > 1 {
+					// Check if user specified a tag (contains ':' but doesn't start with 'sha256:')
+					// or a repo name (contains '/' or is a name like 'localhost')
+					isLikelyTag := !strings.HasPrefix(id, "sha256:") && (strings.Contains(id, ":") || strings.Contains(id, "/"))
+					if isLikelyTag {
+						logrus.Warnf("Image %q has multiple tags. Removing this image will delete all of the following tags:", id)
+						for _, tag := range repoTags {
+							logrus.Warnf("  %s", tag)
+						}
+					}
 				}
 
 				if err := RemoveImage(cliCtx.Context, imageClient, id); err != nil {
