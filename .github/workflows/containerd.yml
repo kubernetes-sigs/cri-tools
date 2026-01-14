@@ -126,8 +126,16 @@ jobs:
           mingw32-make.exe install
         working-directory: ${{ github.workspace }}/src/github.com/containerd/containerd
 
+      - name: Install cni on Linux (release-1.7)
+        # TODO: Remove this step once containerd release/1.7 is no longer supported.
+        if: startsWith(matrix.os, 'ubuntu') && matrix.version == 'release{0}1.7'
+        shell: bash
+        # See https://github.com/containerd/containerd/pull/12660
+        run: |
+          sudo -E PATH=$PATH script/setup/install-cni
+        working-directory: src/github.com/containerd/containerd
       - name: Install cni on Linux
-        if: startsWith(matrix.os, 'ubuntu')
+        if: startsWith(matrix.os, 'ubuntu') && matrix.version != 'release{0}1.7'
         shell: bash
         run: |
           sudo -E PATH=$PATH script/setup/install-cni $(grep 'github.com/containernetworking/plugins' go.mod | awk '{print $2}')
