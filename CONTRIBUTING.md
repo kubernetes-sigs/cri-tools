@@ -1,6 +1,6 @@
 # Contributing guidelines
 
-## How to become a contributor and submit your own code
+## Where to begin
 
 ### Contributor License Agreements
 
@@ -21,10 +21,9 @@ Follow either of the two links above to access the appropriate CLA and instructi
 1. Fork the desired repo, develop and test your code changes.
 1. Submit a pull request.
 
-### Adding dependencies
+## Local development and best practices
 
-If your patch depends on new packages, add that package to the `go.mod` file,
-run `make vendor` and commit the changes.
+The local development and best practices are described in [AGENTS.md](AGENTS.md) file to be accessible for both, humans and robots.
 
 ## Becoming a reviewer and approver
 
