@@ -225,6 +225,8 @@ func main() {
 		metricDescriptorsCommand,
 		completionCommand,
 		checkpointContainerCommand,
+		checkpointPodCommand,
+		restorePodCommand,
 		runtimeConfigCommand,
 		eventsCommand,
 		updateRuntimeConfigCommand,
