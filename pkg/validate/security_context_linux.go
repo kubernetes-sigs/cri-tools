@@ -1024,6 +1024,68 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 				matchContainerOutputRe(podConfig, containerName, `\s+0\s+1000\s+100000\n`)
 			})
+
+			It("runtime should support image volumes with user namespaces", func() {
+				By("pull test image for image volume")
+				testImage := framework.TestContext.TestImageList.DefaultTestContainerImage
+				framework.PullPublicImage(ic, testImage, nil)
+
+				By("create pod sandbox with user namespace")
+				namespaceOption := &runtimeapi.NamespaceOption{
+					UsernsOptions: &runtimeapi.UserNamespace{
+						Mode: runtimeapi.NamespaceMode_POD,
+						Uids: defaultMapping,
+						Gids: defaultMapping,
+					},
+				}
+
+				hostLogPath, podLogPath := createLogTempDir(podName)
+				defer os.RemoveAll(hostLogPath)
+				podID, podConfig = createNamespacePodSandbox(rc, namespaceOption, podName, podLogPath)
+
+				By("create container with image volume mount")
+				containerName := "image-volume-userns-container-" + framework.NewUUID()
+				containerConfig := &runtimeapi.ContainerConfig{
+					Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+					Image: &runtimeapi.ImageSpec{
+						Image:              testImage,
+						UserSpecifiedImage: testImage,
+					},
+					Command: []string{"sh", "-c", "ls -ln /image-volume && stat -c '%u:%g' /image-volume"},
+					LogPath: containerName + ".log",
+					Mounts: []*runtimeapi.Mount{
+						{
+							ContainerPath: "/image-volume",
+							Readonly:      true,
+							Image: &runtimeapi.ImageSpec{
+								Image: testImage,
+							},
+							UidMappings: defaultMapping,
+							GidMappings: defaultMapping,
+						},
+					},
+					Linux: &runtimeapi.LinuxContainerConfig{
+						SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
+							NamespaceOptions: podConfig.GetLinux().GetSecurityContext().GetNamespaceOptions(),
+						},
+					},
+				}
+
+				containerID := createContainerWithExpectation(rc, ic, containerConfig, podID, podConfig, true)
+
+				By("start container")
+				startContainer(rc, containerID)
+
+				By("wait for container to complete")
+				Eventually(func() runtimeapi.ContainerState {
+					return getContainerStatus(rc, containerID).GetState()
+				}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
+
+				By("verify image volume is accessible with correct ownership")
+				// The files in the image volume should be accessible inside the container
+				// with ownership mapped through idmap mounts
+				verifyLogContents(podConfig, containerName+".log", "0:0", stdoutType)
+			})
 		})
 
 		When("Host idmap mount support is not needed", func() {
