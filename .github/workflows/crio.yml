@@ -100,7 +100,7 @@ jobs:
             --ginkgo.randomize-all \
             --ginkgo.timeout=2m \
             --ginkgo.trace \
-            --ginkgo.vv
+            --ginkgo.v
           TEST_RC=$?
           set -o errexit
 
