@@ -31,6 +31,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -68,7 +70,112 @@ var (
 	DisablePullOnRun bool
 	// tracerProvider is the global OpenTelemetry tracing instance.
 	tracerProvider *sdktrace.TracerProvider
+	// rootSpan is the root OpenTelemetry span for the command.
+	rootSpan trace.Span
 )
+
+//nolint:spancheck // rootSpan is closed in cleanupTracing
+func initTracing(c *cli.Context) (context.Context, error) {
+	var err error
+
+	tracerProvider, err = tracing.Init(
+		c.Context,
+		c.String("tracing-endpoint"),
+		c.Int("tracing-sampling-rate-per-million"),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("init tracing: %w", err)
+	}
+
+	spanName := "crictl"
+	if c.Args().Present() {
+		spanName = c.Args().First()
+	}
+
+	ctx, span := tracerProvider.Tracer("sigs.k8s.io/cri-tools/cmd/crictl").Start(c.Context, spanName)
+	rootSpan = span
+	rootSpan.SetAttributes(attribute.String("command", spanName))
+
+	return ctx, nil
+}
+
+func cleanupTracing() {
+	if tracerProvider != nil {
+		if rootSpan != nil {
+			rootSpan.End()
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := tracerProvider.Shutdown(ctx); err != nil {
+			logrus.Errorf("Unable to shutdown tracer provider: %v", err)
+		}
+	}
+}
+
+var cpuProfile *os.File
+
+func setupCPUProfile(c *cli.Context) error {
+	cpuProfilePath := c.String("profile-cpu")
+	if cpuProfilePath != "" {
+		var err error
+
+		cpuProfilePath, err = filepath.Abs(cpuProfilePath)
+		if err != nil {
+			return fmt.Errorf("unable to get absolute memory profile path: %w", err)
+		}
+
+		logrus.Infof("Creating CPU profile in: %s", cpuProfilePath)
+
+		cpuProfile, err = os.Create(cpuProfilePath)
+		if err != nil {
+			return fmt.Errorf("could not create CPU profile %q: %w", cpuProfilePath, err)
+		}
+
+		if err := pprof.StartCPUProfile(cpuProfile); err != nil {
+			return fmt.Errorf("could not start CPU profiling in %q: %w", cpuProfilePath, err)
+		}
+	}
+
+	return nil
+}
+
+func stopCPUProfile() {
+	if cpuProfile != nil {
+		pprof.StopCPUProfile()
+		cpuProfile.Close()
+	}
+}
+
+func writeHeapProfile(c *cli.Context) error {
+	memProfilePath := c.String("profile-mem")
+	if memProfilePath != "" {
+		var err error
+
+		memProfilePath, err = filepath.Abs(memProfilePath)
+		if err != nil {
+			return fmt.Errorf("unable to get absolute memory profile path: %w", err)
+		}
+
+		logrus.Infof("Creating memory profile in: %s", memProfilePath)
+
+		file, err := os.Create(memProfilePath)
+		if err != nil {
+			return fmt.Errorf("could not create memory profile %q: %w", memProfilePath, err)
+		}
+		defer file.Close()
+
+		// Ensure up to date data
+		runtime.GC()
+
+		if err := pprof.WriteHeapProfile(file); err != nil {
+			return fmt.Errorf("could not write memory profile in %q: %w", memProfilePath, err)
+		}
+	}
+
+	return nil
+}
 
 func getRuntimeService(_ *cli.Context, timeout time.Duration) (res internalapi.RuntimeService, err error) {
 	if RuntimeEndpointIsSet && RuntimeEndpoint == "" {
@@ -187,57 +294,13 @@ func getTimeout(timeDuration time.Duration) time.Duration {
 	return defaultTimeout // use default
 }
 
-func main() {
-	app := cli.NewApp()
-	app.Name = "crictl"
-	app.Usage = "client for CRI"
-	app.Version = version.Version
-
-	app.Commands = []*cli.Command{
-		runtimeAttachCommand,
-		createContainerCommand,
-		runtimeExecCommand,
-		runtimeVersionCommand,
-		listImageCommand,
-		containerStatusCommand,
-		imageStatusCommand,
-		imageFsInfoCommand,
-		podStatusCommand,
-		logsCommand,
-		runtimePortForwardCommand,
-		listContainersCommand,
-		pullImageCommand,
-		runContainerCommand,
-		runPodCommand,
-		removeContainerCommand,
-		removeImageCommand,
-		removePodCommand,
-		listPodCommand,
-		startContainerCommand,
-		runtimeStatusCommand,
-		stopContainerCommand,
-		stopPodCommand,
-		updateContainerCommand,
-		configCommand,
-		statsCommand,
-		podStatsCommand,
-		podMetricsCommand,
-		metricDescriptorsCommand,
-		completionCommand,
-		checkpointContainerCommand,
-		runtimeConfigCommand,
-		eventsCommand,
-		updateRuntimeConfigCommand,
-	}
-
-	slices.SortFunc(app.Commands, func(a, b *cli.Command) int { return strings.Compare(a.Name, b.Name) })
-
+func getAppFlags() []cli.Flag {
 	runtimeEndpointUsage := fmt.Sprintf("Endpoint of CRI container runtime "+
 		"service (default: uses in order the first successful one of %v). "+
 		"Default is now deprecated and the endpoint should be set instead.",
 		defaultRuntimeEndpoints)
 
-	app.Flags = []cli.Flag{
+	return []cli.Flag{
 		&cli.StringFlag{
 			Name:    "config",
 			Aliases: []string{"c"},
@@ -293,103 +356,139 @@ func main() {
 			Usage: "Write a pprof memory profile to the provided path.",
 		},
 	}
+}
 
-	var cpuProfile *os.File
+func main() {
+	app := cli.NewApp()
+	app.Name = "crictl"
+	app.Usage = "client for CRI"
+	app.Version = version.Version
 
-	defer func() {
-		if cpuProfile != nil {
-			pprof.StopCPUProfile()
-			cpuProfile.Close()
+	app.Commands = []*cli.Command{
+		runtimeAttachCommand,
+		createContainerCommand,
+		runtimeExecCommand,
+		runtimeVersionCommand,
+		listImageCommand,
+		containerStatusCommand,
+		imageStatusCommand,
+		imageFsInfoCommand,
+		podStatusCommand,
+		logsCommand,
+		runtimePortForwardCommand,
+		listContainersCommand,
+		pullImageCommand,
+		runContainerCommand,
+		runPodCommand,
+		removeContainerCommand,
+		removeImageCommand,
+		removePodCommand,
+		listPodCommand,
+		startContainerCommand,
+		runtimeStatusCommand,
+		stopContainerCommand,
+		stopPodCommand,
+		updateContainerCommand,
+		configCommand,
+		statsCommand,
+		podStatsCommand,
+		podMetricsCommand,
+		metricDescriptorsCommand,
+		completionCommand,
+		checkpointContainerCommand,
+		runtimeConfigCommand,
+		eventsCommand,
+		updateRuntimeConfigCommand,
+	}
+
+	slices.SortFunc(app.Commands, func(a, b *cli.Command) int { return strings.Compare(a.Name, b.Name) })
+
+	app.Flags = getAppFlags()
+
+	defer stopCPUProfile()
+
+	app.Before = func(c *cli.Context) (err error) {
+		// Configure tracing if enabled
+		if c.IsSet("enable-tracing") {
+			ctx, err := initTracing(c)
+			if err != nil {
+				return err
+			}
+
+			c.Context = ctx
 		}
-	}()
 
-	app.Before = func(context *cli.Context) (err error) {
 		var config *common.ServerConfiguration
 
 		var exePath string
 
-		cpuProfilePath := context.String("profile-cpu")
-		if cpuProfilePath != "" {
-			cpuProfilePath, err = filepath.Abs(cpuProfilePath)
-			if err != nil {
-				return fmt.Errorf("unable to get absolute memory profile path: %w", err)
-			}
-
-			logrus.Infof("Creating CPU profile in: %s", cpuProfilePath)
-
-			cpuProfile, err = os.Create(cpuProfilePath)
-			if err != nil {
-				return fmt.Errorf("could not create CPU profile %q: %w", cpuProfilePath, err)
-			}
-
-			if err := pprof.StartCPUProfile(cpuProfile); err != nil {
-				return fmt.Errorf("could not start CPU profiling in %q: %w", cpuProfilePath, err)
-			}
+		if err := setupCPUProfile(c); err != nil {
+			return err
 		}
 
 		if exePath, err = os.Executable(); err != nil {
 			logrus.Fatal(err)
 		}
 
-		if config, err = common.GetServerConfigFromFile(context.String("config"), exePath); err != nil {
-			if context.IsSet("config") {
+		if config, err = common.GetServerConfigFromFile(c.String("config"), exePath); err != nil {
+			if c.IsSet("config") {
 				logrus.Fatal(err)
 			}
 		}
 
 		if config == nil {
-			RuntimeEndpoint = context.String("runtime-endpoint")
+			RuntimeEndpoint = c.String("runtime-endpoint")
 
-			if context.IsSet("runtime-endpoint") {
+			if c.IsSet("runtime-endpoint") {
 				RuntimeEndpointIsSet = true
 			}
 
-			ImageEndpoint = context.String("image-endpoint")
+			ImageEndpoint = c.String("image-endpoint")
 
-			if context.IsSet("image-endpoint") {
+			if c.IsSet("image-endpoint") {
 				ImageEndpointIsSet = true
 			}
 
-			if context.IsSet("timeout") {
-				Timeout = getTimeout(context.Duration("timeout"))
+			if c.IsSet("timeout") {
+				Timeout = getTimeout(c.Duration("timeout"))
 			} else {
-				Timeout = context.Duration("timeout")
+				Timeout = c.Duration("timeout")
 			}
 
-			Debug = context.Bool("debug")
+			Debug = c.Bool("debug")
 			DisablePullOnRun = false
 		} else {
 			// Command line flags overrides config file.
-			if context.IsSet("runtime-endpoint") { //nolint:gocritic
-				RuntimeEndpoint = context.String("runtime-endpoint")
+			if c.IsSet("runtime-endpoint") { //nolint:gocritic
+				RuntimeEndpoint = c.String("runtime-endpoint")
 				RuntimeEndpointIsSet = true
 			} else if config.RuntimeEndpoint != "" {
 				RuntimeEndpoint = config.RuntimeEndpoint
 				RuntimeEndpointIsSet = true
 			} else {
-				RuntimeEndpoint = context.String("runtime-endpoint")
+				RuntimeEndpoint = c.String("runtime-endpoint")
 			}
 
-			if context.IsSet("image-endpoint") { //nolint:gocritic
-				ImageEndpoint = context.String("image-endpoint")
+			if c.IsSet("image-endpoint") { //nolint:gocritic
+				ImageEndpoint = c.String("image-endpoint")
 				ImageEndpointIsSet = true
 			} else if config.ImageEndpoint != "" {
 				ImageEndpoint = config.ImageEndpoint
 				ImageEndpointIsSet = true
 			} else {
-				ImageEndpoint = context.String("image-endpoint")
+				ImageEndpoint = c.String("image-endpoint")
 			}
 
-			if context.IsSet("timeout") { //nolint:gocritic
-				Timeout = getTimeout(context.Duration("timeout"))
+			if c.IsSet("timeout") { //nolint:gocritic
+				Timeout = getTimeout(c.Duration("timeout"))
 			} else if config.Timeout > 0 { // 0/neg value set to default timeout
 				Timeout = config.Timeout
 			} else {
-				Timeout = context.Duration("timeout")
+				Timeout = c.Duration("timeout")
 			}
 
-			if context.IsSet("debug") {
-				Debug = context.Bool("debug")
+			if c.IsSet("debug") {
+				Debug = c.Bool("debug")
 			} else {
 				Debug = config.Debug
 			}
@@ -402,47 +501,10 @@ func main() {
 			logrus.SetLevel(logrus.DebugLevel)
 		}
 
-		// Configure tracing if enabled
-		if context.IsSet("enable-tracing") {
-			tracerProvider, err = tracing.Init(
-				context.Context,
-				context.String("tracing-endpoint"),
-				context.Int("tracing-sampling-rate-per-million"),
-			)
-			if err != nil {
-				return fmt.Errorf("init tracing: %w", err)
-			}
-		}
-
 		return nil
 	}
 
-	app.After = func(ctx *cli.Context) (err error) {
-		memProfilePath := ctx.String("profile-mem")
-		if memProfilePath != "" {
-			memProfilePath, err = filepath.Abs(memProfilePath)
-			if err != nil {
-				return fmt.Errorf("unable to get absolute memory profile path: %w", err)
-			}
-
-			logrus.Infof("Creating memory profile in: %s", memProfilePath)
-
-			file, err := os.Create(memProfilePath)
-			if err != nil {
-				return fmt.Errorf("could not create memory profile %q: %w", memProfilePath, err)
-			}
-			defer file.Close()
-
-			// Ensure up to date data
-			runtime.GC()
-
-			if err := pprof.WriteHeapProfile(file); err != nil {
-				return fmt.Errorf("could not write memory profile in %q: %w", memProfilePath, err)
-			}
-		}
-
-		return nil
-	}
+	app.After = writeHeapProfile
 
 	// sort all flags
 	for _, cmd := range app.Commands {
@@ -452,16 +514,18 @@ func main() {
 	sort.Sort(cli.FlagsByName(app.Flags))
 
 	if err := app.Run(os.Args); err != nil {
-		logrus.Fatal(err)
-	}
-
-	// Ensure that all spans are processed.
-	if tracerProvider != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), Timeout)
-		defer cancel()
-
-		if err := tracerProvider.Shutdown(ctx); err != nil {
-			logrus.Errorf("Unable to shutdown tracer provider: %v", err)
+		if rootSpan != nil {
+			rootSpan.SetStatus(codes.Error, err.Error())
+			rootSpan.RecordError(err)
 		}
+
+		logrus.Error(err)
+
+		cleanupTracing()
+		stopCPUProfile()
+
+		os.Exit(1) //nolint:gocritic // manual cleanup performed before exit
 	}
+
+	cleanupTracing()
 }
