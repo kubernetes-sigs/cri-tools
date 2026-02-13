@@ -116,6 +116,8 @@ type CrictlConfig struct {
 	PullImageOnCreate    bool
 	DisablePullOnRun     bool
 	TracerProvider       *sdktrace.TracerProvider
+	// RootSpan is the root OpenTelemetry span for the command.
+	RootSpan trace.Span
 
 	runtimeServiceOverride internalapi.RuntimeService
 	imageServiceOverride   internalapi.ImageManagerService
