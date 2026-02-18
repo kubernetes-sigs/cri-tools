@@ -39,8 +39,10 @@ const (
 var _ = framework.KubeDescribe("Multiple Containers [Conformance]", func() {
 	f := framework.NewDefaultCRIFramework()
 
-	var rc internalapi.RuntimeService
-	var ic internalapi.ImageManagerService
+	var (
+		rc internalapi.RuntimeService
+		ic internalapi.ImageManagerService
+	)
 
 	BeforeEach(func() {
 		rc = f.CRIClient.CRIRuntimeClient
@@ -48,20 +50,27 @@ var _ = framework.KubeDescribe("Multiple Containers [Conformance]", func() {
 	})
 
 	Context("when running multiple containers in a pod", func() {
-		var podID, httpdContainerID, busyboxContainerID, logDir string
-		var podConfig *runtimeapi.PodSandboxConfig
+		var (
+			podID, httpdContainerID, busyboxContainerID, logDir string
+			podConfig                                           *runtimeapi.PodSandboxConfig
+		)
 
 		BeforeEach(func() {
 			By("create a PodSandbox")
+
 			podID, podConfig, logDir = createMultiContainerTestPodSandbox(rc)
 
 			By("create a httpd container")
+
 			httpdContainerID = createMultiContainerTestHttpdContainer(rc, ic, "httpd", podID, podConfig)
+
 			By("start the httpd container")
 			testStartContainer(rc, httpdContainerID)
 
 			By("create a busybox container")
+
 			busyboxContainerID = createMultiContainerTestBusyboxContainer(rc, ic, "busybox", podID, podConfig)
+
 			By("start the busybox container")
 			testStartContainer(rc, busyboxContainerID)
 		})

@@ -213,6 +213,7 @@ var createContainerCommand = &cli.Command{
 		if c.Args().Len() != 3 {
 			return cli.ShowSubcommandHelp(c)
 		}
+
 		if c.Bool("no-pull") && c.Bool("with-pull") {
 			return errors.New("conflict: no-pull and with-pull are both set")
 		}
@@ -252,6 +253,7 @@ var createContainerCommand = &cli.Command{
 		if err != nil {
 			return fmt.Errorf("creating container: %w", err)
 		}
+
 		fmt.Println(ctrID)
 
 		return nil
@@ -266,6 +268,7 @@ var startContainerCommand = &cli.Command{
 		if c.NArg() == 0 {
 			return errors.New("ID cannot be empty")
 		}
+
 		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
 			return err
@@ -328,6 +331,7 @@ var updateContainerCommand = &cli.Command{
 		if c.NArg() == 0 {
 			return errors.New("ID cannot be empty")
 		}
+
 		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
 			return err
@@ -409,6 +413,7 @@ var stopContainerCommand = &cli.Command{
 			if c.NArg() == 0 {
 				return cli.Exit("you must specify at least one CONTAINER-ID or use --all", 1)
 			}
+
 			containerIDs = c.Args().Slice()
 		}
 
@@ -458,6 +463,7 @@ var removeContainerCommand = &cli.Command{
 			if err != nil {
 				return err
 			}
+
 			ids = nil
 			for _, ctr := range r {
 				ids = append(ids, ctr.GetId())
@@ -483,6 +489,7 @@ var removeContainerCommand = &cli.Command{
 				if err != nil {
 					return fmt.Errorf("getting container status %q: %w", id, err)
 				}
+
 				if resp.GetStatus().GetState() == pb.ContainerState_CONTAINER_RUNNING {
 					if ctx.Bool("force") {
 						if err := StopContainer(ctx.Context, runtimeClient, id, 0); err != nil {
@@ -503,6 +510,7 @@ var removeContainerCommand = &cli.Command{
 						if err != nil {
 							logRotations = []string{}
 						}
+
 						logRotations = append(logRotations, logPath)
 
 						for _, logFile := range logRotations {
@@ -607,6 +615,7 @@ var containerStatusCommand = &cli.Command{
 				last:               c.Int("last"),
 				all:                c.Bool("all"),
 			}
+
 			opts.labels, err = parseLabelStringSlice(c.StringSlice("label"))
 			if err != nil {
 				return err
@@ -616,6 +625,7 @@ var containerStatusCommand = &cli.Command{
 			if err != nil {
 				return fmt.Errorf("listing containers: %w", err)
 			}
+
 			for _, ctr := range ctrs {
 				ids = append(ids, ctr.GetId())
 			}
@@ -749,6 +759,7 @@ var listContainersCommand = &cli.Command{
 			image:              c.String("image"),
 			resolveImagePath:   c.Bool("resolve-image-path"),
 		}
+
 		opts.labels, err = parseLabelStringSlice(c.StringSlice("label"))
 		if err != nil {
 			return err
@@ -772,6 +783,7 @@ var runContainerCommand = &cli.Command{
 		if c.Args().Len() != 2 {
 			return cli.ShowSubcommandHelp(c)
 		}
+
 		if c.Bool("no-pull") && c.Bool("with-pull") {
 			return errors.New("conflict: no-pull and with-pull are both set")
 		}
@@ -828,12 +840,14 @@ var checkpointContainerCommand = &cli.Command{
 		if c.NArg() == 0 {
 			return errors.New("ID cannot be empty")
 		}
+
 		if c.String("export") == "" {
 			return errors.New(
 				"cannot checkpoint a container without specifying the checkpoint destination. " +
 					"Use --export=/path/to/checkpoint.tar",
 			)
 		}
+
 		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
 			return err
@@ -841,6 +855,7 @@ var checkpointContainerCommand = &cli.Command{
 
 		for i := range c.NArg() {
 			containerID := c.Args().Get(i)
+
 			err := CheckpointContainer(
 				c.Context,
 				runtimeClient,

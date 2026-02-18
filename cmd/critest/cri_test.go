@@ -164,8 +164,7 @@ func runParallelTestSuite(t *testing.T) {
 		testArgs = append(testArgs, fmt.Sprintf("-%s=%s", f.Name, f.Value.String()))
 	})
 
-	var args []string
-
+	args := make([]string, 0, len(ginkgoArgs)+len(testArgs)+2)
 	args = append(args, ginkgoArgs...)
 	args = append(args, tempFileName, "--")
 	args = append(args, testArgs...)

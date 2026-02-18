@@ -108,15 +108,18 @@ var logsCommand = &cli.Command{
 			}); err != nil {
 				return fmt.Errorf("reopen container logs: %w", err)
 			}
+
 			logrus.Info("Container logs reopened")
 		}
 
 		tailLines := c.Int64("tail")
 		limitBytes := c.Int64("limit-bytes")
+
 		since, err := parseTimestamp(c.String("since"))
 		if err != nil {
 			return err
 		}
+
 		timestamp := c.Bool("timestamps")
 		previous := c.Bool("previous")
 		stream := c.String("stream")
@@ -126,6 +129,7 @@ var logsCommand = &cli.Command{
 		default:
 			return fmt.Errorf(`invalid stream %q, must be "stdout" or "stderr"`, stream)
 		}
+
 		if c.IsSet("tail") && c.IsSet("stream") {
 			return errors.New("--tail and --stream are mutually exclusive")
 		}
@@ -137,31 +141,37 @@ var logsCommand = &cli.Command{
 			SinceTime:  since,
 			Timestamps: timestamp,
 		}, time.Now())
+
 		status, err := InterruptableRPC(c.Context, func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
 			return runtimeService.ContainerStatus(ctx, containerID, false)
 		})
 		if err != nil {
 			return err
 		}
+
 		logPath := status.GetStatus().GetLogPath()
 		if logPath == "" {
 			return errors.New("the container has not set log path")
 		}
+
 		if previous {
 			containerAttempt := status.GetStatus().GetMetadata().GetAttempt()
 			if containerAttempt == uint32(0) {
 				return fmt.Errorf("previous terminated container %s not found", status.GetStatus().GetMetadata().GetName())
 			}
+
 			logPath = fmt.Sprintf("%s%s%s", logPath[:strings.LastIndex(logPath, "/")+1], strconv.FormatUint(uint64(containerAttempt-1), 10),
 				logPath[strings.LastIndex(logPath, "."):])
 		}
 		// build a WithCancel context based on cli.context
 		readLogCtx, cancelFn := context.WithCancel(c.Context)
+
 		go func() {
 			<-SetupInterruptSignalHandler()
 			// cancel readLogCtx when Interrupt signal received
 			cancelFn()
 		}()
+
 		defer func() {
 			// We can not use the typed error "context.Canceled" here
 			// because the upstream K8S dependency explicitly returns a fmt.Errorf("context cancelled").
@@ -174,12 +184,14 @@ var logsCommand = &cli.Command{
 			// Ensure no context leak
 			cancelFn()
 		}()
+
 		logger := klog.Background()
 
 		var (
 			stdoutStream io.Writer = os.Stdout
 			stderrStream io.Writer = os.Stderr
 		)
+
 		switch stream {
 		case streamStdout:
 			stderrStream = nil

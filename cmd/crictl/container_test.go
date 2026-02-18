@@ -52,10 +52,12 @@ var _ = DescribeTable("getContainersList",
 	func(input []*pb.Container, options *listOptions, indexes []int) {
 		actual, err := getContainersList(context.Background(), nil, input, options)
 		Expect(err).NotTo(HaveOccurred())
-		var expected []*pb.Container
+
+		expected := make([]*pb.Container, 0, len(indexes))
 		for _, i := range indexes {
 			expected = append(expected, input[i])
 		}
+
 		Expect(actual).To(HaveExactElements(expected))
 	},
 	Entry("returns containers in order by createdAt desc",

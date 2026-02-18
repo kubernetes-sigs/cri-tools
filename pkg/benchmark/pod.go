@@ -60,6 +60,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 			if samplingConfig.N <= 0 {
 				Skip("skipping pod lifecycle benchmarks since pod number option was not set")
 			}
+
 			if samplingConfig.NumParallel < 1 {
 				samplingConfig.NumParallel = 1
 			}
@@ -78,9 +79,12 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 			experiment := gmeasure.NewExperiment("PodLifecycle")
 			experiment.Sample(func(idx int) {
-				var lastStartTime, lastEndTime int64
-				var podID string
-				var err error
+				var (
+					lastStartTime, lastEndTime int64
+					podID                      string
+					err                        error
+				)
+
 				durations := make([]int64, len(resultsSet.OperationsNames))
 
 				podSandboxName := "PodSandbox-for-creating-performance-test-" + framework.NewUUID()
@@ -95,32 +99,40 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				}
 
 				By(fmt.Sprintf("Creating a pod %d", idx))
+
 				startTime := time.Now().UnixNano()
 				lastStartTime = startTime
 				podID, err = c.RunPodSandbox(context.TODO(), config, framework.TestContext.RuntimeHandler)
 				lastEndTime = time.Now().UnixNano()
 				durations[0] = lastEndTime - lastStartTime
+
 				framework.ExpectNoError(err, "failed to create PodSandbox: %v", err)
 
 				By(fmt.Sprintf("Get Pod status %d", idx))
+
 				lastStartTime = time.Now().UnixNano()
 				_, err = c.PodSandboxStatus(context.TODO(), podID, true)
 				lastEndTime = time.Now().UnixNano()
 				durations[1] = lastEndTime - lastStartTime
+
 				framework.ExpectNoError(err, "failed to get PodStatus: %v", err)
 
 				By(fmt.Sprintf("Stop PodSandbox %d", idx))
+
 				lastStartTime = time.Now().UnixNano()
 				err = c.StopPodSandbox(context.TODO(), podID)
 				lastEndTime = time.Now().UnixNano()
 				durations[2] = lastEndTime - lastStartTime
+
 				framework.ExpectNoError(err, "failed to stop PodSandbox: %v", err)
 
 				By(fmt.Sprintf("Remove PodSandbox %d", idx))
+
 				lastStartTime = time.Now().UnixNano()
 				err = c.RemovePodSandbox(context.TODO(), podID)
 				lastEndTime = time.Now().UnixNano()
 				durations[3] = lastEndTime - lastStartTime
+
 				framework.ExpectNoError(err, "failed to remove PodSandbox: %v", err)
 
 				res := LifecycleBenchmarkDatapoint{
@@ -135,6 +147,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 			// Send nil and give the manager a minute to process any already-queued results:
 			resultsChannel <- nil
+
 			err := resultsManager.AwaitAllResults(60)
 			if err != nil {
 				logrus.Errorf("Results manager failed to await all results: %v", err)
@@ -142,6 +155,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 			if framework.TestContext.BenchmarkingOutputDir != "" {
 				filepath := path.Join(framework.TestContext.BenchmarkingOutputDir, "pod_benchmark_data.json")
+
 				err = resultsManager.WriteResultsFile(filepath)
 				if err != nil {
 					logrus.Errorf("Error occurred while writing benchmark results to file %s: %v", filepath, err)

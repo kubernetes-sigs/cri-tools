@@ -92,6 +92,7 @@ var runPodCommand = &cli.Command{
 		if err != nil {
 			return fmt.Errorf("run pod sandbox: %w", err)
 		}
+
 		fmt.Println(podID)
 
 		return nil
@@ -106,12 +107,15 @@ var stopPodCommand = &cli.Command{
 		if c.NArg() == 0 {
 			return cli.ShowSubcommandHelp(c)
 		}
+
 		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
 			return err
 		}
+
 		for i := range c.NArg() {
 			id := c.Args().Get(i)
+
 			err := StopPodSandbox(c.Context, runtimeClient, id)
 			if err != nil {
 				return fmt.Errorf("stopping the pod sandbox %q: %w", id, err)
@@ -153,6 +157,7 @@ var removePodCommand = &cli.Command{
 			if err != nil {
 				return err
 			}
+
 			ids = nil
 			for _, sb := range r {
 				ids = append(ids, sb.GetId())
@@ -178,6 +183,7 @@ var removePodCommand = &cli.Command{
 				if err != nil {
 					return fmt.Errorf("getting sandbox status of pod %q: %w", id, err)
 				}
+
 				if resp.GetStatus().GetState() == pb.PodSandboxState_SANDBOX_READY {
 					if ctx.Bool("force") {
 						if err := StopPodSandbox(ctx.Context, runtimeClient, id); err != nil {
@@ -265,14 +271,17 @@ var podStatusCommand = &cli.Command{
 				latest:             c.Bool("latest"),
 				last:               c.Int("last"),
 			}
+
 			opts.labels, err = parseLabelStringSlice(c.StringSlice("label"))
 			if err != nil {
 				return fmt.Errorf("parse label string slice: %w", err)
 			}
+
 			sbs, err := ListPodSandboxes(c.Context, runtimeClient, opts)
 			if err != nil {
 				return fmt.Errorf("listing pod sandboxes: %w", err)
 			}
+
 			for _, sb := range sbs {
 				ids = append(ids, sb.GetId())
 			}
@@ -358,6 +367,7 @@ var listPodCommand = &cli.Command{
 	},
 	Action: func(c *cli.Context) error {
 		var err error
+
 		runtimeClient, err := getRuntimeService(c, 0)
 		if err != nil {
 			return err
@@ -375,10 +385,12 @@ var listPodCommand = &cli.Command{
 			nameRegexp:         c.String("name"),
 			podNamespaceRegexp: c.String("namespace"),
 		}
+
 		opts.labels, err = parseLabelStringSlice(c.StringSlice("label"))
 		if err != nil {
 			return err
 		}
+
 		if err = OutputPodSandboxes(c.Context, runtimeClient, opts); err != nil {
 			return fmt.Errorf("listing pod sandboxes: %w", err)
 		}

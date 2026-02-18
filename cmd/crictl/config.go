@@ -80,6 +80,7 @@ CRICTL OPTIONS:
 		if err != nil {
 			return fmt.Errorf("load config file: %w", err)
 		}
+
 		if c.IsSet("get") {
 			get := c.String("get")
 			switch get {
@@ -109,7 +110,9 @@ CRICTL OPTIONS:
 					if len(pair) != 2 {
 						return fmt.Errorf("incorrectly specified option: %v", setting)
 					}
+
 					key := pair[0]
+
 					value := pair[1]
 					if err := setValue(key, value, config); err != nil {
 						return err
@@ -138,8 +141,10 @@ CRICTL OPTIONS:
 		if key == "" {
 			return cli.ShowSubcommandHelp(c)
 		}
+
 		value := c.Args().Get(1)
 		logrus.Infof("No --get, --set or --list provided, setting key %q to value %q", key, value)
+
 		if err := setValue(key, value, config); err != nil {
 			return fmt.Errorf("set %q to %q: %w", key, value, err)
 		}

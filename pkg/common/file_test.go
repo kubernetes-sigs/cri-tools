@@ -29,6 +29,7 @@ var _ = DescribeTable("ReadConfig",
 	func(content string, expectedConfig *common.Config, shouldFail bool) {
 		f, err := os.CreateTemp("", "crictl-read-config-")
 		defer os.RemoveAll(f.Name())
+
 		Expect(err).NotTo(HaveOccurred())
 
 		_, err = f.WriteString(content)
@@ -131,6 +132,7 @@ var _ = DescribeTable("WriteConfig",
 	func(config *common.Config) {
 		f, err := os.CreateTemp("", "crictl-write-config-")
 		defer os.RemoveAll(f.Name())
+
 		Expect(err).NotTo(HaveOccurred())
 
 		err = common.WriteConfig(config, f.Name())

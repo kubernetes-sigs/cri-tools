@@ -43,8 +43,10 @@ const defaultExecStdinCloseTimeout = 20 * time.Second
 var _ = framework.KubeDescribe("Streaming", func() {
 	f := framework.NewDefaultCRIFramework()
 
-	var rc internalapi.RuntimeService
-	var ic internalapi.ImageManagerService
+	var (
+		rc internalapi.RuntimeService
+		ic internalapi.ImageManagerService
+	)
 
 	BeforeEach(func() {
 		rc = f.CRIClient.CRIRuntimeClient
@@ -52,8 +54,10 @@ var _ = framework.KubeDescribe("Streaming", func() {
 	})
 
 	Context("runtime should support streaming interfaces", func() {
-		var podID string
-		var podConfig *runtimeapi.PodSandboxConfig
+		var (
+			podID     string
+			podConfig *runtimeapi.PodSandboxConfig
+		)
 
 		AfterEach(func() {
 			By("stop PodSandbox")
@@ -66,6 +70,7 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
 
 			By("create a default container")
+
 			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-exec-test")
 
 			By("start container")
@@ -87,6 +92,7 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
 
 			By("create a default container")
+
 			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-exec-test")
 
 			By("start container")
@@ -109,6 +115,7 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
 
 			By("create a default container")
+
 			containerID := createShellContainer(rc, ic, podID, podConfig, "container-for-attach-test")
 
 			By("start container")
@@ -122,7 +129,9 @@ var _ = framework.KubeDescribe("Streaming", func() {
 
 		It("runtime should support portforward [Conformance]", func() {
 			By("create a PodSandbox with container port mapping")
+
 			var podConfig *runtimeapi.PodSandboxConfig
+
 			portMappings := []*runtimeapi.PortMapping{
 				{
 					ContainerPort: webServerContainerPort,
@@ -131,6 +140,7 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			podID, podConfig = createPodSandboxWithPortMapping(rc, portMappings, false)
 
 			By("create a web server container")
+
 			containerID := createWebServerContainer(rc, ic, podID, podConfig, "container-for-portforward-test")
 
 			By("start the web server container")

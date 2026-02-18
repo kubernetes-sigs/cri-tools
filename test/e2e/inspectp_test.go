@@ -30,10 +30,11 @@ import (
 // The actual test suite.
 var _ = t.Describe("inspectp", func() {
 	const sandboxesLength = 2
+
 	sandboxes := []string{}
 
 	BeforeEach(func() {
-		sandboxes = []string{}
+		sandboxes = make([]string, 0, sandboxesLength)
 
 		for i := range sandboxesLength {
 			f, err := os.CreateTemp("", "sandbox-")
@@ -55,6 +56,7 @@ var _ = t.Describe("inspectp", func() {
 			res := t.Crictl("rmp -f " + sb)
 			Expect(res).To(Exit(0))
 		}
+
 		t.CrictlRemovePauseImages()
 	})
 
@@ -79,6 +81,7 @@ var _ = t.Describe("inspectp", func() {
 		multiResponse := []map[string]any{}
 		Expect(json.Unmarshal(contents, &multiResponse)).NotTo(HaveOccurred())
 		Expect(multiResponse).To(HaveLen(sandboxesLength))
+
 		for i := range sandboxesLength {
 			Expect(multiResponse[i]).To(HaveKey("info"))
 			Expect(multiResponse[i]).To(HaveKey("status"))

@@ -35,8 +35,10 @@ import (
 var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 	f := framework.NewDefaultCRIFramework()
 
-	var rc internalapi.RuntimeService
-	var ic internalapi.ImageManagerService
+	var (
+		rc internalapi.RuntimeService
+		ic internalapi.ImageManagerService
+	)
 
 	BeforeEach(func() {
 		rc = f.CRIClient.CRIRuntimeClient
@@ -44,8 +46,10 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 	})
 
 	Context("runtime should support mount propagation", func() {
-		var podID string
-		var podConfig *runtimeapi.PodSandboxConfig
+		var (
+			podID     string
+			podConfig *runtimeapi.PodSandboxConfig
+		)
 
 		BeforeEach(func() {
 			podID, podConfig = createPrivilegedPodSandbox(rc, true)
@@ -60,10 +64,12 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 
 		testMountPropagation := func(propagation runtimeapi.MountPropagation) {
 			By("create host path and flag file")
+
 			mntSource, propagationSrcDir, propagationMntPoint, clearHostPath := createHostPathForMountPropagation(podID, propagation)
 			defer clearHostPath() // clean up the TempDir
 
 			By("create container with volume")
+
 			containerID := createMountPropagationContainer(rc, ic, "mount-propagation-test-", podID, podConfig, mntSource, propagation)
 
 			By("test start container with volume")
@@ -73,6 +79,7 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 			createPropagationMountPoint(propagationSrcDir, propagationMntPoint)
 
 			By("check whether propagationMntPoint contains file or dir in container")
+
 			command := []string{"ls", "-A", propagationMntPoint}
 			output := execSyncContainer(rc, containerID, command)
 
@@ -84,15 +91,18 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 			}
 
 			By("create a directory named containerMntPoint as a mount point in container")
+
 			containerMntPoint := path.Join(mntSource, "containerMntPoint")
 			command = []string{"sh", "-c", "mkdir -p " + containerMntPoint}
 			execSyncContainer(rc, containerID, command)
 
 			By("mount /etc to the mount point in container")
+
 			command = []string{"sh", "-c", "mount --bind /etc " + containerMntPoint}
 			execSyncContainer(rc, containerID, command)
 
 			By("check whether containerMntPoint contains file or dir in host")
+
 			fileInfo, err := os.ReadDir(containerMntPoint)
 			framework.ExpectNoError(err, "failed to ReadDir %q in Host", containerMntPoint)
 
@@ -121,8 +131,10 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 var _ = framework.KubeDescribe("Container OOM", func() {
 	f := framework.NewDefaultCRIFramework()
 
-	var rc internalapi.RuntimeService
-	var ic internalapi.ImageManagerService
+	var (
+		rc internalapi.RuntimeService
+		ic internalapi.ImageManagerService
+	)
 
 	BeforeEach(func() {
 		rc = f.CRIClient.CRIRuntimeClient
@@ -130,8 +142,10 @@ var _ = framework.KubeDescribe("Container OOM", func() {
 	})
 
 	Context("runtime should output OOMKilled reason", func() {
-		var podID string
-		var podConfig *runtimeapi.PodSandboxConfig
+		var (
+			podID     string
+			podConfig *runtimeapi.PodSandboxConfig
+		)
 
 		BeforeEach(func() {
 			podID, podConfig = createPrivilegedPodSandbox(rc, true)
@@ -146,6 +160,7 @@ var _ = framework.KubeDescribe("Container OOM", func() {
 
 		It("should terminate with exitCode 137 and reason OOMKilled", func() {
 			By("create container")
+
 			containerID := createOOMKilledContainer(rc, ic, "OOM-test-", podID, podConfig)
 
 			By("start container")
@@ -159,6 +174,7 @@ var _ = framework.KubeDescribe("Container OOM", func() {
 			Eventually(func() string {
 				return getContainerStatus(rc, containerID).GetReason()
 			}, time.Minute, time.Second*4).Should(Equal("OOMKilled"))
+
 			state := getContainerStatus(rc, containerID)
 
 			By("exit code is 137")
@@ -316,8 +332,10 @@ func createOOMKilledContainer(
 var _ = framework.KubeDescribe("Container Mount Readonly", func() {
 	f := framework.NewDefaultCRIFramework()
 
-	var rc internalapi.RuntimeService
-	var ic internalapi.ImageManagerService
+	var (
+		rc internalapi.RuntimeService
+		ic internalapi.ImageManagerService
+	)
 
 	BeforeEach(func() {
 		rc = f.CRIClient.CRIRuntimeClient
@@ -325,8 +343,10 @@ var _ = framework.KubeDescribe("Container Mount Readonly", func() {
 	})
 
 	Context("runtime should support readonly mounts", func() {
-		var podID string
-		var podConfig *runtimeapi.PodSandboxConfig
+		var (
+			podID     string
+			podConfig *runtimeapi.PodSandboxConfig
+		)
 
 		BeforeEach(func() {
 			podID, podConfig = createPrivilegedPodSandbox(rc, true)
@@ -347,20 +367,24 @@ var _ = framework.KubeDescribe("Container Mount Readonly", func() {
 			}
 
 			By("create host path")
+
 			hostPath, clearHostPath := createHostPathForRROMount(podID)
 			defer clearHostPath() // clean up the TempDir
 
 			By("create container with volume")
+
 			containerID := createRROMountContainer(rc, ic, podID, podConfig, hostPath, "/mnt", rro)
 
 			By("test start container with volume")
 			testStartContainer(rc, containerID)
 
 			By("check whether `touch /mnt/tmpfs/file` succeeds")
+
 			command := []string{"touch", "/mnt/tmpfs/file"}
 			if rro {
 				command = []string{"sh", "-c", `touch /mnt/tmpfs/foo 2>&1 | grep -q "Read-only file system"`}
 			}
+
 			execSyncContainer(rc, containerID, command)
 		}
 
@@ -370,14 +394,17 @@ var _ = framework.KubeDescribe("Container Mount Readonly", func() {
 		It("should support recursive readonly mounts", func() {
 			testRRO(rc, ic, true)
 		})
+
 		testRROInvalidPropagation := func(prop runtimeapi.MountPropagation) {
 			if !runtimeSupportsRRO(rc, framework.TestContext.RuntimeHandler) {
 				Skip("runtime does not implement recursive readonly mounts")
 
 				return
 			}
+
 			hostPath, clearHostPath := createHostPathForRROMount(podID)
 			defer clearHostPath() // clean up the TempDir
+
 			mounts := []*runtimeapi.Mount{
 				{
 					HostPath:          hostPath,
@@ -388,9 +415,11 @@ var _ = framework.KubeDescribe("Container Mount Readonly", func() {
 					Propagation:       prop,
 				},
 			}
+
 			const expectErr = true
 			createMountContainer(rc, ic, podID, podConfig, mounts, expectErr)
 		}
+
 		It("should reject a recursive readonly mount with PROPAGATION_HOST_TO_CONTAINER", func() {
 			testRROInvalidPropagation(runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER)
 		})
@@ -403,8 +432,10 @@ var _ = framework.KubeDescribe("Container Mount Readonly", func() {
 
 				return
 			}
+
 			hostPath, clearHostPath := createHostPathForRROMount(podID)
 			defer clearHostPath() // clean up the TempDir
+
 			mounts := []*runtimeapi.Mount{
 				{
 					HostPath:          hostPath,
@@ -414,6 +445,7 @@ var _ = framework.KubeDescribe("Container Mount Readonly", func() {
 					SelinuxRelabel:    true,
 				},
 			}
+
 			const expectErr = true
 			createMountContainer(rc, ic, podID, podConfig, mounts, expectErr)
 		})
