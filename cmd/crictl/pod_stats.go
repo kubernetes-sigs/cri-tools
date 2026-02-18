@@ -83,6 +83,7 @@ var podStatsCommand = &cli.Command{
 		if id == "" && c.NArg() > 0 {
 			id = c.Args().First()
 		}
+
 		if c.NArg() > 1 {
 			return cli.ShowSubcommandHelp(c)
 		}
@@ -98,6 +99,7 @@ var podStatsCommand = &cli.Command{
 			output: c.String("output"),
 			watch:  c.Bool("watch"),
 		}
+
 		opts.labels, err = parseLabelStringSlice(c.StringSlice("label"))
 		if err != nil {
 			return fmt.Errorf("parse pod labels: %w", err)

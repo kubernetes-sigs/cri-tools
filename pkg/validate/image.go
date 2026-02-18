@@ -54,6 +54,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond)
 		defer cancel()
+
 		res, err := c.PullImage(ctx, &runtimeapi.ImageSpec{Image: imageName}, nil, nil)
 
 		Expect(res).To(BeEmpty())
@@ -88,10 +89,12 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 		Expect(status).NotTo(BeNil(), "should get image status")
 		idStatus := framework.ImageStatus(c, status.GetId())
 		Expect(idStatus).To(Equal(status), "image status with %q", status.GetId())
+
 		for _, tag := range status.GetRepoTags() {
 			tagStatus := framework.ImageStatus(c, tag)
 			Expect(tagStatus).To(Equal(status), "image status with %q", tag)
 		}
+
 		for _, digest := range status.GetRepoDigests() {
 			digestStatus := framework.ImageStatus(c, digest)
 			Expect(digestStatus).To(Equal(status), "image status with %q", digest)
@@ -178,6 +181,7 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 		images := framework.ListImage(c, &runtimeapi.ImageFilter{})
 
 		sort.Strings(testDifferentTagSameImageList)
+
 		for _, img := range images {
 			if img.GetId() == ids[0] {
 				sort.Strings(img.GetRepoTags())

@@ -177,6 +177,7 @@ var _ = framework.AddBeforeSuiteCallback(func() {
 		testDifferentTagDifferentImageList = testWindowsDifferentTagDifferentImageList
 		testDifferentTagSameImageList = testWindowsDifferentTagSameImageList
 	}
+
 	testImagePodSandbox = &runtimeapi.PodSandboxConfig{
 		Labels: framework.DefaultPodLabels,
 	}

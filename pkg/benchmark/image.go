@@ -56,6 +56,7 @@ var defaultImageListingBenchmarkImages = []string{
 
 var _ = framework.KubeDescribe("Image", func() {
 	var ic internalapi.ImageManagerService
+
 	f := framework.NewDefaultCRIFramework()
 
 	testImageList := framework.TestContext.BenchmarkingParams.ImageListingBenchmarkImages
@@ -104,6 +105,7 @@ var _ = framework.KubeDescribe("Image", func() {
 			if samplingConfig.N <= 0 {
 				Skip("skipping image lifecycle benchmarks since image number option was not set")
 			}
+
 			if samplingConfig.NumParallel < 1 {
 				samplingConfig.NumParallel = 1
 			}
@@ -123,8 +125,11 @@ var _ = framework.KubeDescribe("Image", func() {
 			// Image lifecycle benchmark experiment:
 			experiment := gmeasure.NewExperiment("ImageLifecycle")
 			experiment.Sample(func(idx int) {
-				var err error
-				var lastStartTime, lastEndTime int64
+				var (
+					err                        error
+					lastStartTime, lastEndTime int64
+				)
+
 				durations := make([]int64, len(lifecycleResultsSet.OperationsNames))
 
 				imageSpec := &runtimeapi.ImageSpec{
@@ -132,6 +137,7 @@ var _ = framework.KubeDescribe("Image", func() {
 				}
 
 				By(fmt.Sprintf("Pull Image %d", idx))
+
 				startTime := time.Now().UnixNano()
 				lastStartTime = startTime
 				imageID := framework.PullPublicImage(ic, imagePullingBenchmarkImage, nil)
@@ -139,17 +145,21 @@ var _ = framework.KubeDescribe("Image", func() {
 				durations[0] = lastEndTime - lastStartTime
 
 				By(fmt.Sprintf("Status Image %d", idx))
+
 				lastStartTime = time.Now().UnixNano()
 				_, err = ic.ImageStatus(context.TODO(), imageSpec, false)
 				lastEndTime = time.Now().UnixNano()
 				durations[1] = lastEndTime - lastStartTime
+
 				framework.ExpectNoError(err, "failed to status Image: %v", err)
 
 				By(fmt.Sprintf("Remove Image %d", idx))
+
 				lastStartTime = time.Now().UnixNano()
 				err = ic.RemoveImage(context.TODO(), imageSpec)
 				lastEndTime = time.Now().UnixNano()
 				durations[2] = lastEndTime - lastStartTime
+
 				framework.ExpectNoError(err, "failed to remove Image: %v", err)
 
 				res := LifecycleBenchmarkDatapoint{
@@ -164,6 +174,7 @@ var _ = framework.KubeDescribe("Image", func() {
 
 			// Send nil and give the manager a minute to process any already-queued results:
 			lifecycleResultsChannel <- nil
+
 			err = lifecycleResultsManager.AwaitAllResults(60)
 			if err != nil {
 				logrus.Errorf("Results manager failed to await all results: %v", err)
@@ -171,6 +182,7 @@ var _ = framework.KubeDescribe("Image", func() {
 
 			if framework.TestContext.BenchmarkingOutputDir != "" {
 				filepath := path.Join(framework.TestContext.BenchmarkingOutputDir, "image_lifecycle_benchmark_data.json")
+
 				err = lifecycleResultsManager.WriteResultsFile(filepath)
 				if err != nil {
 					logrus.Errorf("Error occurred while writing benchmark results to file %s: %v", filepath, err)
@@ -197,6 +209,7 @@ var _ = framework.KubeDescribe("Image", func() {
 			if samplingConfig.N <= 0 {
 				Skip("skipping image listing benchmarks since image listing number option was not set")
 			}
+
 			if samplingConfig.NumParallel < 1 {
 				samplingConfig.NumParallel = 1
 			}
@@ -216,13 +229,16 @@ var _ = framework.KubeDescribe("Image", func() {
 			experiment := gmeasure.NewExperiment("ImageListing")
 			experiment.Sample(func(idx int) {
 				var err error
+
 				durations := make([]int64, len(imageListResultsSet.OperationsNames))
 
 				By(fmt.Sprintf("List Images %d", idx))
+
 				startTime := time.Now().UnixNano()
 				_, err = ic.ListImages(context.TODO(), nil)
 				endTime := time.Now().UnixNano()
 				durations[0] = endTime - startTime
+
 				framework.ExpectNoError(err, "failed to List images: %v", err)
 
 				res := LifecycleBenchmarkDatapoint{
@@ -237,6 +253,7 @@ var _ = framework.KubeDescribe("Image", func() {
 
 			// Send nil and give the manager a minute to process any already-queued results:
 			imagesResultsChannel <- nil
+
 			err = imageListResultsManager.AwaitAllResults(60)
 			if err != nil {
 				logrus.Errorf("Results manager failed to await all results: %v", err)
@@ -244,6 +261,7 @@ var _ = framework.KubeDescribe("Image", func() {
 
 			if framework.TestContext.BenchmarkingOutputDir != "" {
 				filepath := path.Join(framework.TestContext.BenchmarkingOutputDir, "image_listing_benchmark_data.json")
+
 				err = imageListResultsManager.WriteResultsFile(filepath)
 				if err != nil {
 					logrus.Errorf("Error occurred while writing benchmark results to file %s: %v", filepath, err)

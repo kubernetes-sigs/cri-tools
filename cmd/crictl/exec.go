@@ -179,7 +179,6 @@ var runtimeExecCommand = &cli.Command{
 			c.IsSet("label") ||
 			c.IsSet("latest") ||
 			c.IsSet("last") {
-
 			ids = []string{}
 			cmd = c.Args().Slice()
 			outputContainerID = !quiet && !c.Bool("parallel")
@@ -245,17 +244,20 @@ var runtimeExecCommand = &cli.Command{
 				if outputContainerID {
 					fmt.Println(id + ":")
 				}
+
 				if c.Bool("sync") {
 					exitCode, err := ExecSync(c.Context, runtimeClient, optsCopy)
 					if err != nil {
 						return fmt.Errorf("execing command in container %s synchronously: %w", id, err)
 					}
+
 					if exitCode != 0 {
 						return cli.Exit("non-zero exit code", exitCode)
 					}
 				} else {
 					ctx, cancel := context.WithCancel(c.Context)
 					defer cancel()
+
 					err = Exec(ctx, runtimeClient, optsCopy)
 					if err != nil {
 						return fmt.Errorf("execing command in container %s: %w", id, err)

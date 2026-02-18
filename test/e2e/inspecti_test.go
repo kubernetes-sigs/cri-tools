@@ -45,12 +45,15 @@ var _ = t.Describe("inspecti", func() {
 
 		// Remove any remaining digest references for these images
 		res := t.Crictl("images --filter reference=" + image1 + " -q")
+
 		contents := res.Out.Contents()
 		if len(contents) > 0 {
 			output := strings.Split(string(contents), "\n")
 			t.Crictl("rmi " + strings.TrimSpace(strings.Join(output, " ")))
 		}
+
 		res = t.Crictl("images --filter reference=" + image2 + " -q")
+
 		contents = res.Out.Contents()
 		if len(contents) > 0 {
 			output := strings.Split(string(contents), "\n")
@@ -78,8 +81,10 @@ var _ = t.Describe("inspecti", func() {
 		// Should be a slice
 		multiResponse := []map[string]any{}
 		Expect(json.Unmarshal(contents, &multiResponse)).NotTo(HaveOccurred())
+
 		const length = 2
 		Expect(multiResponse).To(HaveLen(length))
+
 		for i := range length {
 			Expect(multiResponse[i]).To(HaveKey("info"))
 			Expect(multiResponse[i]).To(HaveKey("status"))

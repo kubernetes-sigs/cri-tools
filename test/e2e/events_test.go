@@ -42,6 +42,7 @@ var _ = t.Describe("events", func() {
 	It("should succeed", func() {
 		session := t.CrictlNoWait("events")
 		defer session.Terminate()
+
 		Expect(session.Out).ToNot(Say("unknown method GetContainerEvents")) // no errors
 	})
 })

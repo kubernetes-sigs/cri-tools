@@ -35,8 +35,10 @@ import (
 var _ = framework.KubeDescribe("Networking", func() {
 	f := framework.NewDefaultCRIFramework()
 
-	var rc internalapi.RuntimeService
-	var ic internalapi.ImageManagerService
+	var (
+		rc internalapi.RuntimeService
+		ic internalapi.ImageManagerService
+	)
 
 	BeforeEach(func() {
 		rc = f.CRIClient.CRIRuntimeClient
@@ -55,27 +57,35 @@ var _ = framework.KubeDescribe("Networking", func() {
 
 		It("runtime should support DNS config [Conformance]", func() {
 			By("create a PodSandbox with DNS config")
+
 			var podConfig *runtimeapi.PodSandboxConfig
+
 			podID, podConfig = createPodSandWithDNSConfig(rc)
 
 			By("create container")
+
 			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-DNS-config-test-")
 
 			By("start container")
 			startContainer(rc, containerID)
 
 			By("check DNS config")
+
 			expectedContent := getDNSConfigContent
 			checkDNSConfig(rc, containerID, expectedContent)
 		})
 
 		It("runtime should support set hostname [Conformance]", func() {
 			By("create a PodSandbox with hostname")
+
 			var podConfig *runtimeapi.PodSandboxConfig
+
 			const testHostname = "test-hostname"
+
 			podID, podConfig = createPodSandWithHostname(rc, testHostname)
 
 			By("create container")
+
 			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-hostname-test-")
 
 			By("start container")
@@ -87,7 +97,9 @@ var _ = framework.KubeDescribe("Networking", func() {
 
 		It("runtime should support port mapping with only container port [Conformance]", func() {
 			By("create a PodSandbox with container port mapping")
+
 			var podConfig *runtimeapi.PodSandboxConfig
+
 			portMappings := []*runtimeapi.PortMapping{
 				{
 					ContainerPort: webServerContainerPort,
@@ -96,6 +108,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 			podID, podConfig = createPodSandboxWithPortMapping(rc, portMappings, false)
 
 			By("create a web server container")
+
 			containerID := createWebServerContainer(rc, ic, podID, podConfig, "container-for-container-port")
 
 			By("start the web server container")
@@ -107,7 +120,9 @@ var _ = framework.KubeDescribe("Networking", func() {
 
 		It("runtime should support port mapping with host port and container port [Conformance]", func() {
 			By("create a PodSandbox with host port and container port mapping")
+
 			var podConfig *runtimeapi.PodSandboxConfig
+
 			portMappings := []*runtimeapi.PortMapping{
 				{
 					ContainerPort: webServerContainerPort,
@@ -117,6 +132,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 			podID, podConfig = createPodSandboxWithPortMapping(rc, portMappings, false)
 
 			By("create a web server container")
+
 			containerID := createWebServerContainer(rc, ic, podID, podConfig, "container-for-host-port")
 
 			By("start the web server container")

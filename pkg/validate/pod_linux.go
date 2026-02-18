@@ -33,8 +33,10 @@ import (
 var _ = framework.KubeDescribe("PodSandbox", func() {
 	f := framework.NewDefaultCRIFramework()
 
-	var rc internalapi.RuntimeService
-	var ic internalapi.ImageManagerService
+	var (
+		rc internalapi.RuntimeService
+		ic internalapi.ImageManagerService
+	)
 
 	BeforeEach(func() {
 		rc = f.CRIClient.CRIRuntimeClient
@@ -42,8 +44,10 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 	})
 
 	Context("runtime should support sysctls", func() {
-		var podID string
-		var podConfig *runtimeapi.PodSandboxConfig
+		var (
+			podID     string
+			podConfig *runtimeapi.PodSandboxConfig
+		)
 
 		AfterEach(func() {
 			By("stop PodSandbox")
@@ -58,6 +62,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 			})
 
 			By("create a default container")
+
 			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-shm-rmid-forced")
 
 			By("start container")
@@ -73,6 +78,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 			})
 
 			By("create a default container")
+
 			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-fs-mqueue-msg-max")
 
 			By("start container")

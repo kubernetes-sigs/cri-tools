@@ -30,8 +30,10 @@ import (
 var _ = framework.KubeDescribe("Streaming", func() {
 	f := framework.NewDefaultCRIFramework()
 
-	var rc internalapi.RuntimeService
-	var ic internalapi.ImageManagerService
+	var (
+		rc internalapi.RuntimeService
+		ic internalapi.ImageManagerService
+	)
 
 	BeforeEach(func() {
 		rc = f.CRIClient.CRIRuntimeClient
@@ -50,7 +52,9 @@ var _ = framework.KubeDescribe("Streaming", func() {
 
 		It("runtime should support portforward in host network", func() {
 			By("create a PodSandbox with container port mapping in host network")
+
 			var podConfig *runtimeapi.PodSandboxConfig
+
 			portMappings := []*runtimeapi.PortMapping{
 				{
 					ContainerPort: webServerHostNetContainerPort,
@@ -59,6 +63,7 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			podID, podConfig = createPodSandboxWithPortMapping(rc, portMappings, true)
 
 			By("create a web server container")
+
 			containerID := createHostNetWebServerContainer(rc, ic, podID, podConfig, "container-for-host-net-portforward-test")
 
 			By("start the web server container")

@@ -79,14 +79,18 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 		if !appArmorIsEnabled() {
 			Skip("AppArmor is disabled on this host")
 		}
+
 		rc = f.CRIClient.CRIRuntimeClient
 		ic = f.CRIClient.CRIImageClient
+
 		Expect(loadTestProfiles()).NotTo(HaveOccurred())
 	})
 
 	Context("runtime should support deprecated apparmor_profile field", func() {
-		var sandboxID string
-		var sandboxConfig *runtimeapi.PodSandboxConfig
+		var (
+			sandboxID     string
+			sandboxConfig *runtimeapi.PodSandboxConfig
+		)
 
 		BeforeEach(func() {
 			sandboxID, sandboxConfig = framework.CreatePodSandboxForContainer(rc)
@@ -125,8 +129,10 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 	})
 
 	Context("runtime should support apparmor field", func() {
-		var sandboxID string
-		var sandboxConfig *runtimeapi.PodSandboxConfig
+		var (
+			sandboxID     string
+			sandboxConfig *runtimeapi.PodSandboxConfig
+		)
 
 		BeforeEach(func() {
 			sandboxID, sandboxConfig = framework.CreatePodSandboxForContainer(rc)
@@ -174,8 +180,10 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 	})
 
 	Context("runtime should prefer new apparmor field", func() {
-		var sandboxID string
-		var sandboxConfig *runtimeapi.PodSandboxConfig
+		var (
+			sandboxID     string
+			sandboxConfig *runtimeapi.PodSandboxConfig
+		)
 
 		BeforeEach(func() {
 			sandboxID, sandboxConfig = framework.CreatePodSandboxForContainer(rc)

@@ -29,6 +29,7 @@ var _ = t.Describe("config", func() {
 
 	BeforeEach(func() {
 		var err error
+
 		configFile, err = os.CreateTemp("", "crictl-*.yaml")
 		Expect(err).NotTo(HaveOccurred())
 	})
