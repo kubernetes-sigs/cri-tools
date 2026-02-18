@@ -10,7 +10,7 @@ require (
 	github.com/invopop/jsonschema v0.13.0
 	github.com/moby/term v0.5.2
 	github.com/onsi/ginkgo/v2 v2.28.1
-	github.com/onsi/gomega v1.39.0
+	github.com/onsi/gomega v1.39.1
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/selinux v1.13.1
 	github.com/sirupsen/logrus v1.9.4
