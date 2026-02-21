@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	metadata "github.com/checkpoint-restore/checkpointctl/lib"
 	"github.com/docker/go-units"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -785,55 +786,98 @@ func getSandboxesList(sandboxesList []*pb.PodSandbox, opts *listOptions) []*pb.P
 	return filtered[:n]
 }
 
-var checkpointPodCommand = &cli.Command{
-	Name:                   "checkpointp",
-	Usage:                  "Checkpoint one or more running pods",
-	ArgsUsage:              "POD-ID [POD-ID...]",
-	UseShortOptionHandling: true,
-	Flags: []cli.Flag{
+var checkpointPodCommand = func() *cli.Command {
+	flags := []cli.Flag{
 		&cli.StringFlag{
 			Name:    "export",
 			Aliases: []string{"e"},
 			Usage:   "Specify the name of the tar archive (/path/to/checkpoint.tar) used to export the checkpoint image.",
 		},
-		&cli.BoolFlag{
-			Name:    "leave-running",
-			Aliases: []string{"l"},
-			Usage:   "Leave the pod running after checkpointing.",
-		},
-	},
-	Action: func(c *cli.Context) error {
-		if c.NArg() == 0 {
-			return errors.New("ID cannot be empty")
-		}
-		if c.String("export") == "" {
-			return errors.New(
-				"cannot checkpoint a pod without specifying the checkpoint destination. " +
-					"Use --export=/path/to/checkpoint.tar",
-			)
-		}
-		runtimeClient, err := getRuntimeService(c, 0)
-		if err != nil {
-			return err
-		}
+	}
 
-		for i := range c.NArg() {
-			podID := c.Args().Get(i)
-			err := CheckpointPod(
-				c.Context,
-				runtimeClient,
-				podID,
-				c.String("export"),
-				c.Bool("leave-running"),
-			)
-			if err != nil {
-				return fmt.Errorf("checkpointing the pod %q failed: %w", podID, err)
+	// Build checkpoint option flags from SupportedCheckpointOptions
+	optionNames := make([]string, 0, len(metadata.SupportedCheckpointOptions))
+	for name := range metadata.SupportedCheckpointOptions {
+		optionNames = append(optionNames, name)
+	}
+	sort.Strings(optionNames)
+
+	for _, name := range optionNames {
+		opt := metadata.SupportedCheckpointOptions[name]
+		switch opt.Type {
+		case metadata.OptionTypeBool:
+			flags = append(flags, &cli.BoolFlag{
+				Name:  name,
+				Usage: opt.Help,
+			})
+		case metadata.OptionTypeInt:
+			flags = append(flags, &cli.Int64Flag{
+				Name:  name,
+				Usage: opt.Help,
+			})
+		case metadata.OptionTypeString:
+			flags = append(flags, &cli.StringFlag{
+				Name:  name,
+				Usage: opt.Help,
+			})
+		}
+	}
+
+	return &cli.Command{
+		Name:                   "checkpointp",
+		Usage:                  "Checkpoint one or more running pods",
+		ArgsUsage:              "POD-ID [POD-ID...]",
+		UseShortOptionHandling: true,
+		Flags:                  flags,
+		Action: func(c *cli.Context) error {
+			if c.NArg() == 0 {
+				return errors.New("ID cannot be empty")
 			}
-		}
+			if c.String("export") == "" {
+				return errors.New(
+					"cannot checkpoint a pod without specifying the checkpoint destination. " +
+						"Use --export=/path/to/checkpoint.tar",
+				)
+			}
+			runtimeClient, err := getRuntimeService(c, 0)
+			if err != nil {
+				return err
+			}
 
-		return nil
-	},
-}
+			// Collect checkpoint options that were explicitly set
+			options := make(map[string]string)
+			for name, opt := range metadata.SupportedCheckpointOptions {
+				if !c.IsSet(name) {
+					continue
+				}
+				switch opt.Type {
+				case metadata.OptionTypeBool:
+					options[name] = strconv.FormatBool(c.Bool(name))
+				case metadata.OptionTypeInt:
+					options[name] = strconv.FormatInt(c.Int64(name), 10)
+				case metadata.OptionTypeString:
+					options[name] = c.String(name)
+				}
+			}
+
+			for i := range c.NArg() {
+				podID := c.Args().Get(i)
+				err := CheckpointPod(
+					c.Context,
+					runtimeClient,
+					podID,
+					c.String("export"),
+					options,
+				)
+				if err != nil {
+					return fmt.Errorf("checkpointing the pod %q failed: %w", podID, err)
+				}
+			}
+
+			return nil
+		},
+	}
+}()
 
 // CheckpointPod sends a CheckpointPodRequest to the server.
 func CheckpointPod(
@@ -841,7 +885,7 @@ func CheckpointPod(
 	rClient internalapi.RuntimeService,
 	id string,
 	export string,
-	leaveRunning bool,
+	options map[string]string,
 ) error {
 	if id == "" {
 		return errors.New("ID cannot be empty")
@@ -850,6 +894,7 @@ func CheckpointPod(
 	request := &pb.CheckpointPodRequest{
 		PodSandboxId: id,
 		Path:         export,
+		Options:      options,
 	}
 	logrus.Debugf("CheckpointPodRequest: %v", request)
 
