@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	metadata "github.com/checkpoint-restore/checkpointctl/lib"
 	"github.com/docker/go-units"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -795,4 +796,253 @@ func getSandboxesList(sandboxesList []*pb.PodSandbox, opts *listOptions) []*pb.P
 	}(n, len(filtered))
 
 	return filtered[:n]
+}
+
+var checkpointPodCommand = func() *cli.Command {
+	flags := []cli.Flag{
+		&cli.StringFlag{
+			Name:    "export",
+			Aliases: []string{"e"},
+			Usage:   "Specify the name of the tar archive (/path/to/checkpoint.tar) used to export the checkpoint image.",
+		},
+	}
+
+	// Build checkpoint option flags from SupportedCheckpointOptions
+	optionNames := make([]string, 0, len(metadata.SupportedCheckpointOptions))
+	for name := range metadata.SupportedCheckpointOptions {
+		optionNames = append(optionNames, name)
+	}
+	sort.Strings(optionNames)
+
+	for _, name := range optionNames {
+		opt := metadata.SupportedCheckpointOptions[name]
+		switch opt.Type {
+		case metadata.OptionTypeBool:
+			flags = append(flags, &cli.BoolFlag{
+				Name:  name,
+				Usage: opt.Help,
+			})
+		case metadata.OptionTypeInt:
+			flags = append(flags, &cli.Int64Flag{
+				Name:  name,
+				Usage: opt.Help,
+			})
+		case metadata.OptionTypeString:
+			flags = append(flags, &cli.StringFlag{
+				Name:  name,
+				Usage: opt.Help,
+			})
+		}
+	}
+
+	return &cli.Command{
+		Name:                   "checkpointp",
+		Usage:                  "Checkpoint one or more running pods",
+		ArgsUsage:              "POD-ID [POD-ID...]",
+		UseShortOptionHandling: true,
+		Flags:                  flags,
+		Action: func(c *cli.Context) error {
+			if c.NArg() == 0 {
+				return errors.New("ID cannot be empty")
+			}
+			if c.String("export") == "" {
+				return errors.New(
+					"cannot checkpoint a pod without specifying the checkpoint destination. " +
+						"Use --export=/path/to/checkpoint.tar",
+				)
+			}
+			runtimeClient, err := getRuntimeService(c, 0)
+			if err != nil {
+				return err
+			}
+
+			// Collect checkpoint options that were explicitly set
+			options := make(map[string]string)
+			for name, opt := range metadata.SupportedCheckpointOptions {
+				if !c.IsSet(name) {
+					continue
+				}
+				switch opt.Type {
+				case metadata.OptionTypeBool:
+					options[name] = strconv.FormatBool(c.Bool(name))
+				case metadata.OptionTypeInt:
+					options[name] = strconv.FormatInt(c.Int64(name), 10)
+				case metadata.OptionTypeString:
+					options[name] = c.String(name)
+				}
+			}
+
+			for i := range c.NArg() {
+				podID := c.Args().Get(i)
+				err := CheckpointPod(
+					c.Context,
+					runtimeClient,
+					podID,
+					c.String("export"),
+					options,
+				)
+				if err != nil {
+					return fmt.Errorf("checkpointing the pod %q failed: %w", podID, err)
+				}
+			}
+
+			return nil
+		},
+	}
+}()
+
+// CheckpointPod sends a CheckpointPodRequest to the server.
+func CheckpointPod(
+	ctx context.Context,
+	rClient internalapi.RuntimeService,
+	id string,
+	export string,
+	options map[string]string,
+) error {
+	if id == "" {
+		return errors.New("ID cannot be empty")
+	}
+
+	request := &pb.CheckpointPodRequest{
+		PodSandboxId: id,
+		Path:         export,
+		Options:      options,
+	}
+	logrus.Debugf("CheckpointPodRequest: %v", request)
+
+	_, err := InterruptableRPC(ctx, func(ctx context.Context) (*pb.ImageFsInfoResponse, error) {
+		return nil, rClient.CheckpointPod(ctx, request)
+	})
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(id)
+
+	return nil
+}
+
+var restorePodCommand = &cli.Command{
+	Name:                   "restorep",
+	Usage:                  "Restore a pod from a checkpoint",
+	ArgsUsage:              "[OPTIONS]",
+	UseShortOptionHandling: true,
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:     "location",
+			Aliases:  []string{"l"},
+			Usage:    "Location of the checkpoint to restore from (tar archive or OCI image name)",
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:    "pod-config",
+			Aliases: []string{"c"},
+			Usage:   "Path to pod sandbox config JSON file to override checkpoint metadata",
+		},
+		&cli.StringSliceFlag{
+			Name:    "label",
+			Aliases: []string{"L"},
+			Usage:   "Labels to set on the restored pod (format: key=value)",
+		},
+		&cli.StringSliceFlag{
+			Name:    "annotation",
+			Aliases: []string{"a"},
+			Usage:   "Annotations to set on the restored pod (format: key=value)",
+		},
+	},
+	Action: func(c *cli.Context) error {
+		location := c.String("location")
+		if location == "" {
+			return errors.New("location is required")
+		}
+
+		runtimeClient, err := getRuntimeService(c, 0)
+		if err != nil {
+			return err
+		}
+
+		podID, err := RestorePod(
+			c.Context,
+			runtimeClient,
+			location,
+			c.String("pod-config"),
+			c.StringSlice("label"),
+			c.StringSlice("annotation"),
+		)
+		if err != nil {
+			return fmt.Errorf("restoring pod from %q failed: %w", location, err)
+		}
+
+		fmt.Println(podID)
+		return nil
+	},
+}
+
+// RestorePod sends a RestorePodRequest to the server.
+func RestorePod(
+	ctx context.Context,
+	rClient internalapi.RuntimeService,
+	location string,
+	podConfigPath string,
+	labels []string,
+	annotations []string,
+) (string, error) {
+	if location == "" {
+		return "", errors.New("location cannot be empty")
+	}
+
+	request := &pb.RestorePodRequest{
+		Path: location,
+	}
+
+	// Load pod config from file if provided
+	if podConfigPath != "" {
+		podConfig, err := loadPodSandboxConfig(podConfigPath)
+		if err != nil {
+			return "", fmt.Errorf("failed to load pod config: %w", err)
+		}
+		request.Config = podConfig
+	}
+
+	// Ensure Config exists if labels or annotations are provided
+	if len(labels) > 0 || len(annotations) > 0 {
+		if request.Config == nil {
+			request.Config = &pb.PodSandboxConfig{}
+		}
+	}
+
+	// Parse labels into Config
+	if len(labels) > 0 {
+		request.Config.Labels = make(map[string]string)
+		for _, label := range labels {
+			parts := strings.SplitN(label, "=", 2)
+			if len(parts) != 2 {
+				return "", fmt.Errorf("invalid label format %q, expected key=value", label)
+			}
+			request.Config.Labels[parts[0]] = parts[1]
+		}
+	}
+
+	// Parse annotations into Config
+	if len(annotations) > 0 {
+		request.Config.Annotations = make(map[string]string)
+		for _, annotation := range annotations {
+			parts := strings.SplitN(annotation, "=", 2)
+			if len(parts) != 2 {
+				return "", fmt.Errorf("invalid annotation format %q, expected key=value", annotation)
+			}
+			request.Config.Annotations[parts[0]] = parts[1]
+		}
+	}
+
+	logrus.Debugf("RestorePodRequest: %v", request)
+
+	podID, err := rClient.RestorePod(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	logrus.Infof("Restored pod sandbox %s from %s", podID, location)
+
+	return podID, nil
 }
