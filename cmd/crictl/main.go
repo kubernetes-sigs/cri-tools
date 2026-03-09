@@ -103,6 +103,8 @@ func run() error {
 		metricDescriptorsCommand,
 		completionCommand,
 		checkpointContainerCommand,
+		checkpointPodCommand,
+		restorePodCommand,
 		runtimeConfigCommand,
 		eventsCommand,
 		updateRuntimeConfigCommand,
