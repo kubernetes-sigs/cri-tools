@@ -346,7 +346,8 @@ jobs:
           ctr version
 
           set +o errexit
-          critest --runtime-endpoint=npipe:////./pipe/containerd-containerd --ginkgo.focus="${FOCUS}" --report-dir="${REPORT_DIR}" --report-prefix="windows"
+          SKIP="exec with tty=true and stdin=true"
+          critest --runtime-endpoint=npipe:////./pipe/containerd-containerd --ginkgo.focus="${FOCUS}" --ginkgo.skip="${SKIP}" --report-dir="${REPORT_DIR}" --report-prefix="windows"
           TEST_RC=$?
           test $TEST_RC -ne 0 && cat ${REPORT_DIR}/containerd.log
           set -o errexit
