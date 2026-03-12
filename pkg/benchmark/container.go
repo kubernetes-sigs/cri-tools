@@ -17,7 +17,6 @@ limitations under the License.
 package benchmark
 
 import (
-	"context"
 	"fmt"
 	"path"
 	"time"
@@ -44,13 +43,13 @@ var _ = framework.KubeDescribe("Container", func() {
 		ic internalapi.ImageManagerService
 	)
 
-	BeforeEach(func() {
+	BeforeEach(func(ctx SpecContext) {
 		rc = f.CRIClient.CRIRuntimeClient
 		ic = f.CRIClient.CRIImageClient
 	})
 
 	Context("benchmark about operations on Container", func() {
-		It("benchmark about basic operations on Container", func() {
+		It("benchmark about basic operations on Container", func(ctx SpecContext) {
 			timeout := defaultContainerBenchmarkTimeoutSeconds
 			if framework.TestContext.BenchmarkingParams.ContainerBenchmarkTimeoutSeconds > 0 {
 				timeout = framework.TestContext.BenchmarkingParams.ContainerBenchmarkTimeoutSeconds
@@ -93,20 +92,20 @@ var _ = framework.KubeDescribe("Container", func() {
 
 				durations := make([]int64, len(resultsSet.OperationsNames))
 
-				podID, podConfig = framework.CreatePodSandboxForContainer(rc)
+				podID, podConfig = framework.CreatePodSandboxForContainer(ctx, rc)
 
 				By(fmt.Sprintf("CreatingContainer %d", idx))
 
 				startTime := time.Now().UnixNano()
 				lastStartTime = startTime
-				containerID = framework.CreateDefaultContainer(rc, ic, podID, podConfig, "Benchmark-container-")
+				containerID = framework.CreateDefaultContainer(ctx, rc, ic, podID, podConfig, "Benchmark-container-")
 				lastEndTime = time.Now().UnixNano()
 				durations[0] = lastEndTime - lastStartTime
 
 				By(fmt.Sprintf("StartingContainer %d", idx))
 
 				lastStartTime = time.Now().UnixNano()
-				err = rc.StartContainer(context.TODO(), containerID)
+				err = rc.StartContainer(ctx, containerID)
 				lastEndTime = time.Now().UnixNano()
 				durations[1] = lastEndTime - lastStartTime
 
@@ -115,7 +114,7 @@ var _ = framework.KubeDescribe("Container", func() {
 				By(fmt.Sprintf("ContainerStatus %d", idx))
 
 				lastStartTime = time.Now().UnixNano()
-				_, err = rc.ContainerStatus(context.TODO(), containerID, true)
+				_, err = rc.ContainerStatus(ctx, containerID, true)
 				lastEndTime = time.Now().UnixNano()
 				durations[2] = lastEndTime - lastStartTime
 
@@ -124,7 +123,7 @@ var _ = framework.KubeDescribe("Container", func() {
 				By(fmt.Sprintf("ContainerStop %d", idx))
 
 				lastStartTime = time.Now().UnixNano()
-				err = rc.StopContainer(context.TODO(), containerID, framework.DefaultStopContainerTimeout)
+				err = rc.StopContainer(ctx, containerID, framework.DefaultStopContainerTimeout)
 				lastEndTime = time.Now().UnixNano()
 				durations[3] = lastEndTime - lastStartTime
 
@@ -133,7 +132,7 @@ var _ = framework.KubeDescribe("Container", func() {
 				By(fmt.Sprintf("ContainerRemove %d", idx))
 
 				lastStartTime = time.Now().UnixNano()
-				err = rc.RemoveContainer(context.TODO(), containerID)
+				err = rc.RemoveContainer(ctx, containerID)
 				lastEndTime = time.Now().UnixNano()
 				durations[4] = lastEndTime - lastStartTime
 
@@ -149,9 +148,9 @@ var _ = framework.KubeDescribe("Container", func() {
 				resultsChannel <- &res
 
 				By(fmt.Sprintf("stop PodSandbox %d", idx))
-				Expect(rc.StopPodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
+				Expect(rc.StopPodSandbox(ctx, podID)).NotTo(HaveOccurred())
 				By(fmt.Sprintf("delete PodSandbox %d", idx))
-				Expect(rc.RemovePodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
+				Expect(rc.RemovePodSandbox(ctx, podID)).NotTo(HaveOccurred())
 			}, samplingConfig)
 
 			// Send nil and give the manager a minute to process any already-queued results:

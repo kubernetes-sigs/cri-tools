@@ -17,7 +17,6 @@ limitations under the License.
 package benchmark
 
 import (
-	"context"
 	"fmt"
 	"path"
 	"time"
@@ -41,12 +40,12 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 	var c internalapi.RuntimeService
 
-	BeforeEach(func() {
+	BeforeEach(func(ctx SpecContext) {
 		c = f.CRIClient.CRIRuntimeClient
 	})
 
 	Context("benchmark about operations on PodSandbox", func() {
-		It("benchmark about lifecycle of PodSandbox", func() {
+		It("benchmark about lifecycle of PodSandbox", func(ctx SpecContext) {
 			timeout := defaultPodBenchmarkTimeoutSeconds
 			if framework.TestContext.BenchmarkingParams.ContainerBenchmarkTimeoutSeconds > 0 {
 				timeout = framework.TestContext.BenchmarkingParams.ContainerBenchmarkTimeoutSeconds
@@ -93,7 +92,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				config := &runtimeapi.PodSandboxConfig{
 					Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 					Linux: &runtimeapi.LinuxPodSandboxConfig{
-						CgroupParent: common.GetCgroupParent(context.TODO(), c),
+						CgroupParent: common.GetCgroupParent(ctx, c),
 					},
 					Labels: framework.DefaultPodLabels,
 				}
@@ -102,7 +101,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 				startTime := time.Now().UnixNano()
 				lastStartTime = startTime
-				podID, err = c.RunPodSandbox(context.TODO(), config, framework.TestContext.RuntimeHandler)
+				podID, err = c.RunPodSandbox(ctx, config, framework.TestContext.RuntimeHandler)
 				lastEndTime = time.Now().UnixNano()
 				durations[0] = lastEndTime - lastStartTime
 
@@ -111,7 +110,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				By(fmt.Sprintf("Get Pod status %d", idx))
 
 				lastStartTime = time.Now().UnixNano()
-				_, err = c.PodSandboxStatus(context.TODO(), podID, true)
+				_, err = c.PodSandboxStatus(ctx, podID, true)
 				lastEndTime = time.Now().UnixNano()
 				durations[1] = lastEndTime - lastStartTime
 
@@ -120,7 +119,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				By(fmt.Sprintf("Stop PodSandbox %d", idx))
 
 				lastStartTime = time.Now().UnixNano()
-				err = c.StopPodSandbox(context.TODO(), podID)
+				err = c.StopPodSandbox(ctx, podID)
 				lastEndTime = time.Now().UnixNano()
 				durations[2] = lastEndTime - lastStartTime
 
@@ -129,7 +128,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				By(fmt.Sprintf("Remove PodSandbox %d", idx))
 
 				lastStartTime = time.Now().UnixNano()
-				err = c.RemovePodSandbox(context.TODO(), podID)
+				err = c.RemovePodSandbox(ctx, podID)
 				lastEndTime = time.Now().UnixNano()
 				durations[3] = lastEndTime - lastStartTime
 

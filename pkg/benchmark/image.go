@@ -17,7 +17,6 @@ limitations under the License.
 package benchmark
 
 import (
-	"context"
 	"fmt"
 	"path"
 	"runtime"
@@ -68,21 +67,21 @@ var _ = framework.KubeDescribe("Image", func() {
 		}
 	}
 
-	BeforeEach(func() {
+	BeforeEach(func(ctx SpecContext) {
 		ic = f.CRIClient.CRIImageClient
 	})
 
-	AfterEach(func() {
+	AfterEach(func(ctx SpecContext) {
 		for _, imageName := range testImageList {
 			imageSpec := &runtimeapi.ImageSpec{
 				Image: imageName,
 			}
-			Expect(ic.RemoveImage(context.TODO(), imageSpec)).NotTo(HaveOccurred())
+			Expect(ic.RemoveImage(ctx, imageSpec)).NotTo(HaveOccurred())
 		}
 	})
 
 	Context("benchmark about operations on Image", func() {
-		It("benchmark about basic operations on Image", func() {
+		It("benchmark about basic operations on Image", func(ctx SpecContext) {
 			var err error
 
 			imageBenchmarkTimeoutSeconds := defaultImageBenchmarkTimeoutSeconds
@@ -140,14 +139,14 @@ var _ = framework.KubeDescribe("Image", func() {
 
 				startTime := time.Now().UnixNano()
 				lastStartTime = startTime
-				imageID := framework.PullPublicImage(ic, imagePullingBenchmarkImage, nil)
+				imageID := framework.PullPublicImage(ctx, ic, imagePullingBenchmarkImage, nil)
 				lastEndTime = time.Now().UnixNano()
 				durations[0] = lastEndTime - lastStartTime
 
 				By(fmt.Sprintf("Status Image %d", idx))
 
 				lastStartTime = time.Now().UnixNano()
-				_, err = ic.ImageStatus(context.TODO(), imageSpec, false)
+				_, err = ic.ImageStatus(ctx, imageSpec, false)
 				lastEndTime = time.Now().UnixNano()
 				durations[1] = lastEndTime - lastStartTime
 
@@ -156,7 +155,7 @@ var _ = framework.KubeDescribe("Image", func() {
 				By(fmt.Sprintf("Remove Image %d", idx))
 
 				lastStartTime = time.Now().UnixNano()
-				err = ic.RemoveImage(context.TODO(), imageSpec)
+				err = ic.RemoveImage(ctx, imageSpec)
 				lastEndTime = time.Now().UnixNano()
 				durations[2] = lastEndTime - lastStartTime
 
@@ -193,7 +192,7 @@ var _ = framework.KubeDescribe("Image", func() {
 			}
 		})
 
-		It("benchmark about listing Image", func() {
+		It("benchmark about listing Image", func(ctx SpecContext) {
 			var err error
 
 			imageBenchmarkTimeoutSeconds := defaultImageBenchmarkTimeoutSeconds
@@ -235,7 +234,7 @@ var _ = framework.KubeDescribe("Image", func() {
 				By(fmt.Sprintf("List Images %d", idx))
 
 				startTime := time.Now().UnixNano()
-				_, err = ic.ListImages(context.TODO(), nil)
+				_, err = ic.ListImages(ctx, nil)
 				endTime := time.Now().UnixNano()
 				durations[0] = endTime - startTime
 
