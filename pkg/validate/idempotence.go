@@ -17,8 +17,6 @@ limitations under the License.
 package validate
 
 import (
-	"context"
-
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -30,7 +28,6 @@ import (
 
 var _ = framework.KubeDescribe("Idempotence", func() {
 	f := framework.NewDefaultCRIFramework()
-	c := context.Background()
 
 	var (
 		rc internalapi.RuntimeService
@@ -44,89 +41,89 @@ var _ = framework.KubeDescribe("Idempotence", func() {
 
 	// https://github.com/kubernetes/cri-api/blob/c20fa40/pkg/apis/runtime/v1/api.proto#L45-L46
 	Context("StopPodSandbox", func() {
-		It("should not return an error if not found", func() {
+		It("should not return an error if not found", func(ctx SpecContext) {
 			By("stop not existing sandbox")
-			Expect(rc.StopPodSandbox(c, uuid.New().String())).NotTo(HaveOccurred())
+			Expect(rc.StopPodSandbox(ctx, uuid.New().String())).NotTo(HaveOccurred())
 		})
 
-		It("should not return an error if already stopped", func() {
+		It("should not return an error if already stopped", func(ctx SpecContext) {
 			By("run PodSandbox")
 
-			podID := framework.RunDefaultPodSandbox(rc, "idempotence-pod-")
+			podID := framework.RunDefaultPodSandbox(ctx, rc, "idempotence-pod-")
 
 			By("stop sandbox")
-			testStopPodSandbox(rc, podID)
+			testStopPodSandbox(ctx, rc, podID)
 
 			By("stop sandbox again")
-			testStopPodSandbox(rc, podID)
+			testStopPodSandbox(ctx, rc, podID)
 
 			By("delete sandbox as cleanup")
-			Expect(rc.RemovePodSandbox(c, podID)).NotTo(HaveOccurred())
+			Expect(rc.RemovePodSandbox(ctx, podID)).NotTo(HaveOccurred())
 		})
 	})
 
 	// https://github.com/kubernetes/cri-api/blob/c20fa40/pkg/apis/runtime/v1/api.proto#L53-L54
 	Context("RemovePodSandbox", func() {
-		It("should not return an error if not found", func() {
+		It("should not return an error if not found", func(ctx SpecContext) {
 			By("remove not existing sandbox")
-			Expect(rc.RemovePodSandbox(c, uuid.New().String())).NotTo(HaveOccurred())
+			Expect(rc.RemovePodSandbox(ctx, uuid.New().String())).NotTo(HaveOccurred())
 		})
 	})
 
 	// https://github.com/kubernetes/cri-api/blob/c20fa40/pkg/apis/runtime/v1/api.proto#L67-L68
 	Context("StopContainer", func() {
-		It("should not return an error if not found", func() {
+		It("should not return an error if not found", func(ctx SpecContext) {
 			By("test stop not existing container")
-			Expect(rc.StopContainer(c, uuid.New().String(), 0)).NotTo(HaveOccurred())
+			Expect(rc.StopContainer(ctx, uuid.New().String(), 0)).NotTo(HaveOccurred())
 		})
 
-		It("should not return an error if already stopped", func() {
+		It("should not return an error if already stopped", func(ctx SpecContext) {
 			By("create sandbox")
 
-			podID, podConfig := framework.CreatePodSandboxForContainer(rc)
+			podID, podConfig := framework.CreatePodSandboxForContainer(ctx, rc)
 
 			By("create container")
 
-			containerID := framework.CreatePauseContainer(rc, ic, podID, podConfig, "idempotence-container-")
+			containerID := framework.CreatePauseContainer(ctx, rc, ic, podID, podConfig, "idempotence-container-")
 
 			By("start container")
-			startContainer(rc, containerID)
+			startContainer(ctx, rc, containerID)
 
 			By("stop container")
-			testStopContainer(rc, containerID)
+			testStopContainer(ctx, rc, containerID)
 
 			By("remove container")
-			removeContainer(rc, containerID)
+			removeContainer(ctx, rc, containerID)
 
 			By("remove container again")
-			removeContainer(rc, containerID)
+			removeContainer(ctx, rc, containerID)
 
 			By("stop sandbox as cleanup")
-			Expect(rc.StopPodSandbox(c, podID)).NotTo(HaveOccurred())
+			Expect(rc.StopPodSandbox(ctx, podID)).NotTo(HaveOccurred())
 
 			By("delete sandbox as cleanup")
-			Expect(rc.RemovePodSandbox(c, podID)).NotTo(HaveOccurred())
+			Expect(rc.RemovePodSandbox(ctx, podID)).NotTo(HaveOccurred())
 		})
 	})
 
 	// https://github.com/kubernetes/cri-api/blob/c20fa40/pkg/apis/runtime/v1/api.proto#L74-L75
 	Context("RemoveContainer", func() {
-		It("should not return an error if not found", func() {
+		It("should not return an error if not found", func(ctx SpecContext) {
 			By("remove not existing container")
-			Expect(rc.RemoveContainer(c, uuid.New().String())).NotTo(HaveOccurred())
+			Expect(rc.RemoveContainer(ctx, uuid.New().String())).NotTo(HaveOccurred())
 		})
 	})
 
 	// https://github.com/kubernetes/cri-api/blob/c20fa40/pkg/apis/runtime/v1/api.proto#L156-L157
 	Context("RemoveImage", func() {
-		It("should not return an error if not found", func() {
+		It("should not return an error if not found", func(ctx SpecContext) {
 			By("remove not existing image")
 
 			const fakeImageID = "0000000000000000000000000000000000000000000000000000000000000000"
-			Expect(ic.RemoveImage(c, &runtimeapi.ImageSpec{Image: fakeImageID})).NotTo(HaveOccurred())
+			Expect(ic.RemoveImage(ctx, &runtimeapi.ImageSpec{Image: fakeImageID})).NotTo(HaveOccurred())
 
 			By("remove the image again")
-			Expect(ic.RemoveImage(c, &runtimeapi.ImageSpec{Image: fakeImageID})).NotTo(HaveOccurred())
+			Expect(ic.RemoveImage(ctx, &runtimeapi.ImageSpec{Image: fakeImageID})).NotTo(HaveOccurred())
 		})
 	})
 })

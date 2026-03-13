@@ -59,22 +59,22 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			podConfig *runtimeapi.PodSandboxConfig
 		)
 
-		AfterEach(func() {
+		AfterEach(func(ctx SpecContext) {
 			By("stop PodSandbox")
-			Expect(rc.StopPodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
+			Expect(rc.StopPodSandbox(ctx, podID)).NotTo(HaveOccurred())
 			By("delete PodSandbox")
-			Expect(rc.RemovePodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
+			Expect(rc.RemovePodSandbox(ctx, podID)).NotTo(HaveOccurred())
 		})
 
-		It("runtime should support exec with tty=false and stdin=false [Conformance]", func() {
-			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
+		It("runtime should support exec with tty=false and stdin=false [Conformance]", func(ctx SpecContext) {
+			podID, podConfig = framework.CreatePodSandboxForContainer(ctx, rc)
 
 			By("create a default container")
 
-			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-exec-test")
+			containerID := framework.CreateDefaultContainer(ctx, rc, ic, podID, podConfig, "container-for-exec-test")
 
 			By("start container")
-			startContainer(rc, containerID)
+			startContainer(ctx, rc, containerID)
 
 			execReq := &runtimeapi.ExecRequest{
 				ContainerId: containerID,
@@ -82,21 +82,21 @@ var _ = framework.KubeDescribe("Streaming", func() {
 				Stdout:      true,
 				Stderr:      true,
 			}
-			req := createExec(rc, execReq)
+			req := createExec(ctx, rc, execReq)
 
 			By("check the output of exec")
-			checkExec(rc, req, echoHelloOutput, true, false)
+			checkExec(ctx, rc, req, echoHelloOutput, true, false)
 		})
 
-		It("runtime should support exec with tty=true and stdin=true [Conformance]", func() {
-			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
+		It("runtime should support exec with tty=true and stdin=true [Conformance]", func(ctx SpecContext) {
+			podID, podConfig = framework.CreatePodSandboxForContainer(ctx, rc)
 
 			By("create a default container")
 
-			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-exec-test")
+			containerID := framework.CreateDefaultContainer(ctx, rc, ic, podID, podConfig, "container-for-exec-test")
 
 			By("start container")
-			startContainer(rc, containerID)
+			startContainer(ctx, rc, containerID)
 
 			execReq := &runtimeapi.ExecRequest{
 				ContainerId: containerID,
@@ -105,29 +105,29 @@ var _ = framework.KubeDescribe("Streaming", func() {
 				Tty:         true,
 				Stdin:       true,
 			}
-			req := createExec(rc, execReq)
+			req := createExec(ctx, rc, execReq)
 
 			By("check the output of exec")
-			checkExec(rc, req, "hello", false, true)
+			checkExec(ctx, rc, req, "hello", false, true)
 		})
 
-		It("runtime should support attach [Conformance]", func() {
-			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
+		It("runtime should support attach [Conformance]", func(ctx SpecContext) {
+			podID, podConfig = framework.CreatePodSandboxForContainer(ctx, rc)
 
 			By("create a default container")
 
-			containerID := createShellContainer(rc, ic, podID, podConfig, "container-for-attach-test")
+			containerID := createShellContainer(ctx, rc, ic, podID, podConfig, "container-for-attach-test")
 
 			By("start container")
-			startContainer(rc, containerID)
+			startContainer(ctx, rc, containerID)
 
-			req := createDefaultAttach(rc, containerID)
+			req := createDefaultAttach(ctx, rc, containerID)
 
 			By("check the output of attach")
-			checkAttach(rc, req)
+			checkAttach(ctx, rc, req)
 		})
 
-		It("runtime should support portforward [Conformance]", func() {
+		It("runtime should support portforward [Conformance]", func(ctx SpecContext) {
 			By("create a PodSandbox with container port mapping")
 
 			var podConfig *runtimeapi.PodSandboxConfig
@@ -137,36 +137,36 @@ var _ = framework.KubeDescribe("Streaming", func() {
 					ContainerPort: webServerContainerPort,
 				},
 			}
-			podID, podConfig = createPodSandboxWithPortMapping(rc, portMappings, false)
+			podID, podConfig = createPodSandboxWithPortMapping(ctx, rc, portMappings, false)
 
 			By("create a web server container")
 
-			containerID := createWebServerContainer(rc, ic, podID, podConfig, "container-for-portforward-test")
+			containerID := createWebServerContainer(ctx, rc, ic, podID, podConfig, "container-for-portforward-test")
 
 			By("start the web server container")
-			startContainer(rc, containerID)
+			startContainer(ctx, rc, containerID)
 
 			By("ensure the web server container is serving")
-			checkMainPage(rc, podID, 0, webServerContainerPort)
+			checkMainPage(ctx, rc, podID, 0, webServerContainerPort)
 
-			req := createDefaultPortForward(rc, podID)
+			req := createDefaultPortForward(ctx, rc, podID)
 
 			By("check the output of portforward")
-			checkPortForward(rc, req, webServerHostPortForPortForward, webServerContainerPort)
+			checkPortForward(ctx, rc, req, webServerHostPortForPortForward, webServerContainerPort)
 		})
 	})
 })
 
-func createExec(c internalapi.RuntimeService, execReq *runtimeapi.ExecRequest) string {
+func createExec(ctx context.Context, c internalapi.RuntimeService, execReq *runtimeapi.ExecRequest) string {
 	By("exec given command in container: " + execReq.GetContainerId())
-	resp, err := c.Exec(context.TODO(), execReq)
+	resp, err := c.Exec(ctx, execReq)
 	framework.ExpectNoError(err, "failed to exec in container %q", execReq.GetContainerId())
 	framework.Logf("Get exec URL: " + resp.GetUrl())
 
 	return resp.GetUrl()
 }
 
-func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, stdoutExactMatch, isTty bool) {
+func checkExec(ctx context.Context, c internalapi.RuntimeService, execServerURL, stdout string, stdoutExactMatch, isTty bool) {
 	var (
 		localOut                  = &safeBuffer{buffer: bytes.Buffer{}}
 		localErr                  = &safeBuffer{buffer: bytes.Buffer{}}
@@ -193,7 +193,7 @@ func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, stdou
 
 	// Only http is supported now.
 	// TODO: support streaming APIs via tls.
-	parsedURL := parseURL(c, execServerURL)
+	parsedURL := parseURL(ctx, c, execServerURL)
 
 	transport := common.TransportSpdy
 	if framework.TestContext.UseWebsocketForExec {
@@ -213,7 +213,7 @@ func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, stdou
 		streamOptions.Tty = true
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	err = e.StreamWithContext(ctx, streamOptions)
@@ -229,11 +229,11 @@ func checkExec(c internalapi.RuntimeService, execServerURL, stdout string, stdou
 	framework.Logf("Check exec URL %q succeed", execServerURL)
 }
 
-func parseURL(c internalapi.RuntimeService, serverURL string) *url.URL {
+func parseURL(ctx context.Context, c internalapi.RuntimeService, serverURL string) *url.URL {
 	parsedURL, err := url.Parse(serverURL)
 	framework.ExpectNoError(err, "failed to parse URL:  %q", serverURL)
 
-	version := getVersion(c)
+	version := getVersion(ctx, c)
 	if version.GetRuntimeName() == "docker" {
 		if parsedURL.Host == "" {
 			parsedURL.Host = defaultStreamServerAddress
@@ -250,7 +250,7 @@ func parseURL(c internalapi.RuntimeService, serverURL string) *url.URL {
 	return parsedURL
 }
 
-func createDefaultAttach(c internalapi.RuntimeService, containerID string) string {
+func createDefaultAttach(ctx context.Context, c internalapi.RuntimeService, containerID string) string {
 	By("attach container: " + containerID)
 	req := &runtimeapi.AttachRequest{
 		ContainerId: containerID,
@@ -260,7 +260,7 @@ func createDefaultAttach(c internalapi.RuntimeService, containerID string) strin
 		Tty:         false,
 	}
 
-	resp, err := c.Attach(context.TODO(), req)
+	resp, err := c.Attach(ctx, req)
 	framework.ExpectNoError(err, "failed to attach in container %q", containerID)
 	framework.Logf("Get attach URL: " + resp.GetUrl())
 
@@ -291,7 +291,7 @@ func (s *safeBuffer) String() string {
 	return s.buffer.String()
 }
 
-func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
+func checkAttach(ctx context.Context, c internalapi.RuntimeService, attachServerURL string) {
 	localOut := &safeBuffer{buffer: bytes.Buffer{}}
 	localErr := &safeBuffer{buffer: bytes.Buffer{}}
 	reader, writer := io.Pipe()
@@ -322,7 +322,7 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 
 	// Only http is supported now.
 	// TODO: support streaming APIs via tls.
-	parsedURL := parseURL(c, attachServerURL)
+	parsedURL := parseURL(ctx, c, attachServerURL)
 
 	transport := common.TransportSpdy
 	if framework.TestContext.UseWebsocketForAttach {
@@ -332,7 +332,7 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 	e, err := common.GetExecutor(transport, parsedURL, &rest.TLSClientConfig{Insecure: true})
 	framework.ExpectNoError(err, "failed to create executor for %q", attachServerURL)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	err = e.StreamWithContext(ctx, remoteclient.StreamOptions{
@@ -347,26 +347,26 @@ func checkAttach(c internalapi.RuntimeService, attachServerURL string) {
 	framework.Logf("Check attach URL %q succeed", attachServerURL)
 }
 
-func createDefaultPortForward(c internalapi.RuntimeService, podID string) string {
+func createDefaultPortForward(ctx context.Context, c internalapi.RuntimeService, podID string) string {
 	By("port forward PodSandbox: " + podID)
 	req := &runtimeapi.PortForwardRequest{
 		PodSandboxId: podID,
 	}
 
-	resp, err := c.PortForward(context.TODO(), req)
+	resp, err := c.PortForward(ctx, req)
 	framework.ExpectNoError(err, "failed to port forward PodSandbox %q", podID)
 	framework.Logf("Get port forward URL: " + resp.GetUrl())
 
 	return resp.GetUrl()
 }
 
-func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string, hostPort, containerPort int32) {
+func checkPortForward(ctx context.Context, c internalapi.RuntimeService, portForwardSeverURL string, hostPort, containerPort int32) {
 	stopChan := make(chan struct{}, 1)
 	readyChan := make(chan struct{})
 
 	defer close(stopChan)
 
-	parsedURL := parseURL(c, portForwardSeverURL)
+	parsedURL := parseURL(ctx, c, portForwardSeverURL)
 
 	transport := common.TransportSpdy
 	if framework.TestContext.UseWebsocketForPortForward {
@@ -392,6 +392,6 @@ func checkPortForward(c internalapi.RuntimeService, portForwardSeverURL string, 
 	}()
 
 	By(fmt.Sprintf("check if we can get nginx main page via localhost:%d", hostPort))
-	checkMainPage(c, "", hostPort, 0)
+	checkMainPage(ctx, c, "", hostPort, 0)
 	framework.Logf("Check port forward URL %q succeed", portForwardSeverURL)
 }

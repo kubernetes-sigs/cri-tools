@@ -17,8 +17,6 @@ limitations under the License.
 package benchmark
 
 import (
-	"context"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gmeasure"
@@ -51,7 +49,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 		ic         internalapi.ImageManagerService
 	)
 
-	BeforeEach(func() {
+	BeforeEach(func(ctx SpecContext) {
 		experiment = gmeasure.NewExperiment("start-container-benchmark")
 		AddReportEntry(experiment.Name, experiment)
 
@@ -60,36 +58,36 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 	})
 
 	Context("benchmark about start a container from scratch", func() {
-		It("benchmark about start a container from scratch", func() {
+		It("benchmark about start a container from scratch", func(ctx SpecContext) {
 			podSandboxName := "PodSandbox-for-creating-pod-and-container-performance-test-" + framework.NewUUID()
 			uid := framework.DefaultUIDPrefix + framework.NewUUID()
 			namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
 			config := &runtimeapi.PodSandboxConfig{
 				Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
 				Linux: &runtimeapi.LinuxPodSandboxConfig{
-					CgroupParent: common.GetCgroupParent(context.TODO(), rc),
+					CgroupParent: common.GetCgroupParent(ctx, rc),
 				},
 			}
 
 			benchmark := func() {
 				By("run PodSandbox")
 
-				podID, err := rc.RunPodSandbox(context.TODO(), config, framework.TestContext.RuntimeHandler)
+				podID, err := rc.RunPodSandbox(ctx, config, framework.TestContext.RuntimeHandler)
 				framework.ExpectNoError(err, "failed to create PodSandbox: %v", err)
 
 				By("create container in PodSandbox")
 
-				containerID := framework.CreateDefaultContainer(rc, ic, podID, config, "Pod-Container-for-creating-benchmark-")
+				containerID := framework.CreateDefaultContainer(ctx, rc, ic, podID, config, "Pod-Container-for-creating-benchmark-")
 
 				By("start container in PodSandbox")
 
-				err = rc.StartContainer(context.TODO(), containerID)
+				err = rc.StartContainer(ctx, containerID)
 				framework.ExpectNoError(err, "failed to start Container: %v", err)
 
 				By("stop PodSandbox")
-				Expect(rc.StopPodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
+				Expect(rc.StopPodSandbox(ctx, podID)).NotTo(HaveOccurred())
 				By("delete PodSandbox")
-				Expect(rc.RemovePodSandbox(context.TODO(), podID)).NotTo(HaveOccurred())
+				Expect(rc.RemovePodSandbox(ctx, podID)).NotTo(HaveOccurred())
 			}
 
 			// Run a single test to ensure images are available and everything works
