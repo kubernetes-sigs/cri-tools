@@ -474,8 +474,17 @@ List containers and check the container is in Created state:
 
 ```sh
 $ crictl ps -a
-CONTAINER ID        IMAGE               CREATED             STATE               NAME                ATTEMPT
-3e025dd50a72d       busybox             32 seconds ago      Created             busybox             0
+CONTAINER           IMAGE               CREATED             STATE               NAME                       ATTEMPT             POD ID              POD
+c5d18c6566fa3       2bd29714875d9       7 hours ago         Running             nginx                      17                  f86f7fefb2d60       nginx-demo
+# columns are defined as follows:
+# CONTAINER: short ID of the container
+# IMAGE: image ID of the container. it's a SHA256 cryptographic hash uniquely identifying the container image's content; calculated from its complete layered filesystem and metadata.
+# CREATED: time when the container was created
+# STATE: state of the container, e.g. created, running, exited, etc.
+# NAME: name of the container
+# ATTEMPT: container restart count
+# POD ID: sandbox ID of the pod
+# POD: name of the pod in k8s
 ```
 
 ### Start container
