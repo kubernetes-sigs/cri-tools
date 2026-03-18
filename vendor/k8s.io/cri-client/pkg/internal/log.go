@@ -1,6 +1,3 @@
-//go:build !windows
-// +build !windows
-
 /*
 Copyright 2024 The Kubernetes Authors.
 
@@ -17,13 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package logs
+package internal
 
-import (
-	"os"
-)
+import "k8s.io/klog/v2"
 
-func openFileShareDelete(path string) (*os.File, error) {
-	// Noop. Only relevant for Windows.
-	return os.Open(path)
+func Log(logger *klog.Logger, level int, msg string, keyAndValues ...any) {
+	if logger == nil {
+		return
+	}
+	logger.V(level).Info(msg, keyAndValues...)
+}
+
+func LogErr(logger *klog.Logger, err error, msg string, keyAndValues ...any) {
+	if logger == nil {
+		return
+	}
+	logger.Error(err, msg, keyAndValues...)
 }
