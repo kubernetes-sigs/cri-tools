@@ -20,6 +20,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -37,22 +38,31 @@ import (
 
 // expectedMetricDescriptorNames contains all expected metric descriptor names
 // based on metrics returned by kubelet with CRI-O and cadvisor on the legacy cadvisor stats provider
-// on kubernetes 1.35.
+// on kubernetes 1.37.
 var expectedMetricDescriptorNames = []string{
 	"container_blkio_device_usage_total",
+	"container_cpu_cfs_periods_total",
+	"container_cpu_cfs_throttled_periods_total",
+	"container_cpu_cfs_throttled_seconds_total",
 	"container_cpu_system_seconds_total",
 	"container_cpu_usage_seconds_total",
 	"container_cpu_user_seconds_total",
 	"container_file_descriptors",
+	"container_fs_inodes_free",
+	"container_fs_inodes_total",
+	"container_fs_limit_bytes",
 	"container_fs_reads_bytes_total",
 	"container_fs_reads_total",
 	"container_fs_usage_bytes",
 	"container_fs_writes_bytes_total",
 	"container_fs_writes_total",
+	"container_hugetlb_max_usage_bytes",
+	"container_hugetlb_usage_bytes",
 	"container_last_seen",
 	"container_memory_cache",
 	"container_memory_failcnt",
 	"container_memory_failures_total",
+	"container_memory_kernel_usage",
 	"container_memory_mapped_file",
 	"container_memory_max_usage_bytes",
 	"container_memory_rss",
@@ -68,9 +78,16 @@ var expectedMetricDescriptorNames = []string{
 	"container_network_transmit_packets_dropped_total",
 	"container_network_transmit_packets_total",
 	"container_oom_events_total",
+	"container_pressure_cpu_stalled_seconds_total",
+	"container_pressure_cpu_waiting_seconds_total",
+	"container_pressure_io_stalled_seconds_total",
+	"container_pressure_io_waiting_seconds_total",
+	"container_pressure_memory_stalled_seconds_total",
+	"container_pressure_memory_waiting_seconds_total",
 	"container_processes",
 	"container_sockets",
 	"container_spec_cpu_period",
+	"container_spec_cpu_quota",
 	"container_spec_cpu_shares",
 	"container_spec_memory_limit_bytes",
 	"container_spec_memory_reservation_limit_bytes",
@@ -79,6 +96,19 @@ var expectedMetricDescriptorNames = []string{
 	"container_threads",
 	"container_threads_max",
 	"container_ulimits_soft",
+}
+
+// optionalValuesForMetricDescriptors contains the metric descriptors that have
+// optional values due to test environment limitations.
+var optionalValuesForMetricDescriptors = []string{
+	// All of these depend on blkio cgroup accounting, which doesn't work on
+	// GitHub actions runners because the overlay filesystem is typically backed
+	// by a virtual disk that doesn't report per-device I/O stats.
+	"container_blkio_device_usage_total",
+	"container_fs_reads_bytes_total",
+	"container_fs_reads_total",
+	"container_fs_writes_bytes_total",
+	"container_fs_writes_total",
 }
 
 var _ = framework.KubeDescribe("PodSandbox", func() {
@@ -227,7 +257,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 			By("create container in pod")
 
 			ic := f.CRIClient.CRIImageClient
-			containerID := framework.CreateDefaultContainer(context.TODO(), rc, ic, podID, podConfig, "container-for-metrics-")
+			containerID := createContainerForMetrics(context.TODO(), rc, ic, podID, podConfig)
 
 			By("start container")
 			startContainer(context.TODO(), rc, containerID)
@@ -236,7 +266,6 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				context.TODO(), containerID, []string{"/bin/sh", "-c", "for i in $(seq 1 10); do echo hi >> /var/lib/mydisktest/inode_test_file_$i; done; sync"},
 				time.Duration(defaultExecSyncTimeout)*time.Second,
 			)
-
 			Expect(err).ToNot(HaveOccurred())
 
 			By("list metric descriptors")
@@ -382,7 +411,6 @@ func createPodSandboxWithLogDirectory(ctx context.Context, c internalapi.Runtime
 // testMetricDescriptors verifies that all expected metric descriptors are present.
 func testMetricDescriptors(descs []*runtimeapi.MetricDescriptor) {
 	returnedDescriptors := make(map[string]*runtimeapi.MetricDescriptor)
-
 	for _, desc := range descs {
 		returnedDescriptors[desc.GetName()] = desc
 		Expect(desc.GetHelp()).NotTo(BeEmpty(), "Metric descriptor %q should have help text", desc.GetName())
@@ -427,7 +455,6 @@ func testPodSandboxMetrics(allMetrics []*runtimeapi.PodSandboxMetrics, descs []*
 	Expect(podMetrics).NotTo(BeNil(), "Metrics for pod %q should be present", podID)
 
 	metricNamesFound := make(map[string][]string)
-
 	for _, metric := range podMetrics.GetMetrics() {
 		if len(metricNamesFound[metric.GetName()]) == 0 {
 			metricNamesFound[metric.GetName()] = metric.GetLabelValues()
@@ -446,6 +473,10 @@ func testPodSandboxMetrics(allMetrics []*runtimeapi.PodSandboxMetrics, descs []*
 
 	for _, expectedName := range expectedMetricDescriptorNames {
 		if len(metricNamesFound[expectedName]) == 0 {
+			if slices.Contains(optionalValuesForMetricDescriptors, expectedName) {
+				continue // skip optional values
+			}
+
 			missingMetrics = append(missingMetrics, expectedName)
 		}
 	}
@@ -455,10 +486,42 @@ func testPodSandboxMetrics(allMetrics []*runtimeapi.PodSandboxMetrics, descs []*
 	mismatchedLabels := []string{}
 
 	for _, desc := range descs {
-		if len(metricNamesFound[desc.GetName()]) != len(desc.GetLabelKeys()) {
+		values, found := metricNamesFound[desc.GetName()]
+		if !found {
+			if slices.Contains(optionalValuesForMetricDescriptors, desc.GetName()) {
+				continue
+			}
+
+			mismatchedLabels = append(mismatchedLabels, desc.GetName())
+
+			continue
+		}
+
+		if len(values) != len(desc.GetLabelKeys()) {
 			mismatchedLabels = append(mismatchedLabels, desc.GetName())
 		}
 	}
 
 	Expect(mismatchedLabels).To(BeEmpty(), "Expected %s metrics to have same set of labels in ListMetricDescriptors and ListPodSandboxMetrics", strings.Join(mismatchedLabels, ","))
+}
+
+// createContainerForMetrics creates a container for metrics.
+func createContainerForMetrics(ctx context.Context, rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig) string {
+	containerName := "container-for-metrics-" + framework.NewUUID()
+	containerConfig := &runtimeapi.ContainerConfig{
+		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
+		Command:  framework.DefaultContainerCommand,
+		Linux: &runtimeapi.LinuxContainerConfig{
+			Resources: &runtimeapi.LinuxContainerResources{
+				CpuPeriod:              100000,
+				CpuQuota:               20000,
+				CpuShares:              1024,
+				MemoryLimitInBytes:     64 * 1024 * 1024,
+				MemorySwapLimitInBytes: 64 * 1024 * 1024,
+			},
+		},
+	}
+
+	return framework.CreateContainer(ctx, rc, ic, containerConfig, podID, podConfig)
 }
