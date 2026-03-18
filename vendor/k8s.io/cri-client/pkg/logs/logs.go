@@ -39,6 +39,7 @@ import (
 	"k8s.io/klog/v2"
 
 	remote "k8s.io/cri-client/pkg"
+	"k8s.io/cri-client/pkg/internal"
 )
 
 // Notice that the current CRI logs implementation doesn't handle
@@ -290,7 +291,7 @@ func (w *logWriter) write(msg *logMessage, addPrefix bool) error {
 // ReadLogs read the container log and redirect into stdout and stderr.
 // Note that containerID is only needed when following the log, or else
 // just pass in empty string "".
-func ReadLogs(ctx context.Context, path, containerID string, opts *LogOptions, runtimeService internalapi.RuntimeService, stdout, stderr io.Writer) error {
+func ReadLogs(ctx context.Context, logger *klog.Logger, path, containerID string, opts *LogOptions, runtimeService internalapi.RuntimeService, stdout, stderr io.Writer) error {
 	// fsnotify has different behavior for symlinks in different platform,
 	// for example it follows symlink on Linux, but not on Windows,
 	// so we explicitly resolve symlinks before reading the logs.
@@ -330,11 +331,9 @@ func ReadLogs(ctx context.Context, path, containerID string, opts *LogOptions, r
 	msg := &logMessage{}
 	baseName := filepath.Base(path)
 	dir := filepath.Dir(path)
-	logger := klog.FromContext(ctx)
-
 	for {
 		if stop || (limitedMode && limitedNum == 0) {
-			logger.V(2).Info("Finished parsing log file", "path", path)
+			internal.Log(logger, 2, "Finished parsing log file", "path", path)
 			return nil
 		}
 		l, err := r.ReadBytes(eol[0])
@@ -367,7 +366,7 @@ func ReadLogs(ctx context.Context, path, containerID string, opts *LogOptions, r
 				}
 				var recreated bool
 				// Wait until the next log change.
-				found, recreated, err = waitLogs(ctx, containerID, baseName, watcher, runtimeService)
+				found, recreated, err = waitLogs(ctx, logger, containerID, baseName, watcher, runtimeService)
 				if err != nil {
 					return err
 				}
@@ -392,7 +391,7 @@ func ReadLogs(ctx context.Context, path, containerID string, opts *LogOptions, r
 			if len(l) == 0 {
 				continue
 			}
-			logger.Info("Incomplete line in log file", "path", path, "line", l)
+			internal.Log(logger, 0, "Incomplete line in log file", "path", path, "line", l)
 		}
 		if parse == nil {
 			// Initialize the log parsing function.
@@ -404,16 +403,16 @@ func ReadLogs(ctx context.Context, path, containerID string, opts *LogOptions, r
 		// Parse the log line.
 		msg.reset()
 		if err := parse(l, msg); err != nil {
-			logger.Error(err, "Failed when parsing line in log file", "path", path, "line", l)
+			internal.LogErr(logger, err, "Failed when parsing line in log file", "path", path, "line", l)
 			continue
 		}
 		// Write the log line into the stream.
 		if err := writer.write(msg, isNewLine); err != nil {
 			if err == errMaximumWrite {
-				logger.V(2).Info("Finished parsing log file, hit bytes limit", "path", path, "limit", opts.bytes)
+				internal.Log(logger, 2, "Finished parsing log file, hit bytes limit", "path", path, "limit", opts.bytes)
 				return nil
 			}
-			logger.Error(err, "Failed when writing line to log file", "path", path, "line", msg)
+			internal.LogErr(logger, err, "Failed when writing line to log file", "path", path, "line", msg)
 			return err
 		}
 		if limitedMode {
@@ -427,7 +426,7 @@ func ReadLogs(ctx context.Context, path, containerID string, opts *LogOptions, r
 	}
 }
 
-func isContainerRunning(ctx context.Context, id string, r internalapi.RuntimeService) (bool, error) {
+func isContainerRunning(ctx context.Context, logger *klog.Logger, id string, r internalapi.RuntimeService) (bool, error) {
 	resp, err := r.ContainerStatus(ctx, id, false)
 	if err != nil {
 		// Assume that the container is still running when the runtime is
@@ -443,10 +442,9 @@ func isContainerRunning(ctx context.Context, id string, r internalapi.RuntimeSer
 	if status == nil {
 		return false, remote.ErrContainerStatusNil
 	}
-	logger := klog.FromContext(ctx)
 	// Only keep following container log when it is running.
 	if status.State != runtimeapi.ContainerState_CONTAINER_RUNNING {
-		logger.V(5).Info("Container is not running", "containerId", id, "state", status.State)
+		internal.Log(logger, 5, "Container is not running", "containerId", id, "state", status.State)
 		// Do not return error because it's normal that the container stops
 		// during waiting.
 		return false, nil
@@ -457,10 +455,9 @@ func isContainerRunning(ctx context.Context, id string, r internalapi.RuntimeSer
 // waitLogs wait for the next log write. It returns two booleans and an error. The first boolean
 // indicates whether a new log is found; the second boolean if the log file was recreated;
 // the error is error happens during waiting new logs.
-func waitLogs(ctx context.Context, id string, logName string, w *fsnotify.Watcher, runtimeService internalapi.RuntimeService) (bool, bool, error) {
-	logger := klog.FromContext(ctx)
+func waitLogs(ctx context.Context, logger *klog.Logger, id string, logName string, w *fsnotify.Watcher, runtimeService internalapi.RuntimeService) (bool, bool, error) {
 	// no need to wait if the pod is not running
-	if running, err := isContainerRunning(ctx, id, runtimeService); !running {
+	if running, err := isContainerRunning(ctx, logger, id, runtimeService); !running {
 		return false, false, err
 	}
 	errRetry := 5
@@ -475,10 +472,10 @@ func waitLogs(ctx context.Context, id string, logName string, w *fsnotify.Watche
 			case fsnotify.Create:
 				return true, filepath.Base(e.Name) == logName, nil
 			default:
-				logger.Error(nil, "Received unexpected fsnotify event, retrying", "event", e)
+				internal.LogErr(logger, nil, "Received unexpected fsnotify event, retrying", "event", e)
 			}
 		case err := <-w.Errors:
-			logger.Error(err, "Received fsnotify watch error, retrying unless no more retries left", "retries", errRetry)
+			internal.LogErr(logger, err, "Received fsnotify watch error, retrying unless no more retries left", "retries", errRetry)
 			if errRetry == 0 {
 				return false, false, err
 			}

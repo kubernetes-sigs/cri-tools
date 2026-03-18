@@ -1132,7 +1132,6 @@ message ContainerStatus {
   // AllocatedResources represents the compute resources allocated for this container by the
   // node. Kubelet sets this value to Container.Resources.Requests upon successful pod admission
   // and after successfully admitting desired pod resize.
-  // +featureGate=InPlacePodVerticalScalingAllocatedStatus
   // +optional
   map<string, .k8s.io.apimachinery.pkg.api.resource.Quantity> allocatedResources = 10;
 
@@ -2273,6 +2272,16 @@ message ImageVolumeSource {
   // Defaults to Always if :latest tag is specified, or IfNotPresent otherwise.
   // +optional
   optional string pullPolicy = 2;
+}
+
+// ImageVolumeStatus represents the image-based volume status.
+message ImageVolumeStatus {
+  // ImageRef is the digest of the image used for this volume.
+  // It should have a value that's similar to the pod's status.containerStatuses[i].imageID.
+  // The ImageRef length should not exceed 256 characters.
+  // +kubebuilder:validation:MaxLength=256
+  // +required
+  optional string imageRef = 1;
 }
 
 // Maps a string key to a path within a volume.
@@ -3528,8 +3537,7 @@ message PersistentVolumeSource {
 
   // portworxVolume represents a portworx volume attached and mounted on kubelets host machine.
   // Deprecated: PortworxVolume is deprecated. All operations for the in-tree portworxVolume type
-  // are redirected to the pxd.portworx.com CSI driver when the CSIMigrationPortworx feature-gate
-  // is on.
+  // are redirected to the pxd.portworx.com CSI driver.
   // +optional
   optional PortworxVolumeSource portworxVolume = 18;
 
@@ -3918,8 +3926,6 @@ message PodCondition {
   optional string type = 1;
 
   // If set, this represents the .metadata.generation that the pod condition was set based upon.
-  // The PodObservedGenerationTracking feature gate must be enabled to use this field.
-  // +featureGate=PodObservedGenerationTracking
   // +optional
   optional int64 observedGeneration = 7;
 
@@ -4754,7 +4760,6 @@ message PodSpec {
 message PodStatus {
   // If set, this represents the .metadata.generation that the pod status was set based upon.
   // The PodObservedGenerationTracking feature gate must be enabled to use this field.
-  // +featureGate=PodObservedGenerationTracking
   // +optional
   optional int64 observedGeneration = 17;
 
@@ -5300,8 +5305,8 @@ message ReplicationController {
   // be the same as the Pod(s) that the replication controller manages.
   // Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
   // +optional
-  // +k8s:subfield(name)=+k8s:optional
-  // +k8s:subfield(name)=+k8s:format=k8s-long-name
+  // +k8s:alpha(since: "1.36")=+k8s:subfield(name)=+k8s:optional
+  // +k8s:alpha(since: "1.36")=+k8s:subfield(name)=+k8s:format=k8s-long-name
   optional .k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
 
   // Spec defines the specification of the desired behavior of the replication controller.
@@ -5358,18 +5363,18 @@ message ReplicationControllerSpec {
   // Defaults to 1.
   // More info: https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller#what-is-a-replicationcontroller
   // +optional
-  // +k8s:optional
+  // +k8s:alpha(since: "1.36")=+k8s:optional
   // +default=1
-  // +k8s:minimum=0
+  // +k8s:alpha(since: "1.36")=+k8s:minimum=0
   optional int32 replicas = 1;
 
   // Minimum number of seconds for which a newly created pod should be ready
   // without any of its container crashing, for it to be considered available.
   // Defaults to 0 (pod will be considered available as soon as it is ready)
   // +optional
-  // +k8s:optional
+  // +k8s:alpha(since: "1.36")=+k8s:optional
   // +default=0
-  // +k8s:minimum=0
+  // +k8s:alpha(since: "1.36")=+k8s:minimum=0
   optional int32 minReadySeconds = 4;
 
   // Selector is a label query over pods that should match the Replicas count.
@@ -6885,6 +6890,11 @@ message VolumeMountStatus {
   // depending on the mount result.
   // +optional
   optional string recursiveReadOnly = 4;
+
+  // volumeStatus represents volume-type-specific status about the mounted
+  // volume.
+  // +optional
+  optional VolumeStatus volumeStatus = 5;
 }
 
 // VolumeNodeAffinity defines constraints that limit what nodes this volume can be accessed from.
@@ -7126,8 +7136,7 @@ message VolumeSource {
 
   // portworxVolume represents a portworx volume attached and mounted on kubelets host machine.
   // Deprecated: PortworxVolume is deprecated. All operations for the in-tree portworxVolume type
-  // are redirected to the pxd.portworx.com CSI driver when the CSIMigrationPortworx feature-gate
-  // is on.
+  // are redirected to the pxd.portworx.com CSI driver.
   // +optional
   optional PortworxVolumeSource portworxVolume = 24;
 
@@ -7190,6 +7199,15 @@ message VolumeSource {
   // +featureGate=ImageVolume
   // +optional
   optional ImageVolumeSource image = 30;
+}
+
+// VolumeStatus represents the status of a mounted volume.
+// At most one of its members must be specified.
+message VolumeStatus {
+  // image represents an OCI object (a container image or artifact) pulled and mounted on the kubelet's host machine.
+  // +featureGate=ImageVolumeWithDigest
+  // +optional
+  optional ImageVolumeStatus image = 1;
 }
 
 // Represents a vSphere volume resource.
