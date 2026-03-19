@@ -1,8 +1,5 @@
-//go:build !windows
-// +build !windows
-
 /*
-Copyright 2024 The Kubernetes Authors.
+Copyright 2021 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,13 +14,29 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package logs
+package dump
 
 import (
-	"os"
+	"k8s.io/utils/dump"
 )
 
-func openFileShareDelete(path string) (*os.File, error) {
-	// Noop. Only relevant for Windows.
-	return os.Open(path)
+// Deprecated: Use k8s.io/utils/dump.Pretty instead.
+//
+//go:fix inline
+func Pretty(a interface{}) string {
+	return dump.Pretty(a)
+}
+
+// Deprecated: Use k8s.io/utils/dump.ForHash instead.
+//
+//go:fix inline
+func ForHash(a interface{}) string {
+	return dump.ForHash(a)
+}
+
+// Deprecated: Use k8s.io/utils/dump.OneLine instead.
+//
+//go:fix inline
+func OneLine(a interface{}) string {
+	return dump.OneLine(a)
 }

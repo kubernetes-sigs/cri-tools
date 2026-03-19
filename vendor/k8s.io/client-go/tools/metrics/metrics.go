@@ -85,12 +85,6 @@ type TransportCreateCallsMetric interface {
 	Increment(result string)
 }
 
-// TransportCAReloadsMetric counts the number of times a CA reload is attempted,
-// partitioned by the result and reason.
-type TransportCAReloadsMetric interface {
-	Increment(result, reason string)
-}
-
 var (
 	// ClientCertExpiry is the expiry time of a client certificate
 	ClientCertExpiry ExpiryMetric = noopExpiry{}
@@ -123,9 +117,6 @@ var (
 	// TransportCreateCalls is the metric that counts the number of times a new transport
 	// is created
 	TransportCreateCalls TransportCreateCallsMetric = noopTransportCreateCalls{}
-
-	// TransportCAReloads is the metric that counts the number of times a CA reload is attempted
-	TransportCAReloads TransportCAReloadsMetric = noopTransportCAReloads{}
 )
 
 // RegisterOpts contains all the metrics to register. Metrics may be nil.
@@ -143,7 +134,6 @@ type RegisterOpts struct {
 	RequestRetry          RetryMetric
 	TransportCacheEntries TransportCacheMetric
 	TransportCreateCalls  TransportCreateCallsMetric
-	TransportCAReloads    TransportCAReloadsMetric
 }
 
 // Register registers metrics for the rest client to use. This can
@@ -188,9 +178,6 @@ func Register(opts RegisterOpts) {
 		}
 		if opts.TransportCreateCalls != nil {
 			TransportCreateCalls = opts.TransportCreateCalls
-		}
-		if opts.TransportCAReloads != nil {
-			TransportCAReloads = opts.TransportCAReloads
 		}
 	})
 }
@@ -239,7 +226,3 @@ func (noopTransportCache) Observe(int) {}
 type noopTransportCreateCalls struct{}
 
 func (noopTransportCreateCalls) Increment(string) {}
-
-type noopTransportCAReloads struct{}
-
-func (noopTransportCAReloads) Increment(result, reason string) {}

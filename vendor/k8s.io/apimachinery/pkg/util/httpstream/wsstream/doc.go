@@ -1,8 +1,5 @@
-//go:build !windows
-// +build !windows
-
 /*
-Copyright 2024 The Kubernetes Authors.
+Copyright 2015 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,13 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package logs
-
-import (
-	"os"
-)
-
-func openFileShareDelete(path string) (*os.File, error) {
-	// Noop. Only relevant for Windows.
-	return os.Open(path)
-}
+// Package wsstream contains compatibility wrappers for websocket streaming.
+//
+// Deprecated: use k8s.io/streaming/pkg/httpstream/wsstream directly.
+package wsstream

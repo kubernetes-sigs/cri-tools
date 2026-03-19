@@ -31,20 +31,6 @@ import (
 // of code conflicts because changes are more likely to be scattered
 // across the file.
 const (
-	// owner: @michaelasp
-	// beta: v1.36
-	//
-	// Allow the client to process events atomically rather than a stream of
-	// events for items popped off the FIFO.
-	AtomicFIFO Feature = "AtomicFIFO"
-
-	// owner: @yt2985
-	// beta: 1.36
-	//
-	// If enabled, allows clients to gracefully handle Certificate Authority (CA)
-	// rotations without dropping connections or requiring a restart.
-	ClientsAllowCARotation Feature = "ClientsAllowCARotation"
-
 	// owner: @benluddy
 	// kep: https://kep.k8s.io/4222
 	// alpha: 1.32
@@ -83,12 +69,6 @@ const (
 	// GA: v1.35
 	InformerResourceVersion Feature = "InformerResourceVersion"
 
-	// owner: @michaelasp
-	// beta: v1.36
-	//
-	// Allow the FIFO to unlock while processing items to allow other goroutines to add items to the queue.
-	UnlockWhileProcessingFIFO Feature = "UnlockWhileProcessingFIFO"
-
 	// owner: @p0lyn0mial
 	// beta: v1.30
 	//
@@ -102,12 +82,6 @@ const (
 // After registering with the binary, the features are, by default, controllable using environment variables.
 // For more details, please see envVarFeatureGates implementation.
 var defaultVersionedKubernetesFeatureGates = map[Feature]VersionedSpecs{
-	AtomicFIFO: {
-		{Version: version.MustParse("1.36"), Default: true, PreRelease: Beta},
-	},
-	ClientsAllowCARotation: {
-		{Version: version.MustParse("1.36"), Default: true, PreRelease: Beta},
-	},
 	ClientsAllowCBOR: {
 		{Version: version.MustParse("1.32"), Default: false, PreRelease: Alpha},
 	},
@@ -116,7 +90,6 @@ var defaultVersionedKubernetesFeatureGates = map[Feature]VersionedSpecs{
 	},
 	InOrderInformers: {
 		{Version: version.MustParse("1.33"), Default: true, PreRelease: Beta},
-		{Version: version.MustParse("1.36"), Default: true, PreRelease: GA, LockToDefault: true},
 	},
 	InOrderInformersBatchProcess: {
 		{Version: version.MustParse("1.35"), Default: true, PreRelease: Beta},
@@ -124,9 +97,6 @@ var defaultVersionedKubernetesFeatureGates = map[Feature]VersionedSpecs{
 	InformerResourceVersion: {
 		{Version: version.MustParse("1.30"), Default: false, PreRelease: Alpha},
 		{Version: version.MustParse("1.35"), Default: true, PreRelease: GA},
-	},
-	UnlockWhileProcessingFIFO: {
-		{Version: version.MustParse("1.36"), Default: true, PreRelease: Beta},
 	},
 	WatchListClient: {
 		{Version: version.MustParse("1.30"), Default: false, PreRelease: Beta},

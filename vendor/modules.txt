@@ -397,7 +397,7 @@ google.golang.org/genproto/googleapis/api/httpbody
 ## explicit; go 1.24.0
 google.golang.org/genproto/googleapis/rpc/errdetails
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.79.2
+# google.golang.org/grpc v1.79.3
 ## explicit; go 1.24.0
 google.golang.org/grpc
 google.golang.org/grpc/attributes
@@ -537,11 +537,13 @@ k8s.io/apimachinery/pkg/runtime/serializer/streaming
 k8s.io/apimachinery/pkg/runtime/serializer/versioning
 k8s.io/apimachinery/pkg/selection
 k8s.io/apimachinery/pkg/types
+k8s.io/apimachinery/pkg/util/dump
 k8s.io/apimachinery/pkg/util/duration
 k8s.io/apimachinery/pkg/util/errors
 k8s.io/apimachinery/pkg/util/framer
 k8s.io/apimachinery/pkg/util/httpstream
 k8s.io/apimachinery/pkg/util/httpstream/spdy
+k8s.io/apimachinery/pkg/util/httpstream/wsstream
 k8s.io/apimachinery/pkg/util/intstr
 k8s.io/apimachinery/pkg/util/json
 k8s.io/apimachinery/pkg/util/naming
@@ -558,11 +560,11 @@ k8s.io/apimachinery/pkg/util/yaml
 k8s.io/apimachinery/pkg/version
 k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/reflect
-# k8s.io/cli-runtime v0.0.0-20260317114404-b0a204f5a85d
-## explicit; go 1.26.0
+# k8s.io/cli-runtime v0.35.2
+## explicit; go 1.25.0
 k8s.io/cli-runtime/pkg/printers
-# k8s.io/client-go v0.0.0-20260317080009-39f55294aa5b
-## explicit; go 1.26.0
+# k8s.io/client-go v0.35.2
+## explicit; go 1.25.0
 k8s.io/client-go/features
 k8s.io/client-go/pkg/apis/clientauthentication
 k8s.io/client-go/pkg/apis/clientauthentication/install
@@ -587,13 +589,11 @@ k8s.io/client-go/util/flowcontrol
 k8s.io/client-go/util/jsonpath
 k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/workqueue
-# k8s.io/component-base v0.0.0-20260317085346-690fd4f8073c
-## explicit; go 1.26.0
+# k8s.io/component-base v0.35.2
+## explicit; go 1.25.0
 k8s.io/component-base/featuregate
 k8s.io/component-base/logs/logreduction
 k8s.io/component-base/metrics
-k8s.io/component-base/metrics/api/v1
-k8s.io/component-base/metrics/internal
 k8s.io/component-base/metrics/legacyregistry
 k8s.io/component-base/metrics/prometheus/feature
 k8s.io/component-base/metrics/prometheusextension
@@ -604,9 +604,10 @@ k8s.io/component-base/version
 ## explicit; go 1.26.0
 k8s.io/cri-api/pkg/apis
 k8s.io/cri-api/pkg/apis/runtime/v1
-# k8s.io/cri-client v0.31.0-alpha.0.0.20260317123646-e88ee960539f
-## explicit; go 1.26.0
+# k8s.io/cri-client v0.35.2
+## explicit; go 1.25.0
 k8s.io/cri-client/pkg
+k8s.io/cri-client/pkg/internal
 k8s.io/cri-client/pkg/logs
 k8s.io/cri-client/pkg/util
 # k8s.io/klog/v2 v2.140.0
@@ -623,12 +624,12 @@ k8s.io/klog/v2/textlogger
 # k8s.io/kube-openapi v0.0.0-20260304202019-5b3e3fdb0acf
 ## explicit; go 1.23.0
 k8s.io/kube-openapi/pkg/util
-# k8s.io/kubectl v0.0.0-20260317142939-e12c2a86e0ca
-## explicit; go 1.26.0
+# k8s.io/kubectl v0.35.2
+## explicit; go 1.25.0
 k8s.io/kubectl/pkg/util/interrupt
 k8s.io/kubectl/pkg/util/term
-# k8s.io/kubelet v0.0.0-20260317125604-0ac2cd6dd280
-## explicit; go 1.26.0
+# k8s.io/kubelet v0.35.2
+## explicit; go 1.25.0
 k8s.io/kubelet/pkg/types
 # k8s.io/streaming v0.0.0-20260317070603-951b6bf67777
 ## explicit; go 1.26.0
