@@ -21,11 +21,11 @@ import (
 	"net/http"
 	"net/url"
 
+	"k8s.io/apimachinery/pkg/util/httpstream"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
 	remoteclient "k8s.io/client-go/tools/remotecommand"
 	"k8s.io/client-go/transport/spdy"
-	"k8s.io/streaming/pkg/httpstream"
 )
 
 const (
@@ -58,10 +58,10 @@ func GetDialer(transport string, parsedURL *url.URL, tlsConfig *rest.TLSClientCo
 			return nil, fmt.Errorf("get SPDY round tripper: %w", err)
 		}
 
-		return spdy.NewDialerForStreaming(upgrader, &http.Client{Transport: tr}, "POST", parsedURL), nil
+		return spdy.NewDialer(upgrader, &http.Client{Transport: tr}, "POST", parsedURL), nil
 
 	case TransportWebsocket:
-		return portforward.NewSPDYOverWebsocketDialerForStreaming(parsedURL, config)
+		return portforward.NewSPDYOverWebsocketDialer(parsedURL, config)
 
 	default:
 		return nil, fmt.Errorf("unknown transport: %s", transport)

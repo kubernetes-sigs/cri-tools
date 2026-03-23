@@ -135,7 +135,7 @@ func PortForward(ctx context.Context, client internalapi.RuntimeService, opts po
 
 	logrus.Debugf("Ports to forward: %v", opts.ports)
 
-	pf, err := portforward.NewForStreaming(dialer, opts.ports, SetupInterruptSignalHandler(), readyChan, os.Stdout, os.Stderr)
+	pf, err := portforward.New(dialer, opts.ports, SetupInterruptSignalHandler(), readyChan, os.Stdout, os.Stderr)
 	if err != nil {
 		return err
 	}

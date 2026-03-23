@@ -29,6 +29,8 @@ import (
 	timetypes "github.com/docker/docker/api/types/time"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/cri-client/pkg/logs"
 )
@@ -40,24 +42,18 @@ const (
 
 // NewLogOptions converts PodLogOptions to LogOptions.
 func NewLogOptions(follow, timestamps bool, since time.Time, tailLines, limitBytes *int64) *logs.LogOptions {
-	res := &logs.LogOptions{
-		Follow:    follow,
-		Timestamp: timestamps,
+	apiOpts := &v1.PodLogOptions{
+		Follow:     follow,
+		Timestamps: timestamps,
+		TailLines:  tailLines,
+		LimitBytes: limitBytes,
 	}
 
 	if !since.IsZero() {
-		res.Since = since
+		apiOpts.SinceTime = &metav1.Time{Time: since}
 	}
 
-	if tailLines != nil && *tailLines >= 0 {
-		res.TailLines = tailLines
-	}
-
-	if limitBytes != nil && *limitBytes >= 0 {
-		res.LimitBytes = limitBytes
-	}
-
-	return res
+	return logs.NewLogOptions(apiOpts, time.Now())
 }
 
 var logsCommand = &cli.Command{
@@ -210,7 +206,7 @@ var logsCommand = &cli.Command{
 			stdoutStream = nil
 		}
 
-		return logs.ReadLogs(readLogCtx, logPath, status.GetStatus().GetId(), logOptions, runtimeService, stdoutStream, stderrStream)
+		return logs.ReadLogs(readLogCtx, nil, logPath, status.GetStatus().GetId(), logOptions, runtimeService, stdoutStream, stderrStream)
 	},
 }
 

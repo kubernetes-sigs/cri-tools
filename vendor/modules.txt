@@ -602,8 +602,8 @@ k8s.io/component-base/metrics/prometheusextension
 k8s.io/component-base/tracing
 k8s.io/component-base/tracing/api/v1
 k8s.io/component-base/version
-# k8s.io/cri-api v0.36.0-alpha.2.0.20260319125839-8d77fc8f4f18
-## explicit; go 1.26.0
+# k8s.io/cri-api v0.35.3
+## explicit; go 1.25.0
 k8s.io/cri-api/pkg/apis
 k8s.io/cri-api/pkg/apis/runtime/v1
 # k8s.io/cri-client v0.35.3
@@ -633,7 +633,7 @@ k8s.io/kubectl/pkg/util/term
 # k8s.io/kubelet v0.35.3
 ## explicit; go 1.25.0
 k8s.io/kubelet/pkg/types
-# k8s.io/streaming v0.36.0-alpha.2.0.20260317070603-951b6bf67777
+# k8s.io/streaming v0.0.0-20260317070603-951b6bf67777
 ## explicit; go 1.26.0
 k8s.io/streaming/pkg/httpstream
 k8s.io/streaming/pkg/httpstream/spdy

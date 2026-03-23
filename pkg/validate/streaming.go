@@ -379,7 +379,7 @@ func checkPortForward(ctx context.Context, c internalapi.RuntimeService, portFor
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
 
-	pf, err := portforward.NewForStreaming(dialer, []string{fmt.Sprintf("%d:%d", hostPort, containerPort)}, stopChan, readyChan, stdout, stderr)
+	pf, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", hostPort, containerPort)}, stopChan, readyChan, stdout, stderr)
 	framework.ExpectNoError(err, "failed to create port forward for %q", portForwardSeverURL)
 
 	go func() {
