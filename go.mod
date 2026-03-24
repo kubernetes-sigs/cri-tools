@@ -29,7 +29,7 @@ require (
 	k8s.io/cri-client v0.31.0-alpha.0.0.20260319163659-917274ef1faf
 	k8s.io/kubectl v0.0.0-20260318213720-3aa1fee93885
 	k8s.io/kubelet v0.0.0-20260319073050-a5b1eeb483dc
-	k8s.io/streaming v0.36.0-alpha.2.0.20260317070603-951b6bf67777
+	k8s.io/streaming v0.36.0-beta.0
 	sigs.k8s.io/yaml v1.6.0
 )
 

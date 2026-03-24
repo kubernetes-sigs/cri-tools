@@ -580,7 +580,7 @@ k8s.io/kubectl/pkg/util/term
 # k8s.io/kubelet v0.0.0-20260319073050-a5b1eeb483dc
 ## explicit; go 1.26.0
 k8s.io/kubelet/pkg/types
-# k8s.io/streaming v0.36.0-alpha.2.0.20260317070603-951b6bf67777
+# k8s.io/streaming v0.36.0-beta.0
 ## explicit; go 1.26.0
 k8s.io/streaming/pkg/httpstream
 k8s.io/streaming/pkg/httpstream/spdy

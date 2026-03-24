@@ -235,8 +235,8 @@ k8s.io/kubectl v0.0.0-20260318213720-3aa1fee93885 h1:QyWkpyVPZ4kZshUSXzSjnsnLu7o
 k8s.io/kubectl v0.0.0-20260318213720-3aa1fee93885/go.mod h1:a4ZOVGtQiahyYs9bpGEdQP35d1ek4y68yR5yLV1QfAE=
 k8s.io/kubelet v0.0.0-20260319073050-a5b1eeb483dc h1:fqsGLS6NX4skQI1CDBP8jx8xGQ9Pklt+JHGaF4UTevI=
 k8s.io/kubelet v0.0.0-20260319073050-a5b1eeb483dc/go.mod h1:uwtQRd7unv5cpqsr9T41O7wQbgk2mltCrQa3O4RLg1c=
-k8s.io/streaming v0.36.0-alpha.2.0.20260317070603-951b6bf67777 h1:KZEgq5zgl1jONzTxkPNms/RAqoKaU19+wsNTSeRrwak=
-k8s.io/streaming v0.36.0-alpha.2.0.20260317070603-951b6bf67777/go.mod h1:5Zm1U2Duu3uu1nG/ijKuwNWDkQk24aXVpScAhzRkzkk=
+k8s.io/streaming v0.36.0-beta.0 h1:F3nft77sAwteE5VgwkJQQQsdRqkPCBKk4O24W5bkvtk=
+k8s.io/streaming v0.36.0-beta.0/go.mod h1:5Zm1U2Duu3uu1nG/ijKuwNWDkQk24aXVpScAhzRkzkk=
 k8s.io/utils v0.0.0-20260319190234-28399d86e0b5 h1:kBawHLSnx/mYHmRnNUf9d4CpjREbeZuxoSGOX/J+aYM=
 k8s.io/utils v0.0.0-20260319190234-28399d86e0b5/go.mod h1:xDxuJ0whA3d0I4mf/C4ppKHxXynQ+fxnkmQH0vTHnuk=
 sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 h1:IpInykpT6ceI+QxKBbEflcR5EXP7sU1kvOlxwZh5txg=
