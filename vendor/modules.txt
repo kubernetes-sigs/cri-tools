@@ -550,7 +550,7 @@ k8s.io/client-go/util/workqueue
 # k8s.io/component-base v0.0.0-20260319050627-1cffdcd67621
 ## explicit; go 1.26.0
 k8s.io/component-base/logs/logreduction
-# k8s.io/cri-api v0.36.0-alpha.2.0.20260319125839-8d77fc8f4f18
+# k8s.io/cri-api v0.36.0-beta.0
 ## explicit; go 1.26.0
 k8s.io/cri-api/pkg/apis
 k8s.io/cri-api/pkg/apis/runtime/v1

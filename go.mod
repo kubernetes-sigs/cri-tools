@@ -25,7 +25,7 @@ require (
 	google.golang.org/grpc v1.79.3
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 	k8s.io/client-go v0.0.0-20260319042611-01310540169f
-	k8s.io/cri-api v0.36.0-alpha.2.0.20260319125839-8d77fc8f4f18
+	k8s.io/cri-api v0.36.0-beta.0
 	k8s.io/cri-client v0.31.0-alpha.0.0.20260319163659-917274ef1faf
 	k8s.io/kubectl v0.0.0-20260318213720-3aa1fee93885
 	k8s.io/kubelet v0.0.0-20260319073050-a5b1eeb483dc
