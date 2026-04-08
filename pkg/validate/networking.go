@@ -251,18 +251,6 @@ func createWebServerContainer(ctx context.Context, rc internalapi.RuntimeService
 	return framework.CreateContainer(ctx, rc, ic, containerConfig, podID, podConfig)
 }
 
-// createHostNetWebServerContainer creates a web server container using webServerHostNetContainerPort.
-func createHostNetWebServerContainer(ctx context.Context, rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
-	containerName := prefix + framework.NewUUID()
-	containerConfig := &runtimeapi.ContainerConfig{
-		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: hostNetWebServerImage},
-		Linux:    &runtimeapi.LinuxContainerConfig{},
-	}
-
-	return framework.CreateContainer(ctx, rc, ic, containerConfig, podID, podConfig)
-}
-
 // checkMainPage check if the we can get the main page of the pod via given IP:port.
 func checkMainPage(ctx context.Context, c internalapi.RuntimeService, podID string, hostPort, containerPort int32) {
 	By("get the IP:port needed to be checked")
