@@ -51,6 +51,7 @@ var _ = framework.KubeDescribe("Idempotence", func() {
 
 		It("should not return an error if already stopped", func() {
 			By("run PodSandbox")
+
 			podID := framework.RunDefaultPodSandbox(rc, "idempotence-pod-")
 
 			By("stop sandbox")
@@ -81,9 +82,11 @@ var _ = framework.KubeDescribe("Idempotence", func() {
 
 		It("should not return an error if already stopped", func() {
 			By("create sandbox")
+
 			podID, podConfig := framework.CreatePodSandboxForContainer(rc)
 
 			By("create container")
+
 			containerID := framework.CreatePauseContainer(rc, ic, podID, podConfig, "idempotence-container-")
 
 			By("start container")
@@ -118,6 +121,7 @@ var _ = framework.KubeDescribe("Idempotence", func() {
 	Context("RemoveImage", func() {
 		It("should not return an error if not found", func() {
 			By("remove not existing image")
+
 			const fakeImageID = "0000000000000000000000000000000000000000000000000000000000000000"
 			Expect(ic.RemoveImage(c, &runtimeapi.ImageSpec{Image: fakeImageID})).NotTo(HaveOccurred())
 

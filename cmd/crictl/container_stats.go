@@ -112,6 +112,7 @@ var statsCommand = &cli.Command{
 			output: c.String("output"),
 			watch:  c.Bool("watch"),
 		}
+
 		opts.labels, err = parseLabelStringSlice(c.StringSlice("label"))
 		if err != nil {
 			return err

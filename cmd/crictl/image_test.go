@@ -28,7 +28,7 @@ func fakeImage(id string, digest, tags []string) *pb.Image {
 
 func assert(input []*pb.Image, options, images []string) {
 	actual, _ := filterImagesList(input, options)
-	expected := []string{}
+	expected := make([]string, 0, len(actual))
 
 	for _, img := range actual {
 		expected = append(expected, img.GetId())

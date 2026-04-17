@@ -34,8 +34,10 @@ import (
 var _ = framework.KubeDescribe("SELinux", func() {
 	f := framework.NewDefaultCRIFramework()
 
-	var rc internalapi.RuntimeService
-	var ic internalapi.ImageManagerService
+	var (
+		rc internalapi.RuntimeService
+		ic internalapi.ImageManagerService
+	)
 
 	if selinux.GetEnabled() {
 		BeforeEach(func() {
@@ -44,8 +46,10 @@ var _ = framework.KubeDescribe("SELinux", func() {
 		})
 
 		Context("runtime should support selinux", func() {
-			var sandboxID string
-			var sandboxConfig *runtimeapi.PodSandboxConfig
+			var (
+				sandboxID     string
+				sandboxConfig *runtimeapi.PodSandboxConfig
+			)
 
 			sandboxTests := func(privileged bool) {
 				It("should work with just selinux level set", func() {
@@ -132,8 +136,10 @@ var _ = framework.KubeDescribe("SELinux", func() {
 			})
 
 			Context("when multiple pod sandboxes are not privileged", func() {
-				var sandboxID2 string
-				var sandboxConfig2 *runtimeapi.PodSandboxConfig
+				var (
+					sandboxID2     string
+					sandboxConfig2 *runtimeapi.PodSandboxConfig
+				)
 
 				BeforeEach(func() {
 					sandboxID, sandboxConfig = framework.CreatePodSandboxForContainer(rc)

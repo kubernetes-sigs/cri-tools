@@ -55,8 +55,10 @@ type logMessage struct {
 var _ = framework.KubeDescribe("Container", func() {
 	f := framework.NewDefaultCRIFramework()
 
-	var rc internalapi.RuntimeService
-	var ic internalapi.ImageManagerService
+	var (
+		rc internalapi.RuntimeService
+		ic internalapi.ImageManagerService
+	)
 
 	BeforeEach(func() {
 		rc = f.CRIClient.CRIRuntimeClient
@@ -64,8 +66,10 @@ var _ = framework.KubeDescribe("Container", func() {
 	})
 
 	Context("runtime should support basic operations on container", func() {
-		var podID string
-		var podConfig *runtimeapi.PodSandboxConfig
+		var (
+			podID     string
+			podConfig *runtimeapi.PodSandboxConfig
+		)
 
 		BeforeEach(func() {
 			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
@@ -80,15 +84,18 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support creating container [Conformance]", func() {
 			By("test create a default container")
+
 			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-create-")
 
 			By("test list container")
+
 			containers := listContainerForID(rc, containerID)
 			Expect(containerFound(containers, containerID)).To(BeTrue(), "Container should be created")
 		})
 
 		It("runtime should support starting container [Conformance]", func() {
 			By("create container")
+
 			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-start-test-")
 
 			By("test start container")
@@ -97,6 +104,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support stopping container [Conformance]", func() {
 			By("create container")
+
 			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-stop-test-")
 
 			By("start container")
@@ -108,6 +116,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support removing created container [Conformance]", func() {
 			By("create container")
+
 			containerID := framework.CreatePauseContainer(rc, ic, podID, podConfig, "container-for-remove-created-test-")
 
 			By("test remove container")
@@ -118,6 +127,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support removing running container [Conformance]", func() {
 			By("create container")
+
 			containerID := framework.CreatePauseContainer(rc, ic, podID, podConfig, "container-for-remove-running-test-")
 
 			By("start container")
@@ -131,6 +141,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support removing stopped container [Conformance]", func() {
 			By("create container")
+
 			containerID := framework.CreatePauseContainer(rc, ic, podID, podConfig, "container-for-remove-stopped-test-")
 
 			By("start container")
@@ -147,6 +158,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support execSync [Conformance]", func() {
 			By("create container")
+
 			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-execSync-test-")
 
 			By("start container")
@@ -158,16 +170,19 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support execSync with timeout [Conformance]", func() {
 			By("create container")
+
 			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-execSync-timeout-test-")
 
 			By("start container")
 			startContainer(rc, containerID)
 
 			By("test execSync with timeout")
+
 			_, _, err := rc.ExecSync(context.TODO(), containerID, sleepCmd, time.Second)
 			Expect(err).Should(HaveOccurred(), "execSync should timeout")
 
 			By("timeout exec process should be gone")
+
 			stdout, stderr, err := rc.ExecSync(context.TODO(), containerID, checkSleepCmd,
 				time.Duration(defaultExecSyncTimeout)*time.Second)
 			framework.ExpectNoError(err)
@@ -177,12 +192,14 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support listing container stats [Conformance]", func() {
 			By("create container")
+
 			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-stats-")
 
 			By("start container")
 			startContainer(rc, containerID)
 
 			By("test container stats")
+
 			stats := listContainerStatsForID(rc, containerID)
 			Expect(stats.GetAttributes().GetId()).To(Equal(containerID))
 			Expect(stats.GetAttributes().GetMetadata().GetName()).To(ContainSubstring("container-for-stats-"))
@@ -192,6 +209,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support listing stats for started containers [Conformance]", func() {
 			By("create container")
+
 			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-stats-")
 
 			By("start container")
@@ -201,28 +219,36 @@ var _ = framework.KubeDescribe("Container", func() {
 			}
 
 			By("test container stats")
+
 			stats := listContainerStats(rc, filter)
 			Expect(statFound(stats, containerID)).To(BeTrue(), "Container should be created")
 		})
 
 		It("runtime should support listing stats for started containers when filter is nil [Conformance]", func() {
 			By("create container")
+
 			containerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-stats-with-nil-filter-")
 
 			By("start container")
 			startContainer(rc, containerID)
 
 			By("test container stats")
+
 			stats := listContainerStats(rc, nil)
 			Expect(statFound(stats, containerID)).To(BeTrue(), "Stats should be found")
 		})
 
 		It("runtime should support listing stats for three created containers when filter is nil. [Conformance]", func() {
 			By("create first container ")
+
 			firstContainerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-stats-with-nil-filter-")
+
 			By("create second container ")
+
 			secondContainerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-stats-with-nil-filter-")
+
 			By("create third container ")
+
 			thirdContainerID := framework.CreateDefaultContainer(rc, ic, podID, podConfig, "container-for-stats-with-nil-filter-")
 
 			By("start first container")
@@ -233,6 +259,7 @@ var _ = framework.KubeDescribe("Container", func() {
 			startContainer(rc, thirdContainerID)
 
 			By("test containers stats")
+
 			stats := listContainerStats(rc, nil)
 			Expect(statFound(stats, firstContainerID)).To(BeTrue(), "Stats should be found")
 			Expect(statFound(stats, secondContainerID)).To(BeTrue(), "Stats should be found")
@@ -241,6 +268,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support listing stats for containers filtered by labels [Conformance]", func() {
 			By("create container")
+
 			labels := map[string]string{"foo": "bar"}
 			containerID := framework.CreateDefaultContainerWithLabels(rc, ic, podID, podConfig, "container-for-stats-with-labels-", labels)
 
@@ -248,6 +276,7 @@ var _ = framework.KubeDescribe("Container", func() {
 			startContainer(rc, containerID)
 
 			By("test container stats")
+
 			stats := listContainerStats(rc, &runtimeapi.ContainerStatsFilter{LabelSelector: labels})
 			Expect(statFound(stats, containerID)).To(BeTrue(), "Container should be found")
 
@@ -257,8 +286,10 @@ var _ = framework.KubeDescribe("Container", func() {
 	})
 
 	Context("runtime should support adding volume and device", func() {
-		var podID string
-		var podConfig *runtimeapi.PodSandboxConfig
+		var (
+			podID     string
+			podConfig *runtimeapi.PodSandboxConfig
+		)
 
 		BeforeEach(func() {
 			podID, podConfig = framework.CreatePodSandboxForContainer(rc)
@@ -273,37 +304,44 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support starting container with volume [Conformance]", func() {
 			By("create host path and flag file")
+
 			hostPath := createHostPath(podID)
 
 			defer os.RemoveAll(hostPath) // clean up the TempDir
 
 			By("create container with volume")
+
 			containerID := createVolumeContainer(rc, ic, "container-with-volume-test-", podID, podConfig, hostPath)
 
 			By("test start container with volume")
 			testStartContainer(rc, containerID)
 
 			By("check whether 'hostPath' contains file or dir in container")
+
 			output := execSyncContainer(rc, containerID, checkPathCmd(hostPath))
 			Expect(output).NotTo(BeEmpty(), "len(output) should not be zero.")
 		})
 
 		It("runtime should support starting container with volume when host path is a symlink [Conformance]", func() {
 			By("create host path and flag file")
+
 			hostPath := createHostPath(podID)
 			defer os.RemoveAll(hostPath) // clean up the TempDir
 
 			By("create symlink")
+
 			symlinkPath := createSymlink(hostPath)
 			defer os.RemoveAll(symlinkPath) // clean up the symlink
 
 			By("create volume container with symlink host path")
+
 			containerID := createVolumeContainer(rc, ic, "container-with-symlink-host-path-test-", podID, podConfig, symlinkPath)
 
 			By("test start volume container with symlink host path")
 			testStartContainer(rc, containerID)
 
 			By("check whether 'symlink' contains file or dir in container")
+
 			output := execSyncContainer(rc, containerID, checkPathCmd(symlinkPath))
 			Expect(output).NotTo(BeEmpty(), "len(output) should not be zero.")
 		})
@@ -313,8 +351,10 @@ var _ = framework.KubeDescribe("Container", func() {
 	})
 
 	Context("runtime should support log", func() {
-		var podID, hostPath string
-		var podConfig *runtimeapi.PodSandboxConfig
+		var (
+			podID, hostPath string
+			podConfig       *runtimeapi.PodSandboxConfig
+		)
 
 		BeforeEach(func() {
 			podID, podConfig, hostPath = createPodSandboxWithLogDirectory(rc)
@@ -331,6 +371,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 		It("runtime should support starting container with log [Conformance]", func() {
 			By("create container with log")
+
 			logPath, containerID := createLogContainer(rc, ic, "container-with-log-test-", podID, podConfig)
 
 			By("start container with log")
@@ -341,12 +382,14 @@ var _ = framework.KubeDescribe("Container", func() {
 			}, time.Minute, time.Second*4).Should(Equal(runtimeapi.ContainerState_CONTAINER_EXITED))
 
 			By("check the log context")
+
 			expectedLogMessage := defaultLog + "\n"
 			verifyLogContents(podConfig, logPath, expectedLogMessage, stdoutType)
 		})
 
 		It("runtime should support reopening container log [Conformance]", func() {
 			By("create container with log")
+
 			logPath, containerID := createKeepLoggingContainer(rc, ic, "container-reopen-log-test-", podID, podConfig)
 
 			By("start container with log")
@@ -357,6 +400,7 @@ var _ = framework.KubeDescribe("Container", func() {
 			}, time.Minute, time.Second).ShouldNot(BeEmpty(), "container log should be generated")
 
 			By("rename container log")
+
 			newLogPath := logPath + ".new"
 			Expect(os.Rename(filepath.Join(podConfig.GetLogDirectory(), logPath),
 				filepath.Join(podConfig.GetLogDirectory(), newLogPath))).To(Succeed())
@@ -369,6 +413,7 @@ var _ = framework.KubeDescribe("Container", func() {
 			Eventually(func() []logMessage {
 				return parseLogLine(podConfig, logPath)
 			}, time.Minute, time.Second).ShouldNot(BeEmpty(), "new container log should be generated")
+
 			oldLength := len(parseLogLine(podConfig, newLogPath))
 			Consistently(func() int {
 				return len(parseLogLine(podConfig, newLogPath))

@@ -119,6 +119,7 @@ var pullImageCommand = &cli.Command{
 		if err != nil {
 			return err
 		}
+
 		var sandbox *pb.PodSandboxConfig
 		if c.IsSet("pod-config") {
 			sandbox, err = loadPodSandboxConfig(c.String("pod-config"))
@@ -126,19 +127,25 @@ var pullImageCommand = &cli.Command{
 				return fmt.Errorf("load podSandboxConfig: %w", err)
 			}
 		}
+
 		var ann map[string]string
+
 		if c.IsSet("annotation") {
 			annotationFlags := c.StringSlice("annotation")
+
 			ann, err = parseLabelStringSlice(annotationFlags)
 			if err != nil {
 				return err
 			}
 		}
+
 		timeout := c.Duration("pull-timeout")
+
 		r, err := PullImageWithSandbox(c.Context, imageClient, imageName, auth, sandbox, ann, timeout)
 		if err != nil {
 			return fmt.Errorf("pulling image: %w", err)
 		}
+
 		fmt.Printf("Image is up to date for %s\n", r.GetImageRef())
 
 		return nil
@@ -214,67 +221,85 @@ var listImageCommand = &cli.Command{
 		showPinned := c.Bool("pinned")
 		quiet := c.Bool("quiet")
 		noTrunc := c.Bool("no-trunc")
+
 		if !verbose && !quiet {
 			row := []string{columnImage, columnTag}
 			if showDigest {
 				row = append(row, columnDigest)
 			}
+
 			row = append(row, columnImageID, columnSize)
 			if showPinned {
 				row = append(row, columnPinned)
 			}
+
 			display.AddRow(row)
 		}
+
 		for _, image := range r.GetImages() {
 			if quiet {
 				fmt.Printf("%s\n", image.GetId())
 
 				continue
 			}
+
 			if !verbose {
 				imageName, repoDigest := normalizeRepoDigest(image.GetRepoDigests())
 				repoTagPairs := normalizeRepoTagPair(image.GetRepoTags(), imageName)
 				size := units.HumanSizeWithPrecision(float64(image.GetSize()), 3)
+
 				id := image.GetId()
 				if !noTrunc {
 					id = getTruncatedID(id, "sha256:")
 					repoDigest = getTruncatedID(repoDigest, "sha256:")
 				}
+
 				for _, repoTagPair := range repoTagPairs {
 					row := []string{repoTagPair[0], repoTagPair[1]}
 					if showDigest {
 						row = append(row, repoDigest)
 					}
+
 					row = append(row, id, size)
 					if showPinned {
 						row = append(row, strconv.FormatBool(image.GetPinned()))
 					}
+
 					display.AddRow(row)
 				}
 
 				continue
 			}
+
 			fmt.Printf("ID: %s\n", image.GetId())
+
 			for _, tag := range image.GetRepoTags() {
 				fmt.Printf("RepoTags: %s\n", tag)
 			}
+
 			for _, digest := range image.GetRepoDigests() {
 				fmt.Printf("RepoDigests: %s\n", digest)
 			}
+
 			if image.GetSize() != 0 {
 				fmt.Printf("Size: %d\n", image.GetSize())
 			}
+
 			if image.GetUid() != nil {
 				fmt.Printf("Uid: %v\n", image.GetUid())
 			}
+
 			if image.GetUsername() != "" {
 				fmt.Printf("Username: %v\n", image.GetUsername())
 			}
+
 			if image.GetPinned() {
 				fmt.Printf("Pinned: %v\n", image.GetPinned())
 			}
+
 			fmt.Printf("\n")
 		}
+
 		display.Flush()
 
 		return nil
@@ -318,10 +343,12 @@ var imageStatusCommand = &cli.Command{
 		}
 
 		verbose := !(c.Bool("quiet"))
+
 		output := c.String("output")
 		if output == "" { // default to json output
 			output = outputTypeJSON
 		}
+
 		tmplStr := c.String("template")
 
 		ids := c.Args().Slice()
@@ -331,6 +358,7 @@ var imageStatusCommand = &cli.Command{
 			if err != nil {
 				return fmt.Errorf("listing images: %w", err)
 			}
+
 			for _, img := range r.GetImages() {
 				ids = append(ids, img.GetId())
 			}
@@ -343,6 +371,7 @@ var imageStatusCommand = &cli.Command{
 		}
 
 		statuses := []statusData{}
+
 		for _, id := range ids {
 			r, err := ImageStatus(c.Context, imageClient, id, verbose)
 			if err != nil {
@@ -413,6 +442,7 @@ var removeImageCommand = &cli.Command{
 		}
 
 		ids := map[string]bool{}
+
 		for _, id := range cliCtx.Args().Slice() {
 			logrus.Debugf("User specified image to be removed: %v", id)
 			ids[id] = true
@@ -429,6 +459,7 @@ var removeImageCommand = &cli.Command{
 			if err != nil {
 				return err
 			}
+
 			for _, img := range r {
 				// Pinned images should not be removed on prune.
 				if prune && img.GetPinned() {
@@ -436,6 +467,7 @@ var removeImageCommand = &cli.Command{
 
 					continue
 				}
+
 				logrus.Debugf("Adding container image to be removed: %v", img.GetId())
 				ids[img.GetId()] = true
 			}
@@ -455,8 +487,10 @@ var removeImageCommand = &cli.Command{
 			if err != nil {
 				return err
 			}
+
 			for _, container := range containers {
 				img := container.GetImage().GetImage()
+
 				imageStatus, err := ImageStatus(cliCtx.Context, imageClient, img, false)
 				if err != nil {
 					logrus.Errorf(
@@ -466,6 +500,7 @@ var removeImageCommand = &cli.Command{
 
 					continue
 				}
+
 				id := imageStatus.GetImage().GetId()
 				logrus.Debugf("Excluding in use container image: %v", id)
 				ids[id] = false
@@ -483,15 +518,18 @@ var removeImageCommand = &cli.Command{
 		}
 
 		funcs := []func() error{}
+
 		for id, remove := range ids {
 			if !remove {
 				continue
 			}
+
 			funcs = append(funcs, func() error {
 				status, err := ImageStatus(cliCtx.Context, imageClient, id, false)
 				if err != nil {
 					return fmt.Errorf("image status request for %q failed: %w", id, err)
 				}
+
 				if status.GetImage() == nil {
 					return fmt.Errorf("no such image %s", id)
 				}
@@ -505,6 +543,7 @@ var removeImageCommand = &cli.Command{
 
 					return nil
 				}
+
 				if len(status.GetImage().GetRepoTags()) == 0 {
 					// RepoTags is nil when pulling image by repoDigest,
 					// so print deleted using that instead.
@@ -514,6 +553,7 @@ var removeImageCommand = &cli.Command{
 
 					return nil
 				}
+
 				for _, repoTag := range status.GetImage().GetRepoTags() {
 					fmt.Printf("Deleted: %s\n", repoTag)
 				}
@@ -551,12 +591,14 @@ var imageFsInfoCommand = &cli.Command{
 		if output == "" { // default to json output
 			output = outputTypeJSON
 		}
+
 		tmplStr := c.String("template")
 
 		r, err := ImageFsInfo(c.Context, imageClient)
 		if err != nil {
 			return fmt.Errorf("image filesystem info request: %w", err)
 		}
+
 		status, err := protobufObjectToJSON(r)
 		if err != nil {
 			return fmt.Errorf("marshal filesystem info to json: %w", err)
