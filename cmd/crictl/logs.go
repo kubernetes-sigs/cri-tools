@@ -26,7 +26,6 @@ import (
 	"strings"
 	"time"
 
-	timetypes "github.com/docker/docker/api/types/time"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	v1 "k8s.io/api/core/v1"
@@ -34,6 +33,8 @@ import (
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/cri-client/pkg/logs"
 	"k8s.io/klog/v2"
+
+	"sigs.k8s.io/cri-tools/pkg/timetype"
 )
 
 const (
@@ -210,12 +211,12 @@ func parseTimestamp(value string) (*metav1.Time, error) {
 		return nil, nil
 	}
 
-	str, err := timetypes.GetTimestamp(value, time.Now())
+	str, err := timetype.GetTimestamp(value, time.Now())
 	if err != nil {
 		return nil, err
 	}
 
-	s, ns, err := timetypes.ParseTimestamps(str, 0)
+	s, ns, err := timetype.ParseTimestamps(str, 0)
 	if err != nil {
 		return nil, err
 	}
