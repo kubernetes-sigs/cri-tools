@@ -97,7 +97,7 @@ import (
 //      %TAG    !yaml!  tag:yaml.org,2002:
 //      ---
 //
-// The correspoding sequence of tokens:
+// The corresponding sequence of tokens:
 //
 //      STREAM-START(utf-8)
 //      VERSION-DIRECTIVE(1,1)
@@ -300,7 +300,7 @@ import (
 // The tokens BLOCK-SEQUENCE-START and BLOCK-MAPPING-START denote indentation
 // increase that precedes a block collection (cf. the INDENT token in Python).
 // The token BLOCK-END denote indentation decrease that ends a block collection
-// (cf. the DEDENT token in Python).  However YAML has some syntax pecularities
+// (cf. the DEDENT token in Python).  However YAML has some syntax peculiarities
 // that makes detections of these tokens more complex.
 //
 // The tokens BLOCK-ENTRY, KEY, and VALUE are used to represent the indicators
@@ -645,10 +645,10 @@ func yaml_parser_set_scanner_tag_error(parser *yaml_parser_t, directive bool, co
 	return yaml_parser_set_scanner_error(parser, context, context_mark, problem)
 }
 
-func trace(args ...interface{}) func() {
-	pargs := append([]interface{}{"+++"}, args...)
+func trace(args ...any) func() {
+	pargs := append([]any{"+++"}, args...)
 	fmt.Println(pargs...)
-	pargs = append([]interface{}{"---"}, args...)
+	pargs = append([]any{"---"}, args...)
 	return func() { fmt.Println(pargs...) }
 }
 
@@ -793,7 +793,7 @@ func yaml_parser_fetch_next_token(parser *yaml_parser_t) (ok bool) {
 	}
 
 	// Is it the key indicator?
-	if parser.buffer[parser.buffer_pos] == '?' && (parser.flow_level > 0 || is_blankz(parser.buffer, parser.buffer_pos+1)) {
+	if parser.buffer[parser.buffer_pos] == '?' && is_blankz(parser.buffer, parser.buffer_pos+1) {
 		return yaml_parser_fetch_key(parser)
 	}
 
@@ -868,8 +868,7 @@ func yaml_parser_fetch_next_token(parser *yaml_parser_t) (ok bool) {
 		parser.buffer[parser.buffer_pos] == '"' || parser.buffer[parser.buffer_pos] == '%' ||
 		parser.buffer[parser.buffer_pos] == '@' || parser.buffer[parser.buffer_pos] == '`') ||
 		(parser.buffer[parser.buffer_pos] == '-' && !is_blank(parser.buffer, parser.buffer_pos+1)) ||
-		(parser.flow_level == 0 &&
-			(parser.buffer[parser.buffer_pos] == '?' || parser.buffer[parser.buffer_pos] == ':') &&
+		((parser.buffer[parser.buffer_pos] == '?' || parser.buffer[parser.buffer_pos] == ':') &&
 			!is_blankz(parser.buffer, parser.buffer_pos+1)) {
 		return yaml_parser_fetch_plain_scalar(parser)
 	}
@@ -1332,7 +1331,7 @@ func yaml_parser_fetch_key(parser *yaml_parser_t) bool {
 
 	// In the block context, additional checks are required.
 	if parser.flow_level == 0 {
-		// Check if we are allowed to start a new key (not nessesary simple).
+		// Check if we are allowed to start a new key (not necessary simple).
 		if !parser.simple_key_allowed {
 			return yaml_parser_set_scanner_error(parser, "", parser.mark,
 				"mapping keys are not allowed in this context")
@@ -1614,11 +1613,11 @@ func yaml_parser_scan_to_next_token(parser *yaml_parser_t) bool {
 // Scan a YAML-DIRECTIVE or TAG-DIRECTIVE token.
 //
 // Scope:
-//      %YAML    1.1    # a comment \n
-//      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//      %TAG    !yaml!  tag:yaml.org,2002:  \n
-//      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //
+//	%YAML    1.1    # a comment \n
+//	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//	%TAG    !yaml!  tag:yaml.org,2002:  \n
+//	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 func yaml_parser_scan_directive(parser *yaml_parser_t, token *yaml_token_t) bool {
 	// Eat '%'.
 	start_mark := parser.mark
@@ -1719,11 +1718,11 @@ func yaml_parser_scan_directive(parser *yaml_parser_t, token *yaml_token_t) bool
 // Scan the directive name.
 //
 // Scope:
-//      %YAML   1.1     # a comment \n
-//       ^^^^
-//      %TAG    !yaml!  tag:yaml.org,2002:  \n
-//       ^^^
 //
+//	%YAML   1.1     # a comment \n
+//	 ^^^^
+//	%TAG    !yaml!  tag:yaml.org,2002:  \n
+//	 ^^^
 func yaml_parser_scan_directive_name(parser *yaml_parser_t, start_mark yaml_mark_t, name *[]byte) bool {
 	// Consume the directive name.
 	if parser.unread < 1 && !yaml_parser_update_buffer(parser, 1) {
@@ -1758,8 +1757,9 @@ func yaml_parser_scan_directive_name(parser *yaml_parser_t, start_mark yaml_mark
 // Scan the value of VERSION-DIRECTIVE.
 //
 // Scope:
-//      %YAML   1.1     # a comment \n
-//           ^^^^^^
+//
+//	%YAML   1.1     # a comment \n
+//	     ^^^^^^
 func yaml_parser_scan_version_directive_value(parser *yaml_parser_t, start_mark yaml_mark_t, major, minor *int8) bool {
 	// Eat whitespaces.
 	if parser.unread < 1 && !yaml_parser_update_buffer(parser, 1) {
@@ -1797,10 +1797,11 @@ const max_number_length = 2
 // Scan the version number of VERSION-DIRECTIVE.
 //
 // Scope:
-//      %YAML   1.1     # a comment \n
-//              ^
-//      %YAML   1.1     # a comment \n
-//                ^
+//
+//	%YAML   1.1     # a comment \n
+//	        ^
+//	%YAML   1.1     # a comment \n
+//	          ^
 func yaml_parser_scan_version_directive_number(parser *yaml_parser_t, start_mark yaml_mark_t, number *int8) bool {
 
 	// Repeat while the next character is digit.
@@ -1834,9 +1835,9 @@ func yaml_parser_scan_version_directive_number(parser *yaml_parser_t, start_mark
 // Scan the value of a TAG-DIRECTIVE token.
 //
 // Scope:
-//      %TAG    !yaml!  tag:yaml.org,2002:  \n
-//          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //
+//	%TAG    !yaml!  tag:yaml.org,2002:  \n
+//	    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 func yaml_parser_scan_tag_directive_value(parser *yaml_parser_t, start_mark yaml_mark_t, handle, prefix *[]byte) bool {
 	var handle_value, prefix_value []byte
 
@@ -1907,7 +1908,7 @@ func yaml_parser_scan_anchor(parser *yaml_parser_t, token *yaml_token_t, typ yam
 		return false
 	}
 
-	for is_alpha(parser.buffer, parser.buffer_pos) {
+	for is_anchor_char(parser.buffer, parser.buffer_pos) {
 		s = read(parser, s)
 		if parser.unread < 1 && !yaml_parser_update_buffer(parser, 1) {
 			return false
@@ -2563,7 +2564,7 @@ func yaml_parser_scan_flow_scalar(parser *yaml_parser_t, token *yaml_token_t, si
 					for k := 0; k < code_length; k++ {
 						if !is_hex(parser.buffer, parser.buffer_pos+k) {
 							yaml_parser_set_scanner_error(parser, "while parsing a quoted scalar",
-								start_mark, "did not find expected hexdecimal number")
+								start_mark, "did not find expected hexadecimal number")
 							return false
 						}
 						value = (value << 4) + as_hex(parser.buffer, parser.buffer_pos+k)
@@ -2726,7 +2727,8 @@ func yaml_parser_scan_plain_scalar(parser *yaml_parser_t, token *yaml_token_t) b
 			if (parser.buffer[parser.buffer_pos] == ':' && is_blankz(parser.buffer, parser.buffer_pos+1)) ||
 				(parser.flow_level > 0 &&
 					(parser.buffer[parser.buffer_pos] == ',' ||
-						parser.buffer[parser.buffer_pos] == '?' || parser.buffer[parser.buffer_pos] == '[' ||
+						(parser.buffer[parser.buffer_pos] == '?' && is_blankz(parser.buffer, parser.buffer_pos+1)) ||
+						parser.buffer[parser.buffer_pos] == '[' ||
 						parser.buffer[parser.buffer_pos] == ']' || parser.buffer[parser.buffer_pos] == '{' ||
 						parser.buffer[parser.buffer_pos] == '}')) {
 				break
@@ -2847,7 +2849,7 @@ func yaml_parser_scan_line_comment(parser *yaml_parser_t, token_mark yaml_mark_t
 			continue
 		}
 		if parser.buffer[parser.buffer_pos+peek] == '#' {
-			seen := parser.mark.index+peek
+			seen := parser.mark.index + peek
 			for {
 				if parser.unread < 1 && !yaml_parser_update_buffer(parser, 1) {
 					return false
@@ -2876,7 +2878,7 @@ func yaml_parser_scan_line_comment(parser *yaml_parser_t, token_mark yaml_mark_t
 		parser.comments = append(parser.comments, yaml_comment_t{
 			token_mark: token_mark,
 			start_mark: start_mark,
-			line: text,
+			line:       text,
 		})
 	}
 	return true
@@ -2910,7 +2912,7 @@ func yaml_parser_scan_comments(parser *yaml_parser_t, scan_mark yaml_mark_t) boo
 	// the foot is the line below it.
 	var foot_line = -1
 	if scan_mark.line > 0 {
-		foot_line = parser.mark.line-parser.newlines+1
+		foot_line = parser.mark.line - parser.newlines + 1
 		if parser.newlines == 0 && parser.mark.column > 1 {
 			foot_line++
 		}
@@ -2996,7 +2998,7 @@ func yaml_parser_scan_comments(parser *yaml_parser_t, scan_mark yaml_mark_t) boo
 		recent_empty = false
 
 		// Consume until after the consumed comment line.
-		seen := parser.mark.index+peek
+		seen := parser.mark.index + peek
 		for {
 			if parser.unread < 1 && !yaml_parser_update_buffer(parser, 1) {
 				return false
