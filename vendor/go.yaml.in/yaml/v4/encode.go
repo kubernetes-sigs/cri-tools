@@ -321,6 +321,14 @@ func isOldBool(s string) (result bool) {
 	}
 }
 
+// looksLikeMerge returns true if the given string is the merge indicator "<<".
+//
+// When encoding a scalar with this exact value, it must be quoted to prevent it
+// from being interpreted as a merge indicator during decoding.
+func looksLikeMerge(s string) (result bool) {
+	return s == "<<"
+}
+
 func (e *encoder) stringv(tag string, in reflect.Value) {
 	var style yaml_scalar_style_t
 	s := in.String()
@@ -342,14 +350,17 @@ func (e *encoder) stringv(tag string, in reflect.Value) {
 		// tag when encoded unquoted. If it doesn't,
 		// there's no need to quote it.
 		rtag, _ := resolve("", s)
-		canUsePlain = rtag == strTag && !(isBase60Float(s) || isOldBool(s))
+		canUsePlain = rtag == strTag &&
+			!(isBase60Float(s) ||
+				isOldBool(s) ||
+				looksLikeMerge(s))
 	}
 	// Note: it's possible for user code to emit invalid YAML
 	// if they explicitly specify a tag and a string containing
 	// text that's incompatible with that tag.
 	switch {
 	case strings.Contains(s, "\n"):
-		if e.flow {
+		if e.flow || !shouldUseLiteralStyle(s) {
 			style = yaml_DOUBLE_QUOTED_SCALAR_STYLE
 		} else {
 			style = yaml_LITERAL_SCALAR_STYLE

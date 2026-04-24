@@ -25,7 +25,7 @@ import (
 )
 
 type resolveMapItem struct {
-	value interface{}
+	value any
 	tag   string
 }
 
@@ -45,7 +45,7 @@ func init() {
 	t[int('.')] = '.' // Float (potentially in map)
 
 	var resolveMapList = []struct {
-		v   interface{}
+		v   any
 		tag string
 		l   []string
 	}{
@@ -56,6 +56,7 @@ func init() {
 		{math.Inf(+1), floatTag, []string{".inf", ".Inf", ".INF"}},
 		{math.Inf(+1), floatTag, []string{"+.inf", "+.Inf", "+.INF"}},
 		{math.Inf(-1), floatTag, []string{"-.inf", "-.Inf", "-.INF"}},
+		{negativeZero, floatTag, []string{"-0", "-0.0"}},
 		{"<<", mergeTag, []string{"<<"}},
 	}
 
@@ -79,6 +80,11 @@ const (
 	binaryTag    = "!!binary"
 	mergeTag     = "!!merge"
 )
+
+// negativeZero represents -0.0 for YAML encoding/decoding
+// this is needed because Go constants cannot express -0.0
+// https://staticcheck.dev/docs/checks/#SA4026
+var negativeZero = math.Copysign(0.0, -1.0)
 
 var longTags = make(map[string]string)
 var shortTags = make(map[string]string)
@@ -123,7 +129,7 @@ func resolvableTag(tag string) bool {
 
 var yamlStyleFloat = regexp.MustCompile(`^[-+]?(\.[0-9]+|[0-9]+(\.[0-9]*)?)([eE][-+]?[0-9]+)?$`)
 
-func resolve(tag string, in string) (rtag string, out interface{}) {
+func resolve(tag string, in string) (rtag string, out any) {
 	tag = shortTag(tag)
 	if !resolvableTag(tag) {
 		return tag, in

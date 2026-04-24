@@ -22,7 +22,6 @@ import (
 	"io"
 	"math"
 	"reflect"
-	"strconv"
 	"time"
 )
 
@@ -110,7 +109,6 @@ func (p *parser) peek() yaml_event_type_t {
 }
 
 func (p *parser) fail() {
-	var where string
 	var line int
 	if p.parser.context_mark.line != 0 {
 		line = p.parser.context_mark.line
@@ -125,16 +123,13 @@ func (p *parser) fail() {
 			line++
 		}
 	}
-	if line != 0 {
-		where = "line " + strconv.Itoa(line) + ": "
-	}
 	var msg string
 	if len(p.parser.problem) > 0 {
 		msg = p.parser.problem
 	} else {
 		msg = "unknown problem parsing YAML content"
 	}
-	failf("%s%s", where, msg)
+	fail(&ParserError{msg, line})
 }
 
 func (p *parser) anchor(n *Node, anchor []byte) {
@@ -313,7 +308,7 @@ func (p *parser) mapping() *Node {
 type decoder struct {
 	doc     *Node
 	aliases map[*Node]bool
-	terrors []string
+	terrors []*UnmarshalError
 
 	stringMapType  reflect.Type
 	generalMapType reflect.Type
@@ -324,17 +319,15 @@ type decoder struct {
 	aliasCount  int
 	aliasDepth  int
 
-	mergedFields map[interface{}]bool
+	mergedFields map[any]bool
 }
 
 var (
 	nodeType       = reflect.TypeOf(Node{})
 	durationType   = reflect.TypeOf(time.Duration(0))
-	stringMapType  = reflect.TypeOf(map[string]interface{}{})
-	generalMapType = reflect.TypeOf(map[interface{}]interface{}{})
+	stringMapType  = reflect.TypeOf(map[string]any{})
+	generalMapType = reflect.TypeOf(map[any]any{})
 	ifaceType      = generalMapType.Elem()
-	timeType       = reflect.TypeOf(time.Time{})
-	ptrTimeType    = reflect.TypeOf(&time.Time{})
 )
 
 func newDecoder() *decoder {
@@ -359,24 +352,34 @@ func (d *decoder) terror(n *Node, tag string, out reflect.Value) {
 			value = " `" + value + "`"
 		}
 	}
-	d.terrors = append(d.terrors, fmt.Sprintf("line %d: cannot unmarshal %s%s into %s", n.Line, shortTag(tag), value, out.Type()))
+	d.terrors = append(d.terrors, &UnmarshalError{
+		Err:    fmt.Errorf("cannot unmarshal %s%s into %s", shortTag(tag), value, out.Type()),
+		Line:   n.Line,
+		Column: n.Column,
+	})
 }
 
 func (d *decoder) callUnmarshaler(n *Node, u Unmarshaler) (good bool) {
 	err := u.UnmarshalYAML(n)
-	if e, ok := err.(*TypeError); ok {
+	switch e := err.(type) {
+	case nil:
+		return true
+	case *TypeError:
 		d.terrors = append(d.terrors, e.Errors...)
 		return false
+	default:
+		d.terrors = append(d.terrors, &UnmarshalError{
+			Err:    err,
+			Line:   n.Line,
+			Column: n.Column,
+		})
+		return false
 	}
-	if err != nil {
-		fail(err)
-	}
-	return true
 }
 
 func (d *decoder) callObsoleteUnmarshaler(n *Node, u obsoleteUnmarshaler) (good bool) {
 	terrlen := len(d.terrors)
-	err := u.UnmarshalYAML(func(v interface{}) (err error) {
+	err := u.UnmarshalYAML(func(v any) (err error) {
 		defer handleErr(&err)
 		d.unmarshal(n, reflect.ValueOf(v))
 		if len(d.terrors) > terrlen {
@@ -386,14 +389,20 @@ func (d *decoder) callObsoleteUnmarshaler(n *Node, u obsoleteUnmarshaler) (good 
 		}
 		return nil
 	})
-	if e, ok := err.(*TypeError); ok {
+	switch e := err.(type) {
+	case nil:
+		return true
+	case *TypeError:
 		d.terrors = append(d.terrors, e.Errors...)
 		return false
+	default:
+		d.terrors = append(d.terrors, &UnmarshalError{
+			Err:    err,
+			Line:   n.Line,
+			Column: n.Column,
+		})
+		return false
 	}
-	if err != nil {
-		fail(err)
-	}
-	return true
 }
 
 // d.prepare initializes and dereferences pointers and calls UnmarshalYAML
@@ -543,14 +552,6 @@ func (d *decoder) alias(n *Node, out reflect.Value) (good bool) {
 	return good
 }
 
-var zeroValue reflect.Value
-
-func resetMap(out reflect.Value) {
-	for _, k := range out.MapKeys() {
-		out.SetMapIndex(k, zeroValue)
-	}
-}
-
 func (d *decoder) null(out reflect.Value) bool {
 	if out.CanAddr() {
 		switch out.Kind() {
@@ -564,7 +565,7 @@ func (d *decoder) null(out reflect.Value) bool {
 
 func (d *decoder) scalar(n *Node, out reflect.Value) bool {
 	var tag string
-	var resolved interface{}
+	var resolved any
 	if n.indicatedString() {
 		tag = strTag
 		resolved = n.Value
@@ -602,7 +603,12 @@ func (d *decoder) scalar(n *Node, out reflect.Value) bool {
 			}
 			err := u.UnmarshalText(text)
 			if err != nil {
-				fail(err)
+				d.terrors = append(d.terrors, &UnmarshalError{
+					Err:    err,
+					Line:   n.Line,
+					Column: n.Column,
+				})
+				return false
 			}
 			return true
 		}
@@ -719,7 +725,7 @@ func (d *decoder) scalar(n *Node, out reflect.Value) bool {
 	return false
 }
 
-func settableValueOf(i interface{}) reflect.Value {
+func settableValueOf(i any) reflect.Value {
 	v := reflect.ValueOf(i)
 	sv := reflect.New(v.Type()).Elem()
 	sv.Set(v)
@@ -740,7 +746,7 @@ func (d *decoder) sequence(n *Node, out reflect.Value) (good bool) {
 	case reflect.Interface:
 		// No type hints. Will have to use a generic sequence.
 		iface = out
-		out = settableValueOf(make([]interface{}, l))
+		out = settableValueOf(make([]any, l))
 	default:
 		d.terror(n, seqTag, out)
 		return false
@@ -773,7 +779,11 @@ func (d *decoder) mapping(n *Node, out reflect.Value) (good bool) {
 			for j := i + 2; j < l; j += 2 {
 				nj := n.Content[j]
 				if ni.Kind == nj.Kind && ni.Value == nj.Value {
-					d.terrors = append(d.terrors, fmt.Sprintf("line %d: mapping key %#v already defined at line %d", nj.Line, nj.Value, ni.Line))
+					d.terrors = append(d.terrors, &UnmarshalError{
+						Err:    fmt.Errorf("mapping key %#v already defined at line %d", nj.Value, ni.Line),
+						Line:   nj.Line,
+						Column: nj.Column,
+					})
 				}
 			}
 		}
@@ -832,17 +842,17 @@ func (d *decoder) mapping(n *Node, out reflect.Value) (good bool) {
 		if d.unmarshal(n.Content[i], k) {
 			if mergedFields != nil {
 				ki := k.Interface()
-				if mergedFields[ki] {
+				if d.getPossiblyUnhashableKey(mergedFields, ki) {
 					continue
 				}
-				mergedFields[ki] = true
+				d.setPossiblyUnhashableKey(mergedFields, ki, true)
 			}
 			kkind := k.Kind()
 			if kkind == reflect.Interface {
 				kkind = k.Elem().Kind()
 			}
 			if kkind == reflect.Map || kkind == reflect.Slice {
-				failf("invalid map key: %#v", k.Interface())
+				failf("cannot use '%#v' as a map key; try decoding into yaml.Node", k.Interface())
 			}
 			e := reflect.New(et).Elem()
 			if d.unmarshal(n.Content[i+1], e) || n.Content[i+1].ShortTag() == nullTag && (mapIsNew || !out.MapIndex(k).IsValid()) {
@@ -921,7 +931,11 @@ func (d *decoder) mappingStruct(n *Node, out reflect.Value) (good bool) {
 		if info, ok := sinfo.FieldsMap[sname]; ok {
 			if d.uniqueKeys {
 				if doneFields[info.Id] {
-					d.terrors = append(d.terrors, fmt.Sprintf("line %d: field %s already set in type %s", ni.Line, name.String(), out.Type()))
+					d.terrors = append(d.terrors, &UnmarshalError{
+						Err:    fmt.Errorf("field %s already set in type %s", name.String(), out.Type()),
+						Line:   ni.Line,
+						Column: ni.Column,
+					})
 					continue
 				}
 				doneFields[info.Id] = true
@@ -941,7 +955,11 @@ func (d *decoder) mappingStruct(n *Node, out reflect.Value) (good bool) {
 			d.unmarshal(n.Content[i+1], value)
 			inlineMap.SetMapIndex(name, value)
 		} else if d.knownFields {
-			d.terrors = append(d.terrors, fmt.Sprintf("line %d: field %s not found in type %s", ni.Line, name.String(), out.Type()))
+			d.terrors = append(d.terrors, &UnmarshalError{
+				Err:    fmt.Errorf("field %s not found in type %s", name.String(), out.Type()),
+				Line:   ni.Line,
+				Column: ni.Column,
+			})
 		}
 	}
 
@@ -956,14 +974,32 @@ func failWantMap() {
 	failf("map merge requires map or sequence of maps as the value")
 }
 
+func (d *decoder) setPossiblyUnhashableKey(m map[any]bool, key any, value bool) {
+	defer func() {
+		if err := recover(); err != nil {
+			failf("%v", err)
+		}
+	}()
+	m[key] = value
+}
+
+func (d *decoder) getPossiblyUnhashableKey(m map[any]bool, key any) bool {
+	defer func() {
+		if err := recover(); err != nil {
+			failf("%v", err)
+		}
+	}()
+	return m[key]
+}
+
 func (d *decoder) merge(parent *Node, merge *Node, out reflect.Value) {
 	mergedFields := d.mergedFields
 	if mergedFields == nil {
-		d.mergedFields = make(map[interface{}]bool)
+		d.mergedFields = make(map[any]bool)
 		for i := 0; i < len(parent.Content); i += 2 {
 			k := reflect.New(ifaceType).Elem()
 			if d.unmarshal(parent.Content[i], k) {
-				d.mergedFields[k.Interface()] = true
+				d.setPossiblyUnhashableKey(d.mergedFields, k.Interface(), true)
 			}
 		}
 	}

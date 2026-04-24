@@ -1,17 +1,17 @@
-// 
+//
 // Copyright (c) 2011-2019 Canonical Ltd
 // Copyright (c) 2006-2010 Kirill Simonov
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
 // the Software without restriction, including without limitation the rights to
 // use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
 // of the Software, and to permit persons to whom the Software is furnished to do
 // so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all
 // copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -46,7 +46,33 @@ const (
 // Check if the character at the specified position is an alphabetical
 // character, a digit, '_', or '-'.
 func is_alpha(b []byte, i int) bool {
-	return b[i] >= '0' && b[i] <= '9' || b[i] >= 'A' && b[i] <= 'Z' || b[i] >= 'a' && b[i] <= 'z' || b[i] == '_' || b[i] == '-'
+	return b[i] >= '0' && b[i] <= '9' || b[i] >= 'A' && b[i] <= 'Z' ||
+		b[i] >= 'a' && b[i] <= 'z' || b[i] == '_' || b[i] == '-'
+}
+
+// Check if the character at the specified position is a flow indicator as
+// defined by spec production [23] c-flow-indicator ::=
+// c-collect-entry | c-sequence-start | c-sequence-end |
+// c-mapping-start | c-mapping-end
+func is_flow_indicator(b []byte, i int) bool {
+	return b[i] == '[' || b[i] == ']' ||
+		b[i] == '{' || b[i] == '}' || b[i] == ','
+}
+
+// Check if the character at the specified position is valid for anchor names
+// as defined by spec production [102] ns-anchor-char ::= ns-char -
+// c-flow-indicator.
+// This includes all printable characters except: CR, LF, BOM, space, tab, '[',
+// ']', '{', '}', ','.
+// We further limit it to ascii chars only, which is a subset of the spec
+// production but is usually what most people expect.
+func is_anchor_char(b []byte, i int) bool {
+	return is_printable(b, i) &&
+		!is_break(b, i) &&
+		!is_blank(b, i) &&
+		!is_bom(b, i) &&
+		!is_flow_indicator(b, i) &&
+		is_ascii(b, i)
 }
 
 // Check if the character at the specified position is a digit.
@@ -61,7 +87,8 @@ func as_digit(b []byte, i int) int {
 
 // Check if the character at the specified position is a hex-digit.
 func is_hex(b []byte, i int) bool {
-	return b[i] >= '0' && b[i] <= '9' || b[i] >= 'A' && b[i] <= 'F' || b[i] >= 'a' && b[i] <= 'f'
+	return b[i] >= '0' && b[i] <= '9' || b[i] >= 'A' && b[i] <= 'F' ||
+		b[i] >= 'a' && b[i] <= 'f'
 }
 
 // Get the value of a hex-digit.
@@ -137,8 +164,8 @@ func is_crlf(b []byte, i int) bool {
 func is_breakz(b []byte, i int) bool {
 	//return is_break(b, i) || is_z(b, i)
 	return (
-		// is_break:
-		b[i] == '\r' || // CR (#xD)
+	// is_break:
+	b[i] == '\r' || // CR (#xD)
 		b[i] == '\n' || // LF (#xA)
 		b[i] == 0xC2 && b[i+1] == 0x85 || // NEL (#x85)
 		b[i] == 0xE2 && b[i+1] == 0x80 && b[i+2] == 0xA8 || // LS (#x2028)
@@ -151,8 +178,8 @@ func is_breakz(b []byte, i int) bool {
 func is_spacez(b []byte, i int) bool {
 	//return is_space(b, i) || is_breakz(b, i)
 	return (
-		// is_space:
-		b[i] == ' ' ||
+	// is_space:
+	b[i] == ' ' ||
 		// is_breakz:
 		b[i] == '\r' || // CR (#xD)
 		b[i] == '\n' || // LF (#xA)
@@ -166,8 +193,8 @@ func is_spacez(b []byte, i int) bool {
 func is_blankz(b []byte, i int) bool {
 	//return is_blank(b, i) || is_breakz(b, i)
 	return (
-		// is_blank:
-		b[i] == ' ' || b[i] == '\t' ||
+	// is_blank:
+	b[i] == ' ' || b[i] == '\t' ||
 		// is_breakz:
 		b[i] == '\r' || // CR (#xD)
 		b[i] == '\n' || // LF (#xA)
