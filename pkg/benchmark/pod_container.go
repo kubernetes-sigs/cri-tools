@@ -73,13 +73,16 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 			benchmark := func() {
 				By("run PodSandbox")
+
 				podID, err := rc.RunPodSandbox(context.TODO(), config, framework.TestContext.RuntimeHandler)
 				framework.ExpectNoError(err, "failed to create PodSandbox: %v", err)
 
 				By("create container in PodSandbox")
+
 				containerID := framework.CreateDefaultContainer(rc, ic, podID, config, "Pod-Container-for-creating-benchmark-")
 
 				By("start container in PodSandbox")
+
 				err = rc.StartContainer(context.TODO(), containerID)
 				framework.ExpectNoError(err, "failed to start Container: %v", err)
 

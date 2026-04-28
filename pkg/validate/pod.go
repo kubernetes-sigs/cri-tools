@@ -53,15 +53,18 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 		It("runtime should support running PodSandbox [Conformance]", func() {
 			By("test run a default PodSandbox")
+
 			podID = testRunDefaultPodSandbox(rc)
 
 			By("test list PodSandbox")
+
 			pods := listPodSandboxForID(rc, podID)
 			Expect(podSandboxFound(pods, podID)).To(BeTrue(), "PodSandbox should be listed")
 		})
 
 		It("runtime should support stopping PodSandbox [Conformance]", func() {
 			By("run PodSandbox")
+
 			podID = framework.RunDefaultPodSandbox(rc, "PodSandbox-for-test-stop-")
 
 			By("test stop PodSandbox")
@@ -70,6 +73,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 		It("runtime should support removing PodSandbox [Conformance]", func() {
 			By("run PodSandbox")
+
 			podID = framework.RunDefaultPodSandbox(rc, "PodSandbox-for-test-remove-")
 
 			By("stop PodSandbox")

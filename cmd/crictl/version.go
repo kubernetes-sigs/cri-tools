@@ -39,6 +39,7 @@ var runtimeVersionCommand = &cli.Command{
 		if err != nil {
 			return err
 		}
+
 		if err := Version(c.Context, runtimeClient, string(remote.CRIVersionV1)); err != nil {
 			return fmt.Errorf("getting the runtime version: %w", err)
 		}

@@ -39,8 +39,10 @@ const (
 var _ = framework.KubeDescribe("Container", func() {
 	f := framework.NewDefaultCRIFramework()
 
-	var rc internalapi.RuntimeService
-	var ic internalapi.ImageManagerService
+	var (
+		rc internalapi.RuntimeService
+		ic internalapi.ImageManagerService
+	)
 
 	BeforeEach(func() {
 		rc = f.CRIClient.CRIRuntimeClient
@@ -62,6 +64,7 @@ var _ = framework.KubeDescribe("Container", func() {
 			if samplingConfig.N <= 0 {
 				Skip("skipping container lifecycle benchmarks since container number option was not set")
 			}
+
 			if samplingConfig.NumParallel < 1 {
 				samplingConfig.NumParallel = 1
 			}
@@ -80,16 +83,20 @@ var _ = framework.KubeDescribe("Container", func() {
 
 			experiment := gmeasure.NewExperiment("ContainerOps")
 			experiment.Sample(func(idx int) {
-				var podID string
-				var podConfig *runtimeapi.PodSandboxConfig
-				var containerID string
-				var lastStartTime, lastEndTime int64
-				var err error
+				var (
+					podID                      string
+					podConfig                  *runtimeapi.PodSandboxConfig
+					containerID                string
+					lastStartTime, lastEndTime int64
+					err                        error
+				)
+
 				durations := make([]int64, len(resultsSet.OperationsNames))
 
 				podID, podConfig = framework.CreatePodSandboxForContainer(rc)
 
 				By(fmt.Sprintf("CreatingContainer %d", idx))
+
 				startTime := time.Now().UnixNano()
 				lastStartTime = startTime
 				containerID = framework.CreateDefaultContainer(rc, ic, podID, podConfig, "Benchmark-container-")
@@ -97,31 +104,39 @@ var _ = framework.KubeDescribe("Container", func() {
 				durations[0] = lastEndTime - lastStartTime
 
 				By(fmt.Sprintf("StartingContainer %d", idx))
+
 				lastStartTime = time.Now().UnixNano()
 				err = rc.StartContainer(context.TODO(), containerID)
 				lastEndTime = time.Now().UnixNano()
 				durations[1] = lastEndTime - lastStartTime
+
 				framework.ExpectNoError(err, "failed to start Container: %v", err)
 
 				By(fmt.Sprintf("ContainerStatus %d", idx))
+
 				lastStartTime = time.Now().UnixNano()
 				_, err = rc.ContainerStatus(context.TODO(), containerID, true)
 				lastEndTime = time.Now().UnixNano()
 				durations[2] = lastEndTime - lastStartTime
+
 				framework.ExpectNoError(err, "failed to get Container status: %v", err)
 
 				By(fmt.Sprintf("ContainerStop %d", idx))
+
 				lastStartTime = time.Now().UnixNano()
 				err = rc.StopContainer(context.TODO(), containerID, framework.DefaultStopContainerTimeout)
 				lastEndTime = time.Now().UnixNano()
 				durations[3] = lastEndTime - lastStartTime
+
 				framework.ExpectNoError(err, "failed to stop Container: %v", err)
 
 				By(fmt.Sprintf("ContainerRemove %d", idx))
+
 				lastStartTime = time.Now().UnixNano()
 				err = rc.RemoveContainer(context.TODO(), containerID)
 				lastEndTime = time.Now().UnixNano()
 				durations[4] = lastEndTime - lastStartTime
+
 				framework.ExpectNoError(err, "failed to remove Container: %v", err)
 
 				res := LifecycleBenchmarkDatapoint{
@@ -141,6 +156,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 			// Send nil and give the manager a minute to process any already-queued results:
 			resultsChannel <- nil
+
 			err := resultsManager.AwaitAllResults(60)
 			if err != nil {
 				logrus.Errorf("Results manager failed to await all results: %v", err)
@@ -148,6 +164,7 @@ var _ = framework.KubeDescribe("Container", func() {
 
 			if framework.TestContext.BenchmarkingOutputDir != "" {
 				filepath := path.Join(framework.TestContext.BenchmarkingOutputDir, "container_benchmark_data.json")
+
 				err = resultsManager.WriteResultsFile(filepath)
 				if err != nil {
 					logrus.Errorf("Error occurred while writing benchmark results to file %s: %v", filepath, err)

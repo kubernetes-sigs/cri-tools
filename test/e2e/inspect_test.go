@@ -31,6 +31,7 @@ import (
 // The actual test suite.
 var _ = t.Describe("inspect", func() {
 	const imageLatest = registry + "test-image-latest"
+
 	sandbox := ""
 
 	BeforeEach(func() {
@@ -62,6 +63,7 @@ var _ = t.Describe("inspect", func() {
 
 		// Remove any remaining digest references for this image
 		res := t.Crictl("images --filter reference=" + imageLatest + " -q")
+
 		contents := res.Out.Contents()
 		if len(contents) > 0 {
 			output := strings.Split(string(contents), "\n")
