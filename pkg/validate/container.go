@@ -22,7 +22,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
@@ -762,25 +761,6 @@ func verifyLogContents(ctx context.Context, podConfig *runtimeapi.PodSandboxConf
 	}
 
 	Expect(found).To(BeTrue(), "expected log %q (stream=%q) not found in logs %+v", log, stream, msgs)
-}
-
-// verifyLogContentsRe verifies the contents of container log using the provided regular expression pattern.
-func verifyLogContentsRe(ctx context.Context, podConfig *runtimeapi.PodSandboxConfig, logPath, pattern string, stream streamType) {
-	By("verify log contents using regex pattern")
-
-	msgs := parseLogLine(ctx, podConfig, logPath)
-
-	found := false
-
-	for _, msg := range msgs {
-		if matched, _ := regexp.MatchString(pattern, msg.log); matched && msg.stream == stream {
-			found = true
-
-			break
-		}
-	}
-
-	Expect(found).To(BeTrue(), "expected log pattern %q (stream=%q) to match logs %+v", pattern, stream, msgs)
 }
 
 // listContainerStatsForID lists container for containerID.

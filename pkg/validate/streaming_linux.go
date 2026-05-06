@@ -73,7 +73,7 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			req := createDefaultPortForward(ctx, rc, podID)
 
 			By("check the output of portforward")
-			checkPortForward(ctx, rc, req, webServerHostPortForHostNetPortFroward, webServerHostNetContainerPort)
+			checkPortForward(ctx, rc, req, webServerHostPortForHostNetPortForward, webServerHostNetContainerPort)
 		})
 	})
 })
