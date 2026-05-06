@@ -11,7 +11,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.28.3
 	github.com/onsi/gomega v1.40.0
 	github.com/opencontainers/go-digest v1.0.0
-	github.com/opencontainers/selinux v1.13.1
+	github.com/opencontainers/selinux v1.14.0
 	github.com/sirupsen/logrus v1.9.4
 	github.com/urfave/cli/v2 v2.27.7
 	go.opentelemetry.io/otel v1.43.0
