@@ -40,8 +40,8 @@ linters:
     - godot
     - godox
     - goheader
-    # - gomoddirectives temporarily disabled to test pre-beta of v1.36
-    - gomodguard
+    - gomoddirectives
+    - gomodguard_v2
     - goprintffuncname
     - gosmopolitan
     - govet
@@ -116,6 +116,8 @@ linters:
     # - varnamelen
     # - wrapcheck
   settings:
+    goconst:
+      min-occurrences: 5
     wsl_v5:
       allow-first-in-block: true
       allow-whole-block: false
@@ -158,6 +160,17 @@ linters:
       - common-false-positives
       - legacy
       - std-error-handling
+    rules:
+      # TODO: clean up these exceptions and remove them from the config
+      - linters:
+          - goconst
+        path: cmd/crictl/
+      - linters:
+          - goconst
+        path: _test\.go$
+      - linters:
+          - goconst
+        path: pkg/validate/
     paths:
       - third_party$
       - builtin$
