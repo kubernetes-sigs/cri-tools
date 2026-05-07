@@ -35,7 +35,16 @@ version = 2
         runtime_type = "${RUNTIME}"
         [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
           SystemdCgroup = false
+  [plugins."io.containerd.nri.v1.nri"]
+    disable = false
+    disable_connections = false
+    plugin_path = "/opt/nri/plugins"
+    socket_path = "/var/run/nri/nri.sock"
 EOF
+
+echo "Setting up NRI socket directory..."
+mkdir -p /var/run/nri
+mkdir -p /opt/nri/plugins
 
 echo "Setting up CNI networking in ${CNI_CONFIG_DIR}..."
 mkdir -p "${CNI_CONFIG_DIR}"

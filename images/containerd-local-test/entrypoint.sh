@@ -30,6 +30,9 @@ fi
 echo "Initializing container environment..."
 setup-containerd.sh
 
+echo "Setting up NRI socket directory..."
+mkdir -p /var/run/nri
+
 echo "Starting containerd..."
 mkdir -p /run/containerd
 

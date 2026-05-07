@@ -117,6 +117,9 @@ type TestContextType struct {
 	UseWebsocketForExec        bool
 	UseWebsocketForAttach      bool
 	UseWebsocketForPortForward bool
+
+	// NRI (Node Resource Interface) settings.
+	NRISocketPath string
 }
 
 // TestContext is a test context.
@@ -181,6 +184,8 @@ func RegisterFlags() {
 	flag.BoolVar(&TestContext.UseWebsocketForExec, "websocket-exec", false, "Use websocket connections over SPDY for exec streaming tests.")
 	flag.BoolVar(&TestContext.UseWebsocketForAttach, "websocket-attach", false, "Use websocket connections over SPDY for attach streaming tests.")
 	flag.BoolVar(&TestContext.UseWebsocketForPortForward, "websocket-portforward", false, "Use websocket connections over SPDY for portforward streaming tests.")
+
+	flag.StringVar(&TestContext.NRISocketPath, "nri-socket", "", "Path to the NRI socket. NRI tests are skipped when not set.")
 }
 
 // LoadYamlConfigFiles loads any external file-based parameters into the TestContextType.
