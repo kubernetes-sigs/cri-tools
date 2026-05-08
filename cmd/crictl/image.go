@@ -20,12 +20,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"regexp"
 	"slices"
 	"sort"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/docker/go-units"
@@ -672,7 +672,7 @@ func getAuth(creds, auth, username string) (*pb.AuthConfig, error) {
 	if username != "" {
 		fmt.Print("Enter Password:")
 
-		bytePassword, err := term.ReadPassword(int(syscall.Stdin)) //nolint:unconvert // required for windows
+		bytePassword, err := term.ReadPassword(int(os.Stdin.Fd()))
 
 		fmt.Print("\n")
 

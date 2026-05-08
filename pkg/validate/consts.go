@@ -49,15 +49,16 @@ var (
 	checkPathLinuxCmd      = func(path string) []string { return []string{"ls", "-A", path} }
 
 	// Windows defaults.
-	echoHelloWindowsCmd      = []string{"powershell", "-c", "echo hello"}
-	sleepWindowsCmd          = []string{"powershell", "-c", "start-sleep 4321"}
-	checkSleepWindowsCmd     = []string{"powershell", "-c", "get-process | findstr sleep; exit 0"}
+	powershell               = "powershell"
+	echoHelloWindowsCmd      = []string{powershell, "-c", "echo hello"}
+	sleepWindowsCmd          = []string{powershell, "-c", "start-sleep 4321"}
+	checkSleepWindowsCmd     = []string{powershell, "-c", "get-process | findstr sleep; exit 0"}
 	shellWindowsCmd          = []string{"cmd", "/Q"}
-	pauseWindowsCmd          = []string{"powershell", "-c", "ping -t localhost"}
-	logDefaultWindowsCmd     = []string{"powershell", "-c", "echo '" + defaultLog + "'"}
-	loopLogDefaultWindowsCmd = []string{"powershell", "-c", "while($true) { echo '" + defaultLog + "'; sleep 1; }"}
+	pauseWindowsCmd          = []string{powershell, "-c", "ping -t localhost"}
+	logDefaultWindowsCmd     = []string{powershell, "-c", "echo '" + defaultLog + "'"}
+	loopLogDefaultWindowsCmd = []string{powershell, "-c", "while($true) { echo '" + defaultLog + "'; sleep 1; }"}
 	echoHelloWindowsOutput   = "hello\r\n"
-	checkPathWindowsCmd      = func(path string) []string { return []string{"powershell", "-c", "ls", path} }
+	checkPathWindowsCmd      = func(path string) []string { return []string{powershell, "-c", "ls", path} }
 )
 
 var _ = framework.AddBeforeSuiteCallback(func() {

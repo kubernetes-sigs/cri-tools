@@ -54,7 +54,7 @@ define curl_to
 endef
 
 ZEITGEIST_VERSION = v0.5.3
-GOLANGCI_LINT_VERSION := v2.10.1
+GOLANGCI_LINT_VERSION := v2.12.2
 REPO_INFRA_VERSION = v0.2.6
 
 GINKGO := $(BUILD_BIN_PATH)/ginkgo
@@ -145,12 +145,24 @@ release: ## Build a release.
 verify: verify-lint verify-boilerplate verify-docs verify-dependencies verify-go-modules verify-prettier ## Run all verify targets.
 
 .PHONY: verify-lint
-verify-lint: $(GOLANGCI_LINT) ## Run golangci-lint.
+verify-lint: $(GOLANGCI_LINT) ## Run golangci-lint for the current OS, linux, and windows.
 	$(GOLANGCI_LINT) run
+ifneq ($(GOOS),linux)
+	GOOS=linux $(GOLANGCI_LINT) run
+endif
+ifneq ($(GOOS),windows)
+	GOOS=windows $(GOLANGCI_LINT) run
+endif
 
 .PHONY: lint-fix
-lint-fix: $(GOLANGCI_LINT) ## Run golangci-lint with fix.
+lint-fix: $(GOLANGCI_LINT) ## Run golangci-lint with fix for the current OS, linux, and windows.
 	$(GOLANGCI_LINT) run --fix
+ifneq ($(GOOS),linux)
+	GOOS=linux $(GOLANGCI_LINT) run --fix
+endif
+ifneq ($(GOOS),windows)
+	GOOS=windows $(GOLANGCI_LINT) run --fix
+endif
 
 .PHONY: verify-prettier
 verify-prettier: ## Run prettier check.
