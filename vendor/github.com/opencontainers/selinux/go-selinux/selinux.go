@@ -232,6 +232,10 @@ func ReserveLabel(label string) {
 
 // ReserveLabelV2 reserves the MLS/MCS level component of the specified label.
 // Returns an error if the label can't be reserved.
+//
+// Callers that are intentionally reusing an existing level/MCS (e.g. multiple
+// container in a pod sharing a label) may safely ignore [ErrMCSAlreadyExists]
+// error.
 func ReserveLabelV2(label string) error {
 	return reserveLabel(label)
 }
