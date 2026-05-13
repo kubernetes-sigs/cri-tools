@@ -3,6 +3,11 @@ on:
   push:
     tags:
       - "*"
+# `make release-notes release` and ncipollo/release-action authenticate via
+# secrets.GH_TOKEN; the default GITHUB_TOKEN only needs read access.
+permissions:
+  contents: read
+
 jobs:
   publish:
     name: release
