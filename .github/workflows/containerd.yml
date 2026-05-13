@@ -6,6 +6,9 @@ on:
     branches:
       - master
   pull_request:
+permissions:
+  contents: read
+
 jobs:
   #
   # Run CRI tests against containerd
