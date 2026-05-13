@@ -1,6 +1,6 @@
 module sigs.k8s.io/cri-tools
 
-go 1.26.2
+go 1.26.3
 
 require (
 	github.com/distribution/reference v0.6.0
@@ -11,7 +11,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.28.3
 	github.com/onsi/gomega v1.40.0
 	github.com/opencontainers/go-digest v1.0.0
-	github.com/opencontainers/selinux v1.14.0
+	github.com/opencontainers/selinux v1.14.1
 	github.com/sirupsen/logrus v1.9.4
 	github.com/urfave/cli/v2 v2.27.7
 	go.opentelemetry.io/otel v1.43.0
@@ -24,11 +24,11 @@ require (
 	google.golang.org/grpc v1.81.0
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 	k8s.io/client-go v0.36.0
-	k8s.io/cri-api v0.36.0
+	k8s.io/cri-api v0.36.1
 	k8s.io/cri-client v0.36.0
 	k8s.io/kubectl v0.36.0
 	k8s.io/kubelet v0.36.0
-	k8s.io/streaming v0.36.0
+	k8s.io/streaming v0.36.1
 	sigs.k8s.io/yaml v1.6.0
 )
 
