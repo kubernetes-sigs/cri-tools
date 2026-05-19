@@ -36,6 +36,18 @@ dependencies:
       - path: hack/release-notes.sh
         match: VERSION
 
+  - name: ubuntu
+    version: "24.04"
+    refPaths:
+      - path: .github/workflows/build.yml
+        match: ubuntu-
+      - path: .github/workflows/containerd.yml
+        match: ubuntu-
+      - path: .github/workflows/crio.yml
+        match: ubuntu-
+      - path: images/containerd-local-test/Dockerfile
+        match: ubuntu
+
   - name: busybox
     version: 1.37.0
     refPaths:
