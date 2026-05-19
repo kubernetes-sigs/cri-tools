@@ -308,6 +308,21 @@ jobs:
               runtime_type = \"${{matrix.runtime}}\"
           EOF'
 
+          # Enable NRI explicitly to ensure the expected socket path is used.
+          # Containerd 1.7 is EOL soon so only test main branch.
+          # TODO: Remove the condition once 1.7 is removed or extend when specific 2.x branch is added to the test matrix.
+          if [[ "${{ matrix.version }}" == "main" ]]; then
+            sudo bash -c 'cat >> ${BDIR}/config.toml <<EOF
+            [plugins."io.containerd.nri.v1.nri"]
+              disable = false
+              disable_connections = false
+              plugin_path = "/opt/nri/plugins"
+              socket_path = "/var/run/nri/nri.sock"
+          EOF'
+            sudo mkdir -p /var/run/nri
+            sudo mkdir -p /opt/nri/plugins
+          fi
+
           # Remove possibly existing containerd configuration
           sudo rm -rf /etc/containerd
           sudo PATH=$PATH bash -c "/usr/local/bin/containerd -a ${BDIR}/c.sock -root ${BDIR}/root -state ${BDIR}/state -log-level debug &> ${BDIR}/containerd-cri.log &"
@@ -320,8 +335,15 @@ jobs:
           sudo /usr/local/sbin/runc --version
           sudo mount
 
+          # Build critest flags
+          CRITEST_FLAGS="--ginkgo.v --runtime-endpoint=unix:///${BDIR}/c.sock --parallel=8"
+          # TODO: Remove the condition once 1.7 is removed or extend when specific 2.x branch is added to the test matrix.
+          if [[ "${{ matrix.version }}" == "main" ]]; then
+            CRITEST_FLAGS="${CRITEST_FLAGS} --nri-socket=/var/run/nri/nri.sock"
+          fi
+
           TEST_RC=0
-          sudo -E PATH=$PATH critest --ginkgo.v --runtime-endpoint=unix:///${BDIR}/c.sock --parallel=8 || TEST_RC=$?
+          sudo -E PATH=$PATH critest ${CRITEST_FLAGS} || TEST_RC=$?
           test $TEST_RC -ne 0 && cat ${BDIR}/containerd-cri.log
           sudo pkill containerd
           echo "CONTD_CRI_DIR=$BDIR" >> $GITHUB_ENV

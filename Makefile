@@ -222,6 +222,7 @@ test-critest-containerd: ## Run the critest in a container with containerd.
 	# AppArmor tests must be skipped as the containerized environment does not support them.
 	hack/run-e2e-container.sh /usr/local/bin/critest-tools/critest \
 		--runtime-endpoint=unix:///run/containerd/containerd.sock \
+		--nri-socket=/var/run/nri/nri.sock \
 		--ginkgo.vv \
 		--ginkgo.skip="AppArmor" \
 		$(TESTFLAGS)

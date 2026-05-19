@@ -101,6 +101,55 @@ critest connects to Unix: `unix:///run/containerd/containerd.sock` or Windows: `
 - `-ginkgo.no-color`: Suppress color output in default reporter.
 - `-ginkgo.trace`: Print out the full stack trace when a failure occurs.
 
+### NRI (Node Resource Interface) Testing
+
+- `-nri-socket`: Path to the NRI socket (e.g., `/var/run/nri/nri.sock`). When set, NRI integration tests are enabled. When not set, NRI tests are skipped.
+
+NRI tests validate runtime behavior when NRI plugins are active. They verify plugin lifecycle hooks (RunPodSandbox, StopPodSandbox, RemovePodSandbox, CreateContainer, StartContainer, StopContainer, RemoveContainer), failure handling, retry semantics, blocking behavior, and multi-plugin ordering guarantees.
+
+NRI tests are Linux-only and marked `[Serial]` because they register NRI plugins that affect runtime-wide behavior.
+
+#### Running NRI tests against a local runtime
+
+The following are example configurations. Refer to the official documentation
+for your container runtime for complete and up-to-date setup instructions:
+
+- [NRI repository](https://github.com/containerd/nri) for NRI specification and configuration reference
+- [containerd documentation](https://github.com/containerd/containerd/blob/main/docs/NRI.md) for containerd NRI setup
+- [CRI-O documentation](https://github.com/cri-o/cri-o/blob/main/docs/crio.conf.5.md) for CRI-O NRI configuration
+
+Example containerd config with NRI enabled:
+
+```toml
+[plugins."io.containerd.nri.v1.nri"]
+  disable = false
+  disable_connections = false
+  plugin_path = "/opt/nri/plugins"
+  socket_path = "/var/run/nri/nri.sock"
+```
+
+Create the NRI socket directory and restart containerd:
+
+```sh
+sudo mkdir -p /var/run/nri
+sudo systemctl restart containerd
+```
+
+Then run critest with the NRI socket flag:
+
+```sh
+critest --nri-socket=/var/run/nri/nri.sock
+```
+
+For CRI-O, add an NRI config drop-in at `/etc/crio/crio.conf.d/10-nri.conf`:
+
+```ini
+[crio.nri]
+enable_nri = true
+nri_listen = "/var/run/nri/nri.sock"
+nri_plugin_dir = "/opt/nri/plugins"
+```
+
 ### Other Options
 
 - `-version`: Display version of critest.
