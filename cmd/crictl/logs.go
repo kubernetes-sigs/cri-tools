@@ -117,7 +117,7 @@ var logsCommand = &cli.Command{
 			return cli.ShowSubcommandHelp(c)
 		}
 
-		runtimeService, err := getRuntimeService(c, 0)
+		runtimeService, err := configFromContext(c).GetRuntimeService(c.Context, 0)
 		if err != nil {
 			return err
 		}

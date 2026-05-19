@@ -63,7 +63,7 @@ var eventsCommand = &cli.Command{
 			return fmt.Errorf("don't support %q format", format)
 		}
 
-		runtimeClient, err := getRuntimeService(c, 0)
+		runtimeClient, err := configFromContext(c).GetRuntimeService(c.Context, 0)
 		if err != nil {
 			return err
 		}

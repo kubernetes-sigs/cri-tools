@@ -30,7 +30,7 @@ var runtimeConfigCommand = &cli.Command{
 	Usage:                  "Retrieve the container runtime configuration",
 	UseShortOptionHandling: true,
 	Action: func(c *cli.Context) error {
-		runtimeClient, err := getRuntimeService(c, 0)
+		runtimeClient, err := configFromContext(c).GetRuntimeService(c.Context, 0)
 		if err != nil {
 			return fmt.Errorf("get runtime client: %w", err)
 		}

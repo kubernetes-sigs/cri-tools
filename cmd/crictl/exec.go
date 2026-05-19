@@ -148,12 +148,14 @@ var runtimeExecCommand = &cli.Command{
 			return cli.ShowSubcommandHelp(c)
 		}
 
-		runtimeClient, err := getRuntimeService(c, 0)
+		cfg := configFromContext(c)
+
+		runtimeClient, err := cfg.GetRuntimeService(c.Context, 0)
 		if err != nil {
 			return err
 		}
 
-		imageClient, err := getImageService(c)
+		imageClient, err := cfg.GetImageService(c.Context)
 		if err != nil {
 			return err
 		}

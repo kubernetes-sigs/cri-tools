@@ -18,7 +18,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -31,11 +30,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/trace"
-	"go.opentelemetry.io/otel/trace/noop"
-	internalapi "k8s.io/cri-api/pkg/apis"
-	remote "k8s.io/cri-client/pkg"
 
 	"sigs.k8s.io/cri-tools/pkg/common"
 	"sigs.k8s.io/cri-tools/pkg/framework"
@@ -47,128 +41,6 @@ const (
 	defaultTimeout        = 2 * time.Second
 	defaultTimeoutWindows = 200 * time.Second
 )
-
-var (
-	// RuntimeEndpoint is CRI server runtime endpoint.
-	RuntimeEndpoint string
-	// RuntimeEndpointIsSet is true when RuntimeEndpoint is configured.
-	RuntimeEndpointIsSet bool
-	// ImageEndpoint is CRI server image endpoint, default same as runtime endpoint.
-	ImageEndpoint string
-	// ImageEndpointIsSet is true when ImageEndpoint is configured.
-	ImageEndpointIsSet bool
-	// Timeout  of connecting to server (default: 2s on Linux, 200s on Windows).
-	Timeout time.Duration
-	// Debug enable debug output.
-	Debug bool
-	// PullImageOnCreate enables pulling image on create requests.
-	PullImageOnCreate bool
-	// DisablePullOnRun disable pulling image on run requests.
-	DisablePullOnRun bool
-	// tracerProvider is the global OpenTelemetry tracing instance.
-	tracerProvider *sdktrace.TracerProvider
-)
-
-func getRuntimeService(_ *cli.Context, timeout time.Duration) (res internalapi.RuntimeService, err error) {
-	if RuntimeEndpointIsSet && RuntimeEndpoint == "" {
-		return nil, errors.New("--runtime-endpoint is not set")
-	}
-
-	logrus.Debug("Get runtime connection")
-
-	// Check if a custom timeout is provided.
-	t := Timeout
-	if timeout != 0 {
-		t = timeout
-	}
-
-	logrus.Debugf("Using runtime connection timeout: %v", t)
-
-	// Use the noop tracer provider and not tracerProvider directly, otherwise
-	// we'll panic in the unary call interceptor
-	var tp trace.TracerProvider = noop.NewTracerProvider()
-	if tracerProvider != nil {
-		tp = tracerProvider
-	}
-
-	// If no EP set then use the default endpoint types
-	if !RuntimeEndpointIsSet {
-		logrus.Warningf("runtime connect using default endpoints: %v. "+
-			"As the default settings are now deprecated, you should set the "+
-			"endpoint instead.", defaultRuntimeEndpoints)
-		logrus.Debug("Note that performance maybe affected as each default " +
-			"connection attempt takes n-seconds to complete before timing out " +
-			"and going to the next in sequence.")
-
-		for _, endPoint := range defaultRuntimeEndpoints {
-			logrus.Debugf("Connect using endpoint %q with %q timeout", endPoint, t)
-
-			res, err = remote.NewRemoteRuntimeService(context.Background(), endPoint, t, tp, false)
-			if err != nil {
-				logrus.Error(err)
-
-				continue
-			}
-
-			logrus.Debugf("Connected successfully using endpoint: %s", endPoint)
-
-			break
-		}
-
-		return res, err
-	}
-
-	return remote.NewRemoteRuntimeService(context.Background(), RuntimeEndpoint, t, tp, false)
-}
-
-func getImageService(*cli.Context) (res internalapi.ImageManagerService, err error) {
-	if ImageEndpoint == "" {
-		if RuntimeEndpointIsSet && RuntimeEndpoint == "" {
-			return nil, errors.New("--image-endpoint is not set")
-		}
-
-		ImageEndpoint = RuntimeEndpoint
-		ImageEndpointIsSet = RuntimeEndpointIsSet
-	}
-
-	logrus.Debug("Get image connection")
-
-	// Use the noop tracer provider and not tracerProvider directly, otherwise
-	// we'll panic in the unary call interceptor
-	var tp trace.TracerProvider = noop.NewTracerProvider()
-	if tracerProvider != nil {
-		tp = tracerProvider
-	}
-
-	// If no EP set then use the default endpoint types
-	if !ImageEndpointIsSet {
-		logrus.Warningf("Image connect using default endpoints: %v. "+
-			"As the default settings are now deprecated, you should set the "+
-			"endpoint instead.", defaultRuntimeEndpoints)
-		logrus.Debug("Note that performance maybe affected as each default " +
-			"connection attempt takes n-seconds to complete before timing out " +
-			"and going to the next in sequence.")
-
-		for _, endPoint := range defaultRuntimeEndpoints {
-			logrus.Debugf("Connect using endpoint %q with %q timeout", endPoint, Timeout)
-
-			res, err = remote.NewRemoteImageService(context.Background(), endPoint, Timeout, tp, false)
-			if err != nil {
-				logrus.Error(err)
-
-				continue
-			}
-
-			logrus.Debugf("Connected successfully using endpoint: %s", endPoint)
-
-			break
-		}
-
-		return res, err
-	}
-
-	return remote.NewRemoteImageService(context.Background(), ImageEndpoint, Timeout, tp, false)
-}
 
 func getTimeout(timeDuration time.Duration) time.Duration {
 	if timeDuration.Seconds() > 0 {
@@ -187,6 +59,7 @@ func main() {
 	app.Name = "crictl"
 	app.Usage = "client for CRI"
 	app.Version = version.Version
+	app.Metadata = map[string]any{}
 
 	app.Commands = []*cli.Command{
 		runtimeAttachCommand,
@@ -332,74 +205,11 @@ func main() {
 			}
 		}
 
-		if config == nil {
-			RuntimeEndpoint = context.String("runtime-endpoint")
-
-			if context.IsSet("runtime-endpoint") {
-				RuntimeEndpointIsSet = true
-			}
-
-			ImageEndpoint = context.String("image-endpoint")
-
-			if context.IsSet("image-endpoint") {
-				ImageEndpointIsSet = true
-			}
-
-			if context.IsSet("timeout") {
-				Timeout = getTimeout(context.Duration("timeout"))
-			} else {
-				Timeout = context.Duration("timeout")
-			}
-
-			Debug = context.Bool("debug")
-			DisablePullOnRun = false
-		} else {
-			// Command line flags overrides config file.
-			if context.IsSet("runtime-endpoint") { //nolint:gocritic
-				RuntimeEndpoint = context.String("runtime-endpoint")
-				RuntimeEndpointIsSet = true
-			} else if config.RuntimeEndpoint != "" {
-				RuntimeEndpoint = config.RuntimeEndpoint
-				RuntimeEndpointIsSet = true
-			} else {
-				RuntimeEndpoint = context.String("runtime-endpoint")
-			}
-
-			if context.IsSet("image-endpoint") { //nolint:gocritic
-				ImageEndpoint = context.String("image-endpoint")
-				ImageEndpointIsSet = true
-			} else if config.ImageEndpoint != "" {
-				ImageEndpoint = config.ImageEndpoint
-				ImageEndpointIsSet = true
-			} else {
-				ImageEndpoint = context.String("image-endpoint")
-			}
-
-			if context.IsSet("timeout") { //nolint:gocritic
-				Timeout = getTimeout(context.Duration("timeout"))
-			} else if config.Timeout > 0 { // 0/neg value set to default timeout
-				Timeout = config.Timeout
-			} else {
-				Timeout = context.Duration("timeout")
-			}
-
-			if context.IsSet("debug") {
-				Debug = context.Bool("debug")
-			} else {
-				Debug = config.Debug
-			}
-
-			PullImageOnCreate = config.PullImageOnCreate
-			DisablePullOnRun = config.DisablePullOnRun
-		}
-
-		if Debug {
-			logrus.SetLevel(logrus.DebugLevel)
-		}
+		cfg := newCrictlConfig(context, config)
 
 		// Configure tracing if enabled
 		if context.IsSet("enable-tracing") {
-			tracerProvider, err = tracing.Init(
+			cfg.TracerProvider, err = tracing.Init(
 				context.Context,
 				context.String("tracing-endpoint"),
 				context.Int("tracing-sampling-rate-per-million"),
@@ -408,6 +218,8 @@ func main() {
 				return fmt.Errorf("init tracing: %w", err)
 			}
 		}
+
+		context.App.Metadata[configKey] = cfg
 
 		return nil
 	}
@@ -451,12 +263,15 @@ func main() {
 	}
 
 	// Ensure that all spans are processed.
-	if tracerProvider != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), Timeout)
-		defer cancel()
+	if v, ok := app.Metadata[configKey]; ok {
+		cfg, _ := v.(*CrictlConfig)
+		if cfg.TracerProvider != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout)
+			defer cancel()
 
-		if err := tracerProvider.Shutdown(ctx); err != nil {
-			logrus.Errorf("Unable to shutdown tracer provider: %v", err)
+			if err := cfg.TracerProvider.Shutdown(ctx); err != nil {
+				logrus.Errorf("Unable to shutdown tracer provider: %v", err)
+			}
 		}
 	}
 }
