@@ -119,7 +119,7 @@ var statsCommand = &cli.Command{
 			return err
 		}
 
-		if err = ContainerStats(runtimeClient, opts); err != nil {
+		if err = ContainerStats(c.Context, runtimeClient, opts); err != nil {
 			return fmt.Errorf("get container stats: %w", err)
 		}
 
@@ -136,7 +136,7 @@ type containerStatsDisplayer struct {
 
 // ContainerStats sends a ListContainerStatsRequest to the server, and
 // parses the returned ListContainerStatsResponse.
-func ContainerStats(client internalapi.RuntimeService, opts *statsOptions) error {
+func ContainerStats(ctx context.Context, client internalapi.RuntimeService, opts *statsOptions) error {
 	d := containerStatsDisplayer{
 		opts: opts,
 		request: &pb.ListContainerStatsRequest{
@@ -149,7 +149,7 @@ func ContainerStats(client internalapi.RuntimeService, opts *statsOptions) error
 		display: newDefaultTableDisplay(),
 	}
 
-	return handleDisplay(context.TODO(), client, opts.watch, d.displayStats)
+	return handleDisplay(ctx, client, opts.watch, d.displayStats)
 }
 
 func (d containerStatsDisplayer) displayStats(ctx context.Context, client internalapi.RuntimeService) error {

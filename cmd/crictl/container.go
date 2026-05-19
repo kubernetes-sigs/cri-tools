@@ -428,29 +428,11 @@ var removeContainerCommand = &cli.Command{
 			return err
 		}
 
-		ids := ctx.Args().Slice()
-		if ctx.Bool("all") {
-			r, err := InterruptableRPC(ctx.Context, func(ctx context.Context) ([]*pb.Container, error) {
-				return runtimeClient.ListContainers(ctx, nil)
-			})
-			if err != nil {
-				return err
-			}
-
-			ids = nil
-			for _, ctr := range r {
-				ids = append(ids, ctr.GetId())
-			}
-		}
-
-		if len(ids) == 0 {
-			if ctx.Bool("all") {
-				logrus.Info("No containers to remove")
-
-				return nil
-			}
-
-			return cli.ShowSubcommandHelp(ctx)
+		ids, err := collectIDs(ctx.Context, ctx, func(ctx context.Context) ([]*pb.Container, error) {
+			return runtimeClient.ListContainers(ctx, nil)
+		}, "container")
+		if err != nil || len(ids) == 0 {
+			return err
 		}
 
 		funcs := []func() error{}
@@ -1482,22 +1464,5 @@ func getContainersList(ctx context.Context, imageClient internalapi.ImageManager
 		return cmp.Compare(b.GetCreatedAt(), a.GetCreatedAt()) // descending
 	})
 
-	n := len(filtered)
-	if opts.latest {
-		n = 1
-	}
-
-	if opts.last > 0 {
-		n = opts.last
-	}
-
-	n = func(a, b int) int {
-		if a < b {
-			return a
-		}
-
-		return b
-	}(n, len(filtered))
-
-	return filtered[:n], nil
+	return filtered[:truncateCount(len(filtered), opts.latest, opts.last)], nil
 }

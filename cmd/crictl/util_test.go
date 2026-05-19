@@ -17,12 +17,16 @@ limitations under the License.
 package main
 
 import (
+	"context"
+	"errors"
+	"flag"
 	"io"
 	"os"
 	"strings"
 	"testing"
 
 	. "github.com/onsi/gomega"
+	"github.com/urfave/cli/v2"
 )
 
 func TestGetSortedKeys(t *testing.T) {
@@ -450,5 +454,147 @@ func TestLoadPodSandboxConfigNotFound(t *testing.T) {
 
 	if !strings.Contains(err.Error(), filename) {
 		t.Errorf("expected error message to contain %q, got %q", filename, err.Error())
+	}
+}
+
+func TestTruncateCount(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		total    int
+		latest   bool
+		last     int
+		expected int
+	}{
+		{"zero items", 0, false, 0, 0},
+		{"no truncation", 5, false, 0, 5},
+		{"latest", 5, true, 0, 1},
+		{"latest with empty", 0, true, 0, 0},
+		{"last 3", 5, false, 3, 3},
+		{"last exceeds total", 5, false, 10, 5},
+		{"last overrides latest", 5, true, 3, 3},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := truncateCount(tt.total, tt.latest, tt.last)
+			if got != tt.expected {
+				t.Errorf("truncateCount(%d, %v, %d) = %d, want %d",
+					tt.total, tt.latest, tt.last, got, tt.expected)
+			}
+		})
+	}
+}
+
+type fakeItem struct{ id string }
+
+func (f fakeItem) GetId() string { return f.id } //nolint:staticcheck // matches protobuf GetId() interface
+
+func newCLIContext(args []string, all bool) *cli.Context {
+	fs := flag.NewFlagSet("test", flag.ContinueOnError)
+	fs.Bool("all", false, "")
+
+	var setArgs []string
+	if all {
+		setArgs = append(setArgs, "--all")
+	}
+
+	setArgs = append(setArgs, args...)
+	_ = fs.Parse(setArgs)
+
+	app := &cli.App{Writer: io.Discard}
+
+	return cli.NewContext(app, fs, nil)
+}
+
+func TestCollectIDs(t *testing.T) {
+	t.Parallel()
+
+	errList := errors.New("list failed")
+
+	tests := []struct {
+		name        string
+		args        []string
+		all         bool
+		listFn      func(context.Context) ([]fakeItem, error)
+		expectedIDs []string
+		expectErr   bool
+	}{
+		{
+			name: "explicit args returned as-is",
+			args: []string{"id1", "id2"},
+			listFn: func(context.Context) ([]fakeItem, error) {
+				t.Fatal("listFn should not be called")
+
+				return nil, nil
+			},
+			expectedIDs: []string{"id1", "id2"},
+		},
+		{
+			name: "all flag collects IDs from listFn",
+			all:  true,
+			listFn: func(context.Context) ([]fakeItem, error) {
+				return []fakeItem{{id: "a"}, {id: "b"}, {id: "c"}}, nil
+			},
+			expectedIDs: []string{"a", "b", "c"},
+		},
+		{
+			name: "all flag with empty list returns nil",
+			all:  true,
+			listFn: func(context.Context) ([]fakeItem, error) {
+				return nil, nil
+			},
+		},
+		{
+			name: "all flag with list error",
+			all:  true,
+			listFn: func(context.Context) ([]fakeItem, error) {
+				return nil, errList
+			},
+			expectErr: true,
+		},
+		{
+			name: "no args and no all flag returns error",
+			listFn: func(context.Context) ([]fakeItem, error) {
+				t.Fatal("listFn should not be called")
+
+				return nil, nil
+			},
+			expectErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			cliCtx := newCLIContext(tt.args, tt.all)
+
+			ids, err := collectIDs(context.Background(), cliCtx, tt.listFn, "thing")
+			if tt.expectErr {
+				if err == nil && ids != nil {
+					t.Fatal("expected error or nil result, got ids")
+				}
+
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if len(ids) != len(tt.expectedIDs) {
+				t.Fatalf("expected %d ids, got %d", len(tt.expectedIDs), len(ids))
+			}
+
+			for i, id := range ids {
+				if id != tt.expectedIDs[i] {
+					t.Errorf("ids[%d] = %q, want %q", i, id, tt.expectedIDs[i])
+				}
+			}
+		})
 	}
 }
