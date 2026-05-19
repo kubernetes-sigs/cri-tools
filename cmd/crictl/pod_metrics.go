@@ -55,7 +55,7 @@ var podMetricsCommand = &cli.Command{
 			return cli.ShowSubcommandHelp(c)
 		}
 
-		client, err := getRuntimeService(c, 0)
+		client, err := configFromContext(c).GetRuntimeService(c.Context, 0)
 		if err != nil {
 			return fmt.Errorf("get runtime service: %w", err)
 		}

@@ -109,7 +109,7 @@ var pullImageCommand = &cli.Command{
 			return cli.ShowSubcommandHelp(c)
 		}
 
-		imageClient, err := getImageService(c)
+		imageClient, err := configFromContext(c).GetImageService(c.Context)
 		if err != nil {
 			return err
 		}
@@ -196,7 +196,7 @@ var listImageCommand = &cli.Command{
 			return cli.ShowSubcommandHelp(c)
 		}
 
-		imageClient, err := getImageService(c)
+		imageClient, err := configFromContext(c).GetImageService(c.Context)
 		if err != nil {
 			return err
 		}
@@ -336,7 +336,7 @@ var imageStatusCommand = &cli.Command{
 		},
 	},
 	Action: func(c *cli.Context) error {
-		imageClient, err := getImageService(c)
+		imageClient, err := configFromContext(c).GetImageService(c.Context)
 		if err != nil {
 			return err
 		}
@@ -442,7 +442,9 @@ the specified tag. To remove only a specific tag, use the container runtime's na
 		},
 	},
 	Action: func(cliCtx *cli.Context) error {
-		imageClient, err := getImageService(cliCtx)
+		cfg := configFromContext(cliCtx)
+
+		imageClient, err := cfg.GetImageService(cliCtx.Context)
 		if err != nil {
 			return err
 		}
@@ -481,7 +483,7 @@ the specified tag. To remove only a specific tag, use the container runtime's na
 
 		// On prune, remove images which are in use from the ID selector
 		if prune {
-			runtimeClient, err := getRuntimeService(cliCtx, 0)
+			runtimeClient, err := cfg.GetRuntimeService(cliCtx.Context, 0)
 			if err != nil {
 				return err
 			}
@@ -603,7 +605,7 @@ var imageFsInfoCommand = &cli.Command{
 		},
 	},
 	Action: func(c *cli.Context) error {
-		imageClient, err := getImageService(c)
+		imageClient, err := configFromContext(c).GetImageService(c.Context)
 		if err != nil {
 			return err
 		}

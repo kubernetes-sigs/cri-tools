@@ -217,11 +217,12 @@ var createContainerCommand = &cli.Command{
 			return errors.New("conflict: no-pull and with-pull are both set")
 		}
 
-		withPull := (!c.Bool("no-pull") && PullImageOnCreate) || c.Bool("with-pull")
+		cfg := configFromContext(c)
+		withPull := (!c.Bool("no-pull") && cfg.PullImageOnCreate) || c.Bool("with-pull")
 
 		var imageClient internalapi.ImageManagerService
 		if withPull {
-			imageClient, err = getImageService(c)
+			imageClient, err = cfg.GetImageService(c.Context)
 			if err != nil {
 				return err
 			}
@@ -243,7 +244,7 @@ var createContainerCommand = &cli.Command{
 			},
 		}
 
-		runtimeClient, err := getRuntimeService(c, opts.timeout)
+		runtimeClient, err := cfg.GetRuntimeService(c.Context, opts.timeout)
 		if err != nil {
 			return err
 		}
@@ -268,7 +269,7 @@ var startContainerCommand = &cli.Command{
 			return errors.New("ID cannot be empty")
 		}
 
-		runtimeClient, err := getRuntimeService(c, 0)
+		runtimeClient, err := configFromContext(c).GetRuntimeService(c.Context, 0)
 		if err != nil {
 			return err
 		}
@@ -331,7 +332,7 @@ var updateContainerCommand = &cli.Command{
 			return errors.New("ID cannot be empty")
 		}
 
-		runtimeClient, err := getRuntimeService(c, 0)
+		runtimeClient, err := configFromContext(c).GetRuntimeService(c.Context, 0)
 		if err != nil {
 			return err
 		}
@@ -377,7 +378,7 @@ var stopContainerCommand = &cli.Command{
 		},
 	},
 	Action: func(c *cli.Context) error {
-		runtimeClient, err := getRuntimeService(c, 0)
+		runtimeClient, err := configFromContext(c).GetRuntimeService(c.Context, 0)
 		if err != nil {
 			return err
 		}
@@ -449,7 +450,7 @@ var removeContainerCommand = &cli.Command{
 		},
 	},
 	Action: func(ctx *cli.Context) error {
-		runtimeClient, err := getRuntimeService(ctx, 0)
+		runtimeClient, err := configFromContext(ctx).GetRuntimeService(ctx.Context, 0)
 		if err != nil {
 			return err
 		}
@@ -591,12 +592,14 @@ var containerStatusCommand = &cli.Command{
 		},
 	},
 	Action: func(c *cli.Context) error {
-		runtimeClient, err := getRuntimeService(c, 0)
+		cfg := configFromContext(c)
+
+		runtimeClient, err := cfg.GetRuntimeService(c.Context, 0)
 		if err != nil {
 			return err
 		}
 
-		imageClient, err := getImageService(c)
+		imageClient, err := cfg.GetImageService(c.Context)
 		if err != nil {
 			return err
 		}
@@ -732,12 +735,14 @@ var listContainersCommand = &cli.Command{
 			return cli.ShowSubcommandHelp(c)
 		}
 
-		runtimeClient, err := getRuntimeService(c, 0)
+		cfg := configFromContext(c)
+
+		runtimeClient, err := cfg.GetRuntimeService(c.Context, 0)
 		if err != nil {
 			return err
 		}
 
-		imageClient, err := getImageService(c)
+		imageClient, err := cfg.GetImageService(c.Context)
 		if err != nil {
 			return err
 		}
@@ -787,11 +792,12 @@ var runContainerCommand = &cli.Command{
 			return errors.New("conflict: no-pull and with-pull are both set")
 		}
 
-		withPull := (!DisablePullOnRun && !c.Bool("no-pull")) || c.Bool("with-pull")
+		cfg := configFromContext(c)
+		withPull := (!cfg.DisablePullOnRun && !c.Bool("no-pull")) || c.Bool("with-pull")
 
 		var imageClient internalapi.ImageManagerService
 		if withPull {
-			imageClient, err = getImageService(c)
+			imageClient, err = cfg.GetImageService(c.Context)
 			if err != nil {
 				return err
 			}
@@ -810,7 +816,7 @@ var runContainerCommand = &cli.Command{
 			timeout: c.Duration("cancel-timeout"),
 		}
 
-		runtimeClient, err := getRuntimeService(c, opts.timeout)
+		runtimeClient, err := cfg.GetRuntimeService(c.Context, opts.timeout)
 		if err != nil {
 			return err
 		}
@@ -847,7 +853,7 @@ var checkpointContainerCommand = &cli.Command{
 			)
 		}
 
-		runtimeClient, err := getRuntimeService(c, 0)
+		runtimeClient, err := configFromContext(c).GetRuntimeService(c.Context, 0)
 		if err != nil {
 			return err
 		}

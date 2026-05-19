@@ -76,7 +76,7 @@ var runPodCommand = &cli.Command{
 			return cli.ShowSubcommandHelp(c)
 		}
 
-		runtimeClient, err := getRuntimeService(c, c.Duration("cancel-timeout"))
+		runtimeClient, err := configFromContext(c).GetRuntimeService(c.Context, c.Duration("cancel-timeout"))
 		if err != nil {
 			return err
 		}
@@ -107,7 +107,7 @@ var stopPodCommand = &cli.Command{
 			return cli.ShowSubcommandHelp(c)
 		}
 
-		runtimeClient, err := getRuntimeService(c, 0)
+		runtimeClient, err := configFromContext(c).GetRuntimeService(c.Context, 0)
 		if err != nil {
 			return err
 		}
@@ -143,7 +143,7 @@ var removePodCommand = &cli.Command{
 		},
 	},
 	Action: func(ctx *cli.Context) error {
-		runtimeClient, err := getRuntimeService(ctx, 0)
+		runtimeClient, err := configFromContext(ctx).GetRuntimeService(ctx.Context, 0)
 		if err != nil {
 			return err
 		}
@@ -255,7 +255,7 @@ var podStatusCommand = &cli.Command{
 		},
 	},
 	Action: func(c *cli.Context) error {
-		runtimeClient, err := getRuntimeService(c, 0)
+		runtimeClient, err := configFromContext(c).GetRuntimeService(c.Context, 0)
 		if err != nil {
 			return err
 		}
@@ -367,7 +367,7 @@ var listPodCommand = &cli.Command{
 	Action: func(c *cli.Context) error {
 		var err error
 
-		runtimeClient, err := getRuntimeService(c, 0)
+		runtimeClient, err := configFromContext(c).GetRuntimeService(c.Context, 0)
 		if err != nil {
 			return err
 		}
