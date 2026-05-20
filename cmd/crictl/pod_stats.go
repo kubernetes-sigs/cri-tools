@@ -17,10 +17,11 @@ limitations under the License.
 package main
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 	"time"
 
 	"github.com/docker/go-units"
@@ -111,14 +112,6 @@ var podStatsCommand = &cli.Command{
 
 		return nil
 	},
-}
-
-type podStatsByID []*pb.PodSandboxStats
-
-func (c podStatsByID) Len() int      { return len(c) }
-func (c podStatsByID) Swap(i, j int) { c[i], c[j] = c[j], c[i] }
-func (c podStatsByID) Less(i, j int) bool {
-	return c[i].GetAttributes().GetId() < c[j].GetAttributes().GetId()
 }
 
 type podStatsDisplayer struct {
@@ -285,7 +278,9 @@ func getPodSandboxStats(
 
 	logrus.Debugf("Stats: %v", stats)
 
-	sort.Sort(podStatsByID(stats))
+	slices.SortFunc(stats, func(a, b *pb.PodSandboxStats) int {
+		return cmp.Compare(a.GetAttributes().GetId(), b.GetAttributes().GetId())
+	})
 
 	return stats, nil
 }

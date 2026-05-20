@@ -17,10 +17,11 @@ limitations under the License.
 package main
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 	"strconv"
 	"time"
 
@@ -124,14 +125,6 @@ var statsCommand = &cli.Command{
 
 		return nil
 	},
-}
-
-type containerStatsByID []*pb.ContainerStats
-
-func (c containerStatsByID) Len() int      { return len(c) }
-func (c containerStatsByID) Swap(i, j int) { c[i], c[j] = c[j], c[i] }
-func (c containerStatsByID) Less(i, j int) bool {
-	return c[i].GetAttributes().GetId() < c[j].GetAttributes().GetId()
 }
 
 type containerStatsDisplayer struct {
@@ -251,7 +244,9 @@ func getContainerStats(ctx context.Context, client internalapi.RuntimeService, r
 		return nil, err
 	}
 
-	sort.Sort(containerStatsByID(r))
+	slices.SortFunc(r, func(a, b *pb.ContainerStats) int {
+		return cmp.Compare(a.GetAttributes().GetId(), b.GetAttributes().GetId())
+	})
 
 	return &pb.ListContainerStatsResponse{Stats: r}, nil
 }
