@@ -91,15 +91,7 @@ type pullOptions struct {
 	timeout time.Duration
 }
 
-var createPullFlags = []cli.Flag{
-	&cli.BoolFlag{
-		Name:  "no-pull",
-		Usage: "Do not pull the image on container creation (overrides pull-image-on-create=true in config)",
-	},
-	&cli.BoolFlag{
-		Name:  "with-pull",
-		Usage: "Pull the image on container creation (overrides pull-image-on-create=false in config)",
-	},
+var pullFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:  "creds",
 		Usage: "Use `USERNAME[:PASSWORD]` for accessing the registry",
@@ -115,7 +107,7 @@ var createPullFlags = []cli.Flag{
 	&cli.DurationFlag{
 		Name:    "cancel-timeout",
 		Aliases: []string{"T"},
-		Usage:   "Seconds to wait for a container create request to complete before cancelling the request",
+		Usage:   "Seconds to wait for the request to complete before cancelling",
 	},
 	&cli.DurationFlag{
 		Name:    "pull-timeout",
@@ -125,7 +117,18 @@ var createPullFlags = []cli.Flag{
 	},
 }
 
-var runPullFlags = []cli.Flag{
+var createPullFlags = append([]cli.Flag{
+	&cli.BoolFlag{
+		Name:  "no-pull",
+		Usage: "Do not pull the image on container creation (overrides pull-image-on-create=true in config)",
+	},
+	&cli.BoolFlag{
+		Name:  "with-pull",
+		Usage: "Pull the image on container creation (overrides pull-image-on-create=false in config)",
+	},
+}, pullFlags...)
+
+var runPullFlags = append([]cli.Flag{
 	&cli.BoolFlag{
 		Name:  "no-pull",
 		Usage: "Do not pull the image (overrides disable-pull-on-run=false in config)",
@@ -135,34 +138,11 @@ var runPullFlags = []cli.Flag{
 		Usage: "Pull the image (overrides disable-pull-on-run=true in config)",
 	},
 	&cli.StringFlag{
-		Name:  "creds",
-		Usage: "Use `USERNAME[:PASSWORD]` for accessing the registry",
-	},
-	&cli.StringFlag{
-		Name:  "auth",
-		Usage: "Use `AUTH_STRING` for accessing the registry. AUTH_STRING is a base64 encoded 'USERNAME[:PASSWORD]'",
-	},
-	&cli.StringFlag{
-		Name:  "username",
-		Usage: "Use `USERNAME` for accessing the registry. password will be requested",
-	},
-	&cli.StringFlag{
 		Name:    "runtime",
 		Aliases: []string{"r"},
 		Usage:   "Runtime handler to use. Available options are defined by the container runtime.",
 	},
-	&cli.DurationFlag{
-		Name:    "cancel-timeout",
-		Aliases: []string{"T"},
-		Usage:   "Seconds to wait for a container create request before cancelling the request",
-	},
-	&cli.DurationFlag{
-		Name:    "pull-timeout",
-		Aliases: []string{"pt"},
-		Usage:   "Maximum time to be used for pulling the image, disabled if set to 0s",
-		EnvVars: []string{"CRICTL_PULL_TIMEOUT"},
-	},
-}
+}, pullFlags...)
 
 var subcommands = []*cli.Command{{
 	Name:    "jsonschema",
