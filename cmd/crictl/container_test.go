@@ -48,6 +48,17 @@ func fakeContainer(name string, createdAt int64) *pb.Container {
 	}
 }
 
+var _ = DescribeTable("convertContainerState",
+	func(state pb.ContainerState, expected string) {
+		actual := convertContainerState(state)
+		Expect(actual).To(Equal(expected))
+	},
+	Entry("created", pb.ContainerState_CONTAINER_CREATED, "Created"),
+	Entry("running", pb.ContainerState_CONTAINER_RUNNING, "Running"),
+	Entry("exited", pb.ContainerState_CONTAINER_EXITED, "Exited"),
+	Entry("unknown", pb.ContainerState_CONTAINER_UNKNOWN, "Unknown"),
+)
+
 var _ = DescribeTable("getContainersList",
 	func(input []*pb.Container, options *listOptions, indexes []int) {
 		actual, err := getContainersList(context.Background(), nil, input, options)

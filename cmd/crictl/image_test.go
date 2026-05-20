@@ -37,6 +37,119 @@ func assert(input []*pb.Image, options, images []string) {
 	Expect(images).To(Equal(expected))
 }
 
+var _ = DescribeTable("parseCreds",
+	func(input, expectedUser, expectedPass string, expectErr bool) {
+		user, pass, err := parseCreds(input)
+		if expectErr {
+			Expect(err).To(HaveOccurred())
+
+			return
+		}
+
+		Expect(err).NotTo(HaveOccurred())
+		Expect(user).To(Equal(expectedUser))
+		Expect(pass).To(Equal(expectedPass))
+	},
+	Entry("user:password", "alice:secret", "alice", "secret", false),
+	Entry("user only (no colon)", "alice", "alice", "", false),
+	Entry("user with empty password", "alice:", "alice", "", false),
+	Entry("password containing colons", "alice:p:a:ss", "alice", "p:a:ss", false),
+	Entry("empty string", "", "", "", true),
+	Entry("empty username", ":secret", "", "", true),
+)
+
+var _ = DescribeTable("getAuth",
+	func(creds, auth string, expectedUser, expectedPass, expectedAuth string, expectNil, expectErr bool) {
+		cfg, err := getAuth(creds, auth, "")
+		if expectErr {
+			Expect(err).To(HaveOccurred())
+
+			return
+		}
+
+		Expect(err).NotTo(HaveOccurred())
+
+		if expectNil {
+			Expect(cfg).To(BeNil())
+
+			return
+		}
+
+		Expect(cfg.GetUsername()).To(Equal(expectedUser))
+		Expect(cfg.GetPassword()).To(Equal(expectedPass))
+		Expect(cfg.GetAuth()).To(Equal(expectedAuth))
+	},
+	Entry("creds only", "alice:secret", "", "alice", "secret", "", false, false),
+	Entry("auth only", "", "dG9rZW4=", "", "", "dG9rZW4=", false, false),
+	Entry("both creds and auth", "alice:secret", "dG9rZW4=", "", "", "", false, true),
+	Entry("neither creds nor auth", "", "", "", "", "", true, false),
+)
+
+var _ = DescribeTable("normalizeRepoTagPair",
+	func(repoTags []string, imageName string, expected [][]string) {
+		actual := normalizeRepoTagPair(repoTags, imageName)
+		Expect(actual).To(Equal(expected))
+	},
+	Entry("standard image:tag",
+		[]string{"docker.io/library/nginx:latest"},
+		"nginx",
+		[][]string{{"docker.io/library/nginx", "latest"}},
+	),
+	Entry("multiple tags",
+		[]string{"nginx:latest", "nginx:1.25"},
+		"nginx",
+		[][]string{{"nginx", "latest"}, {"nginx", "1.25"}},
+	),
+	Entry("empty repoTags uses imageName with <none> tag",
+		[]string{},
+		"docker.io/library/nginx",
+		[][]string{{"docker.io/library/nginx", "<none>"}},
+	),
+	Entry("nil repoTags uses imageName with <none> tag",
+		nil,
+		"docker.io/library/nginx",
+		[][]string{{"docker.io/library/nginx", "<none>"}},
+	),
+	Entry("<none> name replaced by imageName",
+		[]string{"<none>:latest"},
+		"myimage",
+		[][]string{{"myimage", "latest"}},
+	),
+	Entry("tag without colon yields error pair",
+		[]string{"malformed"},
+		"img",
+		[][]string{{"errorRepoTag", "errorRepoTag"}},
+	),
+)
+
+var _ = DescribeTable("normalizeRepoDigest",
+	func(repoDigests []string, expectedRepo, expectedDigest string) {
+		repo, digest := normalizeRepoDigest(repoDigests)
+		Expect(repo).To(Equal(expectedRepo))
+		Expect(digest).To(Equal(expectedDigest))
+	},
+	Entry("standard digest",
+		[]string{"docker.io/library/nginx@sha256:abc123"},
+		"docker.io/library/nginx", "sha256:abc123",
+	),
+	Entry("empty list",
+		[]string{},
+		"<none>", "<none>",
+	),
+	Entry("nil list",
+		nil,
+		"<none>", "<none>",
+	),
+	Entry("malformed digest (no @)",
+		[]string{"docker.io/library/nginx"},
+		"errorName", "errorRepoDigest",
+	),
+	Entry("multiple digests uses first",
+		[]string{"docker.io/library/nginx@sha256:abc", "docker.io/library/nginx@sha256:def"},
+		"docker.io/library/nginx", "sha256:abc",
+	),
+)
+
 var _ = DescribeTable("filterImagesListByDangling", assert,
 	Entry("returns filtered images with dangling --filter=dangling=true",
 		[]*pb.Image{
