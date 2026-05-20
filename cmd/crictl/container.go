@@ -266,7 +266,7 @@ var startContainerCommand = &cli.Command{
 	ArgsUsage: "CONTAINER-ID [CONTAINER-ID...]",
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
-			return errors.New("ID cannot be empty")
+			return errIDEmpty
 		}
 
 		runtimeClient, err := configFromContext(c).GetRuntimeService(c.Context, 0)
@@ -329,7 +329,7 @@ var updateContainerCommand = &cli.Command{
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
-			return errors.New("ID cannot be empty")
+			return errIDEmpty
 		}
 
 		runtimeClient, err := configFromContext(c).GetRuntimeService(c.Context, 0)
@@ -843,7 +843,7 @@ var checkpointContainerCommand = &cli.Command{
 	},
 	Action: func(c *cli.Context) error {
 		if c.NArg() == 0 {
-			return errors.New("ID cannot be empty")
+			return errIDEmpty
 		}
 
 		if c.String("export") == "" {
@@ -992,7 +992,7 @@ func CreateContainer(
 // the returned StartContainerResponse.
 func StartContainer(ctx context.Context, client internalapi.RuntimeService, id string) error {
 	if id == "" {
-		return errors.New("ID cannot be empty")
+		return errIDEmpty
 	}
 
 	if _, err := InterruptableRPC(ctx, func(ctx context.Context) (any, error) {
@@ -1031,7 +1031,7 @@ type updateOptions struct {
 // the returned UpdateContainerResourcesResponse.
 func UpdateContainerResources(ctx context.Context, client internalapi.RuntimeService, id string, opts *updateOptions) error {
 	if id == "" {
-		return errors.New("ID cannot be empty")
+		return errIDEmpty
 	}
 
 	request := &pb.UpdateContainerResourcesRequest{
@@ -1074,7 +1074,7 @@ func UpdateContainerResources(ctx context.Context, client internalapi.RuntimeSer
 // the returned StopContainerResponse.
 func StopContainer(ctx context.Context, client internalapi.RuntimeService, id string, timeout int64) error {
 	if id == "" {
-		return errors.New("ID cannot be empty")
+		return errIDEmpty
 	}
 
 	logrus.Debugf("Stopping container: %s (timeout = %v)", id, timeout)
@@ -1098,7 +1098,7 @@ func CheckpointContainer(
 	export string,
 ) error {
 	if id == "" {
-		return errors.New("ID cannot be empty")
+		return errIDEmpty
 	}
 
 	request := &pb.CheckpointContainerRequest{
@@ -1123,7 +1123,7 @@ func CheckpointContainer(
 // the returned RemoveContainerResponse.
 func RemoveContainer(ctx context.Context, client internalapi.RuntimeService, id string) error {
 	if id == "" {
-		return errors.New("ID cannot be empty")
+		return errIDEmpty
 	}
 
 	logrus.Debugf("Removing container: %s", id)
@@ -1189,7 +1189,7 @@ func containerStatus(ctx context.Context, client internalapi.RuntimeService, ids
 	}
 
 	if len(ids) == 0 {
-		return errors.New("ID cannot be empty")
+		return errIDEmpty
 	}
 
 	statuses := []statusData{}
