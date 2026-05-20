@@ -714,3 +714,49 @@ func collectIDs[T interface{ GetId() string }](
 
 	return ids, nil
 }
+
+type statusResult interface {
+	GetInfo() map[string]string
+}
+
+func resourceStatus[T statusResult](
+	ctx context.Context,
+	ids []string,
+	output, tmplStr string,
+	quiet bool,
+	fetch func(ctx context.Context, id string, verbose bool) (T, error),
+	marshal func(T) (string, error),
+	table func(T, bool),
+) error {
+	verbose := !quiet
+
+	if output == "" {
+		output = outputTypeJSON
+	}
+
+	if len(ids) == 0 {
+		return errIDEmpty
+	}
+
+	statuses := []statusData{}
+
+	for _, id := range ids {
+		r, err := fetch(ctx, id, verbose)
+		if err != nil {
+			return err
+		}
+
+		statusJSON, err := marshal(r)
+		if err != nil {
+			return err
+		}
+
+		if output == outputTypeTable {
+			table(r, verbose)
+		} else {
+			statuses = append(statuses, statusData{json: statusJSON, info: r.GetInfo()})
+		}
+	}
+
+	return outputStatusData(statuses, output, tmplStr)
+}
