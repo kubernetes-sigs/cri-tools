@@ -110,7 +110,7 @@ var logsCommand = &cli.Command{
 	Action: func(c *cli.Context) (retErr error) {
 		containerID := c.Args().First()
 		if containerID == "" {
-			return errors.New("ID cannot be empty")
+			return errIDEmpty
 		}
 
 		if c.NArg() > 1 {

@@ -949,7 +949,7 @@ func ImageStatus(ctx context.Context, client internalapi.ImageManagerService, im
 // the returned RemoveImageResponse.
 func RemoveImage(ctx context.Context, client internalapi.ImageManagerService, image string) error {
 	if image == "" {
-		return errors.New("ImageID cannot be empty")
+		return errIDEmpty
 	}
 
 	request := &pb.RemoveImageRequest{Image: &pb.ImageSpec{Image: image}}

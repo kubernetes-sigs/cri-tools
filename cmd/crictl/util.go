@@ -52,6 +52,8 @@ const (
 	outputTypeGoTemplate = "go-template"
 )
 
+var errIDEmpty = errors.New("ID cannot be empty")
+
 var (
 	// The global stopCh for monitoring Interrupt signal.
 	// DO NOT use it directly. Use SetupInterruptSignalHandler() to get it.

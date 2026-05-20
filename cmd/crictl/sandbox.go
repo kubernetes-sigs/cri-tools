@@ -19,7 +19,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"sort"
@@ -423,7 +422,7 @@ func RunPodSandbox(ctx context.Context, client internalapi.RuntimeService, confi
 // the returned StopPodSandboxResponse.
 func StopPodSandbox(ctx context.Context, client internalapi.RuntimeService, id string) error {
 	if id == "" {
-		return errors.New("ID cannot be empty")
+		return errIDEmpty
 	}
 
 	logrus.Debugf("Stopping pod sandbox: %s", id)
@@ -443,7 +442,7 @@ func StopPodSandbox(ctx context.Context, client internalapi.RuntimeService, id s
 // the returned RemovePodSandboxResponse.
 func RemovePodSandbox(ctx context.Context, client internalapi.RuntimeService, id string) error {
 	if id == "" {
-		return errors.New("ID cannot be empty")
+		return errIDEmpty
 	}
 
 	logrus.Debugf("Removing pod sandbox: %s", id)
@@ -492,7 +491,7 @@ func podSandboxStatus(ctx context.Context, client internalapi.RuntimeService, id
 	}
 
 	if len(ids) == 0 {
-		return errors.New("ID cannot be empty")
+		return errIDEmpty
 	}
 
 	statuses := []statusData{}
