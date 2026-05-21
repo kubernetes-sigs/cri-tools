@@ -17,11 +17,12 @@ limitations under the License.
 package main
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -34,14 +35,6 @@ import (
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
-
-type sandboxByCreated []*pb.PodSandbox
-
-func (a sandboxByCreated) Len() int      { return len(a) }
-func (a sandboxByCreated) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a sandboxByCreated) Less(i, j int) bool {
-	return a[i].GetCreatedAt() > a[j].GetCreatedAt()
-}
 
 var runPodCommand = &cli.Command{
 	Name:      "runp",
@@ -773,7 +766,9 @@ func getSandboxesList(sandboxesList []*pb.PodSandbox, opts *listOptions) []*pb.P
 		}
 	}
 
-	sort.Sort(sandboxByCreated(filtered))
+	slices.SortFunc(filtered, func(a, b *pb.PodSandbox) int {
+		return cmp.Compare(b.GetCreatedAt(), a.GetCreatedAt()) // descending
+	})
 
 	n := len(filtered)
 	if opts.latest {

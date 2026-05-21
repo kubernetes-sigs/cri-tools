@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -25,7 +26,7 @@ import (
 	"os"
 	"path/filepath"
 	goruntime "runtime"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -40,14 +41,6 @@ import (
 
 	"sigs.k8s.io/cri-tools/pkg/framework"
 )
-
-type containerByCreated []*pb.Container
-
-func (a containerByCreated) Len() int      { return len(a) }
-func (a containerByCreated) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a containerByCreated) Less(i, j int) bool {
-	return a[i].GetCreatedAt() > a[j].GetCreatedAt()
-}
 
 type createOptions struct {
 	// the config and pod options
@@ -1485,7 +1478,9 @@ func getContainersList(ctx context.Context, imageClient internalapi.ImageManager
 		}
 	}
 
-	sort.Sort(containerByCreated(filtered))
+	slices.SortFunc(filtered, func(a, b *pb.Container) int {
+		return cmp.Compare(b.GetCreatedAt(), a.GetCreatedAt()) // descending
+	})
 
 	n := len(filtered)
 	if opts.latest {

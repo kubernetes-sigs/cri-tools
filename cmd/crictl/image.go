@@ -17,13 +17,13 @@ limitations under the License.
 package main
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"os"
 	"regexp"
 	"slices"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -35,22 +35,6 @@ import (
 	internalapi "k8s.io/cri-api/pkg/apis"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
-
-type imageByRef []*pb.Image
-
-func (a imageByRef) Len() int      { return len(a) }
-func (a imageByRef) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a imageByRef) Less(i, j int) bool {
-	if len(a[i].GetRepoTags()) > 0 && len(a[j].GetRepoTags()) > 0 {
-		return a[i].GetRepoTags()[0] < a[j].GetRepoTags()[0]
-	}
-
-	if len(a[i].GetRepoDigests()) > 0 && len(a[j].GetRepoDigests()) > 0 {
-		return a[i].GetRepoDigests()[0] < a[j].GetRepoDigests()[0]
-	}
-
-	return a[i].GetId() < a[j].GetId()
-}
 
 var pullImageCommand = &cli.Command{
 	Name:                   "pull",
@@ -813,7 +797,17 @@ func ListImages(ctx context.Context, client internalapi.ImageManagerService, nam
 	resp := &pb.ListImagesResponse{Images: res}
 	logrus.Debugf("ListImagesResponse: %v", resp)
 
-	sort.Sort(imageByRef(resp.GetImages()))
+	slices.SortFunc(resp.GetImages(), func(a, b *pb.Image) int {
+		if len(a.GetRepoTags()) > 0 && len(b.GetRepoTags()) > 0 {
+			return cmp.Compare(a.GetRepoTags()[0], b.GetRepoTags()[0])
+		}
+
+		if len(a.GetRepoDigests()) > 0 && len(b.GetRepoDigests()) > 0 {
+			return cmp.Compare(a.GetRepoDigests()[0], b.GetRepoDigests()[0])
+		}
+
+		return cmp.Compare(a.GetId(), b.GetId())
+	})
 
 	if len(conditionFilters) > 0 && len(resp.GetImages()) > 0 {
 		resp.Images, err = filterImagesList(resp.GetImages(), conditionFilters)
