@@ -46,6 +46,26 @@ func fakeSandbox(name, namespace string, createdAt int64) *pb.PodSandbox {
 	}
 }
 
+var _ = DescribeTable("convertPodState",
+	func(state pb.PodSandboxState, expected string) {
+		actual := convertPodState(state)
+		Expect(actual).To(Equal(expected))
+	},
+	Entry("ready", pb.PodSandboxState_SANDBOX_READY, "Ready"),
+	Entry("not ready", pb.PodSandboxState_SANDBOX_NOTREADY, "NotReady"),
+)
+
+var _ = DescribeTable("getSandboxesRuntimeHandler",
+	func(handler string, expected string) {
+		sandbox := &pb.PodSandbox{RuntimeHandler: handler}
+		actual := getSandboxesRuntimeHandler(sandbox)
+		Expect(actual).To(Equal(expected))
+	},
+	Entry("empty handler returns default", "", "(default)"),
+	Entry("custom handler", "runc", "runc"),
+	Entry("another handler", "kata", "kata"),
+)
+
 var _ = DescribeTable("getSandboxesList",
 	func(input []*pb.PodSandbox, options *listOptions, indexes []int) {
 		actual := getSandboxesList(input, options)

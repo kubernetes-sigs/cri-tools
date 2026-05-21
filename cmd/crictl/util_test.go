@@ -25,6 +25,49 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+func TestGetSortedKeys(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		desc     string
+		input    map[string]string
+		expected []string
+	}{
+		{
+			desc:     "returns keys in alphabetical order",
+			input:    map[string]string{"c": "3", "a": "1", "b": "2"},
+			expected: []string{"a", "b", "c"},
+		},
+		{
+			desc:     "empty map returns empty slice",
+			input:    map[string]string{},
+			expected: []string{},
+		},
+		{
+			desc:     "single key",
+			input:    map[string]string{"only": "value"},
+			expected: []string{"only"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := getSortedKeys(tc.input)
+			if len(result) != len(tc.expected) {
+				t.Fatalf("expected %d keys, got %d", len(tc.expected), len(result))
+			}
+
+			for i, k := range tc.expected {
+				if result[i] != k {
+					t.Errorf("expected key[%d]=%q, got %q", i, k, result[i])
+				}
+			}
+		})
+	}
+}
+
 func TestNameFilterByRegex(t *testing.T) {
 	t.Parallel()
 

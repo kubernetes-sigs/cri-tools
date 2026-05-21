@@ -23,6 +23,92 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+func TestNewLogOptions(t *testing.T) {
+	t.Parallel()
+
+	g := NewWithT(t)
+
+	t.Run("defaults", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewLogOptions(false, false, time.Time{}, nil, nil)
+		g := NewWithT(t)
+		g.Expect(opts.Follow).To(BeFalse())
+		g.Expect(opts.Timestamp).To(BeFalse())
+		g.Expect(opts.Since).To(Equal(time.Time{}))
+		g.Expect(opts.TailLines).To(BeNil())
+		g.Expect(opts.LimitBytes).To(BeNil())
+	})
+
+	t.Run("follow and timestamps enabled", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewLogOptions(true, true, time.Time{}, nil, nil)
+		g := NewWithT(t)
+		g.Expect(opts.Follow).To(BeTrue())
+		g.Expect(opts.Timestamp).To(BeTrue())
+	})
+
+	t.Run("since is set when non-zero", func(t *testing.T) {
+		t.Parallel()
+
+		since := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+		opts := NewLogOptions(false, false, since, nil, nil)
+		g := NewWithT(t)
+		g.Expect(opts.Since).To(Equal(since))
+	})
+
+	t.Run("positive tail lines", func(t *testing.T) {
+		t.Parallel()
+
+		var lines int64 = 100
+
+		opts := NewLogOptions(false, false, time.Time{}, &lines, nil)
+		g = NewWithT(t)
+		g.Expect(opts.TailLines).To(Equal(&lines))
+	})
+
+	t.Run("negative tail lines are ignored", func(t *testing.T) {
+		t.Parallel()
+
+		var lines int64 = -1
+
+		opts := NewLogOptions(false, false, time.Time{}, &lines, nil)
+		g := NewWithT(t)
+		g.Expect(opts.TailLines).To(BeNil())
+	})
+
+	t.Run("positive limit bytes", func(t *testing.T) {
+		t.Parallel()
+
+		var limit int64 = 1024
+
+		opts := NewLogOptions(false, false, time.Time{}, nil, &limit)
+		g := NewWithT(t)
+		g.Expect(opts.LimitBytes).To(Equal(&limit))
+	})
+
+	t.Run("negative limit bytes are ignored", func(t *testing.T) {
+		t.Parallel()
+
+		var limit int64 = -1
+
+		opts := NewLogOptions(false, false, time.Time{}, nil, &limit)
+		g := NewWithT(t)
+		g.Expect(opts.LimitBytes).To(BeNil())
+	})
+
+	t.Run("zero tail lines are accepted", func(t *testing.T) {
+		t.Parallel()
+
+		var lines int64
+
+		opts := NewLogOptions(false, false, time.Time{}, &lines, nil)
+		g := NewWithT(t)
+		g.Expect(opts.TailLines).To(Equal(&lines))
+	})
+}
+
 func TestParseTimestamp(t *testing.T) {
 	t.Parallel()
 
