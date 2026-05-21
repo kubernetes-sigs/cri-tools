@@ -29,7 +29,7 @@ jobs:
         # ╟──────────────────┼───────────┼─────────╢
         # ║ hcshim           │           │ runhcs  ║
         # ╚══════════════════╧═══════════╧═════════╝
-        os: [ubuntu-22.04, windows-2025]
+        os: [ubuntu-24.04, windows-2025]
         # not every command likes the slash in branch name.
         # So will use format command to replace to either `_` or '/'
         # There is no LTS version of 2.0+ containerd. So main testing covers the latest.
@@ -50,7 +50,7 @@ jobs:
           - runtime: io.containerd.runtime.v1.linux
             os: windows-2025
           - runtime: containerd-shim-runhcs-v1
-            os: ubuntu-22.04
+            os: ubuntu-24.04
           - runtime: io.containerd.runc.v1
             runc: crun
           - runtime: io.containerd.runtime.v1.linux
