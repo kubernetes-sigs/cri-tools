@@ -206,6 +206,35 @@ verify-go-modules: ## Verify vendored golang modules.
 
 ##@ Test targets:
 
+# Containerd git ref built into the local containerized test image. Mirrors
+# CI's primary matrix entry (main). NRI is only configured/tested for main,
+# matching .github/workflows/containerd.yml. Override to test other refs, e.g.
+# make test-critest-containerd CONTAINERD_VERSION=release/1.7
+CONTAINERD_VERSION ?= main
+
+# runc flavor built into the image (runc or crun) and the containerd runtime
+# handler used by the generated config. Defaults mirror CI's primary matrix
+# entry. Override via, e.g. RUNC_FLAVOR=crun.
+RUNC_FLAVOR ?= runc
+RUNTIME ?= io.containerd.runc.v2
+
+# NRI is supported in containerd 2.x+ (all versions except the legacy 1.7
+# branch). The --nri-socket flag is critest-specific and must not be passed to
+# other test binaries.
+ifeq ($(CONTAINERD_VERSION),release/1.7)
+ENABLE_NRI ?= false
+else
+ENABLE_NRI ?= true
+endif
+
+NRI_FLAGS :=
+ifeq ($(ENABLE_NRI),true)
+NRI_FLAGS := --nri-socket=/var/run/nri/nri.sock
+endif
+
+# critest parallelism, mirrors CI's --parallel=8. Override via PARALLEL=N.
+PARALLEL ?= 8
+
 .PHONY: test-e2e
 test-e2e: $(GINKGO) ## Run the e2e test suite.
 	$(GINKGO) \
@@ -219,24 +248,41 @@ test-e2e: $(GINKGO) ## Run the e2e test suite.
 		$(TESTFLAGS)
 
 .PHONY: test-critest-containerd
-test-critest-containerd: ## Run the critest in a container with containerd.
+test-critest-containerd: ## Run the critest in a container with containerd (set CONTAINERD_VERSION=main|release/1.7, RUNC_FLAVOR, RUNTIME; images are cached per version).
 	# AppArmor tests must be skipped as the containerized environment does not support them.
+	CONTAINERD_VERSION=$(CONTAINERD_VERSION) \
+	RUNC_FLAVOR=$(RUNC_FLAVOR) \
+	RUNTIME=$(RUNTIME) \
 	hack/run-e2e-container.sh /usr/local/bin/critest-tools/critest \
 		--runtime-endpoint=unix:///run/containerd/containerd.sock \
-		--nri-socket=/var/run/nri/nri.sock \
+		--parallel=$(PARALLEL) \
 		--ginkgo.vv \
 		--ginkgo.skip="AppArmor" \
+		$(NRI_FLAGS) \
 		$(TESTFLAGS)
 
 .PHONY: test-crictl-e2e-containerd
-test-crictl-e2e-containerd: ## Run the crictl e2e tests in a container with containerd.
+test-crictl-e2e-containerd: ## Run the crictl e2e tests in a container with containerd (set CONTAINERD_VERSION=main|release/1.7, RUNC_FLAVOR, RUNTIME; images are cached per version).
 	# AppArmor tests must be skipped as the containerized environment does not support them.
+	CONTAINERD_VERSION=$(CONTAINERD_VERSION) \
+	RUNC_FLAVOR=$(RUNC_FLAVOR) \
+	RUNTIME=$(RUNTIME) \
 	hack/run-e2e-container.sh /usr/local/bin/critest-tools/crictl-e2e \
 		-crictl-binary-path=/usr/local/bin/critest-tools/crictl \
 		-crictl-runtime-endpoint=unix:///run/containerd/containerd.sock \
 		--ginkgo.vv \
 		--ginkgo.skip="AppArmor" \
 		$(TESTFLAGS)
+
+.PHONY: clean-containerd-test-images
+clean-containerd-test-images: ## Remove cached containerd-local-test images and data volumes so they are regenerated.
+	# Remove all per-version containerd-local-test images. Guard the empty case
+	# without GNU-only `xargs -r` so the target also works on macOS/BSD.
+	images=$$(docker images --filter=reference='containerd-local-test:*' -q | sort -u); \
+	if [ -n "$$images" ]; then docker rmi -f $$images; fi
+	# Remove the per-version named data volumes (containerd-local-test-data-*).
+	volumes=$$(docker volume ls --filter=name='containerd-local-test-data' -q); \
+	if [ -n "$$volumes" ]; then docker volume rm -f $$volumes; fi
 
 .PHONY: test-crictl
 test-crictl: $(GINKGO) ## Run the crictl test suite.
