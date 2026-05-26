@@ -30,6 +30,14 @@ dependencies:
       - path: Makefile
         match: REPO_INFRA_VERSION
 
+  - name: prettier
+    version: 3.8.3
+    refPaths:
+      - path: Makefile
+        match: PRETTIER_VERSION
+      - path: .github/workflows/build.yml
+        match: prettier_version
+
   - name: release-notes
     version: v0.18.0
     refPaths:

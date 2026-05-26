@@ -56,6 +56,7 @@ endef
 ZEITGEIST_VERSION = v0.5.3
 GOLANGCI_LINT_VERSION := v2.12.2
 REPO_INFRA_VERSION = v0.2.6
+PRETTIER_VERSION = 3.8.3
 
 GINKGO := $(BUILD_BIN_PATH)/ginkgo
 GOLANGCI_LINT_DIR := $(BUILD_BIN_PATH)/golangci-lint-$(GOLANGCI_LINT_VERSION)
@@ -169,14 +170,14 @@ verify-prettier: ## Run prettier check.
 	# skip check if npx is not available since it is not a standard
 	# tool for go developers and may not be installed in the environment
 	@if $(NPX) --version >/dev/null 2>&1; then \
-		$(NPX) prettier --check .; \
+		$(NPX) prettier@$(PRETTIER_VERSION) --check .; \
 	else \
 		echo "npx not found. Skipping prettier check."; \
 	fi
 
 .PHONY: prettier-fix
 prettier-fix: ## Run prettier with write.
-	$(NPX) prettier --write .
+	$(NPX) prettier@$(PRETTIER_VERSION) --write .
 
 .PHONY: verify-boilerplate
 verify-boilerplate: $(VERIFY_BOILERPLATE) ## Verify the boilerplate headers.
@@ -266,7 +267,7 @@ install.lint: $(GOLANGCI_LINT) ## Install golangci-lint.
 
 .PHONY: install.prettier
 install.prettier: ## Install prettier.
-	npm install prettier
+	npm install prettier@$(PRETTIER_VERSION)
 
 $(GOLANGCI_LINT):
 	mkdir -p $(GOLANGCI_LINT_DIR)
