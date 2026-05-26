@@ -160,6 +160,36 @@ func LoadCRIClient() (*InternalAPIClient, error) {
 	}, nil
 }
 
+// LoadCRIClientWithStreaming creates an InternalAPIClient with streaming
+// list operations explicitly enabled, regardless of the --enable-streaming flag.
+func LoadCRIClientWithStreaming() (*InternalAPIClient, error) {
+	rService, err := remote.NewRemoteRuntimeService(
+		context.Background(),
+		TestContext.RuntimeServiceAddr,
+		TestContext.RuntimeServiceTimeout,
+		nil,
+		true,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	imageServiceAddr := TestContext.ImageServiceAddr
+	if imageServiceAddr == "" {
+		imageServiceAddr = TestContext.RuntimeServiceAddr
+	}
+
+	iService, err := remote.NewRemoteImageService(context.Background(), imageServiceAddr, TestContext.ImageServiceTimeout, nil, true)
+	if err != nil {
+		return nil, err
+	}
+
+	return &InternalAPIClient{
+		CRIRuntimeClient: rService,
+		CRIImageClient:   iService,
+	}, nil
+}
+
 func nowStamp() string {
 	return time.Now().Format(time.StampMilli)
 }
