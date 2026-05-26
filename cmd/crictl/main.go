@@ -30,6 +30,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 
 	"sigs.k8s.io/cri-tools/pkg/common"
 	"sigs.k8s.io/cri-tools/pkg/framework"
@@ -217,6 +219,20 @@ func main() {
 			if err != nil {
 				return fmt.Errorf("init tracing: %w", err)
 			}
+
+			// Start a root span named after the invoked command so that all
+			// command operations are recorded as children of it. The span is
+			// ended in main() once app.Run returns.
+			spanName := "crictl"
+			if context.Args().Present() {
+				spanName = context.Args().First()
+			}
+
+			ctx, span := cfg.TracerProvider.Tracer("sigs.k8s.io/cri-tools/cmd/crictl").Start(context.Context, spanName)
+			cfg.RootSpan = span
+			cfg.RootSpan.SetAttributes(attribute.String("command", spanName))
+
+			context.Context = ctx
 		}
 
 		context.App.Metadata[configKey] = cfg
@@ -258,20 +274,34 @@ func main() {
 
 	sort.Sort(cli.FlagsByName(app.Flags))
 
-	if err := app.Run(os.Args); err != nil {
-		logrus.Fatal(err)
-	}
+	err := app.Run(os.Args)
 
-	// Ensure that all spans are processed.
+	// Record the command result on the root span and ensure that all spans are
+	// processed before exiting.
 	if v, ok := app.Metadata[configKey]; ok {
 		cfg, _ := v.(*CrictlConfig)
-		if cfg.TracerProvider != nil {
-			ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout)
-			defer cancel()
+		if cfg != nil {
+			if err != nil && cfg.RootSpan != nil {
+				cfg.RootSpan.SetStatus(codes.Error, err.Error())
+				cfg.RootSpan.RecordError(err)
+			}
 
-			if err := cfg.TracerProvider.Shutdown(ctx); err != nil {
-				logrus.Errorf("Unable to shutdown tracer provider: %v", err)
+			if cfg.RootSpan != nil {
+				cfg.RootSpan.End()
+			}
+
+			if cfg.TracerProvider != nil {
+				shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.Timeout)
+				defer cancel()
+
+				if shutdownErr := cfg.TracerProvider.Shutdown(shutdownCtx); shutdownErr != nil {
+					logrus.Errorf("Unable to shutdown tracer provider: %v", shutdownErr)
+				}
 			}
 		}
+	}
+
+	if err != nil {
+		logrus.Fatal(err)
 	}
 }

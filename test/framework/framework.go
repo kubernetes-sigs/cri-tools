@@ -42,7 +42,9 @@ func init() {
 }
 
 // TestFramework is used to support commonly used test features.
-type TestFramework struct{}
+type TestFramework struct {
+	OtelCollector *OtelCollector
+}
 
 // NewTestFramework creates a new test framework instance.
 func NewTestFramework() *TestFramework {
@@ -60,6 +62,9 @@ func (t *TestFramework) Setup() {
 // Teardown is the global deinitialization function which runs after each test
 // suite.
 func (t *TestFramework) Teardown() {
+	if t.OtelCollector != nil {
+		t.OtelCollector.Stop()
+	}
 }
 
 // Describe is a convenience wrapper around the `ginkgo.Describe` function.
@@ -111,6 +116,21 @@ func (t *TestFramework) Crictl(args string) *Session {
 // CrictlNoWait runs crictl on the specified endpoint and returns the resulting session without wait.
 func (t *TestFramework) CrictlNoWait(args string) *Session {
 	return lcmd("%s%s %s", crictlBinaryPathFlag(), crictlRuntimeEndpointFlag(), args)
+}
+
+// CrictlWithTracing runs crictl with tracing enabled and returns the resulting session.
+// The OtelCollector is started lazily on the first call.
+func (t *TestFramework) CrictlWithTracing(args string) *Session {
+	if t.OtelCollector == nil {
+		t.OtelCollector = NewOtelCollector()
+		Expect(t.OtelCollector.Start()).To(Succeed())
+	}
+
+	t.OtelCollector.ClearSpans()
+	tracingArgs := fmt.Sprintf("--enable-tracing --tracing-endpoint=%s %s",
+		t.OtelCollector.GetEndpoint(), args)
+
+	return t.Crictl(tracingArgs)
 }
 
 // CrictlExpect runs crictl and expects exit, expectedOut, expectedErr.
