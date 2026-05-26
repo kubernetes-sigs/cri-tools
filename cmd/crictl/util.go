@@ -33,6 +33,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/invopop/jsonschema"
 	"github.com/sirupsen/logrus"
+	"github.com/urfave/cli/v2"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/protoadapt"
 	"google.golang.org/protobuf/runtime/protoiface"
@@ -667,4 +668,49 @@ func AggregateGoroutines(funcs ...func() error) error {
 	}
 
 	return errors.Join(errs...)
+}
+
+func truncateCount(total int, latest bool, last int) int {
+	n := total
+	if latest {
+		n = 1
+	}
+
+	if last > 0 {
+		n = last
+	}
+
+	return min(n, total)
+}
+
+func collectIDs[T interface{ GetId() string }](
+	ctx context.Context,
+	cliCtx *cli.Context,
+	listFn func(ctx context.Context) ([]T, error),
+	typeName string,
+) ([]string, error) {
+	ids := cliCtx.Args().Slice()
+	if cliCtx.Bool("all") {
+		items, err := InterruptableRPC(ctx, listFn)
+		if err != nil {
+			return nil, err
+		}
+
+		ids = nil
+		for _, item := range items {
+			ids = append(ids, item.GetId())
+		}
+	}
+
+	if len(ids) == 0 {
+		if cliCtx.Bool("all") {
+			logrus.Infof("No %ss to remove", typeName)
+
+			return nil, nil
+		}
+
+		return nil, cli.ShowSubcommandHelp(cliCtx)
+	}
+
+	return ids, nil
 }
