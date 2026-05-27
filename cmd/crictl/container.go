@@ -84,32 +84,6 @@ type pullOptions struct {
 	timeout time.Duration
 }
 
-var pullFlags = []cli.Flag{
-	&cli.StringFlag{
-		Name:  "creds",
-		Usage: "Use `USERNAME[:PASSWORD]` for accessing the registry",
-	},
-	&cli.StringFlag{
-		Name:  "auth",
-		Usage: "Use `AUTH_STRING` for accessing the registry. AUTH_STRING is a base64 encoded 'USERNAME[:PASSWORD]'",
-	},
-	&cli.StringFlag{
-		Name:  "username",
-		Usage: "Use `USERNAME` for accessing the registry. The password will be requested on the command line",
-	},
-	&cli.DurationFlag{
-		Name:    "cancel-timeout",
-		Aliases: []string{"T"},
-		Usage:   "Seconds to wait for the request to complete before cancelling",
-	},
-	&cli.DurationFlag{
-		Name:    "pull-timeout",
-		Aliases: []string{"pt"},
-		Usage:   "Maximum time to be used for pulling the image, disabled if set to 0s",
-		EnvVars: []string{"CRICTL_PULL_TIMEOUT"},
-	},
-}
-
 var createPullFlags = append([]cli.Flag{
 	&cli.BoolFlag{
 		Name:  "no-pull",
@@ -119,6 +93,7 @@ var createPullFlags = append([]cli.Flag{
 		Name:  "with-pull",
 		Usage: "Pull the image on container creation (overrides pull-image-on-create=false in config)",
 	},
+	cancelTimeoutFlag,
 }, pullFlags...)
 
 var runPullFlags = append([]cli.Flag{
@@ -135,6 +110,7 @@ var runPullFlags = append([]cli.Flag{
 		Aliases: []string{"r"},
 		Usage:   "Runtime handler to use. Available options are defined by the container runtime.",
 	},
+	cancelTimeoutFlag,
 }, pullFlags...)
 
 var subcommands = []*cli.Command{{
