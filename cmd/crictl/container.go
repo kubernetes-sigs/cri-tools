@@ -1134,50 +1134,29 @@ func marshalContainerStatus(cs *pb.ContainerStatus) (string, error) {
 
 // containerStatus sends a ContainerStatusRequest to the server, and parses
 // the returned ContainerStatusResponse.
-//
-//nolint:dupl // pods and containers are similar, but still different
 func containerStatus(ctx context.Context, client internalapi.RuntimeService, ids []string, output, tmplStr string, quiet bool) error {
-	verbose := !(quiet)
+	return resourceStatus(
+		ctx, ids, output, tmplStr, quiet,
+		func(ctx context.Context, id string, verbose bool) (*pb.ContainerStatusResponse, error) {
+			r, err := InterruptableRPC(ctx, func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
+				return client.ContainerStatus(ctx, id, verbose)
+			})
+			if err != nil {
+				return nil, fmt.Errorf("get container status: %w", err)
+			}
 
-	if output == "" { // default to json output
-		output = outputTypeJSON
-	}
+			return r, nil
+		},
+		func(r *pb.ContainerStatusResponse) (string, error) {
+			s, err := marshalContainerStatus(r.GetStatus())
+			if err != nil {
+				return "", fmt.Errorf("marshal container status: %w", err)
+			}
 
-	if len(ids) == 0 {
-		return errIDEmpty
-	}
-
-	statuses := []statusData{}
-
-	for _, id := range ids {
-		request := &pb.ContainerStatusRequest{
-			ContainerId: id,
-			Verbose:     verbose,
-		}
-		logrus.Debugf("ContainerStatusRequest: %v", request)
-
-		r, err := InterruptableRPC(ctx, func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
-			return client.ContainerStatus(ctx, id, verbose)
-		})
-		logrus.Debugf("ContainerStatusResponse: %v", r)
-
-		if err != nil {
-			return fmt.Errorf("get container status: %w", err)
-		}
-
-		statusJSON, err := marshalContainerStatus(r.GetStatus())
-		if err != nil {
-			return fmt.Errorf("marshal container status: %w", err)
-		}
-
-		if output == outputTypeTable {
-			outputContainerStatusTable(r, verbose)
-		} else {
-			statuses = append(statuses, statusData{json: statusJSON, info: r.GetInfo()})
-		}
-	}
-
-	return outputStatusData(statuses, output, tmplStr)
+			return s, nil
+		},
+		outputContainerStatusTable,
+	)
 }
 
 func outputContainerStatusTable(r *pb.ContainerStatusResponse, verbose bool) {

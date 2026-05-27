@@ -456,51 +456,29 @@ func marshalPodSandboxStatus(ps *pb.PodSandboxStatus) (string, error) {
 
 // podSandboxStatus sends a PodSandboxStatusRequest to the server, and parses
 // the returned PodSandboxStatusResponse.
-//
-//nolint:dupl // pods and containers are similar, but still different
 func podSandboxStatus(ctx context.Context, client internalapi.RuntimeService, ids []string, output string, quiet bool, tmplStr string) error {
-	verbose := !(quiet)
+	return resourceStatus(
+		ctx, ids, output, tmplStr, quiet,
+		func(ctx context.Context, id string, verbose bool) (*pb.PodSandboxStatusResponse, error) {
+			r, err := InterruptableRPC(ctx, func(ctx context.Context) (*pb.PodSandboxStatusResponse, error) {
+				return client.PodSandboxStatus(ctx, id, verbose)
+			})
+			if err != nil {
+				return nil, fmt.Errorf("get pod sandbox status: %w", err)
+			}
 
-	if output == "" { // default to json output
-		output = outputTypeJSON
-	}
+			return r, nil
+		},
+		func(r *pb.PodSandboxStatusResponse) (string, error) {
+			s, err := marshalPodSandboxStatus(r.GetStatus())
+			if err != nil {
+				return "", fmt.Errorf("marshal pod sandbox status: %w", err)
+			}
 
-	if len(ids) == 0 {
-		return errIDEmpty
-	}
-
-	statuses := []statusData{}
-
-	for _, id := range ids {
-		request := &pb.PodSandboxStatusRequest{
-			PodSandboxId: id,
-			Verbose:      verbose,
-		}
-		logrus.Debugf("PodSandboxStatusRequest: %v", request)
-
-		r, err := InterruptableRPC(ctx, func(ctx context.Context) (*pb.PodSandboxStatusResponse, error) {
-			return client.PodSandboxStatus(ctx, id, verbose)
-		})
-
-		logrus.Debugf("PodSandboxStatusResponse: %v", r)
-
-		if err != nil {
-			return fmt.Errorf("get pod sandbox status: %w", err)
-		}
-
-		statusJSON, err := marshalPodSandboxStatus(r.GetStatus())
-		if err != nil {
-			return fmt.Errorf("marshal pod sandbox status: %w", err)
-		}
-
-		if output == outputTypeTable {
-			outputPodSandboxStatusTable(r, verbose)
-		} else {
-			statuses = append(statuses, statusData{json: statusJSON, info: r.GetInfo()})
-		}
-	}
-
-	return outputStatusData(statuses, output, tmplStr)
+			return s, nil
+		},
+		outputPodSandboxStatusTable,
+	)
 }
 
 func outputPodSandboxStatusTable(r *pb.PodSandboxStatusResponse, verbose bool) {
