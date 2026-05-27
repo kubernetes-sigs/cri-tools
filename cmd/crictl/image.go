@@ -36,26 +36,41 @@ import (
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
+var pullFlags = []cli.Flag{
+	&cli.StringFlag{
+		Name:    "creds",
+		Usage:   "Use `USERNAME[:PASSWORD]` for accessing the registry",
+		EnvVars: []string{"CRICTL_CREDS"},
+	},
+	&cli.StringFlag{
+		Name:    "auth",
+		Usage:   "Use `AUTH_STRING` for accessing the registry. AUTH_STRING is a base64 encoded 'USERNAME[:PASSWORD]'",
+		EnvVars: []string{"CRICTL_AUTH"},
+	},
+	&cli.StringFlag{
+		Name:    "username",
+		Aliases: []string{"u"},
+		Usage:   "Use `USERNAME` for accessing the registry. The password will be requested on the command line",
+	},
+	&cli.DurationFlag{
+		Name:    "pull-timeout",
+		Aliases: []string{"pt"},
+		Usage:   "Maximum time to be used for pulling the image, disabled if set to 0s",
+		EnvVars: []string{"CRICTL_PULL_TIMEOUT"},
+	},
+}
+
+var cancelTimeoutFlag = &cli.DurationFlag{
+	Name:    "cancel-timeout",
+	Aliases: []string{"T"},
+	Usage:   "Seconds to wait for the request to complete before cancelling",
+}
+
 var pullImageCommand = &cli.Command{
 	Name:                   "pull",
 	Usage:                  "Pull an image from a registry",
 	UseShortOptionHandling: true,
-	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:    "creds",
-			Usage:   "Use `USERNAME[:PASSWORD]` for accessing the registry",
-			EnvVars: []string{"CRICTL_CREDS"},
-		},
-		&cli.StringFlag{
-			Name:    "auth",
-			Usage:   "Use `AUTH_STRING` for accessing the registry. AUTH_STRING is a base64 encoded 'USERNAME[:PASSWORD]'",
-			EnvVars: []string{"CRICTL_AUTH"},
-		},
-		&cli.StringFlag{
-			Name:    "username",
-			Aliases: []string{"u"},
-			Usage:   "Use `USERNAME` for accessing the registry. The password will be requested on the command line",
-		},
+	Flags: append([]cli.Flag{
 		&cli.StringFlag{
 			Name:      "pod-config",
 			Usage:     "Use `pod-config.[json|yaml]` to override the pull c",
@@ -66,13 +81,7 @@ var pullImageCommand = &cli.Command{
 			Aliases: []string{"a"},
 			Usage:   "Annotation to be set on the pulled image",
 		},
-		&cli.DurationFlag{
-			Name:    "pull-timeout",
-			Aliases: []string{"pt"},
-			Usage:   "Maximum time to be used for pulling the image, disabled if set to 0s",
-			EnvVars: []string{"CRICTL_PULL_TIMEOUT"},
-		},
-	},
+	}, pullFlags...),
 	Subcommands: []*cli.Command{{
 		Name:      "jsonschema",
 		Aliases:   []string{"js"},
