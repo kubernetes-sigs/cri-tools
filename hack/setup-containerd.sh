@@ -22,9 +22,23 @@ set -euo pipefail
 CONTD_CONFIG_DIR="${CONTD_CONFIG_DIR:-/etc/containerd}"
 CNI_CONFIG_DIR="${CNI_CONFIG_DIR:-/etc/cni/net.d}"
 RUNTIME="${RUNTIME:-io.containerd.runc.v2}"
+CONTAINERD_VERSION="${CONTAINERD_VERSION:-main}"
+
+# NRI is only configured for containerd main, mirroring CI which adds NRI
+# config only for the main branch (release/1.7 is EOL-soon and not exercised
+# with NRI). See .github/workflows/containerd.yml. ENABLE_NRI may be set
+# explicitly to override the version-derived default.
+if [ "${CONTAINERD_VERSION}" = "main" ]; then
+    ENABLE_NRI="${ENABLE_NRI:-true}"
+else
+    ENABLE_NRI="${ENABLE_NRI:-false}"
+fi
 
 echo "Setting up containerd configuration in ${CONTD_CONFIG_DIR}..."
 mkdir -p "${CONTD_CONFIG_DIR}"
+# The modern `io.containerd.grpc.v1.cri` schema (version = 2) is accepted by
+# both containerd 1.7 and 2.x, so a single config honors RUNTIME for both
+# refs; no per-version schema branch is needed here.
 cat <<EOF > "${CONTD_CONFIG_DIR}/config.toml"
 version = 2
 [plugins]
@@ -35,16 +49,23 @@ version = 2
         runtime_type = "${RUNTIME}"
         [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
           SystemdCgroup = false
+EOF
+
+if [ "${ENABLE_NRI}" = "true" ]; then
+    echo "Enabling NRI plugin configuration (containerd ${CONTAINERD_VERSION})..."
+    cat <<EOF >> "${CONTD_CONFIG_DIR}/config.toml"
   [plugins."io.containerd.nri.v1.nri"]
     disable = false
     disable_connections = false
     plugin_path = "/opt/nri/plugins"
     socket_path = "/var/run/nri/nri.sock"
 EOF
-
-echo "Setting up NRI socket directory..."
-mkdir -p /var/run/nri
-mkdir -p /opt/nri/plugins
+    echo "Setting up NRI socket directory..."
+    mkdir -p /var/run/nri
+    mkdir -p /opt/nri/plugins
+else
+    echo "NRI disabled for containerd ${CONTAINERD_VERSION}; skipping NRI configuration."
+fi
 
 echo "Setting up CNI networking in ${CNI_CONFIG_DIR}..."
 mkdir -p "${CNI_CONFIG_DIR}"

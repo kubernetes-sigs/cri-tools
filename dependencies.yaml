@@ -11,6 +11,8 @@ dependencies:
     refPaths:
       - path: go.mod
         match: go
+      - path: images/containerd-local-test/Dockerfile
+        match: GO_VERSION
 
   - name: zeitgeist
     version: v0.5.3

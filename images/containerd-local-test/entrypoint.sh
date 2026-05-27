@@ -28,10 +28,9 @@ fi
 # set -x
 
 echo "Initializing container environment..."
+# setup-containerd.sh creates the NRI socket directory itself, but only when
+# NRI is enabled (containerd main); do not create it unconditionally here.
 setup-containerd.sh
-
-echo "Setting up NRI socket directory..."
-mkdir -p /var/run/nri
 
 echo "Starting containerd..."
 mkdir -p /run/containerd
@@ -43,10 +42,12 @@ CONTAINERD_PID=$!
 # Wait for containerd to be ready
 wait-for-containerd.sh
 
-# Execute the command passed to the container
+# Execute the command passed to the container. Capture the exit code without
+# tripping `set -e` so the containerd cleanup below always runs even when the
+# test command fails (mirrors CI's `|| TEST_RC=$?` pattern).
 echo "Executing: $@"
-"$@"
-EXIT_CODE=$?
+EXIT_CODE=0
+"$@" || EXIT_CODE=$?
 
 # Cleanup containerd
 echo "Cleaning up containerd (PID: $CONTAINERD_PID)..."
