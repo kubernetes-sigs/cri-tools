@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"slices"
 	"sync"
 	"time"
 
@@ -174,6 +175,30 @@ func (p *NRITestPlugin) Events() []NRIEvent {
 	copy(result, p.events)
 
 	return result
+}
+
+// Reset clears all recorded events.
+func (p *NRITestPlugin) Reset() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	p.events = nil
+}
+
+// LastRunPodSandboxID returns the pod sandbox ID from the most recent RunPodSandbox event,
+// or empty string if none recorded. This is useful for cleanup in AfterEach when the test
+// may have failed before capturing the pod ID from the CRI call.
+func (p *NRITestPlugin) LastRunPodSandboxID() string {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	for i := range slices.Backward(p.events) {
+		if p.events[i].Type == EventRunPodSandbox {
+			return p.events[i].PodSandboxID
+		}
+	}
+
+	return ""
 }
 
 // WaitForEventCount waits until at least count events are recorded, or times out.
@@ -374,7 +399,8 @@ func (ts *NRITestStub) Stop() {
 	}
 }
 
-// Cleanup stops the stub.
+// Cleanup stops the stub and resets events.
 func (ts *NRITestStub) Cleanup() {
 	ts.Stop()
+	ts.Plugin.Reset()
 }
