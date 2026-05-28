@@ -91,6 +91,29 @@ To automatically fix formatting issues, run:
 make prettier-fix
 ```
 
+### Zizmor
+
+Zizmor is a static analyzer for GitHub Actions workflows. It runs as part
+of `make verify` (and the `linters` CI matrix), and new findings will fail
+the build.
+
+To install zizmor locally, run:
+
+```bash
+make install.zizmor
+```
+
+To run zizmor against `.github/workflows/`, run:
+
+```bash
+make verify-zizmor
+```
+
+There is no auto-fix target — findings must be fixed by hand. When a
+finding is a confirmed false positive, suppress it with an inline
+`# zizmor: ignore[<rule>]` comment on the offending line, and put a short
+justification on the line above.
+
 ### Testing
 
 The test suite is built on top of the Ginkgo testing framework. To run the tests, you will need to first build the `critest` binary and then execute it.

@@ -20,6 +20,12 @@ dependencies:
       - path: Makefile
         match: ZEITGEIST_VERSION
 
+  - name: zizmor
+    version: v1.25.2
+    refPaths:
+      - path: Makefile
+        match: ZIZMOR_VERSION
+
   - name: golangci-lint
     version: v2.12.2
     refPaths:
