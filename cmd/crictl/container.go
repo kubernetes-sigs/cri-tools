@@ -83,34 +83,36 @@ type pullOptions struct {
 	timeout time.Duration
 }
 
-var createPullFlags = append([]cli.Flag{
-	&cli.BoolFlag{
-		Name:  "no-pull",
-		Usage: "Do not pull the image on container creation (overrides pull-image-on-create=true in config)",
-	},
-	&cli.BoolFlag{
-		Name:  "with-pull",
-		Usage: "Pull the image on container creation (overrides pull-image-on-create=false in config)",
-	},
-	cancelTimeoutFlag,
-}, pullFlags...)
+func newContainerPullFlags(noPullUsage, withPullUsage string) []cli.Flag {
+	return append([]cli.Flag{
+		&cli.BoolFlag{
+			Name:  "no-pull",
+			Usage: noPullUsage,
+		},
+		&cli.BoolFlag{
+			Name:  "with-pull",
+			Usage: withPullUsage,
+		},
+		cancelTimeoutFlag,
+	}, pullFlags...)
+}
 
-var runPullFlags = append([]cli.Flag{
-	&cli.BoolFlag{
-		Name:  "no-pull",
-		Usage: "Do not pull the image (overrides disable-pull-on-run=false in config)",
-	},
-	&cli.BoolFlag{
-		Name:  "with-pull",
-		Usage: "Pull the image (overrides disable-pull-on-run=true in config)",
-	},
+var createPullFlags = newContainerPullFlags(
+	"Do not pull the image on container creation (overrides pull-image-on-create=true in config)",
+	"Pull the image on container creation (overrides pull-image-on-create=false in config)",
+)
+
+var runPullFlags = append(
+	newContainerPullFlags(
+		"Do not pull the image (overrides disable-pull-on-run=false in config)",
+		"Pull the image (overrides disable-pull-on-run=true in config)",
+	),
 	&cli.StringFlag{
 		Name:    "runtime",
 		Aliases: []string{"r"},
 		Usage:   "Runtime handler to use. Available options are defined by the container runtime.",
 	},
-	cancelTimeoutFlag,
-}, pullFlags...)
+)
 
 var subcommands = []*cli.Command{{
 	Name:    "jsonschema",
