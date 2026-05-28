@@ -189,6 +189,21 @@ func ExpectNoError(err error, explain ...any) {
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), explain...)
 }
 
+// CleanupPodSandbox stops and removes a PodSandbox.
+func CleanupPodSandbox(ctx context.Context, rc internalapi.RuntimeService, podID string) {
+	By("stop PodSandbox")
+	ExpectNoError(rc.StopPodSandbox(ctx, podID), "failed to stop PodSandbox")
+	By("delete PodSandbox")
+	ExpectNoError(rc.RemovePodSandbox(ctx, podID), "failed to remove PodSandbox")
+}
+
+// CleanupPodSandboxAndLogDir stops and removes a PodSandbox and its log directory.
+func CleanupPodSandboxAndLogDir(ctx context.Context, rc internalapi.RuntimeService, podID, logDir string) {
+	CleanupPodSandbox(ctx, rc, podID)
+	By("cleanup log directory")
+	ExpectNoError(os.RemoveAll(logDir), "failed to remove log directory")
+}
+
 // NewUUID creates a new UUID string.
 func NewUUID() string {
 	return uuid.New().String()

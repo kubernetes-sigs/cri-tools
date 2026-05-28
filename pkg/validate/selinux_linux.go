@@ -117,7 +117,7 @@ var _ = framework.KubeDescribe("SELinux", func() {
 				})
 
 				AfterEach(func(ctx SpecContext) {
-					cleanupSandbox(ctx, rc, sandboxID)
+					framework.CleanupPodSandbox(ctx, rc, sandboxID)
 				})
 
 				sandboxTests(false)
@@ -129,7 +129,7 @@ var _ = framework.KubeDescribe("SELinux", func() {
 				})
 
 				AfterEach(func(ctx SpecContext) {
-					cleanupSandbox(ctx, rc, sandboxID)
+					framework.CleanupPodSandbox(ctx, rc, sandboxID)
 				})
 
 				sandboxTests(true)
@@ -147,8 +147,8 @@ var _ = framework.KubeDescribe("SELinux", func() {
 				})
 
 				AfterEach(func(ctx SpecContext) {
-					cleanupSandbox(ctx, rc, sandboxID)
-					cleanupSandbox(ctx, rc, sandboxID2)
+					framework.CleanupPodSandbox(ctx, rc, sandboxID)
+					framework.CleanupPodSandbox(ctx, rc, sandboxID2)
 				})
 
 				It("should create containers with different process labels", func(ctx SpecContext) {
@@ -223,13 +223,6 @@ func checkContainerSelinux(ctx context.Context, rc internalapi.RuntimeService, c
 	stdout, stderr, err := rc.ExecSync(ctx, containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
 	Expect(err).NotTo(HaveOccurred(), msg)
-}
-
-func cleanupSandbox(ctx context.Context, rc internalapi.RuntimeService, sandboxID string) {
-	By("stop PodSandbox")
-	Expect(rc.StopPodSandbox(ctx, sandboxID)).NotTo(HaveOccurred())
-	By("delete PodSandbox")
-	Expect(rc.RemovePodSandbox(ctx, sandboxID)).NotTo(HaveOccurred())
 }
 
 func checkMountLabelRoleType(ctx context.Context, rc internalapi.RuntimeService, containerID string) {

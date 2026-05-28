@@ -76,12 +76,7 @@ var _ = framework.KubeDescribe("Multiple Containers [Conformance]", func() {
 		})
 
 		AfterEach(func(ctx SpecContext) {
-			By("stop PodSandbox")
-			Expect(rc.StopPodSandbox(ctx, podID)).To(Succeed())
-			By("delete PodSandbox")
-			Expect(rc.RemovePodSandbox(ctx, podID)).To(Succeed())
-			By("cleanup log path")
-			Expect(os.RemoveAll(logDir)).To(Succeed())
+			framework.CleanupPodSandboxAndLogDir(ctx, rc, podID, logDir)
 		})
 
 		It("should support network", func(ctx SpecContext) {
