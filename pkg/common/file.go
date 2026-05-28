@@ -34,6 +34,7 @@ type Config struct {
 	Debug             bool
 	PullImageOnCreate bool
 	DisablePullOnRun  bool
+	MaxRetries        int
 	yamlData          *yaml.Node // YAML representation of config
 }
 
@@ -55,6 +56,9 @@ const (
 
 	// DisablePullOnRun is the YAML key for the disable pull on run config option.
 	DisablePullOnRun = "disable-pull-on-run"
+
+	// MaxRetries is the YAML key for the max retries config option.
+	MaxRetries = "max-retries"
 )
 
 // ReadConfig reads from a file with the given name and returns a config or
@@ -152,6 +156,11 @@ func getConfigOptions(yamlData *yaml.Node) (*Config, error) {
 			if err != nil {
 				return nil, fmt.Errorf("parsing config option '%s': %w", name, err)
 			}
+		case MaxRetries:
+			config.MaxRetries, err = strconv.Atoi(value)
+			if err != nil {
+				return nil, fmt.Errorf("parsing config option '%s': %w", name, err)
+			}
 		default:
 			return nil, fmt.Errorf("Config option '%s' is not valid", name)
 		}
@@ -170,6 +179,7 @@ func setConfigOptions(config *Config) {
 	setConfigOption(Debug, strconv.FormatBool(config.Debug), config.yamlData)
 	setConfigOption(PullImageOnCreate, strconv.FormatBool(config.PullImageOnCreate), config.yamlData)
 	setConfigOption(DisablePullOnRun, strconv.FormatBool(config.DisablePullOnRun), config.yamlData)
+	setConfigOption(MaxRetries, strconv.Itoa(config.MaxRetries), config.yamlData)
 }
 
 // Set config option on yaml.
@@ -224,7 +234,7 @@ func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
 		var tagType string
 
 		switch configName {
-		case Timeout:
+		case Timeout, MaxRetries:
 			tagType = tagInt
 		case Debug:
 			tagType = tagBool

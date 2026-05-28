@@ -52,7 +52,8 @@ CRICTL OPTIONS:
 	 timeout:	Timeout of connecting to server (default: 2)
 	 debug:	Enable debug output (default: false)
 	 pull-image-on-create:	Enable pulling image on create requests (default: false)
-	 disable-pull-on-run:	Disable pulling image on run requests (default: false)`,
+	 disable-pull-on-run:	Disable pulling image on run requests (default: false)
+	 max-retries:	Max retries for connecting to an explicitly set endpoint (default: 3, 0 to disable, negative for infinite)`,
 	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		&cli.StringFlag{
@@ -96,6 +97,8 @@ CRICTL OPTIONS:
 				fmt.Println(config.PullImageOnCreate)
 			case common.DisablePullOnRun:
 				fmt.Println(config.DisablePullOnRun)
+			case common.MaxRetries:
+				fmt.Println(config.MaxRetries)
 			default:
 				return fmt.Errorf("no configuration option named %s", get)
 			}
@@ -130,6 +133,7 @@ CRICTL OPTIONS:
 			display.AddRow([]string{common.Debug, strconv.FormatBool(config.Debug)})
 			display.AddRow([]string{common.PullImageOnCreate, strconv.FormatBool(config.PullImageOnCreate)})
 			display.AddRow([]string{common.DisablePullOnRun, strconv.FormatBool(config.DisablePullOnRun)})
+			display.AddRow([]string{common.MaxRetries, strconv.Itoa(config.MaxRetries)})
 			display.ClearScreen()
 			display.Flush()
 
@@ -187,6 +191,13 @@ func setValue(key, value string, config *common.Config) error {
 		}
 
 		config.DisablePullOnRun = pi
+	case common.MaxRetries:
+		n, err := strconv.Atoi(value)
+		if err != nil {
+			return fmt.Errorf("parse max-retries value '%s': %w", value, err)
+		}
+
+		config.MaxRetries = n
 	default:
 		return fmt.Errorf("no configuration option named %s", key)
 	}

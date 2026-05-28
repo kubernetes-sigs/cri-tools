@@ -50,6 +50,7 @@ var _ = DescribeTable("ReadConfig",
 		Expect(readConfig.Debug).To(Equal(expectedConfig.Debug))
 		Expect(readConfig.PullImageOnCreate).To(Equal(expectedConfig.PullImageOnCreate))
 		Expect(readConfig.DisablePullOnRun).To(Equal(expectedConfig.DisablePullOnRun))
+		Expect(readConfig.MaxRetries).To(Equal(expectedConfig.MaxRetries))
 	},
 
 	Entry("should succeed with valid config", `
@@ -59,6 +60,7 @@ timeout: 10
 debug: true
 pull-image-on-create: true
 disable-pull-on-run: true
+max-retries: 3
 `, &common.Config{
 		RuntimeEndpoint:   "foo",
 		ImageEndpoint:     "bar",
@@ -66,6 +68,7 @@ disable-pull-on-run: true
 		Debug:             true,
 		PullImageOnCreate: true,
 		DisablePullOnRun:  true,
+		MaxRetries:        3,
 	}, false),
 
 	Entry("should succeed with comments", `
@@ -126,6 +129,7 @@ timeout: 20
 	Entry("should fail with invalid 'debug' value", `debug: "foo"`, nil, true),
 	Entry("should fail with invalid 'pull-image-on-create' value", `pull-image-on-create: "foo"`, nil, true),
 	Entry("should fail with invalid 'disable-pull-on-run' value", `disable-pull-on-run: "foo"`, nil, true),
+	Entry("should fail with invalid 'max-retries' value", `max-retries: "foo"`, nil, true),
 )
 
 var _ = DescribeTable("WriteConfig",
@@ -151,6 +155,7 @@ var _ = DescribeTable("WriteConfig",
 		Expect(readConfig.Debug).To(Equal(config.Debug))
 		Expect(readConfig.PullImageOnCreate).To(Equal(config.PullImageOnCreate))
 		Expect(readConfig.DisablePullOnRun).To(Equal(config.DisablePullOnRun))
+		Expect(readConfig.MaxRetries).To(Equal(config.MaxRetries))
 	},
 
 	Entry("should succeed with config", &common.Config{
@@ -160,6 +165,7 @@ var _ = DescribeTable("WriteConfig",
 		Debug:             true,
 		PullImageOnCreate: true,
 		DisablePullOnRun:  true,
+		MaxRetries:        5,
 	}),
 
 	Entry("should succeed with nil config", nil),

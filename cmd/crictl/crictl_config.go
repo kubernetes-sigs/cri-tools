@@ -35,72 +35,95 @@ import (
 const configKey = "crictl-config"
 
 func newCrictlConfig(ctx *cli.Context, config *common.ServerConfiguration) *CrictlConfig {
-	cfg := &CrictlConfig{}
+	var cfg *CrictlConfig
 
 	if config == nil {
-		cfg.RuntimeEndpoint = ctx.String("runtime-endpoint")
-
-		if ctx.IsSet("runtime-endpoint") {
-			cfg.RuntimeEndpointIsSet = true
-		}
-
-		cfg.ImageEndpoint = ctx.String("image-endpoint")
-
-		if ctx.IsSet("image-endpoint") {
-			cfg.ImageEndpointIsSet = true
-		}
-
-		if ctx.IsSet("timeout") {
-			cfg.Timeout = getTimeout(ctx.Duration("timeout"))
-		} else {
-			cfg.Timeout = ctx.Duration("timeout")
-		}
-
-		cfg.Debug = ctx.Bool("debug")
-		cfg.DisablePullOnRun = false
+		cfg = newCrictlConfigFromFlags(ctx)
 	} else {
-		// Command line flags overrides config file.
-		if ctx.IsSet("runtime-endpoint") { //nolint:gocritic
-			cfg.RuntimeEndpoint = ctx.String("runtime-endpoint")
-			cfg.RuntimeEndpointIsSet = true
-		} else if config.RuntimeEndpoint != "" {
-			cfg.RuntimeEndpoint = config.RuntimeEndpoint
-			cfg.RuntimeEndpointIsSet = true
-		} else {
-			cfg.RuntimeEndpoint = ctx.String("runtime-endpoint")
-		}
-
-		if ctx.IsSet("image-endpoint") { //nolint:gocritic
-			cfg.ImageEndpoint = ctx.String("image-endpoint")
-			cfg.ImageEndpointIsSet = true
-		} else if config.ImageEndpoint != "" {
-			cfg.ImageEndpoint = config.ImageEndpoint
-			cfg.ImageEndpointIsSet = true
-		} else {
-			cfg.ImageEndpoint = ctx.String("image-endpoint")
-		}
-
-		if ctx.IsSet("timeout") { //nolint:gocritic
-			cfg.Timeout = getTimeout(ctx.Duration("timeout"))
-		} else if config.Timeout > 0 { // 0/neg value set to default timeout
-			cfg.Timeout = config.Timeout
-		} else {
-			cfg.Timeout = ctx.Duration("timeout")
-		}
-
-		if ctx.IsSet("debug") {
-			cfg.Debug = ctx.Bool("debug")
-		} else {
-			cfg.Debug = config.Debug
-		}
-
-		cfg.PullImageOnCreate = config.PullImageOnCreate
-		cfg.DisablePullOnRun = config.DisablePullOnRun
+		cfg = newCrictlConfigFromFile(ctx, config)
 	}
 
 	if cfg.Debug {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
+
+	return cfg
+}
+
+func newCrictlConfigFromFlags(ctx *cli.Context) *CrictlConfig {
+	cfg := &CrictlConfig{}
+
+	cfg.RuntimeEndpoint = ctx.String("runtime-endpoint")
+
+	if ctx.IsSet("runtime-endpoint") {
+		cfg.RuntimeEndpointIsSet = true
+	}
+
+	cfg.ImageEndpoint = ctx.String("image-endpoint")
+
+	if ctx.IsSet("image-endpoint") {
+		cfg.ImageEndpointIsSet = true
+	}
+
+	if ctx.IsSet("timeout") {
+		cfg.Timeout = getTimeout(ctx.Duration("timeout"))
+	} else {
+		cfg.Timeout = ctx.Duration("timeout")
+	}
+
+	cfg.Debug = ctx.Bool("debug")
+	cfg.MaxRetries = ctx.Int("max-retries")
+	cfg.DisablePullOnRun = false
+
+	return cfg
+}
+
+func newCrictlConfigFromFile(ctx *cli.Context, config *common.ServerConfiguration) *CrictlConfig {
+	cfg := &CrictlConfig{}
+
+	// Command line flags overrides config file.
+	if ctx.IsSet("runtime-endpoint") { //nolint:gocritic
+		cfg.RuntimeEndpoint = ctx.String("runtime-endpoint")
+		cfg.RuntimeEndpointIsSet = true
+	} else if config.RuntimeEndpoint != "" {
+		cfg.RuntimeEndpoint = config.RuntimeEndpoint
+		cfg.RuntimeEndpointIsSet = true
+	} else {
+		cfg.RuntimeEndpoint = ctx.String("runtime-endpoint")
+	}
+
+	if ctx.IsSet("image-endpoint") { //nolint:gocritic
+		cfg.ImageEndpoint = ctx.String("image-endpoint")
+		cfg.ImageEndpointIsSet = true
+	} else if config.ImageEndpoint != "" {
+		cfg.ImageEndpoint = config.ImageEndpoint
+		cfg.ImageEndpointIsSet = true
+	} else {
+		cfg.ImageEndpoint = ctx.String("image-endpoint")
+	}
+
+	if ctx.IsSet("timeout") { //nolint:gocritic
+		cfg.Timeout = getTimeout(ctx.Duration("timeout"))
+	} else if config.Timeout > 0 { // 0/neg value set to default timeout
+		cfg.Timeout = config.Timeout
+	} else {
+		cfg.Timeout = ctx.Duration("timeout")
+	}
+
+	if ctx.IsSet("debug") {
+		cfg.Debug = ctx.Bool("debug")
+	} else {
+		cfg.Debug = config.Debug
+	}
+
+	if ctx.IsSet("max-retries") {
+		cfg.MaxRetries = ctx.Int("max-retries")
+	} else {
+		cfg.MaxRetries = config.MaxRetries
+	}
+
+	cfg.PullImageOnCreate = config.PullImageOnCreate
+	cfg.DisablePullOnRun = config.DisablePullOnRun
 
 	return cfg
 }
@@ -115,6 +138,7 @@ type CrictlConfig struct {
 	Debug                bool
 	PullImageOnCreate    bool
 	DisablePullOnRun     bool
+	MaxRetries           int
 	TracerProvider       *sdktrace.TracerProvider
 	// RootSpan is the root OpenTelemetry span for the command.
 	RootSpan trace.Span
@@ -186,7 +210,9 @@ func (cfg *CrictlConfig) GetRuntimeService(ctx context.Context, timeout time.Dur
 		return res, err
 	}
 
-	return remote.NewRemoteRuntimeService(ctx, cfg.RuntimeEndpoint, t, tp, false)
+	return connectWithRetry(ctx, cfg.MaxRetries, func() (internalapi.RuntimeService, error) {
+		return remote.NewRemoteRuntimeService(ctx, cfg.RuntimeEndpoint, t, tp, false)
+	})
 }
 
 // GetImageService returns the image service client. If an override is set
@@ -244,5 +270,44 @@ func (cfg *CrictlConfig) GetImageService(ctx context.Context) (internalapi.Image
 		return res, err
 	}
 
-	return remote.NewRemoteImageService(ctx, cfg.ImageEndpoint, cfg.Timeout, tp, false)
+	return connectWithRetry(ctx, cfg.MaxRetries, func() (internalapi.ImageManagerService, error) {
+		return remote.NewRemoteImageService(ctx, cfg.ImageEndpoint, cfg.Timeout, tp, false)
+	})
+}
+
+func connectWithRetry[T any](
+	ctx context.Context,
+	maxRetries int,
+	connect func() (T, error),
+) (T, error) {
+	result, err := connect()
+	if err == nil || maxRetries == 0 {
+		return result, err
+	}
+
+	delay := 500 * time.Millisecond
+	maxDelay := 5 * time.Second
+
+	for attempt := 0; maxRetries < 0 || attempt < maxRetries; attempt++ {
+		if maxRetries > 0 {
+			logrus.Debugf("Connection attempt %d/%d failed: %v, retrying in %v", attempt+1, maxRetries, err, delay)
+		} else {
+			logrus.Debugf("Connection attempt %d failed: %v, retrying in %v", attempt+1, err, delay)
+		}
+
+		select {
+		case <-ctx.Done():
+			return result, ctx.Err()
+		case <-time.After(delay):
+		}
+
+		result, err = connect()
+		if err == nil {
+			return result, nil
+		}
+
+		delay = min(delay*2, maxDelay)
+	}
+
+	return result, err
 }
