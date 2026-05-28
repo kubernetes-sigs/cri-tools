@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -41,15 +40,15 @@ func builtinTmplFuncs() template.FuncMap {
 }
 
 // jsonBuiltinTmplFunc allows to jsonify result of template execution.
-func jsonBuiltinTmplFunc(v any) string {
+func jsonBuiltinTmplFunc(v any) (string, error) {
 	o := new(bytes.Buffer)
 
 	enc := json.NewEncoder(o)
 	if err := enc.Encode(v); err != nil {
-		logrus.Fatalf("Unable to encode JSON: %v", err)
+		return "", fmt.Errorf("unable to encode JSON: %w", err)
 	}
 
-	return o.String()
+	return o.String(), nil
 }
 
 // tmplExecuteRawJSON executes the template with any with decoded by

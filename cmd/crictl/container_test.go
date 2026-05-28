@@ -50,7 +50,8 @@ func fakeContainer(name string, createdAt int64) *pb.Container {
 
 var _ = DescribeTable("convertContainerState",
 	func(state pb.ContainerState, expected string) {
-		actual := convertContainerState(state)
+		actual, err := convertContainerState(state)
+		Expect(err).NotTo(HaveOccurred())
 		Expect(actual).To(Equal(expected))
 	},
 	Entry("created", pb.ContainerState_CONTAINER_CREATED, "Created"),

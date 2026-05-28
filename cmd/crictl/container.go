@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	goruntime "runtime"
@@ -1222,7 +1221,7 @@ func ListContainers(ctx context.Context, runtimeClient internalapi.RuntimeServic
 			st.State = pb.ContainerState_CONTAINER_UNKNOWN
 			filter.State = st
 		default:
-			log.Fatalf("--state should be one of created, running, exited or unknown")
+			return nil, errors.New("--state should be one of created, running, exited or unknown")
 		}
 	}
 
@@ -1310,8 +1309,14 @@ func OutputContainers(ctx context.Context, runtimeClient internalapi.RuntimeServ
 			}
 
 			podName := getPodNameFromLabels(c.GetLabels())
+
+			containerState, err := convertContainerState(c.GetState())
+			if err != nil {
+				return err
+			}
+
 			display.AddRow([]string{
-				id, image, ctm, convertContainerState(c.GetState()), c.GetMetadata().GetName(),
+				id, image, ctm, containerState, c.GetMetadata().GetName(),
 				strconv.FormatUint(uint64(c.GetMetadata().GetAttempt()), 10), podID, podName, podNamespace,
 			})
 
@@ -1330,7 +1335,12 @@ func OutputContainers(ctx context.Context, runtimeClient internalapi.RuntimeServ
 			fmt.Printf("Attempt: %v\n", c.GetMetadata().GetAttempt())
 		}
 
-		fmt.Printf("State: %s\n", convertContainerState(c.GetState()))
+		containerState, err := convertContainerState(c.GetState())
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("State: %s\n", containerState)
 
 		if c.GetImage() != nil {
 			fmt.Printf("Image: %s\n", c.GetImage().GetImage())
@@ -1362,20 +1372,18 @@ func OutputContainers(ctx context.Context, runtimeClient internalapi.RuntimeServ
 	return nil
 }
 
-func convertContainerState(state pb.ContainerState) string {
+func convertContainerState(state pb.ContainerState) (string, error) {
 	switch state {
 	case pb.ContainerState_CONTAINER_CREATED:
-		return "Created"
+		return "Created", nil
 	case pb.ContainerState_CONTAINER_RUNNING:
-		return "Running"
+		return "Running", nil
 	case pb.ContainerState_CONTAINER_EXITED:
-		return "Exited"
+		return "Exited", nil
 	case pb.ContainerState_CONTAINER_UNKNOWN:
-		return "Unknown"
+		return "Unknown", nil
 	default:
-		log.Fatalf("Unknown container state %q", state)
-
-		return ""
+		return "", fmt.Errorf("unknown container state %q", state)
 	}
 }
 
