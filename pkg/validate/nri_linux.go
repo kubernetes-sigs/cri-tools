@@ -411,4 +411,170 @@ var _ = framework.KubeDescribe("NRI", func() {
 			}
 		})
 	})
+
+	Context("StopPodSandbox contract", Serial, func() {
+		var (
+			testStub    *NRITestStub
+			podID       string
+			podConfig   *runtimeapi.PodSandboxConfig
+			containerID string
+		)
+
+		AfterEach(func(ctx SpecContext) {
+			// Stop the stub first to unblock any hooks that may be holding
+			// a StopPodSandbox call, allowing it to complete.
+			if testStub != nil {
+				testStub.Cleanup()
+			}
+
+			if containerID != "" {
+				if err := rc.StopContainer(ctx, containerID, 0); err != nil {
+					framework.Logf("AfterEach: StopContainer(%s) failed: %v", containerID, err)
+				}
+
+				if err := rc.RemoveContainer(ctx, containerID); err != nil {
+					framework.Logf("AfterEach: RemoveContainer(%s) failed: %v", containerID, err)
+				}
+			}
+
+			if podID != "" {
+				if err := rc.StopPodSandbox(ctx, podID); err != nil {
+					framework.Logf("AfterEach: StopPodSandbox(%s) failed: %v", podID, err)
+				}
+
+				if err := rc.RemovePodSandbox(ctx, podID); err != nil {
+					framework.Logf("AfterEach: RemovePodSandbox(%s) failed: %v", podID, err)
+				}
+			}
+		})
+
+		It("should stop all workload containers and keep sandbox accessible while StopPodSandbox hook is in progress", func(ctx SpecContext) {
+			// This test validates the spec contract: when StopPodSandbox is called,
+			// all workload containers MUST already be stopped before the NRI hook
+			// fires, and the sandbox infrastructure MUST still be accessible via
+			// PodSandboxStatus while the hook is in progress.
+			hookBlocking := make(chan struct{})
+			hookReached := make(chan struct{})
+
+			var hookOnce sync.Once
+
+			var err error
+
+			testStub, err = StartNRITestStub("cri-test-nri-stop-state", "00")
+			Expect(err).NotTo(HaveOccurred(), "failed to start NRI test stub")
+
+			// Configure stub to block during StopPodSandbox so the main
+			// goroutine can inspect runtime state while the hook is active.
+			// sync.Once guards against the hook being invoked multiple times
+			// (e.g., idempotent stop redelivery), which would otherwise panic
+			// on a double close of hookReached.
+			testStub.Plugin.OnStopPodSandbox = func(hookCtx context.Context, _ *nri.PodSandbox) error {
+				firstInvocation := false
+
+				hookOnce.Do(func() { firstInvocation = true })
+
+				// Skip duplicate invocations (e.g., AfterEach cleanup) so
+				// they are not blocked by the test channel handshake.
+				if !firstInvocation {
+					return nil
+				}
+
+				close(hookReached)
+
+				select {
+				case <-hookBlocking:
+				case <-hookCtx.Done():
+				}
+
+				return nil
+			}
+
+			By("creating a pod sandbox")
+
+			podSandboxName := "nri-test-stop-state-" + framework.NewUUID()
+			uid := framework.DefaultUIDPrefix + framework.NewUUID()
+			namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
+			podConfig = &runtimeapi.PodSandboxConfig{
+				Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
+				Linux: &runtimeapi.LinuxPodSandboxConfig{
+					CgroupParent: common.GetCgroupParent(ctx, rc),
+				},
+				Labels: framework.DefaultPodLabels,
+			}
+			podID = framework.RunPodSandbox(ctx, rc, podConfig)
+			Expect(podID).NotTo(BeEmpty())
+
+			By("creating and starting a container in the sandbox")
+			framework.PullPublicImage(ctx, ic, framework.TestContext.TestImageList.DefaultTestContainerImage, nil)
+
+			containerName := "nri-test-stop-state-ctr-" + framework.NewUUID()
+			containerConfig := &runtimeapi.ContainerConfig{
+				Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+				Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
+				Command:  framework.DefaultPauseCommand,
+				Linux:    &runtimeapi.LinuxContainerConfig{},
+			}
+			containerID = framework.CreateContainer(ctx, rc, ic, containerConfig, podID, podConfig)
+			Expect(containerID).NotTo(BeEmpty())
+			Expect(rc.StartContainer(ctx, containerID)).NotTo(HaveOccurred())
+
+			By("triggering StopPodSandbox in a goroutine")
+
+			var (
+				stopErr error
+				stopWg  sync.WaitGroup
+			)
+
+			stopWg.Go(func() {
+				stopErr = rc.StopPodSandbox(ctx, podID)
+			})
+
+			By("waiting for StopPodSandbox hook to be reached")
+
+			select {
+			case <-hookReached:
+				// Hook is now blocking; main goroutine can inspect state
+			case <-time.After(30 * time.Second):
+				close(hookBlocking) // unblock to avoid goroutine leak
+				Fail("Timed out waiting for StopPodSandbox NRI hook to fire")
+			}
+
+			By("verifying all workload containers were stopped before the hook fired")
+
+			containers, listErr := rc.ListContainers(ctx, &runtimeapi.ContainerFilter{
+				PodSandboxId: podID,
+			})
+			Expect(listErr).NotTo(HaveOccurred(), "ListContainers during StopPodSandbox hook")
+
+			Expect(containers).NotTo(BeEmpty(),
+				"workload containers should still be listed (in EXITED state) during StopPodSandbox hook")
+
+			for _, c := range containers {
+				Expect(c.GetState()).To(Equal(runtimeapi.ContainerState_CONTAINER_EXITED),
+					"container %s MUST be stopped before StopPodSandbox hook fires", c.GetId())
+			}
+
+			By("verifying sandbox infrastructure is still accessible during the hook")
+
+			statusResp, statusErr := rc.PodSandboxStatus(ctx, podID, false)
+			Expect(statusErr).NotTo(HaveOccurred(), "PodSandboxStatus during StopPodSandbox hook")
+			Expect(statusResp.GetStatus()).NotTo(BeNil(),
+				"PodSandboxStatus MUST be accessible during StopPodSandbox hook")
+			Expect(statusResp.GetStatus().GetId()).To(Equal(podID))
+
+			By("releasing the hook and verifying StopPodSandbox succeeds")
+			close(hookBlocking)
+			stopWg.Wait()
+			Expect(stopErr).NotTo(HaveOccurred(), "StopPodSandbox should succeed after hook returns")
+
+			// StopPodSandbox stopped the container; clear so AfterEach skips it.
+			containerID = ""
+
+			// Remove the sandbox now and clear podID so AfterEach doesn't issue a
+			// second StopPodSandbox (which could re-enter the hook callback).
+			Expect(rc.RemovePodSandbox(ctx, podID)).NotTo(HaveOccurred(),
+				"RemovePodSandbox should succeed after stop")
+			podID = ""
+		})
+	})
 })
