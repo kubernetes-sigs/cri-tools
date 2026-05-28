@@ -48,7 +48,8 @@ func fakeSandbox(name, namespace string, createdAt int64) *pb.PodSandbox {
 
 var _ = DescribeTable("convertPodState",
 	func(state pb.PodSandboxState, expected string) {
-		actual := convertPodState(state)
+		actual, err := convertPodState(state)
+		Expect(err).NotTo(HaveOccurred())
 		Expect(actual).To(Equal(expected))
 	},
 	Entry("ready", pb.PodSandboxState_SANDBOX_READY, "Ready"),

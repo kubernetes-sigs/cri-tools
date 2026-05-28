@@ -57,6 +57,13 @@ func getTimeout(timeDuration time.Duration) time.Duration {
 }
 
 func main() {
+	if err := run(); err != nil {
+		logrus.Error(err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	app := cli.NewApp()
 	app.Name = "crictl"
 	app.Usage = "client for CRI"
@@ -198,12 +205,12 @@ func main() {
 		}
 
 		if exePath, err = os.Executable(); err != nil {
-			logrus.Fatal(err)
+			return fmt.Errorf("get executable path: %w", err)
 		}
 
 		if config, err = common.GetServerConfigFromFile(context.String("config"), exePath); err != nil {
 			if context.IsSet("config") {
-				logrus.Fatal(err)
+				return fmt.Errorf("get server config: %w", err)
 			}
 		}
 
@@ -222,7 +229,7 @@ func main() {
 
 			// Start a root span named after the invoked command so that all
 			// command operations are recorded as children of it. The span is
-			// ended in main() once app.Run returns.
+			// ended in run() once app.Run returns.
 			spanName := "crictl"
 			if context.Args().Present() {
 				spanName = context.Args().First()
@@ -292,16 +299,15 @@ func main() {
 
 			if cfg.TracerProvider != nil {
 				shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.Timeout)
-				defer cancel()
 
 				if shutdownErr := cfg.TracerProvider.Shutdown(shutdownCtx); shutdownErr != nil {
 					logrus.Errorf("Unable to shutdown tracer provider: %v", shutdownErr)
 				}
+
+				cancel()
 			}
 		}
 	}
 
-	if err != nil {
-		logrus.Fatal(err)
-	}
+	return err
 }

@@ -20,8 +20,8 @@ import (
 	"cmp"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
 	"slices"
 	"strconv"
 	"strings"
@@ -554,7 +554,7 @@ func ListPodSandboxes(ctx context.Context, client internalapi.RuntimeService, op
 			st.State = pb.PodSandboxState_SANDBOX_NOTREADY
 			filter.State = st
 		default:
-			log.Fatalf("--state should be ready or notready")
+			return nil, errors.New("--state should be ready or notready")
 		}
 	}
 
@@ -629,10 +629,15 @@ func OutputPodSandboxes(ctx context.Context, client internalapi.RuntimeService, 
 				id = getTruncatedID(id, "")
 			}
 
+			podState, err := convertPodState(pod.GetState())
+			if err != nil {
+				return err
+			}
+
 			display.AddRow([]string{
 				id,
 				ctm,
-				convertPodState(pod.GetState()),
+				podState,
 				pod.GetMetadata().GetName(),
 				pod.GetMetadata().GetNamespace(),
 				strconv.FormatUint(uint64(pod.GetMetadata().GetAttempt()), 10),
@@ -662,7 +667,13 @@ func OutputPodSandboxes(ctx context.Context, client internalapi.RuntimeService, 
 			}
 		}
 
-		fmt.Printf("Status: %s\n", convertPodState(pod.GetState()))
+		podState, err := convertPodState(pod.GetState())
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Status: %s\n", podState)
+
 		ctm := time.Unix(0, pod.GetCreatedAt())
 		fmt.Printf("Created: %v\n", ctm)
 
@@ -694,16 +705,14 @@ func OutputPodSandboxes(ctx context.Context, client internalapi.RuntimeService, 
 	return nil
 }
 
-func convertPodState(state pb.PodSandboxState) string {
+func convertPodState(state pb.PodSandboxState) (string, error) {
 	switch state {
 	case pb.PodSandboxState_SANDBOX_READY:
-		return "Ready"
+		return "Ready", nil
 	case pb.PodSandboxState_SANDBOX_NOTREADY:
-		return "NotReady"
+		return "NotReady", nil
 	default:
-		log.Fatalf("Unknown pod state %q", state)
-
-		return ""
+		return "", fmt.Errorf("unknown pod state %q", state)
 	}
 }
 
