@@ -65,10 +65,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 
 	AfterEach(func(ctx SpecContext) {
 		if podID != "" {
-			By("stop PodSandbox")
-			Expect(rc.StopPodSandbox(ctx, podID)).NotTo(HaveOccurred())
-			By("delete PodSandbox")
-			Expect(rc.RemovePodSandbox(ctx, podID)).NotTo(HaveOccurred())
+			framework.CleanupPodSandbox(ctx, rc, podID)
 		}
 
 		if podLogDir != "" {

@@ -60,10 +60,7 @@ var _ = framework.KubeDescribe("Streaming", func() {
 		)
 
 		AfterEach(func(ctx SpecContext) {
-			By("stop PodSandbox")
-			Expect(rc.StopPodSandbox(ctx, podID)).NotTo(HaveOccurred())
-			By("delete PodSandbox")
-			Expect(rc.RemovePodSandbox(ctx, podID)).NotTo(HaveOccurred())
+			framework.CleanupPodSandbox(ctx, rc, podID)
 		})
 
 		It("runtime should support exec with tty=false and stdin=false [Conformance]", func(ctx SpecContext) {

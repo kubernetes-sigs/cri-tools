@@ -49,10 +49,7 @@ var _ = framework.KubeDescribe("Networking", func() {
 		var podID string
 
 		AfterEach(func(ctx SpecContext) {
-			By("stop PodSandbox")
-			Expect(rc.StopPodSandbox(ctx, podID)).NotTo(HaveOccurred())
-			By("delete PodSandbox")
-			Expect(rc.RemovePodSandbox(ctx, podID)).NotTo(HaveOccurred())
+			framework.CleanupPodSandbox(ctx, rc, podID)
 		})
 
 		It("runtime should support DNS config [Conformance]", func(ctx SpecContext) {

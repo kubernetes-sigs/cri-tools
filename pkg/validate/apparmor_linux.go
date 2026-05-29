@@ -97,10 +97,7 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 		})
 
 		AfterEach(func(ctx SpecContext) {
-			By("stop PodSandbox")
-			Expect(rc.StopPodSandbox(ctx, sandboxID)).NotTo(HaveOccurred())
-			By("delete PodSandbox")
-			Expect(rc.RemovePodSandbox(ctx, sandboxID)).NotTo(HaveOccurred())
+			framework.CleanupPodSandbox(ctx, rc, sandboxID)
 		})
 
 		It("should fail with an unloaded apparmor_profile", func(ctx SpecContext) {
@@ -139,10 +136,7 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 		})
 
 		AfterEach(func(ctx SpecContext) {
-			By("stop PodSandbox")
-			Expect(rc.StopPodSandbox(ctx, sandboxID)).NotTo(HaveOccurred())
-			By("delete PodSandbox")
-			Expect(rc.RemovePodSandbox(ctx, sandboxID)).NotTo(HaveOccurred())
+			framework.CleanupPodSandbox(ctx, rc, sandboxID)
 		})
 
 		It("should fail with an unloaded apparmor_profile", func(ctx SpecContext) {
@@ -190,10 +184,7 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 		})
 
 		AfterEach(func(ctx SpecContext) {
-			By("stop PodSandbox")
-			Expect(rc.StopPodSandbox(ctx, sandboxID)).NotTo(HaveOccurred())
-			By("delete PodSandbox")
-			Expect(rc.RemovePodSandbox(ctx, sandboxID)).NotTo(HaveOccurred())
+			framework.CleanupPodSandbox(ctx, rc, sandboxID)
 		})
 
 		It("should fail with an unloaded apparmor_profile", func(ctx SpecContext) {

@@ -76,10 +76,7 @@ var _ = framework.KubeDescribe("Container", func() {
 		})
 
 		AfterEach(func(ctx SpecContext) {
-			By("stop PodSandbox")
-			Expect(rc.StopPodSandbox(ctx, podID)).NotTo(HaveOccurred())
-			By("delete PodSandbox")
-			Expect(rc.RemovePodSandbox(ctx, podID)).NotTo(HaveOccurred())
+			framework.CleanupPodSandbox(ctx, rc, podID)
 		})
 
 		It("runtime should support creating container [Conformance]", func(ctx SpecContext) {
@@ -338,10 +335,7 @@ var _ = framework.KubeDescribe("Container", func() {
 		})
 
 		AfterEach(func(ctx SpecContext) {
-			By("stop PodSandbox")
-			Expect(rc.StopPodSandbox(ctx, podID)).NotTo(HaveOccurred())
-			By("delete PodSandbox")
-			Expect(rc.RemovePodSandbox(ctx, podID)).NotTo(HaveOccurred())
+			framework.CleanupPodSandbox(ctx, rc, podID)
 		})
 
 		It("runtime should support starting container with volume [Conformance]", func(ctx SpecContext) {
@@ -403,12 +397,7 @@ var _ = framework.KubeDescribe("Container", func() {
 		})
 
 		AfterEach(func(ctx SpecContext) {
-			By("stop PodSandbox")
-			Expect(rc.StopPodSandbox(ctx, podID)).NotTo(HaveOccurred())
-			By("delete PodSandbox")
-			Expect(rc.RemovePodSandbox(ctx, podID)).NotTo(HaveOccurred())
-			By("clean up the TempDir")
-			os.RemoveAll(hostPath)
+			framework.CleanupPodSandboxAndLogDir(ctx, rc, podID, hostPath)
 		})
 
 		It("runtime should support starting container with log [Conformance]", func(ctx SpecContext) {

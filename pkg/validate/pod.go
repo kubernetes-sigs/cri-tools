@@ -45,10 +45,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 		AfterEach(func(ctx SpecContext) {
 			if podID != "" {
-				By("stop PodSandbox")
-				Expect(rc.StopPodSandbox(ctx, podID)).NotTo(HaveOccurred())
-				By("delete PodSandbox")
-				Expect(rc.RemovePodSandbox(ctx, podID)).NotTo(HaveOccurred())
+				framework.CleanupPodSandbox(ctx, rc, podID)
 			}
 		})
 
