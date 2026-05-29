@@ -187,6 +187,7 @@ image-endpoint: unix:///run/containerd/containerd.sock
 timeout: 2
 debug: true
 pull-image-on-create: false
+max-retries: 3
 .EE
 
 .PP
@@ -199,6 +200,7 @@ image-endpoint: npipe:////./pipe/containerd-containerd
 timeout: 2
 debug: true
 pull-image-on-create: false
+max-retries: 3
 .EE
 
 .SS Connection troubleshooting
@@ -231,6 +233,8 @@ option for no timeout value set and the smallest supported timeout is \fB1s\fR
 \fB--tracing-endpoint\fR: Address to which the gRPC tracing collector will send spans to (default: \fB127.0.0.1:4317\fR)
 .IP \(bu 2
 \fB--tracing-sampling-rate-per-million\fR: Number of samples to collect per million OpenTelemetry spans. Set to 1000000 or -1 to always sample (default: \fB-1\fR)
+.IP \(bu 2
+\fB--max-retries\fR: Max retries for connecting to an explicitly set endpoint with exponential backoff (default: \fB3\fR, \fB0\fR to disable, negative for infinite)
 .IP \(bu 2
 \fB--profile-cpu\fR: Write a pprof CPU profile to the provided path
 .IP \(bu 2
@@ -275,6 +279,8 @@ COMMAND OPTIONS:
 \fBpull-image-on-create\fR: Enable pulling image on create requests (default: \fBfalse\fR)
 .IP \(bu 2
 \fBdisable-pull-on-run\fR: Disable pulling image on run requests (default: \fBfalse\fR)
+.IP \(bu 2
+\fBmax-retries\fR: Max retries for connecting to an explicitly set endpoint (default: \fB3\fR, \fB0\fR to disable, negative for infinite)
 
 .PP
 .RS

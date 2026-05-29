@@ -116,6 +116,7 @@ image-endpoint: unix:///run/containerd/containerd.sock
 timeout: 2
 debug: true
 pull-image-on-create: false
+max-retries: 3
 ```
 
 Windows:
@@ -127,6 +128,7 @@ image-endpoint: npipe:////./pipe/containerd-containerd
 timeout: 2
 debug: true
 pull-image-on-create: false
+max-retries: 3
 ```
 
 ### Connection troubleshooting
@@ -151,6 +153,7 @@ via sudo (`sudo -E crictl ...`).
 - `--enable-tracing`: Enable OpenTelemetry tracing (default: `false`)
 - `--tracing-endpoint`: Address to which the gRPC tracing collector will send spans to (default: `127.0.0.1:4317`)
 - `--tracing-sampling-rate-per-million`: Number of samples to collect per million OpenTelemetry spans. Set to 1000000 or -1 to always sample (default: `-1`)
+- `--max-retries`: Max retries for connecting to an explicitly set endpoint with exponential backoff (default: `3`, `0` to disable, negative for infinite)
 - `--profile-cpu`: Write a pprof CPU profile to the provided path
 - `--profile-mem`: Write a pprof memory profile to the provided path
 
@@ -182,6 +185,7 @@ COMMAND OPTIONS:
 - `debug`: Enable debug output (default: `false`)
 - `pull-image-on-create`: Enable pulling image on create requests (default: `false`)
 - `disable-pull-on-run`: Disable pulling image on run requests (default: `false`)
+- `max-retries`: Max retries for connecting to an explicitly set endpoint (default: `3`, `0` to disable, negative for infinite)
 
 > When enabled `pull-image-on-create` modifies the create container command to first pull the container's image.
 > This feature is used as a helper to make creating containers easier and faster.

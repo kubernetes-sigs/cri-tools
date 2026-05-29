@@ -53,6 +53,7 @@ var _ = t.Describe("config", func() {
 		Expect(cfg).To(MatchRegexp("debug .* false"))
 		Expect(cfg).To(MatchRegexp("pull-image-on-create .* false"))
 		Expect(cfg).To(MatchRegexp("disable-pull-on-run .* false"))
+		Expect(cfg).To(MatchRegexp("max-retries .* 0"))
 	})
 
 	It("should succeed to set config values", func() {
@@ -87,6 +88,7 @@ timeout: 10
 debug: false
 pull-image-on-create: false
 disable-pull-on-run: false
+max-retries: 0
 `))
 	})
 
@@ -123,6 +125,7 @@ image-endpoint: ""
 debug: false
 pull-image-on-create: false
 disable-pull-on-run: false
+max-retries: 0
 `))
 
 		t.CrictlExpectSuccess("--config "+configFile.Name()+" config --get timeout", "30")

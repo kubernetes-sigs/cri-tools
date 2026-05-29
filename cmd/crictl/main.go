@@ -147,6 +147,11 @@ func run() error {
 			Aliases: []string{"D"},
 			Usage:   "Enable debug mode",
 		},
+		&cli.IntFlag{
+			Name:  "max-retries",
+			Value: 3,
+			Usage: "Max retries for connecting to an explicitly set endpoint with exponential backoff (0 to disable, negative for infinite)",
+		},
 		&cli.BoolFlag{
 			Name:  "enable-tracing",
 			Usage: "Enable OpenTelemetry tracing.",

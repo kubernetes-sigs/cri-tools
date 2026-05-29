@@ -40,6 +40,8 @@ type ServerConfiguration struct {
 	PullImageOnCreate bool
 	// DisablePullOnRun disables pulling an image for run requests
 	DisablePullOnRun bool
+	// MaxRetries is the number of retries for connecting to the server
+	MaxRetries int
 }
 
 // GetServerConfigFromFile returns the CRI server configuration from file.
@@ -76,6 +78,7 @@ func GetServerConfigFromFile(configFileName, currentDir string) (*ServerConfigur
 	serverConfig.Debug = config.Debug
 	serverConfig.PullImageOnCreate = config.PullImageOnCreate
 	serverConfig.DisablePullOnRun = config.DisablePullOnRun
+	serverConfig.MaxRetries = config.MaxRetries
 
 	return &serverConfig, nil
 }
