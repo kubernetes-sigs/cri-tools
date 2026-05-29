@@ -27,6 +27,7 @@ linters:
     - exhaustive
     - exptostd
     - fatcontext
+    - forbidigo
     - forcetypeassert
     - funcorder
     - ginkgolinter
@@ -101,7 +102,6 @@ linters:
     # - depguard
     # - err113
     # - exhaustruct
-    # - forbidigo
     # - funlen
     # - gochecknoglobals
     # - gochecknoinits
@@ -124,6 +124,17 @@ linters:
       branch-max-lines: 2
     cyclop:
       max-complexity: 37
+    forbidigo:
+      analyze-types: false
+      forbid:
+        - pattern: ^logrus\.Fatal.*$
+          msg: "use error returns instead of logrus.Fatal*; let main() print and exit with non-zero"
+        - pattern: ^log\.Fatal.*$
+          msg: "use error returns instead of log.Fatal*; let main() print and exit with non-zero"
+        - pattern: ^klog\.Fatal.*$
+          msg: "use error returns instead of klog.Fatal*; let main() print and exit with non-zero"
+        - pattern: ^os\.Exit.*$
+          msg: "use error returns instead of os.Exit; let main() handle the exit"
     gocognit:
       min-complexity: 71
     gocritic:
@@ -171,6 +182,9 @@ linters:
       - linters:
           - goconst
         path: pkg/validate/
+      - linters:
+          - forbidigo
+        path: _test\.go$
     paths:
       - third_party$
       - builtin$

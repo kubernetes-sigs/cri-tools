@@ -59,7 +59,7 @@ func getTimeout(timeDuration time.Duration) time.Duration {
 func main() {
 	if err := run(); err != nil {
 		logrus.Error(err)
-		os.Exit(1)
+		os.Exit(1) //nolint:forbidigo // intentional exit in main() after error handling
 	}
 }
 

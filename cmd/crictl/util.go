@@ -76,7 +76,7 @@ func SetupInterruptSignalHandler() <-chan struct{} {
 			<-c
 			close(signalIntStopCh)
 			<-c
-			os.Exit(1) // Exit immediately on second signal
+			os.Exit(1) //nolint:forbidigo // intentional exit on second interrupt signal for immediate shutdown
 		}()
 	})
 
