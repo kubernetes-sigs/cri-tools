@@ -43,6 +43,7 @@ linters:
     - goheader
     - gomoddirectives
     - gomodguard_v2
+    - gosec
     - goprintffuncname
     - gosmopolitan
     - govet
@@ -105,7 +106,6 @@ linters:
     # - funlen
     # - gochecknoglobals
     # - gochecknoinits
-    # - gosec
     # - ireturn
     # - lll
     # - mnd

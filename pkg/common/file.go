@@ -106,7 +106,7 @@ func WriteConfig(c *Config, filepath string) error {
 		return err
 	}
 
-	return os.WriteFile(filepath, data, 0o644)
+	return os.WriteFile(filepath, data, 0o600)
 }
 
 // Extracts config options from the yaml data which is loaded from file.
