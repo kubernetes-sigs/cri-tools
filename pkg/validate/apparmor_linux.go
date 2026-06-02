@@ -279,13 +279,16 @@ func loadTestProfiles(ctx context.Context) error {
 	defer os.Remove(f.Name())
 	defer f.Close()
 
-	// write test profiles to a temp file.
 	if _, err = f.WriteString(testProfiles); err != nil {
 		return fmt.Errorf("write profiles to file: %w", err)
 	}
 
-	// load apparmor profiles into kernel.
-	cmd := exec.CommandContext(ctx, "sudo", "apparmor_parser", "-r", "-W", f.Name())
+	binary, err := exec.LookPath("sudo")
+	if err != nil {
+		return fmt.Errorf("find sudo binary: %w", err)
+	}
+
+	cmd := exec.CommandContext(ctx, binary, "apparmor_parser", "-r", "-W", f.Name())
 	stderr := &bytes.Buffer{}
 	cmd.Stderr = stderr
 	out, err := cmd.Output()

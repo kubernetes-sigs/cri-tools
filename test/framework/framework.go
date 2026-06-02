@@ -76,7 +76,10 @@ func (t *TestFramework) Describe(text string, body func()) bool {
 func cmd(workDir, format string, args ...any) *Session {
 	c := strings.Split(fmt.Sprintf(format, args...), " ")
 
-	command := exec.CommandContext(context.TODO(), c[0], c[1:]...)
+	binary, err := exec.LookPath(c[0])
+	Expect(err).ToNot(HaveOccurred())
+
+	command := exec.CommandContext(context.TODO(), binary, c[1:]...)
 	if workDir != "" {
 		command.Dir = workDir
 	}

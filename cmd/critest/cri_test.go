@@ -17,9 +17,10 @@ limitations under the License.
 package main
 
 import (
+	"crypto/rand"
 	"flag"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -98,7 +99,12 @@ func runTestSuite(t *testing.T) {
 func generateTempTestName() (string, error) {
 	suffix := make([]byte, 10)
 	for i := range suffix {
-		suffix[i] = letterBytes[rand.Intn(len(letterBytes))]
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(letterBytes))))
+		if err != nil {
+			return "", fmt.Errorf("generate random suffix: %w", err)
+		}
+
+		suffix[i] = letterBytes[n.Int64()]
 	}
 
 	dir, err := os.MkdirTemp("", "cri-test")
