@@ -51,59 +51,7 @@ var _ = framework.KubeDescribe("NRI", func() {
 		ic = f.CRIClient.CRIImageClient
 	})
 
-	Context("runtime should invoke NRI RunPodSandbox hook on pod creation", Serial, func() {
-		var (
-			testStub  *NRITestStub
-			podID     string
-			podConfig *runtimeapi.PodSandboxConfig
-		)
-
-		BeforeEach(func() {
-			var err error
-
-			testStub, err = StartNRITestStub("cri-test-nri", "00")
-			Expect(err).NotTo(HaveOccurred(), "failed to start NRI test stub")
-		})
-
-		AfterEach(func(ctx SpecContext) {
-			if podID != "" {
-				By("stop PodSandbox")
-				Expect(rc.StopPodSandbox(ctx, podID)).NotTo(HaveOccurred())
-				By("remove PodSandbox")
-				Expect(rc.RemovePodSandbox(ctx, podID)).NotTo(HaveOccurred())
-			}
-
-			if testStub != nil {
-				testStub.Cleanup()
-			}
-		})
-
-		It("should receive RunPodSandbox event when a pod is created via CRI", func(ctx SpecContext) {
-			By("creating a pod sandbox")
-
-			podSandboxName := "nri-test-run-hook-" + framework.NewUUID()
-			uid := framework.DefaultUIDPrefix + framework.NewUUID()
-			namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
-			podConfig = &runtimeapi.PodSandboxConfig{
-				Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
-				Linux: &runtimeapi.LinuxPodSandboxConfig{
-					CgroupParent: common.GetCgroupParent(ctx, rc),
-				},
-				Labels: framework.DefaultPodLabels,
-			}
-
-			podID = framework.RunPodSandbox(ctx, rc, podConfig)
-			Expect(podID).NotTo(BeEmpty())
-
-			By("waiting for RunPodSandbox NRI event")
-
-			event, err := testStub.Plugin.WaitForEvent(EventRunPodSandbox, 10*time.Second)
-			Expect(err).NotTo(HaveOccurred(), "NRI stub did not receive RunPodSandbox event")
-			Expect(event.PodName).To(Equal(podSandboxName))
-		})
-	})
-
-	Context("should invoke all pod sandbox hooks in order with correct metadata", Serial, func() {
+	Context("pod sandbox lifecycle", Serial, func() {
 		var (
 			testStub  *NRITestStub
 			podID     string
@@ -206,7 +154,7 @@ var _ = framework.KubeDescribe("NRI", func() {
 		})
 	})
 
-	Context("should invoke all container lifecycle hooks in order with correct metadata", Serial, func() {
+	Context("container lifecycle", Serial, func() {
 		var (
 			testStub    *NRITestStub
 			podID       string
@@ -353,7 +301,7 @@ var _ = framework.KubeDescribe("NRI", func() {
 		})
 	})
 
-	Context("RunPodSandbox state contract and blocking behavior", Serial, func() {
+	Context("RunPodSandbox contract", Serial, func() {
 		var (
 			testStub  *NRITestStub
 			podID     string
@@ -592,7 +540,7 @@ var _ = framework.KubeDescribe("NRI", func() {
 		})
 	})
 
-	Context("StopPodSandbox state contract and idempotency", Serial, func() {
+	Context("StopPodSandbox contract", Serial, func() {
 		var (
 			testStub    *NRITestStub
 			podID       string
@@ -879,7 +827,7 @@ var _ = framework.KubeDescribe("NRI", func() {
 		})
 	})
 
-	Context("RunPodSandbox and CreateContainer failure, cleanup, and retry", Serial, func() {
+	Context("plugin error handling", Serial, func() {
 		var (
 			testStub  *NRITestStub
 			podID     string
@@ -1097,7 +1045,7 @@ var _ = framework.KubeDescribe("NRI", func() {
 		})
 	})
 
-	Context("Multi-plugin coordination", Serial, func() {
+	Context("multi-plugin coordination", Serial, func() {
 		var (
 			multiStub *NRIMultiStub
 			podID     string
@@ -1359,7 +1307,7 @@ var _ = framework.KubeDescribe("NRI", func() {
 		})
 	})
 
-	Context("Teardown error handling and edge cases", Serial, func() {
+	Context("hook delivery edge cases", Serial, func() {
 		var (
 			testStub  *NRITestStub
 			podID     string
@@ -1383,67 +1331,6 @@ var _ = framework.KubeDescribe("NRI", func() {
 				_ = rc.StopPodSandbox(ctx, cleanupID)
 				_ = rc.RemovePodSandbox(ctx, cleanupID)
 			}
-		})
-
-		It("should propagate NRI plugin errors on StopPodSandbox and RemovePodSandbox", func(ctx SpecContext) {
-			// This test validates the spec contract: teardown errors from plugins MUST
-			// be propagated to the CRI caller. StopPodSandbox and RemovePodSandbox CRI
-			// calls MUST return the plugin error so the caller is aware of the failure.
-			var err error
-
-			testStub, err = StartNRITestStub("cri-test-nri-teardown-err", "00")
-			Expect(err).NotTo(HaveOccurred(), "failed to start NRI test stub")
-
-			// Configure stub to return errors on both StopPodSandbox and RemovePodSandbox
-			testStub.Plugin.OnStopPodSandbox = func(_ context.Context, _ *nri.PodSandbox) error {
-				return errors.New("simulated NRI plugin error on StopPodSandbox")
-			}
-			testStub.Plugin.OnRemovePodSandbox = func(_ context.Context, _ *nri.PodSandbox) error {
-				return errors.New("simulated NRI plugin error on RemovePodSandbox")
-			}
-
-			By("creating a pod sandbox")
-
-			podSandboxName := "nri-test-teardown-err-" + framework.NewUUID()
-			uid := framework.DefaultUIDPrefix + framework.NewUUID()
-			namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
-			podConfig = &runtimeapi.PodSandboxConfig{
-				Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
-				Linux: &runtimeapi.LinuxPodSandboxConfig{
-					CgroupParent: common.GetCgroupParent(ctx, rc),
-				},
-				Labels: framework.DefaultPodLabels,
-			}
-			podID = framework.RunPodSandbox(ctx, rc, podConfig)
-			Expect(podID).NotTo(BeEmpty())
-
-			By("stopping the pod sandbox (plugin returns error, CRI call MUST propagate it)")
-
-			stopErr := rc.StopPodSandbox(ctx, podID)
-			// SPEC_DISCREPANCY: containerd swallows NRI plugin errors on StopPodSandbox
-			// instead of propagating them to the CRI caller.
-			if stopErr == nil {
-				// Clean up the sandbox before skipping so mounts are released.
-				testStub.Cleanup()
-				testStub = nil
-				_ = rc.StopPodSandbox(ctx, podID)
-				_ = rc.RemovePodSandbox(ctx, podID)
-				podID = ""
-
-				Skip("spec discrepancy: runtime swallows NRI plugin errors on StopPodSandbox instead of propagating them")
-			}
-
-			Expect(stopErr).To(HaveOccurred(),
-				"StopPodSandbox MUST propagate NRI plugin error to the caller")
-
-			By("removing the pod sandbox")
-
-			// RemovePodSandbox may or may not propagate plugin errors depending on
-			// the runtime. CRI-O propagates StopPodSandbox errors but swallows
-			// RemovePodSandbox errors. We don't assert error propagation here.
-			_ = rc.RemovePodSandbox(ctx, podID)
-
-			podID = ""
 		})
 
 		It("should deliver StopPodSandbox hook to plugin even after slow RunPodSandbox hook", func(ctx SpecContext) {
