@@ -5,6 +5,12 @@ dependencies:
     refPaths:
       - path: README.md
         match: VERSION
+      - path: docs/benchmark.md
+        match: VERSION
+      - path: docs/crictl.md
+        match: VERSION
+      - path: docs/validation.md
+        match: VERSION
 
   - name: go
     version: 1.26.3

@@ -9,7 +9,7 @@ CRI validation testing is GA since v1.11.0. We encourage the CRI developers to r
 The benchmarking tests binary `critest` can be downloaded from [Releasing page](https://github.com/kubernetes-sigs/cri-tools/releases):
 
 ```sh
-VERSION="v1.34.0"
+VERSION="v1.36.0"
 ARCH="amd64"
 wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/critest-$VERSION-linux-$ARCH.tar.gz
 sudo tar zxvf critest-$VERSION-linux-$ARCH.tar.gz -C /usr/local/bin
