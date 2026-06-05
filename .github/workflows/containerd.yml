@@ -32,8 +32,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         # not every command likes the slash in branch name.
         # So will use format command to replace to either `_` or '/'
-        # There is no LTS version of 2.0+ containerd. So main testing covers the latest.
-        version: [main, "release{0}1.7"]
+        version: [main, "release{0}2.3", "release{0}1.7"]
         runtime:
           [
             io.containerd.runtime.v1.linux,
@@ -316,9 +315,9 @@ jobs:
           EOF'
 
           # Enable NRI explicitly to ensure the expected socket path is used.
-          # Containerd 1.7 is EOL soon so only test main branch.
-          # TODO: Remove the condition once 1.7 is removed or extend when specific 2.x branch is added to the test matrix.
-          if [[ "${{ matrix.version }}" == "main" ]]; then
+          # Containerd 1.7 is EOL soon so skip NRI on that branch only.
+          # TODO: Remove the condition once 1.7 is removed.
+          if [[ "${{ matrix.version }}" != "release{0}1.7" ]]; then
             sudo bash -c 'cat >> ${BDIR}/config.toml <<EOF
             [plugins."io.containerd.nri.v1.nri"]
               disable = false
@@ -344,8 +343,8 @@ jobs:
 
           # Build critest flags
           CRITEST_FLAGS="--ginkgo.v --runtime-endpoint=unix:///${BDIR}/c.sock --parallel=8"
-          # TODO: Remove the condition once 1.7 is removed or extend when specific 2.x branch is added to the test matrix.
-          if [[ "${{ matrix.version }}" == "main" ]]; then
+          # TODO: Remove the condition once 1.7 is removed.
+          if [[ "${{ matrix.version }}" != "release{0}1.7" ]]; then
             CRITEST_FLAGS="${CRITEST_FLAGS} --nri-socket=/var/run/nri/nri.sock"
           fi
 
