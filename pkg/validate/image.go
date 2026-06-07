@@ -297,12 +297,12 @@ var _ = framework.KubeDescribe("Image Manager", func() {
 func testRemoveImage(ctx context.Context, c internalapi.ImageManagerService, imageName string) {
 	By("Remove image : " + imageName)
 	image, err := c.ImageStatus(ctx, &runtimeapi.ImageSpec{Image: imageName}, false)
-	framework.ExpectNoError(err, "failed to get image status: %v", err)
+	framework.ExpectNoError(err, "failed to get image status")
 
 	if image.GetImage() != nil {
 		By("Remove image by ID : " + image.GetImage().GetId())
 		err = c.RemoveImage(ctx, &runtimeapi.ImageSpec{Image: image.GetImage().GetId()})
-		framework.ExpectNoError(err, "failed to remove image: %v", err)
+		framework.ExpectNoError(err, "failed to remove image")
 	}
 
 	By("Check image list empty")
@@ -351,11 +351,11 @@ func removeImageList(ctx context.Context, c internalapi.ImageManagerService, ima
 func removeImage(ctx context.Context, c internalapi.ImageManagerService, imageName string) {
 	By("Remove image : " + imageName)
 	image, err := c.ImageStatus(ctx, &runtimeapi.ImageSpec{Image: imageName}, false)
-	framework.ExpectNoError(err, "failed to get image status: %v", err)
+	framework.ExpectNoError(err, "failed to get image status")
 
 	if image.GetImage() != nil {
 		By("Remove image by ID : " + image.GetImage().GetId())
 		err = c.RemoveImage(ctx, &runtimeapi.ImageSpec{Image: image.GetImage().GetId()})
-		framework.ExpectNoError(err, "failed to remove image: %v", err)
+		framework.ExpectNoError(err, "failed to remove image")
 	}
 }

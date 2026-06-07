@@ -161,7 +161,7 @@ func testRunDefaultPodSandbox(ctx context.Context, c internalapi.RuntimeService)
 func getPodSandboxStatus(ctx context.Context, c internalapi.RuntimeService, podID string) *runtimeapi.PodSandboxStatus {
 	By("Get PodSandbox status for podID: " + podID)
 	status, err := c.PodSandboxStatus(ctx, podID, false)
-	framework.ExpectNoError(err, "failed to get PodSandbox %q status: %v", podID, err)
+	framework.ExpectNoError(err, "failed to get PodSandbox %q status", podID)
 
 	return status.GetStatus()
 }
@@ -170,7 +170,7 @@ func getPodSandboxStatus(ctx context.Context, c internalapi.RuntimeService, podI
 func stopPodSandbox(ctx context.Context, c internalapi.RuntimeService, podID string) {
 	By("Stop PodSandbox for podID: " + podID)
 	err := c.StopPodSandbox(ctx, podID)
-	framework.ExpectNoError(err, "Failed to stop PodSandbox: %v", err)
+	framework.ExpectNoError(err, "Failed to stop PodSandbox")
 	framework.Logf("Stopped PodSandbox %q\n", podID)
 }
 
@@ -184,7 +184,7 @@ func testStopPodSandbox(ctx context.Context, c internalapi.RuntimeService, podID
 func removePodSandbox(ctx context.Context, c internalapi.RuntimeService, podID string) {
 	By("Remove PodSandbox for podID: " + podID)
 	err := c.RemovePodSandbox(ctx, podID)
-	framework.ExpectNoError(err, "failed to remove PodSandbox: %v", err)
+	framework.ExpectNoError(err, "failed to remove PodSandbox")
 	framework.Logf("Removed PodSandbox %q\n", podID)
 }
 
@@ -210,7 +210,7 @@ func listPodSandbox(ctx context.Context, c internalapi.RuntimeService, filter *r
 	By("List PodSandbox.")
 
 	pods, err := c.ListPodSandbox(ctx, filter)
-	framework.ExpectNoError(err, "failed to list PodSandbox status: %v", err)
+	framework.ExpectNoError(err, "failed to list PodSandbox status")
 	framework.Logf("List PodSandbox succeed")
 
 	return pods
@@ -219,10 +219,10 @@ func listPodSandbox(ctx context.Context, c internalapi.RuntimeService, filter *r
 // createLogTempDir creates the log temp directory for podSandbox.
 func createLogTempDir(podSandboxName string) (hostPath, podLogPath string) {
 	hostPath, err := os.MkdirTemp("", "podLogTest")
-	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
+	framework.ExpectNoError(err, "failed to create TempDir %q", hostPath)
 	podLogPath = filepath.Join(hostPath, podSandboxName)
 	err = os.MkdirAll(podLogPath, 0o777)
-	framework.ExpectNoError(err, "failed to create host path %s: %v", podLogPath, err)
+	framework.ExpectNoError(err, "failed to create host path %s", podLogPath)
 
 	return hostPath, podLogPath
 }

@@ -479,7 +479,7 @@ func statFound(stats []*runtimeapi.ContainerStats, containerID string) bool {
 func getContainerStatus(ctx context.Context, c internalapi.RuntimeService, containerID string) *runtimeapi.ContainerStatus {
 	By("Get container status for containerID: " + containerID)
 	status, err := c.ContainerStatus(ctx, containerID, false)
-	framework.ExpectNoError(err, "failed to get container %q status: %v", containerID, err)
+	framework.ExpectNoError(err, "failed to get container %q status", containerID)
 
 	return status.GetStatus()
 }
@@ -504,7 +504,7 @@ func createShellContainer(ctx context.Context, rc internalapi.RuntimeService, ic
 func startContainer(ctx context.Context, c internalapi.RuntimeService, containerID string) {
 	By("Start container for containerID: " + containerID)
 	err := c.StartContainer(ctx, containerID)
-	framework.ExpectNoError(err, "failed to start container: %v", err)
+	framework.ExpectNoError(err, "failed to start container")
 	framework.Logf("Started container %q\n", containerID)
 }
 
@@ -526,7 +526,7 @@ func stopContainer(ctx context.Context, c internalapi.RuntimeService, containerI
 		defer GinkgoRecover()
 
 		err := c.StopContainer(ctx, containerID, timeout)
-		framework.ExpectNoError(err, "failed to stop container: %v", err)
+		framework.ExpectNoError(err, "failed to stop container")
 
 		stopped <- true
 	}()
@@ -551,7 +551,7 @@ func testStopContainer(ctx context.Context, c internalapi.RuntimeService, contai
 func removeContainer(ctx context.Context, c internalapi.RuntimeService, containerID string) {
 	By("Remove container for containerID: " + containerID)
 	err := c.RemoveContainer(ctx, containerID)
-	framework.ExpectNoError(err, "failed to remove container: %v", err)
+	framework.ExpectNoError(err, "failed to remove container")
 	framework.Logf("Removed container %q\n", containerID)
 }
 
@@ -562,7 +562,7 @@ func listContainerForID(ctx context.Context, c internalapi.RuntimeService, conta
 		Id: containerID,
 	}
 	containers, err := c.ListContainers(ctx, filter)
-	framework.ExpectNoError(err, "failed to list containers %q status: %v", containerID, err)
+	framework.ExpectNoError(err, "failed to list containers %q status", containerID)
 
 	return containers
 }
@@ -590,11 +590,11 @@ func verifyExecSyncOutput(ctx context.Context, c internalapi.RuntimeService, con
 // createHostPath creates the hostPath and flagFile for volume.
 func createHostPath(podID string) (hostPath string) {
 	hostPath, err := os.MkdirTemp("", "test"+podID)
-	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
+	framework.ExpectNoError(err, "failed to create TempDir %q", hostPath)
 
 	flagFile := "testVolume.file"
 	_, err = os.Create(filepath.Join(hostPath, flagFile))
-	framework.ExpectNoError(err, "failed to create volume file %q: %v", flagFile, err)
+	framework.ExpectNoError(err, "failed to create volume file %q", flagFile)
 
 	return hostPath
 }
@@ -672,7 +672,7 @@ func pathExists(path string) bool {
 		return false
 	}
 
-	framework.ExpectNoError(err, "failed to check whether %q Exists: %v", path, err)
+	framework.ExpectNoError(err, "failed to check whether %q Exists", path)
 
 	return false
 }
@@ -687,11 +687,11 @@ func parseCRILog(log string, msg *logMessage) {
 
 	if len(log) < 4 {
 		err := errors.New("invalid CRI log")
-		framework.ExpectNoError(err, "failed to parse CRI log: %v", err)
+		framework.ExpectNoError(err, "failed to parse CRI log")
 	}
 
 	timeStamp, err := time.Parse(time.RFC3339Nano, logMessage[0])
-	framework.ExpectNoError(err, "failed to parse timeStamp: %v", err)
+	framework.ExpectNoError(err, "failed to parse timeStamp")
 
 	stream := logMessage[1]
 
@@ -705,7 +705,7 @@ func parseCRILog(log string, msg *logMessage) {
 func parseLogLine(ctx context.Context, podConfig *runtimeapi.PodSandboxConfig, logPath string) []logMessage {
 	path := filepath.Join(podConfig.GetLogDirectory(), logPath)
 	f, err := os.Open(path)
-	framework.ExpectNoError(err, "failed to open log file: %v", err)
+	framework.ExpectNoError(err, "failed to open log file")
 	framework.Logf("Open log file %s", path)
 
 	defer f.Close()
@@ -725,7 +725,7 @@ func parseLogLine(ctx context.Context, podConfig *runtimeapi.PodSandboxConfig, l
 	}
 
 	if err := scanner.Err(); err != nil {
-		framework.ExpectNoError(err, "failed to read log by row: %v", err)
+		framework.ExpectNoError(err, "failed to read log by row")
 	}
 
 	framework.Logf("Parse container log succeed")
@@ -756,7 +756,7 @@ func verifyLogContents(ctx context.Context, podConfig *runtimeapi.PodSandboxConf
 func listContainerStatsForID(ctx context.Context, c internalapi.RuntimeService, containerID string) *runtimeapi.ContainerStats {
 	By("List container stats for containerID: " + containerID)
 	stats, err := c.ContainerStats(ctx, containerID)
-	framework.ExpectNoError(err, "failed to list container stats for %q status: %v", containerID, err)
+	framework.ExpectNoError(err, "failed to list container stats for %q status", containerID)
 
 	return stats
 }
@@ -766,7 +766,7 @@ func listContainerStats(ctx context.Context, c internalapi.RuntimeService, filte
 	By("List container stats for all containers:")
 
 	stats, err := c.ListContainerStats(ctx, filter)
-	framework.ExpectNoError(err, "failed to list container stats for containers status: %v", err)
+	framework.ExpectNoError(err, "failed to list container stats for containers status")
 
 	return stats
 }

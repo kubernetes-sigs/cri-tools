@@ -73,7 +73,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				By("run PodSandbox")
 
 				podID, err := rc.RunPodSandbox(ctx, config, framework.TestContext.RuntimeHandler)
-				framework.ExpectNoError(err, "failed to create PodSandbox: %v", err)
+				framework.ExpectNoError(err, "failed to create PodSandbox")
 
 				By("create container in PodSandbox")
 
@@ -82,7 +82,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				By("start container in PodSandbox")
 
 				err = rc.StartContainer(ctx, containerID)
-				framework.ExpectNoError(err, "failed to start Container: %v", err)
+				framework.ExpectNoError(err, "failed to start Container")
 
 				By("stop PodSandbox")
 				Expect(rc.StopPodSandbox(ctx, podID)).NotTo(HaveOccurred())

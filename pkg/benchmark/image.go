@@ -150,7 +150,7 @@ var _ = framework.KubeDescribe("Image", func() {
 				lastEndTime = time.Now().UnixNano()
 				durations[1] = lastEndTime - lastStartTime
 
-				framework.ExpectNoError(err, "failed to status Image: %v", err)
+				framework.ExpectNoError(err, "failed to status Image")
 
 				By(fmt.Sprintf("Remove Image %d", idx))
 
@@ -159,7 +159,7 @@ var _ = framework.KubeDescribe("Image", func() {
 				lastEndTime = time.Now().UnixNano()
 				durations[2] = lastEndTime - lastStartTime
 
-				framework.ExpectNoError(err, "failed to remove Image: %v", err)
+				framework.ExpectNoError(err, "failed to remove Image")
 
 				res := LifecycleBenchmarkDatapoint{
 					SampleIndex:           idx,
@@ -238,7 +238,7 @@ var _ = framework.KubeDescribe("Image", func() {
 				endTime := time.Now().UnixNano()
 				durations[0] = endTime - startTime
 
-				framework.ExpectNoError(err, "failed to List images: %v", err)
+				framework.ExpectNoError(err, "failed to List images")
 
 				res := LifecycleBenchmarkDatapoint{
 					SampleIndex:           idx,

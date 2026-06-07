@@ -105,7 +105,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				lastEndTime = time.Now().UnixNano()
 				durations[0] = lastEndTime - lastStartTime
 
-				framework.ExpectNoError(err, "failed to create PodSandbox: %v", err)
+				framework.ExpectNoError(err, "failed to create PodSandbox")
 
 				By(fmt.Sprintf("Get Pod status %d", idx))
 
@@ -114,7 +114,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				lastEndTime = time.Now().UnixNano()
 				durations[1] = lastEndTime - lastStartTime
 
-				framework.ExpectNoError(err, "failed to get PodStatus: %v", err)
+				framework.ExpectNoError(err, "failed to get PodStatus")
 
 				By(fmt.Sprintf("Stop PodSandbox %d", idx))
 
@@ -123,7 +123,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				lastEndTime = time.Now().UnixNano()
 				durations[2] = lastEndTime - lastStartTime
 
-				framework.ExpectNoError(err, "failed to stop PodSandbox: %v", err)
+				framework.ExpectNoError(err, "failed to stop PodSandbox")
 
 				By(fmt.Sprintf("Remove PodSandbox %d", idx))
 
@@ -132,7 +132,7 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				lastEndTime = time.Now().UnixNano()
 				durations[3] = lastEndTime - lastStartTime
 
-				framework.ExpectNoError(err, "failed to remove PodSandbox: %v", err)
+				framework.ExpectNoError(err, "failed to remove PodSandbox")
 
 				res := LifecycleBenchmarkDatapoint{
 					SampleIndex:           idx,

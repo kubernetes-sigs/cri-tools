@@ -181,49 +181,49 @@ var _ = framework.KubeDescribe("Container OOM", func() {
 // createHostPath creates the hostPath for mount propagation test.
 func createHostPathForMountPropagation(podID string, propagationOpt runtimeapi.MountPropagation) (mntSource, propagationSrcDir, propagationMntPoint string, clearHostPath func()) {
 	hostPath, err := os.MkdirTemp("", "test"+podID)
-	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
+	framework.ExpectNoError(err, "failed to create TempDir %q", hostPath)
 
 	mntSource = filepath.Join(hostPath, "mnt")
 	propagationMntPoint = filepath.Join(mntSource, "propagationMnt")
 	err = os.MkdirAll(propagationMntPoint, 0o700)
-	framework.ExpectNoError(err, "failed to create volume dir %q: %v", propagationMntPoint, err)
+	framework.ExpectNoError(err, "failed to create volume dir %q", propagationMntPoint)
 
 	propagationSrcDir = filepath.Join(hostPath, "propagationSrcDir")
 	err = os.MkdirAll(propagationSrcDir, 0o700)
-	framework.ExpectNoError(err, "failed to create volume dir %q: %v", propagationSrcDir, err)
+	framework.ExpectNoError(err, "failed to create volume dir %q", propagationSrcDir)
 
 	_, err = os.Create(filepath.Join(propagationSrcDir, "flagFile"))
-	framework.ExpectNoError(err, "failed to create volume file \"flagFile\": %v", err)
+	framework.ExpectNoError(err, "failed to create volume file \"flagFile\"")
 
 	switch propagationOpt {
 	case runtimeapi.MountPropagation_PROPAGATION_PRIVATE:
 		err := unix.Mount(mntSource, mntSource, "bind", unix.MS_BIND|unix.MS_REC, "")
-		framework.ExpectNoError(err, "failed to mount \"mntSource\": %v", err)
+		framework.ExpectNoError(err, "failed to mount \"mntSource\"")
 		err = unix.Mount("", mntSource, "", unix.MS_PRIVATE|unix.MS_REC, "")
-		framework.ExpectNoError(err, "failed to set \"mntSource\" to \"rprivate\": %v", err)
+		framework.ExpectNoError(err, "failed to set \"mntSource\" to \"rprivate\"")
 	case runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER,
 		runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL:
 		err := unix.Mount(mntSource, mntSource, "bind", unix.MS_BIND|unix.MS_REC, "")
-		framework.ExpectNoError(err, "failed to mount \"mntSource\": %v", err)
+		framework.ExpectNoError(err, "failed to mount \"mntSource\"")
 		err = unix.Mount("", mntSource, "", unix.MS_SHARED|unix.MS_REC, "")
-		framework.ExpectNoError(err, "failed to set \"mntSource\" to \"rshared\": %v", err)
+		framework.ExpectNoError(err, "failed to set \"mntSource\" to \"rshared\"")
 	default:
 		err := unix.Mount(mntSource, mntSource, "bind", unix.MS_BIND|unix.MS_REC, "")
-		framework.ExpectNoError(err, "failed to mount \"mntSource\": %v", err)
+		framework.ExpectNoError(err, "failed to mount \"mntSource\"")
 		err = unix.Mount("", mntSource, "", unix.MS_PRIVATE|unix.MS_REC, "")
-		framework.ExpectNoError(err, "failed to set \"mntSource\" to \"rprivate\": %v", err)
+		framework.ExpectNoError(err, "failed to set \"mntSource\" to \"rprivate\"")
 	}
 
 	clearHostPath = func() {
 		By("clean up the TempDir")
 
 		err := unix.Unmount(propagationMntPoint, unix.MNT_DETACH)
-		framework.ExpectNoError(err, "failed to unmount \"propagationMntPoint\": %v", err)
+		framework.ExpectNoError(err, "failed to unmount \"propagationMntPoint\"")
 		err = unix.Unmount(mntSource, unix.MNT_DETACH)
-		framework.ExpectNoError(err, "failed to unmount \"mntSource\": %v", err)
+		framework.ExpectNoError(err, "failed to unmount \"mntSource\"")
 
-		os.RemoveAll(hostPath)
-		framework.ExpectNoError(err, "failed to remove \"hostPath\": %v", err)
+		err = os.RemoveAll(hostPath)
+		framework.ExpectNoError(err, "failed to remove \"hostPath\"")
 	}
 
 	return mntSource, propagationSrcDir, propagationMntPoint, clearHostPath
@@ -286,7 +286,7 @@ func createMountPropagationContainer(
 // this will be used to check whether mount can be propagated from host to container or not.
 func createPropagationMountPoint(propagationSrcDir, propagationMntPoint string) {
 	err := unix.Mount(propagationSrcDir, propagationMntPoint, "bind", unix.MS_BIND|unix.MS_REC, "")
-	framework.ExpectNoError(err, "failed to mount \"propagationMntPoint\": %v", err)
+	framework.ExpectNoError(err, "failed to mount \"propagationMntPoint\"")
 }
 
 func createOOMKilledContainer(
@@ -466,22 +466,22 @@ func runtimeSupportsRRO(ctx context.Context, rc internalapi.RuntimeService, runt
 // hostPath contains a "tmpfs" directory with tmpfs mounted on it.
 func createHostPathForRROMount(podID string) (hostPath string, clearHostPath func()) {
 	hostPath, err := os.MkdirTemp("", "test"+podID)
-	framework.ExpectNoError(err, "failed to create TempDir %q: %v", hostPath, err)
+	framework.ExpectNoError(err, "failed to create TempDir %q", hostPath)
 
 	tmpfsMntPoint := filepath.Join(hostPath, "tmpfs")
 	err = os.MkdirAll(tmpfsMntPoint, 0o700)
-	framework.ExpectNoError(err, "failed to create tmpfs dir %q: %v", tmpfsMntPoint, err)
+	framework.ExpectNoError(err, "failed to create tmpfs dir %q", tmpfsMntPoint)
 
 	err = unix.Mount("none", tmpfsMntPoint, "tmpfs", 0, "")
-	framework.ExpectNoError(err, "failed to mount tmpfs on dir %q: %v", tmpfsMntPoint, err)
+	framework.ExpectNoError(err, "failed to mount tmpfs on dir %q", tmpfsMntPoint)
 
 	clearHostPath = func() {
 		By("clean up the TempDir")
 
 		err := unix.Unmount(tmpfsMntPoint, unix.MNT_DETACH)
-		framework.ExpectNoError(err, "failed to unmount \"tmpfsMntPoint\": %v", err)
+		framework.ExpectNoError(err, "failed to unmount \"tmpfsMntPoint\"")
 		err = os.RemoveAll(hostPath)
-		framework.ExpectNoError(err, "failed to remove \"hostPath\": %v", err)
+		framework.ExpectNoError(err, "failed to remove \"hostPath\"")
 	}
 
 	return hostPath, clearHostPath

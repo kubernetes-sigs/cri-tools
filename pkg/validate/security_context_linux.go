@@ -1076,7 +1076,7 @@ var _ = framework.KubeDescribe("Security Context", func() {
 				var err error
 
 				statusResp, err = rc.Status(tctx, true)
-				framework.ExpectNoError(err, "failed to get runtime config: %v", err)
+				framework.ExpectNoError(err, "failed to get runtime config")
 
 				_ = statusResp // Avoid unused variable error
 			})
@@ -1677,7 +1677,7 @@ func createContainerWithExpectation(ctx context.Context, rc internalapi.RuntimeS
 		msg := fmt.Sprintf("create should fail with err %v", err)
 		Expect(err).To(HaveOccurred(), msg)
 	} else {
-		framework.ExpectNoError(err, "failed to create container: %v", err)
+		framework.ExpectNoError(err, "failed to create container")
 		framework.Logf("Created container %q\n", containerID)
 	}
 

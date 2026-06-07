@@ -238,7 +238,7 @@ func BuildPodSandboxMetadata(podSandboxName, uid, namespace string, attempt uint
 // RunPodSandbox runs a PodSandbox.
 func RunPodSandbox(ctx context.Context, c internalapi.RuntimeService, config *runtimeapi.PodSandboxConfig) string {
 	podID, err := c.RunPodSandbox(ctx, config, TestContext.RuntimeHandler)
-	ExpectNoError(err, "failed to create PodSandbox: %v", err)
+	ExpectNoError(err, "failed to create PodSandbox")
 
 	return podID
 }
@@ -338,7 +338,7 @@ func CreateContainerWithError(ctx context.Context, rc internalapi.RuntimeService
 // CreateContainer creates a container with the prefix of containerName.
 func CreateContainer(ctx context.Context, rc internalapi.RuntimeService, ic internalapi.ImageManagerService, config *runtimeapi.ContainerConfig, podID string, podConfig *runtimeapi.PodSandboxConfig) string {
 	containerID, err := CreateContainerWithError(ctx, rc, ic, config, podID, podConfig)
-	ExpectNoError(err, "failed to create container: %v", err)
+	ExpectNoError(err, "failed to create container")
 	Logf("Created container %q\n", containerID)
 
 	return containerID
@@ -351,7 +351,7 @@ func ImageStatus(ctx context.Context, c internalapi.ImageManagerService, imageNa
 		Image: imageName,
 	}
 	status, err := c.ImageStatus(ctx, imageSpec, false)
-	ExpectNoError(err, "failed to get image status: %v", err)
+	ExpectNoError(err, "failed to get image status")
 
 	return status.GetImage()
 }
@@ -359,7 +359,7 @@ func ImageStatus(ctx context.Context, c internalapi.ImageManagerService, imageNa
 // ListImage list the image filtered by the image filter.
 func ListImage(ctx context.Context, c internalapi.ImageManagerService, filter *runtimeapi.ImageFilter) []*runtimeapi.Image {
 	images, err := c.ListImages(ctx, filter)
-	ExpectNoError(err, "Failed to get image list: %v", err)
+	ExpectNoError(err, "Failed to get image list")
 
 	return images
 }
@@ -380,7 +380,7 @@ func PrepareImageName(imageName string) string {
 	if TestContext.RegistryPrefix != DefaultRegistryPrefix {
 		r := fmt.Sprintf("%s/%s", TestContext.RegistryPrefix, reference.Path(ref))
 		ref, err = reference.ParseNamed(r)
-		ExpectNoError(err, "failed to parse new image name: %v", err)
+		ExpectNoError(err, "failed to parse new image name")
 	}
 
 	imageName = ref.String()
@@ -403,7 +403,7 @@ func PullPublicImage(ctx context.Context, c internalapi.ImageManagerService, ima
 		Image: imageName,
 	}
 	id, err := c.PullImage(ctx, imageSpec, nil, podConfig)
-	ExpectNoError(err, "failed to pull image: %v", err)
+	ExpectNoError(err, "failed to pull image")
 
 	return id
 }
