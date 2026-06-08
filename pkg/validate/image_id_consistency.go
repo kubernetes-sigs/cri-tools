@@ -89,20 +89,20 @@ var _ = framework.KubeDescribe("Image Identifier Consistency", func() {
 			Command: nil,
 		}
 		containerID, err := rc.CreateContainer(ctx, podID, containerConfig, podConfig)
-		framework.ExpectNoError(err, "failed to create container: %v", err)
+		framework.ExpectNoError(err, "failed to create container")
 
 		defer func() {
 			Expect(rc.RemoveContainer(ctx, containerID)).NotTo(HaveOccurred())
 		}()
 
 		err = rc.StartContainer(ctx, containerID)
-		framework.ExpectNoError(err, "failed to start container: %v", err)
+		framework.ExpectNoError(err, "failed to start container")
 
 		By("Collecting identifiers from all APIs")
 
 		// 1. ContainerStatus
 		statusResp, err := rc.ContainerStatus(ctx, containerID, false)
-		framework.ExpectNoError(err, "failed to get container status: %v", err)
+		framework.ExpectNoError(err, "failed to get container status")
 
 		containerStatus := statusResp.GetStatus()
 		framework.Logf("ContainerStatus.image_id: %q", containerStatus.GetImageId())
@@ -110,7 +110,7 @@ var _ = framework.KubeDescribe("Image Identifier Consistency", func() {
 
 		// 2. ListContainers
 		containers, err := rc.ListContainers(ctx, &runtimeapi.ContainerFilter{Id: containerID})
-		framework.ExpectNoError(err, "failed to list containers: %v", err)
+		framework.ExpectNoError(err, "failed to list containers")
 		Expect(containers).To(HaveLen(1))
 		framework.Logf("Container.image_id: %q", containers[0].GetImageId())
 
@@ -193,19 +193,19 @@ var _ = framework.KubeDescribe("Image Identifier Consistency", func() {
 			Command: nil,
 		}
 		containerID, err := rc.CreateContainer(ctx, podID, containerConfig, podConfig)
-		framework.ExpectNoError(err, "failed to create container: %v", err)
+		framework.ExpectNoError(err, "failed to create container")
 
 		defer func() {
 			Expect(rc.RemoveContainer(ctx, containerID)).NotTo(HaveOccurred())
 		}()
 
 		err = rc.StartContainer(ctx, containerID)
-		framework.ExpectNoError(err, "failed to start container: %v", err)
+		framework.ExpectNoError(err, "failed to start container")
 
 		By("Checking container status")
 
 		statusResp, err := rc.ContainerStatus(ctx, containerID, false)
-		framework.ExpectNoError(err, "failed to get container status: %v", err)
+		framework.ExpectNoError(err, "failed to get container status")
 
 		containerStatus := statusResp.GetStatus()
 		framework.Logf("ContainerStatus.image_id: %q", containerStatus.GetImageId())

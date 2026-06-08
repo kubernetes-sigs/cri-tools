@@ -109,7 +109,7 @@ var _ = framework.KubeDescribe("Container", func() {
 				lastEndTime = time.Now().UnixNano()
 				durations[1] = lastEndTime - lastStartTime
 
-				framework.ExpectNoError(err, "failed to start Container: %v", err)
+				framework.ExpectNoError(err, "failed to start Container")
 
 				By(fmt.Sprintf("ContainerStatus %d", idx))
 
@@ -118,7 +118,7 @@ var _ = framework.KubeDescribe("Container", func() {
 				lastEndTime = time.Now().UnixNano()
 				durations[2] = lastEndTime - lastStartTime
 
-				framework.ExpectNoError(err, "failed to get Container status: %v", err)
+				framework.ExpectNoError(err, "failed to get Container status")
 
 				By(fmt.Sprintf("ContainerStop %d", idx))
 
@@ -127,7 +127,7 @@ var _ = framework.KubeDescribe("Container", func() {
 				lastEndTime = time.Now().UnixNano()
 				durations[3] = lastEndTime - lastStartTime
 
-				framework.ExpectNoError(err, "failed to stop Container: %v", err)
+				framework.ExpectNoError(err, "failed to stop Container")
 
 				By(fmt.Sprintf("ContainerRemove %d", idx))
 
@@ -136,7 +136,7 @@ var _ = framework.KubeDescribe("Container", func() {
 				lastEndTime = time.Now().UnixNano()
 				durations[4] = lastEndTime - lastStartTime
 
-				framework.ExpectNoError(err, "failed to remove Container: %v", err)
+				framework.ExpectNoError(err, "failed to remove Container")
 
 				res := LifecycleBenchmarkDatapoint{
 					SampleIndex:           idx,
