@@ -806,6 +806,13 @@ func ListImages(ctx context.Context, client internalapi.ImageManagerService, nam
 	resp := &pb.ListImagesResponse{Images: res}
 	logrus.Debugf("ListImagesResponse: %v", resp)
 
+	// The CRI runtime may not honor the image name filter, so apply it
+	// client-side to ensure correct results. See
+	// https://github.com/kubernetes-sigs/cri-tools/issues/2008
+	if nameFilter != "" && len(resp.GetImages()) > 0 {
+		resp.Images = filterByName(nameFilter, resp.GetImages())
+	}
+
 	slices.SortFunc(resp.GetImages(), func(a, b *pb.Image) int {
 		if len(a.GetRepoTags()) > 0 && len(b.GetRepoTags()) > 0 {
 			return cmp.Compare(a.GetRepoTags()[0], b.GetRepoTags()[0])
@@ -893,6 +900,58 @@ func filterByBeforeSince(filterValue string, imageList []*pb.Image) []*pb.Image 
 	}
 
 	return filtered
+}
+
+// filterByName filters the image list to only include images matching the given
+// name filter. The filter can be "repo", "repo:tag", or "repo@digest".
+// This provides client-side filtering as a fallback when the CRI runtime does
+// not honor the ListImages filter.
+func filterByName(nameFilter string, imageList []*pb.Image) []*pb.Image {
+	var filtered []*pb.Image
+
+	for _, img := range imageList {
+		for _, repoTag := range img.GetRepoTags() {
+			if matchesNameFilter(repoTag, nameFilter) {
+				filtered = append(filtered, img)
+
+				goto next
+			}
+		}
+
+		for _, repoDigest := range img.GetRepoDigests() {
+			if matchesNameFilter(repoDigest, nameFilter) {
+				filtered = append(filtered, img)
+
+				goto next
+			}
+		}
+	next:
+	}
+
+	return filtered
+}
+
+// matchesNameFilter checks if an image reference matches the name filter.
+// If the filter contains a tag (":") or digest ("@"), it must match exactly.
+// Otherwise, only the repository part is compared.
+func matchesNameFilter(imageRef, nameFilter string) bool {
+	if imageRef == nameFilter {
+		return true
+	}
+
+	// If the filter has no tag/digest, match by repository name only.
+	if !strings.Contains(nameFilter, ":") && !strings.Contains(nameFilter, "@") {
+		repo := imageRef
+		if idx := strings.LastIndex(repo, ":"); idx != -1 {
+			repo = repo[:idx]
+		} else if idx := strings.LastIndex(repo, "@"); idx != -1 {
+			repo = repo[:idx]
+		}
+
+		return repo == nameFilter
+	}
+
+	return false
 }
 
 func filterByReference(filterValue string, imageList []*pb.Image) ([]*pb.Image, error) {
