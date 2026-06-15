@@ -9,8 +9,8 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/invopop/jsonschema v0.14.0
 	github.com/moby/term v0.5.2
-	github.com/onsi/ginkgo/v2 v2.30.0
-	github.com/onsi/gomega v1.41.0
+	github.com/onsi/ginkgo/v2 v2.31.0
+	github.com/onsi/gomega v1.42.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/selinux v1.15.1
 	github.com/sirupsen/logrus v1.9.4
@@ -26,11 +26,11 @@ require (
 	google.golang.org/grpc v1.81.1
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 	k8s.io/client-go v0.36.1
-	k8s.io/cri-api v0.36.1
+	k8s.io/cri-api v0.36.2
 	k8s.io/cri-client v0.36.1
 	k8s.io/kubectl v0.36.1
 	k8s.io/kubelet v0.36.1
-	k8s.io/streaming v0.36.1
+	k8s.io/streaming v0.36.2
 	sigs.k8s.io/yaml v1.6.0
 )
 
