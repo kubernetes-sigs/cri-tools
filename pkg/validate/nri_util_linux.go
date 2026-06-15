@@ -185,20 +185,27 @@ func (p *NRITestPlugin) Reset() {
 	p.events = nil
 }
 
-// LastRunPodSandboxID returns the pod sandbox ID from the most recent RunPodSandbox event,
-// or empty string if none recorded. This is useful for cleanup in AfterEach when the test
-// may have failed before capturing the pod ID from the CRI call.
-func (p *NRITestPlugin) LastRunPodSandboxID() string {
-	p.mu.Lock()
-	defer p.mu.Unlock()
+// WaitForEvent waits until an event of the given type is recorded, or times out.
+func (p *NRITestPlugin) WaitForEvent(eventType NRIEventType, timeout time.Duration) (*NRIEvent, error) {
+	deadline := time.Now().Add(timeout)
 
-	for i := range slices.Backward(p.events) {
-		if p.events[i].Type == EventRunPodSandbox {
-			return p.events[i].PodSandboxID
+	for time.Now().Before(deadline) {
+		p.mu.Lock()
+
+		for i := range p.events {
+			if p.events[i].Type == eventType {
+				event := p.events[i]
+				p.mu.Unlock()
+
+				return &event, nil
+			}
 		}
+
+		p.mu.Unlock()
+		time.Sleep(50 * time.Millisecond)
 	}
 
-	return ""
+	return nil, fmt.Errorf("timed out waiting for NRI event %s after %v", eventType, timeout)
 }
 
 // WaitForEventCount waits until at least count events are recorded, or times out.
@@ -224,6 +231,36 @@ func (p *NRITestPlugin) WaitForEventCount(count int, timeout time.Duration) ([]N
 	defer p.mu.Unlock()
 
 	return nil, fmt.Errorf("timed out waiting for %d NRI events after %v (got %d)", count, timeout, len(p.events))
+}
+
+// HasEventOfType returns true if any recorded event matches the given type.
+func (p *NRITestPlugin) HasEventOfType(eventType NRIEventType) bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	for i := range p.events {
+		if p.events[i].Type == eventType {
+			return true
+		}
+	}
+
+	return false
+}
+
+// LastRunPodSandboxID returns the pod sandbox ID from the most recent RunPodSandbox event,
+// or empty string if none recorded. This is useful for cleanup in AfterEach when the test
+// may have failed before capturing the pod ID from the CRI call.
+func (p *NRITestPlugin) LastRunPodSandboxID() string {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	for i := range slices.Backward(p.events) {
+		if p.events[i].Type == EventRunPodSandbox {
+			return p.events[i].PodSandboxID
+		}
+	}
+
+	return ""
 }
 
 // FilterEventsByPodID returns events matching a specific pod sandbox ID.
@@ -287,6 +324,7 @@ func StartNRITestStub(pluginName, pluginIdx string) (*NRITestStub, error) {
 	plugin := &NRITestPlugin{
 		ready: make(chan struct{}),
 	}
+
 	// Use a custom dialer to capture the underlying network connection.
 	// If Start() gets stuck (e.g., waiting for Configure that never arrives),
 	// we can force-close the connection to free network resources.
@@ -320,12 +358,13 @@ func StartNRITestStub(pluginName, pluginIdx string) (*NRITestStub, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
-	errCh := make(chan error, 1)
+
+	var runErr error
 
 	go func() {
 		defer close(done)
 
-		errCh <- s.Run(ctx)
+		runErr = s.Run(ctx)
 	}()
 
 	// Wait for the stub to complete registration and configuration with the runtime.
@@ -334,7 +373,7 @@ func StartNRITestStub(pluginName, pluginIdx string) (*NRITestStub, error) {
 	case <-done:
 		cancel()
 
-		return nil, fmt.Errorf("NRI stub exited early: %w", <-errCh)
+		return nil, fmt.Errorf("NRI stub exited early: %w", runErr)
 	case <-plugin.ready:
 		// Registration and configuration complete
 	case <-time.After(10 * time.Second):
@@ -343,8 +382,8 @@ func StartNRITestStub(pluginName, pluginIdx string) (*NRITestStub, error) {
 		// internal channel read (cfgErrC) that doesn't observe context cancellation.
 		select {
 		case <-done:
-			// Goroutine finished; safe to read the error.
-			return nil, fmt.Errorf("NRI stub did not become ready within 10s: %w", <-errCh)
+			// Goroutine finished; safe to read runErr.
+			return nil, fmt.Errorf("NRI stub did not become ready within 10s: %w", runErr)
 		case <-time.After(5 * time.Second):
 			// Goroutine still running — likely stuck in Start()'s <-cfgErrC read,
 			// which does not observe context cancellation. Force-close the
@@ -364,10 +403,7 @@ func StartNRITestStub(pluginName, pluginIdx string) (*NRITestStub, error) {
 				case <-done:
 					s.Stop()
 				case <-time.After(30 * time.Second):
-					// Permanently stuck — attempt Stop() anyway to release resources,
-					// then accept the goroutine leak.
-					framework.Logf("NRI stub goroutine still running after 30s; calling Stop() and accepting leak")
-					s.Stop()
+					// Permanently stuck — nothing more we can do.
 				}
 			}()
 
@@ -403,4 +439,59 @@ func (ts *NRITestStub) Stop() {
 func (ts *NRITestStub) Cleanup() {
 	ts.Stop()
 	ts.Plugin.Reset()
+}
+
+// NRIMultiStub manages multiple NRI test stubs for multi-plugin coordination tests.
+type NRIMultiStub struct {
+	Stubs []*NRITestStub
+}
+
+// StartNRIMultiStub creates and starts multiple NRI test stubs with sequential indices.
+// Plugins are registered with the given base name and indices starting from startIdx.
+// Lower index means higher priority (invoked first).
+func StartNRIMultiStub(baseName string, count, startIdx int) (*NRIMultiStub, error) {
+	multi := &NRIMultiStub{}
+
+	for i := range count {
+		idx := fmt.Sprintf("%02d", startIdx+i)
+		name := fmt.Sprintf("%s-%d", baseName, i)
+
+		s, err := StartNRITestStub(name, idx)
+		if err != nil {
+			// Clean up any already-started stubs
+			multi.Cleanup()
+
+			return nil, fmt.Errorf("failed to start stub %d (%s/%s): %w", i, name, idx, err)
+		}
+
+		multi.Stubs = append(multi.Stubs, s)
+	}
+
+	return multi, nil
+}
+
+// Cleanup stops all stubs and resets their events.
+func (m *NRIMultiStub) Cleanup() {
+	for _, s := range m.Stubs {
+		if s != nil {
+			s.Cleanup()
+		}
+	}
+}
+
+// Plugin returns the plugin for the stub at the given index.
+func (m *NRIMultiStub) Plugin(idx int) *NRITestPlugin {
+	return m.Stubs[idx].Plugin
+}
+
+// LastRunPodSandboxID returns the pod sandbox ID from the most recent RunPodSandbox
+// event across all stubs, or empty string if none recorded.
+func (m *NRIMultiStub) LastRunPodSandboxID() string {
+	for _, s := range m.Stubs {
+		if id := s.Plugin.LastRunPodSandboxID(); id != "" {
+			return id
+		}
+	}
+
+	return ""
 }
