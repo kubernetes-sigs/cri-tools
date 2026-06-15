@@ -153,6 +153,10 @@ func run() error {
 			Usage: "Max retries for connecting to an explicitly set endpoint with exponential backoff (0 to disable, negative for infinite)",
 		},
 		&cli.BoolFlag{
+			Name:  "stream",
+			Usage: "Enable streaming API for list operations",
+		},
+		&cli.BoolFlag{
 			Name:  "enable-tracing",
 			Usage: "Enable OpenTelemetry tracing.",
 		},
