@@ -227,7 +227,8 @@ $(ZIZMOR): $(BUILD_BIN_PATH)
 		-o "$$tmp"; \
 	mkdir -p $(ZIZMOR_DIR); \
 	tar -xzf "$$tmp" -C $(ZIZMOR_DIR) zizmor; \
-	chmod +x $(ZIZMOR)
+	chmod +x $(ZIZMOR); \
+	touch $(ZIZMOR)
 
 .PHONY: verify-go-modules
 verify-go-modules: ## Verify vendored golang modules.
