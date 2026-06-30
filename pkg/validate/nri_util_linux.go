@@ -66,8 +66,20 @@ type NRITestPlugin struct {
 	ready     chan struct{}
 	readyOnce sync.Once
 
+	// syncPods/syncContainers capture the pod and container IDs passed to the
+	// most recent Synchronize call, so tests can assert that a late-joining
+	// plugin is reconciled with the runtime's existing state.
+	syncPods       []string
+	syncContainers []string
+
 	// Hook callbacks - if set, called during the respective hook.
 	// Return an error to simulate plugin failure.
+	//
+	// OnSynchronize fires during the Synchronize handshake (before the ready
+	// channel is closed), so it must be installed before the stub connects
+	// (see the configure callback on StartNRITestStub). Block inside it to hold
+	// the Synchronize call open while the test mutates runtime state.
+	OnSynchronize      func(ctx context.Context, pods []*nri.PodSandbox, containers []*nri.Container) error
 	OnRunPodSandbox    func(ctx context.Context, pod *nri.PodSandbox) error
 	OnStopPodSandbox   func(ctx context.Context, pod *nri.PodSandbox) error
 	OnRemovePodSandbox func(ctx context.Context, pod *nri.PodSandbox) error
@@ -78,11 +90,60 @@ type NRITestPlugin struct {
 }
 
 // Synchronize implements stub.SynchronizeInterface.
-// It signals readiness (registration/configuration complete) via the ready channel.
-func (p *NRITestPlugin) Synchronize(_ context.Context, _ []*nri.PodSandbox, _ []*nri.Container) ([]*nri.ContainerUpdate, error) {
+// It captures the existing pods/containers the runtime reconciles the plugin
+// with, then signals readiness (registration/configuration complete) via the
+// ready channel.
+func (p *NRITestPlugin) Synchronize(ctx context.Context, pods []*nri.PodSandbox, containers []*nri.Container) ([]*nri.ContainerUpdate, error) {
+	p.mu.Lock()
+
+	p.syncPods = make([]string, 0, len(pods))
+	for _, pod := range pods {
+		p.syncPods = append(p.syncPods, pod.GetId())
+	}
+
+	p.syncContainers = make([]string, 0, len(containers))
+	for _, container := range containers {
+		p.syncContainers = append(p.syncContainers, container.GetId())
+	}
+
+	p.mu.Unlock()
+
+	// Invoke the optional hook while still inside the Synchronize call. A test
+	// may block here to keep the late-joining plugin in its synchronization
+	// window (the runtime has not yet observed the plugin as ready) while it
+	// creates additional containers, exercising the race where a container
+	// created during Synchronize must not be lost.
+	if p.OnSynchronize != nil {
+		if err := p.OnSynchronize(ctx, pods, containers); err != nil {
+			return nil, err
+		}
+	}
+
 	p.readyOnce.Do(func() { close(p.ready) })
 
 	return nil, nil
+}
+
+// SyncedPods returns the pod sandbox IDs passed to the most recent Synchronize call.
+func (p *NRITestPlugin) SyncedPods() []string {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	result := make([]string, len(p.syncPods))
+	copy(result, p.syncPods)
+
+	return result
+}
+
+// SyncedContainers returns the container IDs passed to the most recent Synchronize call.
+func (p *NRITestPlugin) SyncedContainers() []string {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	result := make([]string, len(p.syncContainers))
+	copy(result, p.syncContainers)
+
+	return result
 }
 
 // RunPodSandbox implements stub.RunPodInterface.
@@ -183,6 +244,8 @@ func (p *NRITestPlugin) Reset() {
 	defer p.mu.Unlock()
 
 	p.events = nil
+	p.syncPods = nil
+	p.syncContainers = nil
 }
 
 // LastRunPodSandboxID returns the pod sandbox ID from the most recent RunPodSandbox event,
@@ -278,7 +341,12 @@ type NRITestStub struct {
 }
 
 // StartNRITestStub creates and starts an NRI test stub connected to the runtime.
-func StartNRITestStub(pluginName, pluginIdx string) (*NRITestStub, error) {
+//
+// Optional configure callbacks run against the plugin before it connects, so
+// tests can install hooks that fire during the registration/Synchronize
+// handshake (e.g. OnSynchronize), which cannot be set after this call returns
+// because the handshake has already completed by then.
+func StartNRITestStub(pluginName, pluginIdx string, configure ...func(*NRITestPlugin)) (*NRITestStub, error) {
 	socketPath := framework.TestContext.NRISocketPath
 	if socketPath == "" {
 		return nil, errors.New("NRI socket path not configured")
@@ -286,6 +354,10 @@ func StartNRITestStub(pluginName, pluginIdx string) (*NRITestStub, error) {
 
 	plugin := &NRITestPlugin{
 		ready: make(chan struct{}),
+	}
+
+	for _, c := range configure {
+		c(plugin)
 	}
 	// Use a custom dialer to capture the underlying network connection.
 	// If Start() gets stuck (e.g., waiting for Configure that never arrives),
