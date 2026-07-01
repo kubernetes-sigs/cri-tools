@@ -73,6 +73,7 @@ func newCrictlConfigFromFlags(ctx *cli.Context) *CrictlConfig {
 
 	cfg.Debug = ctx.Bool("debug")
 	cfg.MaxRetries = ctx.Int("max-retries")
+	cfg.EnableStreaming = ctx.Bool("stream")
 	cfg.DisablePullOnRun = false
 
 	return cfg
@@ -122,6 +123,12 @@ func newCrictlConfigFromFile(ctx *cli.Context, config *common.ServerConfiguratio
 		cfg.MaxRetries = config.MaxRetries
 	}
 
+	if ctx.IsSet("stream") {
+		cfg.EnableStreaming = ctx.Bool("stream")
+	} else {
+		cfg.EnableStreaming = config.EnableStreaming
+	}
+
 	cfg.PullImageOnCreate = config.PullImageOnCreate
 	cfg.DisablePullOnRun = config.DisablePullOnRun
 
@@ -139,6 +146,7 @@ type CrictlConfig struct {
 	PullImageOnCreate    bool
 	DisablePullOnRun     bool
 	MaxRetries           int
+	EnableStreaming      bool
 	TracerProvider       *sdktrace.TracerProvider
 	// RootSpan is the root OpenTelemetry span for the command.
 	RootSpan trace.Span
@@ -195,7 +203,7 @@ func (cfg *CrictlConfig) GetRuntimeService(ctx context.Context, timeout time.Dur
 		for _, endPoint := range defaultRuntimeEndpoints {
 			logrus.Debugf("Connect using endpoint %q with %q timeout", endPoint, t)
 
-			res, err = remote.NewRemoteRuntimeService(ctx, endPoint, t, tp, false)
+			res, err = remote.NewRemoteRuntimeService(ctx, endPoint, t, tp, cfg.EnableStreaming)
 			if err != nil {
 				logrus.Error(err)
 
@@ -211,7 +219,7 @@ func (cfg *CrictlConfig) GetRuntimeService(ctx context.Context, timeout time.Dur
 	}
 
 	return connectWithRetry(ctx, cfg.MaxRetries, func() (internalapi.RuntimeService, error) {
-		return remote.NewRemoteRuntimeService(ctx, cfg.RuntimeEndpoint, t, tp, false)
+		return remote.NewRemoteRuntimeService(ctx, cfg.RuntimeEndpoint, t, tp, cfg.EnableStreaming)
 	})
 }
 
@@ -255,7 +263,7 @@ func (cfg *CrictlConfig) GetImageService(ctx context.Context) (internalapi.Image
 		for _, endPoint := range defaultRuntimeEndpoints {
 			logrus.Debugf("Connect using endpoint %q with %q timeout", endPoint, cfg.Timeout)
 
-			res, err = remote.NewRemoteImageService(ctx, endPoint, cfg.Timeout, tp, false)
+			res, err = remote.NewRemoteImageService(ctx, endPoint, cfg.Timeout, tp, cfg.EnableStreaming)
 			if err != nil {
 				logrus.Error(err)
 
@@ -271,7 +279,7 @@ func (cfg *CrictlConfig) GetImageService(ctx context.Context) (internalapi.Image
 	}
 
 	return connectWithRetry(ctx, cfg.MaxRetries, func() (internalapi.ImageManagerService, error) {
-		return remote.NewRemoteImageService(ctx, cfg.ImageEndpoint, cfg.Timeout, tp, false)
+		return remote.NewRemoteImageService(ctx, cfg.ImageEndpoint, cfg.Timeout, tp, cfg.EnableStreaming)
 	})
 }
 

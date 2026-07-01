@@ -89,6 +89,7 @@ debug: false
 pull-image-on-create: false
 disable-pull-on-run: false
 max-retries: 0
+enable-streaming: false
 `))
 	})
 
@@ -126,6 +127,7 @@ debug: false
 pull-image-on-create: false
 disable-pull-on-run: false
 max-retries: 0
+enable-streaming: false
 `))
 
 		t.CrictlExpectSuccess("--config "+configFile.Name()+" config --get timeout", "30")
