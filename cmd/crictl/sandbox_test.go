@@ -69,7 +69,8 @@ var _ = DescribeTable("getSandboxesRuntimeHandler",
 
 var _ = DescribeTable("getSandboxesList",
 	func(input []*pb.PodSandbox, options *listOptions, indexes []int) {
-		actual := getSandboxesList(input, options)
+		actual, err := getSandboxesList(input, options)
+		Expect(err).NotTo(HaveOccurred())
 
 		expected := make([]*pb.PodSandbox, 0, len(indexes))
 		for _, i := range indexes {

@@ -576,7 +576,7 @@ func ListPodSandboxes(ctx context.Context, client internalapi.RuntimeService, op
 		return nil, fmt.Errorf("call list sandboxes RPC: %w", err)
 	}
 
-	return getSandboxesList(r, opts), nil
+	return getSandboxesList(r, opts)
 }
 
 // OutputPodSandboxes sends a ListPodSandboxRequest to the server, and parses
@@ -724,13 +724,23 @@ func getSandboxesRuntimeHandler(sandbox *pb.PodSandbox) string {
 	return sandbox.GetRuntimeHandler()
 }
 
-func getSandboxesList(sandboxesList []*pb.PodSandbox, opts *listOptions) []*pb.PodSandbox {
+func getSandboxesList(sandboxesList []*pb.PodSandbox, opts *listOptions) ([]*pb.PodSandbox, error) {
+	nameRe, err := compileRegex(opts.nameRegexp)
+	if err != nil {
+		return nil, err
+	}
+
+	nsRe, err := compileRegex(opts.podNamespaceRegexp)
+	if err != nil {
+		return nil, err
+	}
+
 	filtered := []*pb.PodSandbox{}
 
 	for _, p := range sandboxesList {
 		// Filter by pod name/namespace regular expressions.
-		if p.GetMetadata() != nil && matchesRegex(opts.nameRegexp, p.GetMetadata().GetName()) &&
-			matchesRegex(opts.podNamespaceRegexp, p.GetMetadata().GetNamespace()) {
+		if p.GetMetadata() != nil && matchesRegex(nameRe, p.GetMetadata().GetName()) &&
+			matchesRegex(nsRe, p.GetMetadata().GetNamespace()) {
 			filtered = append(filtered, p)
 		}
 	}
@@ -739,5 +749,5 @@ func getSandboxesList(sandboxesList []*pb.PodSandbox, opts *listOptions) []*pb.P
 		return cmp.Compare(b.GetCreatedAt(), a.GetCreatedAt()) // descending
 	})
 
-	return filtered[:truncateCount(len(filtered), opts.latest, opts.last)]
+	return filtered[:truncateCount(len(filtered), opts.latest, opts.last)], nil
 }

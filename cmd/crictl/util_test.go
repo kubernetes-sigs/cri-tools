@@ -72,6 +72,49 @@ func TestGetSortedKeys(t *testing.T) {
 	}
 }
 
+func TestCompileRegex(t *testing.T) {
+	t.Parallel()
+
+	t.Run("empty pattern returns nil", func(t *testing.T) {
+		t.Parallel()
+
+		re, err := compileRegex("")
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		if re != nil {
+			t.Errorf("expected nil regexp for empty pattern, got %v", re)
+		}
+	})
+
+	t.Run("valid pattern compiles", func(t *testing.T) {
+		t.Parallel()
+
+		re, err := compileRegex("iner$")
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		if re == nil {
+			t.Error("expected non-nil regexp")
+		}
+	})
+
+	t.Run("invalid pattern returns error", func(t *testing.T) {
+		t.Parallel()
+
+		re, err := compileRegex("[invalid")
+		if err == nil {
+			t.Error("expected error for invalid regex")
+		}
+
+		if re != nil {
+			t.Errorf("expected nil regexp for invalid pattern, got %v", re)
+		}
+	})
+}
+
 func TestNameFilterByRegex(t *testing.T) {
 	t.Parallel()
 
@@ -116,7 +159,12 @@ func TestNameFilterByRegex(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
 
-			r := matchesRegex(tc.pattern, tc.name)
+			re, err := compileRegex(tc.pattern)
+			if err != nil {
+				t.Fatalf("unexpected compile error: %v", err)
+			}
+
+			r := matchesRegex(re, tc.name)
 			if r != tc.isMatch {
 				t.Errorf("expected matched to be %v; actual result is %v", tc.isMatch, r)
 			}
