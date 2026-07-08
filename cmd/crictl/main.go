@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -213,6 +214,12 @@ func run() error {
 			return fmt.Errorf("get executable path: %w", err)
 		}
 
+		if shouldCreateMissingExplicitConfigFile(context) {
+			if err := common.WriteConfig(nil, context.String("config")); err != nil {
+				return fmt.Errorf("create config file: %w", err)
+			}
+		}
+
 		if config, err = common.GetServerConfigFromFile(context.String("config"), exePath); err != nil {
 			if context.IsSet("config") {
 				return fmt.Errorf("get server config: %w", err)
@@ -315,4 +322,32 @@ func run() error {
 	}
 
 	return err
+}
+
+func shouldCreateMissingExplicitConfigFile(ctx *cli.Context) bool {
+	args := ctx.Args().Slice()
+	if !ctx.IsSet("config") || len(args) == 0 || args[0] != configCommand.Name {
+		return false
+	}
+
+	for _, arg := range args[1:] {
+		switch {
+		case arg == "--get" || strings.HasPrefix(arg, "--get="):
+			return false
+		case arg == "--list" || strings.HasPrefix(arg, "--list="):
+			return false
+		case arg == "--set" || strings.HasPrefix(arg, "--set="):
+			return missingConfigFile(ctx.String("config"))
+		case !strings.HasPrefix(arg, "-"):
+			return missingConfigFile(ctx.String("config"))
+		}
+	}
+
+	return false
+}
+
+func missingConfigFile(path string) bool {
+	_, err := os.Stat(path)
+
+	return errors.Is(err, os.ErrNotExist)
 }

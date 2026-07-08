@@ -60,6 +60,7 @@ PRETTIER_VERSION = 3.8.3
 ZIZMOR_VERSION := v1.25.2
 
 GINKGO := $(BUILD_BIN_PATH)/ginkgo
+GINKGO_FLAGS ?=
 GOLANGCI_LINT_DIR := $(BUILD_BIN_PATH)/golangci-lint-$(GOLANGCI_LINT_VERSION)
 GOLANGCI_LINT := $(GOLANGCI_LINT_DIR)/golangci-lint
 ZEITGEIST := $(BUILD_BIN_PATH)/zeitgeist
@@ -267,7 +268,7 @@ PARALLEL ?= 8
 
 .PHONY: test-e2e
 test-e2e: $(GINKGO) ## Run the e2e test suite.
-	$(GINKGO) \
+	$(GINKGO) $(GINKGO_FLAGS) \
 		-r \
 		--randomize-all \
 		--randomize-suites \
