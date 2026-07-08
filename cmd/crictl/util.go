@@ -557,18 +557,25 @@ func getTruncatedID(id, prefix string) string {
 	return id
 }
 
-func matchesRegex(pattern, target string) bool {
+func compileRegex(pattern string) (*regexp.Regexp, error) {
 	if pattern == "" {
+		return nil, nil
+	}
+
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return nil, fmt.Errorf("invalid regular expression %q: %w", pattern, err)
+	}
+
+	return re, nil
+}
+
+func matchesRegex(re *regexp.Regexp, target string) bool {
+	if re == nil {
 		return true
 	}
 
-	matched, err := regexp.MatchString(pattern, target)
-	if err != nil {
-		// Assume it's not a match if an error occurs.
-		return false
-	}
-
-	return matched
+	return re.MatchString(target)
 }
 
 func matchesImage(ctx context.Context, imageClient internalapi.ImageManagerService, image, containerImage string) (bool, error) {

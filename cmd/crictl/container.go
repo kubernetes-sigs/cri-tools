@@ -1407,6 +1407,16 @@ func getFromLabels(labels map[string]string, label string) string {
 }
 
 func getContainersList(ctx context.Context, imageClient internalapi.ImageManagerService, containersList []*pb.Container, opts *listOptions) ([]*pb.Container, error) {
+	nameRe, err := compileRegex(opts.nameRegexp)
+	if err != nil {
+		return nil, err
+	}
+
+	nsRe, err := compileRegex(opts.podNamespaceRegexp)
+	if err != nil {
+		return nil, err
+	}
+
 	filtered := []*pb.Container{}
 
 	for _, c := range containersList {
@@ -1419,8 +1429,8 @@ func getContainersList(ctx context.Context, imageClient internalapi.ImageManager
 		podNamespace := getPodNamespaceFromLabels(c.GetLabels())
 		// Filter by pod name/namespace regular expressions.
 		if c.GetMetadata() != nil &&
-			matchesRegex(opts.nameRegexp, c.GetMetadata().GetName()) &&
-			matchesRegex(opts.podNamespaceRegexp, podNamespace) {
+			matchesRegex(nameRe, c.GetMetadata().GetName()) &&
+			matchesRegex(nsRe, podNamespace) {
 			filtered = append(filtered, c)
 		}
 	}
