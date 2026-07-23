@@ -305,8 +305,8 @@ go.opentelemetry.io/otel/trace
 go.opentelemetry.io/otel/trace/embedded
 go.opentelemetry.io/otel/trace/internal/telemetry
 go.opentelemetry.io/otel/trace/noop
-# go.opentelemetry.io/proto/otlp v1.10.0
-## explicit; go 1.24.0
+# go.opentelemetry.io/proto/otlp v1.11.0
+## explicit; go 1.25.0
 go.opentelemetry.io/proto/otlp/collector/trace/v1
 go.opentelemetry.io/proto/otlp/common/v1
 go.opentelemetry.io/proto/otlp/resource/v1
@@ -323,7 +323,7 @@ go.yaml.in/yaml/v4
 # golang.org/x/mod v0.37.0
 ## explicit; go 1.25.0
 golang.org/x/mod/semver
-# golang.org/x/net v0.56.0
+# golang.org/x/net v0.57.0
 ## explicit; go 1.25.0
 golang.org/x/net/html
 golang.org/x/net/html/atom
@@ -405,10 +405,10 @@ golang.org/x/tools/internal/stdlib
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
 golang.org/x/tools/internal/versions
-# google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa
+# google.golang.org/genproto/googleapis/api v0.0.0-20260720211330-0afa2a65878a
 ## explicit; go 1.25.0
 google.golang.org/genproto/googleapis/api/httpbody
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20260720211330-0afa2a65878a
 ## explicit; go 1.25.0
 google.golang.org/genproto/googleapis/rpc/errdetails
 google.golang.org/genproto/googleapis/rpc/status
