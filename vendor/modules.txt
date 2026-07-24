@@ -604,7 +604,7 @@ k8s.io/client-go/util/workqueue
 # k8s.io/component-base v0.36.1
 ## explicit; go 1.26.0
 k8s.io/component-base/logs/logreduction
-# k8s.io/cri-api v0.36.2
+# k8s.io/cri-api v0.36.3
 ## explicit; go 1.26.0
 k8s.io/cri-api/pkg/apis
 k8s.io/cri-api/pkg/apis/runtime/v1
@@ -634,7 +634,7 @@ k8s.io/kubectl/pkg/util/term
 # k8s.io/kubelet v0.36.1
 ## explicit; go 1.26.0
 k8s.io/kubelet/pkg/types
-# k8s.io/streaming v0.36.2
+# k8s.io/streaming v0.36.3
 ## explicit; go 1.26.0
 k8s.io/streaming/pkg/httpstream
 k8s.io/streaming/pkg/httpstream/spdy
