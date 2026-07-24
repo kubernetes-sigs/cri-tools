@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -72,14 +73,26 @@ CRICTL OPTIONS:
 	Action: func(c *cli.Context) error {
 		configFile := c.String("config")
 		if _, err := os.Stat(configFile); err != nil {
-			if err := common.WriteConfig(nil, configFile); err != nil {
+			if !errors.Is(err, os.ErrNotExist) {
 				return err
 			}
+
+			if shouldCreateConfigFile(c) {
+				if err := common.WriteConfig(nil, configFile); err != nil {
+					return err
+				}
+			}
 		}
-		// Get config from file.
-		config, err := common.ReadConfig(configFile)
-		if err != nil {
-			return fmt.Errorf("load config file: %w", err)
+
+		config := &common.Config{}
+		if _, err := os.Stat(configFile); err == nil {
+			// Get config from file.
+			config, err = common.ReadConfig(configFile)
+			if err != nil {
+				return fmt.Errorf("load config file: %w", err)
+			}
+		} else if !errors.Is(err, os.ErrNotExist) {
+			return err
 		}
 
 		if c.IsSet("get") {
@@ -155,6 +168,18 @@ CRICTL OPTIONS:
 
 		return common.WriteConfig(config, configFile)
 	},
+}
+
+func shouldCreateConfigFile(c *cli.Context) bool {
+	if c.IsSet("set") {
+		return true
+	}
+
+	if c.IsSet("get") || c.Bool("list") {
+		return false
+	}
+
+	return c.Args().First() != ""
 }
 
 func setValue(key, value string, config *common.Config) error {

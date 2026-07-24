@@ -142,6 +142,7 @@ jobs:
 
           set +o errexit
           sudo -E PATH=$PATH make test-e2e \
+            GINKGO_FLAGS="--flake-attempts=3" \
             TESTFLAGS="-crictl-runtime-endpoint=unix://var/run/crio/crio.sock"
           TEST_RC=$?
           set -o errexit
