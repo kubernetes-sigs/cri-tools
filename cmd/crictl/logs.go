@@ -174,8 +174,7 @@ var logsCommand = &cli.Command{
 				return fmt.Errorf("previous terminated container %s not found", status.GetStatus().GetMetadata().GetName())
 			}
 
-			logPath = fmt.Sprintf("%s%s%s", logPath[:strings.LastIndex(logPath, "/")+1], strconv.FormatUint(uint64(containerAttempt-1), 10),
-				logPath[strings.LastIndex(logPath, "."):])
+			logPath = previousLogPath(logPath, containerAttempt-1)
 		}
 		// build a WithCancel context based on cli.context
 		readLogCtx, cancelFn := context.WithCancel(c.Context)
@@ -233,4 +232,21 @@ func parseTimestamp(value string) (time.Time, error) {
 	}
 
 	return time.Unix(s, ns), nil
+}
+
+// previousLogPath returns the log path of an earlier attempt of the same
+// container, by swapping the attempt number in the file name. The runtime
+// reports the log path, and nothing guarantees it carries an extension, so a
+// name without a dot keeps whatever suffix it has rather than being sliced at
+// a negative index.
+func previousLogPath(logPath string, attempt uint32) string {
+	dir := logPath[:strings.LastIndex(logPath, "/")+1]
+	name := logPath[len(dir):]
+
+	extension := ""
+	if i := strings.LastIndex(name, "."); i >= 0 {
+		extension = name[i:]
+	}
+
+	return dir + strconv.FormatUint(uint64(attempt), 10) + extension
 }
