@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -215,7 +216,12 @@ func run() error {
 
 		if config, err = common.GetServerConfigFromFile(context.String("config"), exePath); err != nil {
 			if context.IsSet("config") {
-				return fmt.Errorf("get server config: %w", err)
+				// `crictl config` can create a missing file; allow that path through.
+				// Other subcommands still require an existing --config path.
+				isConfigCmd := context.Args().Present() && context.Args().First() == "config"
+				if !isConfigCmd || !errors.Is(err, os.ErrNotExist) {
+					return fmt.Errorf("get server config: %w", err)
+				}
 			}
 		}
 
