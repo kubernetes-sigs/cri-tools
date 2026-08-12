@@ -20,7 +20,7 @@
 
 # Go toolchain version, extracted from go.mod by hack/run-e2e-container.sh
 # (mirroring CI's go-version-file approach). The default is a fallback only.
-ARG GO_VERSION=1.26.4
+ARG GO_VERSION=1.26.6
 
 FROM golang:${GO_VERSION} AS containerd-builder
 

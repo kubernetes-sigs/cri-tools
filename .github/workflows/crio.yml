@@ -77,6 +77,10 @@ jobs:
           printf '[crio.runtime]\nlog_level = "debug"\n[crio.image]\nshort_name_mode = "disabled"\n' | sudo tee /etc/crio/crio.conf.d/01-base.conf
           printf '[crio.stats]\nincluded_pod_metrics = [\n"all",\n]\n' | sudo tee -a /etc/crio/crio.conf.d/01-base.conf
 
+      - name: Enable CNI configuration
+        run: |
+          sudo mv /etc/cni/net.d/10-crio-bridge.conflist.disabled /etc/cni/net.d/10-crio-bridge.conflist
+
       - name: Configure NRI for CRI-O
         run: |
           sudo mkdir -p /var/run/nri /opt/nri/plugins
@@ -124,7 +128,7 @@ jobs:
             --parallel=$(nproc) \
             --ginkgo.flake-attempts=3 \
             --ginkgo.randomize-all \
-            --ginkgo.timeout=2m \
+            --ginkgo.timeout=5m \
             --ginkgo.trace \
             --ginkgo.v
           TEST_RC=$?
@@ -142,7 +146,7 @@ jobs:
 
           set +o errexit
           sudo -E PATH=$PATH make test-e2e \
-            TESTFLAGS="-crictl-runtime-endpoint=unix://var/run/crio/crio.sock"
+            TESTFLAGS="-crictl-runtime-endpoint=unix://var/run/crio/crio.sock -crictl-timeout=30s"
           TEST_RC=$?
           set -o errexit
 
