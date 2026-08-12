@@ -236,14 +236,8 @@ func loadContainerConfig(path string) (*pb.ContainerConfig, error) {
 }
 
 // stripKeyValueContentEncoding removes the base64 content encoding from the
-// reflected pb.KeyValue schema.
-//
-// pb.KeyValue stores the value as []byte, which reflection renders as a base64
-// encoded string. The CRI API implements custom JSON marshaling for
-// pb.KeyValue to keep encoding the value as a plain string, which is what the
-// config parsers in this package accept as well. Advertising base64 in the
-// schema would point users and code generators to an encoding crictl does not
-// understand.
+// reflected pb.KeyValue schema so it matches the custom JSON marshaling that
+// keeps values as plain strings.
 func stripKeyValueContentEncoding(schema *jsonschema.Schema) {
 	definition, ok := schema.Definitions[reflect.TypeFor[pb.KeyValue]().Name()]
 	if !ok || definition.Properties == nil {
