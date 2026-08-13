@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"io"
@@ -27,6 +28,7 @@ import (
 
 	. "github.com/onsi/gomega"
 	"github.com/urfave/cli/v2"
+	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 func TestGetSortedKeys(t *testing.T) {
@@ -401,6 +403,55 @@ func TestLoadContainerConfigNotFound(t *testing.T) {
 
 	if !strings.Contains(err.Error(), filename) {
 		t.Errorf("expected error message to contain %q, got %q", filename, err.Error())
+	}
+}
+
+//nolint:paralleltest // replaces os.Stdout
+func TestPrintJSONSchemaEnvValueIsPlainString(t *testing.T) {
+	tmpfile, err := os.CreateTemp(t.TempDir(), "jsonschema-*.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer tmpfile.Close()
+
+	old := os.Stdout
+	os.Stdout = tmpfile
+
+	defer func() { os.Stdout = old }()
+
+	if err := printJSONSchema(&pb.ContainerConfig{}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	out, err := os.ReadFile(tmpfile.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var schema struct {
+		Defs map[string]struct {
+			Properties map[string]struct {
+				Type            string `json:"type"`
+				ContentEncoding string `json:"contentEncoding"`
+			} `json:"properties"`
+		} `json:"$defs"`
+	}
+
+	if err := json.Unmarshal(out, &schema); err != nil {
+		t.Fatalf("unmarshal JSON schema: %v", err)
+	}
+
+	value := schema.Defs["KeyValue"].Properties["value"]
+
+	if value.Type != "string" {
+		t.Errorf("expected KeyValue value type %q, got %q", "string", value.Type)
+	}
+
+	// The CRI API encodes KeyValue values as plain strings, which is also what
+	// loadContainerConfig accepts. The schema must not advertise base64.
+	if value.ContentEncoding != "" {
+		t.Errorf("expected empty content encoding for KeyValue value, got %q", value.ContentEncoding)
 	}
 }
 

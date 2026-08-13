@@ -235,8 +235,23 @@ func loadContainerConfig(path string) (*pb.ContainerConfig, error) {
 	return &config, nil
 }
 
+// stripKeyValueContentEncoding removes the base64 content encoding from the
+// reflected pb.KeyValue schema so it matches the custom JSON marshaling that
+// keeps values as plain strings.
+func stripKeyValueContentEncoding(schema *jsonschema.Schema) {
+	definition, ok := schema.Definitions[reflect.TypeFor[pb.KeyValue]().Name()]
+	if !ok || definition.Properties == nil {
+		return
+	}
+
+	if value, ok := definition.Properties.Get("value"); ok {
+		value.ContentEncoding = ""
+	}
+}
+
 func printJSONSchema(value any) error {
 	schema := jsonschema.Reflect(value)
+	stripKeyValueContentEncoding(schema)
 
 	data, err := json.MarshalIndent(schema, "", "  ")
 	if err != nil {
