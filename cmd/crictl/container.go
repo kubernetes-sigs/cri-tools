@@ -272,7 +272,7 @@ var updateContainerCommand = &cli.Command{
 			Name:  "cpuset-mems",
 			Usage: "Memory node(s) to use",
 		},
-		&cli.StringFlag{
+		&cli.Int64Flag{
 			Name:  "oom-score-adj",
 			Usage: "OOM Killer score to use",
 		},
@@ -889,7 +889,7 @@ func CreateContainer(
 		// Add possible OCI volume mounts
 		for _, m := range config.GetMounts() {
 			if m.GetImage() != nil && m.GetImage().GetImage() != "" {
-				logrus.Infof("Pulling image %s to be mounted to container path: %s", image, m.GetContainerPath())
+				logrus.Infof("Pulling image %s to be mounted to container path: %s", m.GetImage().GetImage(), m.GetContainerPath())
 				images = append(images, m.GetImage().GetImage())
 			}
 		}
@@ -1039,7 +1039,7 @@ func CheckpointContainer(
 	}
 	logrus.Debugf("CheckpointContainerRequest: %v", request)
 
-	_, err := InterruptableRPC(ctx, func(ctx context.Context) (*pb.ImageFsInfoResponse, error) {
+	_, err := InterruptableRPC(ctx, func(ctx context.Context) (any, error) {
 		return nil, rClient.CheckpointContainer(ctx, request)
 	})
 	if err != nil {
@@ -1105,8 +1105,7 @@ func marshalContainerStatus(cs *pb.ContainerStatus) (string, error) {
 	jsonMap["startedAt"] = startedAt.Format(time.RFC3339Nano)
 	jsonMap["finishedAt"] = finishedAt.Format(time.RFC3339Nano)
 
-	//nolint:govet // copying the lock is not harmful in this place
-	return marshalMapInOrder(jsonMap, *cs)
+	return marshalMapInOrder(jsonMap, cs)
 }
 
 // containerStatus sends a ContainerStatusRequest to the server, and parses

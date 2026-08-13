@@ -174,8 +174,14 @@ var logsCommand = &cli.Command{
 				return fmt.Errorf("previous terminated container %s not found", status.GetStatus().GetMetadata().GetName())
 			}
 
-			logPath = fmt.Sprintf("%s%s%s", logPath[:strings.LastIndex(logPath, "/")+1], strconv.FormatUint(uint64(containerAttempt-1), 10),
-				logPath[strings.LastIndex(logPath, "."):])
+			dotIdx := strings.LastIndex(logPath, ".")
+
+			ext := ""
+			if dotIdx != -1 {
+				ext = logPath[dotIdx:]
+			}
+
+			logPath = fmt.Sprintf("%s%s%s", logPath[:strings.LastIndex(logPath, "/")+1], strconv.FormatUint(uint64(containerAttempt-1), 10), ext)
 		}
 		// build a WithCancel context based on cli.context
 		readLogCtx, cancelFn := context.WithCancel(c.Context)

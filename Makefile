@@ -22,14 +22,8 @@ ifeq ($(GOOS),windows)
 	BIN_EXT := .exe
 endif
 
-# test for go module support
-ifeq ($(shell go help mod >/dev/null 2>&1 && echo true), true)
-export GO_BUILD=GO111MODULE=on GOARCH=$(GOARCH) GOOS=$(GOOS) $(GO) build -mod=vendor
-export GO_TEST=GO111MODULE=on GOARCH=$(GOARCH) GOOS=$(GOOS) $(GO) test -mod=vendor
-else
-export GO_BUILD=GOARCH=$(GOARCH) GOOS=$(GOOS) $(GO) build
-export GO_TEST=GOARCH=$(GOARCH) GOOS=$(GOOS) $(GO) test
-endif
+export GO_BUILD=GOARCH=$(GOARCH) GOOS=$(GOOS) $(GO) build -mod=vendor
+export GO_TEST=GOARCH=$(GOARCH) GOOS=$(GOOS) $(GO) test -mod=vendor
 
 PROJECT := sigs.k8s.io/cri-tools
 BINDIR ?= /usr/local/bin
@@ -77,7 +71,7 @@ COLOR:=\\033[36m
 NOCOLOR:=\\033[0m
 WIDTH:=30
 
-.PHONY: helpIn
+.PHONY: help
 help: ## Display this help.
 	@awk \
 		-v "col=${COLOR}" -v "nocol=${NOCOLOR}" \
@@ -359,7 +353,7 @@ $(GOLANGCI_LINT):
 
 .PHONY: vendor
 vendor: ## Update vendored golang modules.
-	export GO111MODULE=on GOSUMDB= && \
+	export GOSUMDB= && \
 		$(GO) mod tidy && \
 		$(GO) mod vendor && \
 		$(GO) mod verify

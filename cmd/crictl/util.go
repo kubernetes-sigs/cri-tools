@@ -512,7 +512,7 @@ func marshalMapInOrder(m map[string]any, t any) (string, error) {
 	var sb strings.Builder
 	sb.WriteString("{")
 
-	v := reflect.ValueOf(t)
+	v := reflect.Indirect(reflect.ValueOf(t))
 	numFields := v.Type().NumField()
 	fieldCount := 0
 

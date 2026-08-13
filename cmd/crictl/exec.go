@@ -301,8 +301,8 @@ func tlsConfigFromFlags(ctx *cli.Context) (*rest.TLSClientConfig, error) {
 
 	if cfg.CertFile == "" || cfg.KeyFile == "" {
 		return nil, fmt.Errorf(
-			"all two flags --%s and --%s are required for TLS streaming, only --%s is optional",
-			flagTLSCA, flagTLSCert, flagTLSKey,
+			"both flags --%s and --%s are required for TLS streaming, only --%s is optional",
+			flagTLSCert, flagTLSKey, flagTLSCA,
 		)
 	}
 
