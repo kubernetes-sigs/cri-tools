@@ -53,7 +53,8 @@ CRICTL OPTIONS:
 	 debug:	Enable debug output (default: false)
 	 pull-image-on-create:	Enable pulling image on create requests (default: false)
 	 disable-pull-on-run:	Disable pulling image on run requests (default: false)
-	 max-retries:	Max retries for connecting to an explicitly set endpoint (default: 3, 0 to disable, negative for infinite)`,
+	 max-retries:	Max retries for connecting to an explicitly set endpoint (default: 3, 0 to disable, negative for infinite)
+	 enable-streaming:	Enable streaming API for list operations (default: false)`,
 	UseShortOptionHandling: true,
 	Flags: []cli.Flag{
 		&cli.StringFlag{
@@ -99,6 +100,8 @@ CRICTL OPTIONS:
 				fmt.Println(config.DisablePullOnRun)
 			case common.MaxRetries:
 				fmt.Println(config.MaxRetries)
+			case common.EnableStreaming:
+				fmt.Println(config.EnableStreaming)
 			default:
 				return fmt.Errorf("no configuration option named %s", get)
 			}
@@ -134,6 +137,7 @@ CRICTL OPTIONS:
 			display.AddRow([]string{common.PullImageOnCreate, strconv.FormatBool(config.PullImageOnCreate)})
 			display.AddRow([]string{common.DisablePullOnRun, strconv.FormatBool(config.DisablePullOnRun)})
 			display.AddRow([]string{common.MaxRetries, strconv.Itoa(config.MaxRetries)})
+			display.AddRow([]string{common.EnableStreaming, strconv.FormatBool(config.EnableStreaming)})
 			display.ClearScreen()
 			display.Flush()
 
@@ -198,6 +202,13 @@ func setValue(key, value string, config *common.Config) error {
 		}
 
 		config.MaxRetries = n
+	case common.EnableStreaming:
+		es, err := strconv.ParseBool(value)
+		if err != nil {
+			return fmt.Errorf("parse enable-streaming value '%s': %w", value, err)
+		}
+
+		config.EnableStreaming = es
 	default:
 		return fmt.Errorf("no configuration option named %s", key)
 	}
