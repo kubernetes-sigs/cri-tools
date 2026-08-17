@@ -150,6 +150,61 @@ var _ = DescribeTable("normalizeRepoDigest",
 	),
 )
 
+func assertFilterByName(input []*pb.Image, nameFilter string, expectedIDs []string) {
+	actual := filterByName(nameFilter, input)
+	ids := make([]string, 0, len(actual))
+
+	for _, img := range actual {
+		ids = append(ids, img.GetId())
+	}
+
+	Expect(expectedIDs).To(Equal(ids))
+}
+
+var _ = DescribeTable("filterByName", assertFilterByName,
+	Entry("filters by exact repo:tag",
+		[]*pb.Image{
+			fakeImage("1", []string{"docker.io/library/busybox@sha256:1"}, []string{"docker.io/library/busybox:latest"}),
+			fakeImage("2", []string{"docker.io/library/nginx@sha256:2"}, []string{"docker.io/library/nginx:latest"}),
+		},
+		"docker.io/library/busybox:latest",
+		[]string{"1"},
+	),
+	Entry("filters by repo name only (no tag)",
+		[]*pb.Image{
+			fakeImage("1", []string{"docker.io/library/busybox@sha256:1"}, []string{"docker.io/library/busybox:latest"}),
+			fakeImage("2", []string{"docker.io/library/nginx@sha256:2"}, []string{"docker.io/library/nginx:1.0"}),
+			fakeImage("3", []string{"docker.io/library/busybox@sha256:3"}, []string{"docker.io/library/busybox:1.36"}),
+		},
+		"docker.io/library/busybox",
+		[]string{"1", "3"},
+	),
+	Entry("returns empty when no match",
+		[]*pb.Image{
+			fakeImage("1", []string{"docker.io/library/busybox@sha256:1"}, []string{"docker.io/library/busybox:latest"}),
+			fakeImage("2", []string{"docker.io/library/nginx@sha256:2"}, []string{"docker.io/library/nginx:latest"}),
+		},
+		"docker.io/library/alpine:latest",
+		[]string{},
+	),
+	Entry("matches by repo digest",
+		[]*pb.Image{
+			fakeImage("1", []string{"docker.io/library/busybox@sha256:abc123"}, []string{"docker.io/library/busybox:latest"}),
+			fakeImage("2", []string{"docker.io/library/nginx@sha256:def456"}, []string{"docker.io/library/nginx:latest"}),
+		},
+		"docker.io/library/busybox@sha256:abc123",
+		[]string{"1"},
+	),
+	Entry("filters by repo:tag with non-matching tag",
+		[]*pb.Image{
+			fakeImage("1", []string{"docker.io/kindest/kindnetd@sha256:1"}, []string{"docker.io/kindest/kindnetd:v20250214"}),
+			fakeImage("2", []string{"docker.io/kindest/local-path-helper@sha256:2"}, []string{"docker.io/kindest/local-path-helper:v20241212"}),
+		},
+		"docker.io/kindest/kindnetd:v20250214",
+		[]string{"1"},
+	),
+)
+
 var _ = DescribeTable("filterImagesListByDangling", assert,
 	Entry("returns filtered images with dangling --filter=dangling=true",
 		[]*pb.Image{
