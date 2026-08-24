@@ -34,11 +34,13 @@ import (
 var (
 	crictlBinaryPath      string
 	crictlRuntimeEndpoint string
+	crictlTimeout         string
 )
 
 func init() {
 	flag.StringVar(&crictlBinaryPath, "crictl-binary-path", "", "`crictl` binary path to be used")
 	flag.StringVar(&crictlRuntimeEndpoint, "crictl-runtime-endpoint", "", "`crictl --runtime-endpoint` to be used")
+	flag.StringVar(&crictlTimeout, "crictl-timeout", "", "`crictl --timeout` to be used (e.g. 30s)")
 }
 
 // TestFramework is used to support commonly used test features.
@@ -106,6 +108,14 @@ func crictlRuntimeEndpointFlag() string {
 	return ""
 }
 
+func crictlTimeoutFlag() string {
+	if crictlTimeout != "" {
+		return " --timeout=" + crictlTimeout
+	}
+
+	return ""
+}
+
 // Convenience method for command creation in the current working directory.
 func lcmd(format string, args ...any) *Session {
 	return cmd("", format, args...)
@@ -113,12 +123,12 @@ func lcmd(format string, args ...any) *Session {
 
 // Crictl runs crictl on the specified endpoint and returns the resulting session.
 func (t *TestFramework) Crictl(args string) *Session {
-	return lcmd("%s%s %s", crictlBinaryPathFlag(), crictlRuntimeEndpointFlag(), args).Wait(time.Minute)
+	return lcmd("%s%s%s %s", crictlBinaryPathFlag(), crictlRuntimeEndpointFlag(), crictlTimeoutFlag(), args).Wait(time.Minute)
 }
 
 // CrictlNoWait runs crictl on the specified endpoint and returns the resulting session without wait.
 func (t *TestFramework) CrictlNoWait(args string) *Session {
-	return lcmd("%s%s %s", crictlBinaryPathFlag(), crictlRuntimeEndpointFlag(), args)
+	return lcmd("%s%s%s %s", crictlBinaryPathFlag(), crictlRuntimeEndpointFlag(), crictlTimeoutFlag(), args)
 }
 
 // CrictlWithTracing runs crictl with tracing enabled and returns the resulting session.

@@ -397,6 +397,7 @@ jobs:
         shell: bash
         run: |
           echo "Cleanup temp directory $CONTD_CRI_DIR created for cri tests"
+          sudo umount -Rl "$CONTD_CRI_DIR" 2>/dev/null || true
           sudo rm -rf "$CONTD_CRI_DIR"
 
       - name: Cleanup temp directory on Windows

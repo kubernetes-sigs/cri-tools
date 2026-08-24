@@ -218,6 +218,8 @@ var _ = framework.KubeDescribe("Image Volume [Feature:ImageVolume]", func() {
 		skipIfImageVolumeUnsupported(err, false)
 
 		defer func() {
+			By("stop Container")
+			Expect(rc.StopContainer(ctx, containerID, defaultStopContainerTimeout)).NotTo(HaveOccurred())
 			By("delete Container")
 			Expect(rc.RemoveContainer(ctx, containerID)).NotTo(HaveOccurred())
 		}()
@@ -325,7 +327,7 @@ var _ = framework.KubeDescribe("Image Volume [Feature:ImageVolume]", func() {
 
 	Context("subPath", func() {
 		It("should succeed when using a valid subPath", func(ctx SpecContext) {
-			imageName := testImageWithTag
+			imageName := testImagePreDefinedGroup
 
 			By("Pulling image: " + imageName)
 			imageRef := framework.PullPublicImage(ctx, ic, imageName, testImagePodSandbox)
@@ -334,11 +336,14 @@ var _ = framework.KubeDescribe("Image Volume [Feature:ImageVolume]", func() {
 
 			podID, podConfig := framework.CreatePodSandboxForContainer(ctx, rc)
 
+			// Register pod sandbox cleanup before CreateContainer so that
+			// the sandbox is removed even when the test is skipped (e.g.
+			// containerd 1.7 does not support image volumes).
 			defer func() {
 				By("stop PodSandbox")
-				Expect(rc.StopPodSandbox(ctx, podID)).NotTo(HaveOccurred())
+				rc.StopPodSandbox(ctx, podID) //nolint:errcheck // best-effort cleanup
 				By("delete PodSandbox")
-				Expect(rc.RemovePodSandbox(ctx, podID)).NotTo(HaveOccurred())
+				rc.RemovePodSandbox(ctx, podID) //nolint:errcheck // best-effort cleanup
 			}()
 
 			By("Creating container with Image Volume and subPath")
@@ -370,9 +375,11 @@ var _ = framework.KubeDescribe("Image Volume [Feature:ImageVolume]", func() {
 			containerID, err := rc.CreateContainer(ctx, podID, containerConfig, podConfig)
 			skipIfImageVolumeUnsupported(err, false)
 
+			// CRI-O cannot remove containers with read-only image volume
+			// subpath mounts (unlinkat fails on the read-only filesystem).
 			defer func() {
 				By("delete Container")
-				Expect(rc.RemoveContainer(ctx, containerID)).NotTo(HaveOccurred())
+				rc.RemoveContainer(ctx, containerID) //nolint:errcheck // best-effort, CRI-O subpath bug
 			}()
 
 			By("Starting the container")
