@@ -51,6 +51,7 @@ var _ = DescribeTable("ReadConfig",
 		Expect(readConfig.PullImageOnCreate).To(Equal(expectedConfig.PullImageOnCreate))
 		Expect(readConfig.DisablePullOnRun).To(Equal(expectedConfig.DisablePullOnRun))
 		Expect(readConfig.MaxRetries).To(Equal(expectedConfig.MaxRetries))
+		Expect(readConfig.EnableStreaming).To(Equal(expectedConfig.EnableStreaming))
 	},
 
 	Entry("should succeed with valid config", `
@@ -61,6 +62,7 @@ debug: true
 pull-image-on-create: true
 disable-pull-on-run: true
 max-retries: 3
+enable-streaming: true
 `, &common.Config{
 		RuntimeEndpoint:   "foo",
 		ImageEndpoint:     "bar",
@@ -69,6 +71,7 @@ max-retries: 3
 		PullImageOnCreate: true,
 		DisablePullOnRun:  true,
 		MaxRetries:        3,
+		EnableStreaming:   true,
 	}, false),
 
 	Entry("should succeed with comments", `
@@ -130,6 +133,7 @@ timeout: 20
 	Entry("should fail with invalid 'pull-image-on-create' value", `pull-image-on-create: "foo"`, nil, true),
 	Entry("should fail with invalid 'disable-pull-on-run' value", `disable-pull-on-run: "foo"`, nil, true),
 	Entry("should fail with invalid 'max-retries' value", `max-retries: "foo"`, nil, true),
+	Entry("should fail with invalid 'enable-streaming' value", `enable-streaming: "foo"`, nil, true),
 )
 
 var _ = DescribeTable("WriteConfig",
@@ -156,6 +160,7 @@ var _ = DescribeTable("WriteConfig",
 		Expect(readConfig.PullImageOnCreate).To(Equal(config.PullImageOnCreate))
 		Expect(readConfig.DisablePullOnRun).To(Equal(config.DisablePullOnRun))
 		Expect(readConfig.MaxRetries).To(Equal(config.MaxRetries))
+		Expect(readConfig.EnableStreaming).To(Equal(config.EnableStreaming))
 	},
 
 	Entry("should succeed with config", &common.Config{
@@ -166,6 +171,7 @@ var _ = DescribeTable("WriteConfig",
 		PullImageOnCreate: true,
 		DisablePullOnRun:  true,
 		MaxRetries:        5,
+		EnableStreaming:   true,
 	}),
 
 	Entry("should succeed with nil config", nil),

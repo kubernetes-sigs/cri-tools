@@ -42,6 +42,8 @@ type ServerConfiguration struct {
 	DisablePullOnRun bool
 	// MaxRetries is the number of retries for connecting to the server
 	MaxRetries int
+	// EnableStreaming enables streaming API for list operations
+	EnableStreaming bool
 }
 
 // GetServerConfigFromFile returns the CRI server configuration from file.
@@ -79,6 +81,7 @@ func GetServerConfigFromFile(configFileName, currentDir string) (*ServerConfigur
 	serverConfig.PullImageOnCreate = config.PullImageOnCreate
 	serverConfig.DisablePullOnRun = config.DisablePullOnRun
 	serverConfig.MaxRetries = config.MaxRetries
+	serverConfig.EnableStreaming = config.EnableStreaming
 
 	return &serverConfig, nil
 }

@@ -35,6 +35,7 @@ type Config struct {
 	PullImageOnCreate bool
 	DisablePullOnRun  bool
 	MaxRetries        int
+	EnableStreaming   bool
 	yamlData          *yaml.Node // YAML representation of config
 }
 
@@ -59,6 +60,9 @@ const (
 
 	// MaxRetries is the YAML key for the max retries config option.
 	MaxRetries = "max-retries"
+
+	// EnableStreaming is the YAML key for the enable streaming config option.
+	EnableStreaming = "enable-streaming"
 )
 
 // ReadConfig reads from a file with the given name and returns a config or
@@ -161,6 +165,11 @@ func getConfigOptions(yamlData *yaml.Node) (*Config, error) {
 			if err != nil {
 				return nil, fmt.Errorf("parsing config option '%s': %w", name, err)
 			}
+		case EnableStreaming:
+			config.EnableStreaming, err = strconv.ParseBool(value)
+			if err != nil {
+				return nil, fmt.Errorf("parsing config option '%s': %w", name, err)
+			}
 		default:
 			return nil, fmt.Errorf("Config option '%s' is not valid", name)
 		}
@@ -180,6 +189,7 @@ func setConfigOptions(config *Config) {
 	setConfigOption(PullImageOnCreate, strconv.FormatBool(config.PullImageOnCreate), config.yamlData)
 	setConfigOption(DisablePullOnRun, strconv.FormatBool(config.DisablePullOnRun), config.yamlData)
 	setConfigOption(MaxRetries, strconv.Itoa(config.MaxRetries), config.yamlData)
+	setConfigOption(EnableStreaming, strconv.FormatBool(config.EnableStreaming), config.yamlData)
 }
 
 // Set config option on yaml.
@@ -241,6 +251,8 @@ func setConfigOption(configName, configValue string, yamlData *yaml.Node) {
 		case PullImageOnCreate:
 			tagType = tagBool
 		case DisablePullOnRun:
+			tagType = tagBool
+		case EnableStreaming:
 			tagType = tagBool
 		default:
 			tagType = tagStr
