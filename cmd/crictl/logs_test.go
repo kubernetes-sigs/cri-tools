@@ -174,3 +174,52 @@ func TestParseTimestamp(t *testing.T) {
 		})
 	}
 }
+
+func TestPreviousLogPath(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name     string
+		logPath  string
+		attempt  uint32
+		expected string
+	}{
+		{
+			name:     "kubelet style path",
+			logPath:  "/var/log/pods/ns_pod_uid/container/1.log",
+			attempt:  0,
+			expected: "/var/log/pods/ns_pod_uid/container/0.log",
+		},
+		{
+			name:     "no extension",
+			logPath:  "/tmp/logs/1",
+			attempt:  0,
+			expected: "/tmp/logs/0",
+		},
+		{
+			name:     "no directory and no extension",
+			logPath:  "1",
+			attempt:  0,
+			expected: "0",
+		},
+		{
+			name:     "dot in a directory name only",
+			logPath:  "/var/log/my.logs/2",
+			attempt:  1,
+			expected: "/var/log/my.logs/1",
+		},
+		{
+			name:     "double extension keeps the last one",
+			logPath:  "/var/log/pods/ns_pod_uid/container/3.log.txt",
+			attempt:  2,
+			expected: "/var/log/pods/ns_pod_uid/container/2.txt",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			g := NewWithT(t)
+			g.Expect(previousLogPath(tc.logPath, tc.attempt)).To(Equal(tc.expected))
+		})
+	}
+}
