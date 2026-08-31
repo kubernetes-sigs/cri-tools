@@ -450,8 +450,7 @@ func marshalPodSandboxStatus(ps *pb.PodSandboxStatus) (string, error) {
 
 	jsonMap["createdAt"] = time.Unix(0, ps.GetCreatedAt()).Format(time.RFC3339Nano)
 
-	//nolint:govet // copying the lock is not harmful in this place
-	return marshalMapInOrder(jsonMap, *ps)
+	return marshalMapInOrder(jsonMap, ps)
 }
 
 // podSandboxStatus sends a PodSandboxStatusRequest to the server, and parses
@@ -503,7 +502,7 @@ func outputPodSandboxStatusTable(r *pb.PodSandboxStatusResponse, verbose bool) {
 
 	fmt.Printf("Status: %s\n", r.GetStatus().GetState())
 	ctm := time.Unix(0, r.GetStatus().GetCreatedAt())
-	fmt.Printf("Created: %v\n", ctm)
+	fmt.Printf("Created: %v\n", units.HumanDuration(time.Now().UTC().Sub(ctm))+" ago")
 
 	if r.GetStatus().GetNetwork() != nil {
 		fmt.Printf("IP Addresses: %v\n", r.GetStatus().GetNetwork().GetIp())
