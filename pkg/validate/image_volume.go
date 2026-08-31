@@ -336,9 +336,10 @@ var _ = framework.KubeDescribe("Image Volume [Feature:ImageVolume]", func() {
 
 			podID, podConfig := framework.CreatePodSandboxForContainer(ctx, rc)
 
-			// Register pod sandbox cleanup before CreateContainer so that
-			// the sandbox is removed even when the test is skipped (e.g.
-			// containerd 1.7 does not support image volumes).
+			// Use best-effort cleanup because CRI-O cannot remove
+			// containers with read-only image volume subpath mounts.
+			// Placed before CreateContainer so it runs even when the
+			// test is skipped (e.g. containerd 1.7).
 			defer func() {
 				By("stop PodSandbox")
 				rc.StopPodSandbox(ctx, podID) //nolint:errcheck // best-effort cleanup
@@ -378,6 +379,8 @@ var _ = framework.KubeDescribe("Image Volume [Feature:ImageVolume]", func() {
 			// CRI-O cannot remove containers with read-only image volume
 			// subpath mounts (unlinkat fails on the read-only filesystem).
 			defer func() {
+				By("stop Container")
+				rc.StopContainer(ctx, containerID, defaultStopContainerTimeout) //nolint:errcheck // best-effort, CRI-O subpath bug
 				By("delete Container")
 				rc.RemoveContainer(ctx, containerID) //nolint:errcheck // best-effort, CRI-O subpath bug
 			}()
