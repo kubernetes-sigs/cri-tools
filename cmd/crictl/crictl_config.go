@@ -195,7 +195,11 @@ func (cfg *CrictlConfig) GetRuntimeService(ctx context.Context, timeout time.Dur
 		for _, endPoint := range defaultRuntimeEndpoints {
 			logrus.Debugf("Connect using endpoint %q with %q timeout", endPoint, t)
 
-			res, err = remote.NewRemoteRuntimeService(ctx, endPoint, t, tp, false)
+			res, err = remote.NewRemoteRuntimeServiceBuilder().
+				WithEndpoint(endPoint).
+				WithConnectionTimeout(t).
+				WithTracerProvider(tp).
+				Build(ctx)
 			if err != nil {
 				logrus.Error(err)
 
@@ -211,7 +215,11 @@ func (cfg *CrictlConfig) GetRuntimeService(ctx context.Context, timeout time.Dur
 	}
 
 	return connectWithRetry(ctx, cfg.MaxRetries, func() (internalapi.RuntimeService, error) {
-		return remote.NewRemoteRuntimeService(ctx, cfg.RuntimeEndpoint, t, tp, false)
+		return remote.NewRemoteRuntimeServiceBuilder().
+			WithEndpoint(cfg.RuntimeEndpoint).
+			WithConnectionTimeout(t).
+			WithTracerProvider(tp).
+			Build(ctx)
 	})
 }
 
@@ -255,7 +263,11 @@ func (cfg *CrictlConfig) GetImageService(ctx context.Context) (internalapi.Image
 		for _, endPoint := range defaultRuntimeEndpoints {
 			logrus.Debugf("Connect using endpoint %q with %q timeout", endPoint, cfg.Timeout)
 
-			res, err = remote.NewRemoteImageService(ctx, endPoint, cfg.Timeout, tp, false)
+			res, err = remote.NewRemoteImageServiceBuilder().
+				WithEndpoint(endPoint).
+				WithConnectionTimeout(cfg.Timeout).
+				WithTracerProvider(tp).
+				Build(ctx)
 			if err != nil {
 				logrus.Error(err)
 
@@ -271,7 +283,11 @@ func (cfg *CrictlConfig) GetImageService(ctx context.Context) (internalapi.Image
 	}
 
 	return connectWithRetry(ctx, cfg.MaxRetries, func() (internalapi.ImageManagerService, error) {
-		return remote.NewRemoteImageService(ctx, cfg.ImageEndpoint, cfg.Timeout, tp, false)
+		return remote.NewRemoteImageServiceBuilder().
+			WithEndpoint(cfg.ImageEndpoint).
+			WithConnectionTimeout(cfg.Timeout).
+			WithTracerProvider(tp).
+			Build(ctx)
 	})
 }
 
