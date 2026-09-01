@@ -49,7 +49,11 @@ var runtimeAttachCommand = &cli.Command{
 			Name:    transportFlag,
 			Aliases: []string{"r"},
 			Value:   common.TransportSpdy,
-			Usage:   fmt.Sprintf("Transport protocol to use, one of: %s|%s", common.TransportSpdy, common.TransportWebsocket),
+			Usage: fmt.Sprintf(
+				"Transport protocol to use, one of: %s|%s",
+				common.TransportSpdy,
+				common.TransportWebsocket,
+			),
 		},
 		&cli.StringFlag{
 			Name:    flagTLSSNI,

@@ -10,6 +10,7 @@ linters:
     - bidichk
     - bodyclose
     - canonicalheader
+    - clickhouselint
     - containedctx
     - contextcheck
     - copyloopvar
@@ -102,7 +103,7 @@ linters:
     - zerologlint
     # - depguard
     # - err113
-    # - exhaustruct
+    # - exhaustruct_v5
     # - funlen
     # - gochecknoglobals
     # - gochecknoinits
@@ -185,6 +186,10 @@ linters:
       - linters:
           - forbidigo
         path: _test\.go$
+      - linters:
+          - staticcheck
+        text: "SA1019:.*ApparmorProfile"
+        path: pkg/validate/
     paths:
       - third_party$
       - builtin$
@@ -195,6 +200,8 @@ formatters:
     - gofmt
     - gofumpt
     - goimports
+    - golines
+    - swaggo
   settings:
     gci:
       sections:

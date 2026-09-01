@@ -198,7 +198,11 @@ func CleanupPodSandbox(ctx context.Context, rc internalapi.RuntimeService, podID
 }
 
 // CleanupPodSandboxAndLogDir stops and removes a PodSandbox and its log directory.
-func CleanupPodSandboxAndLogDir(ctx context.Context, rc internalapi.RuntimeService, podID, logDir string) {
+func CleanupPodSandboxAndLogDir(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	podID, logDir string,
+) {
 	CleanupPodSandbox(ctx, rc, podID)
 	By("cleanup log directory")
 	ExpectNoError(os.RemoveAll(logDir), "failed to remove log directory")
@@ -226,7 +230,10 @@ func RunDefaultPodSandbox(ctx context.Context, c internalapi.RuntimeService, pre
 }
 
 // BuildPodSandboxMetadata builds PodSandboxMetadata.
-func BuildPodSandboxMetadata(podSandboxName, uid, namespace string, attempt uint32) *runtimeapi.PodSandboxMetadata {
+func BuildPodSandboxMetadata(
+	podSandboxName, uid, namespace string,
+	attempt uint32,
+) *runtimeapi.PodSandboxMetadata {
 	return &runtimeapi.PodSandboxMetadata{
 		Name:      podSandboxName,
 		Uid:       uid,
@@ -236,7 +243,11 @@ func BuildPodSandboxMetadata(podSandboxName, uid, namespace string, attempt uint
 }
 
 // RunPodSandbox runs a PodSandbox.
-func RunPodSandbox(ctx context.Context, c internalapi.RuntimeService, config *runtimeapi.PodSandboxConfig) string {
+func RunPodSandbox(
+	ctx context.Context,
+	c internalapi.RuntimeService,
+	config *runtimeapi.PodSandboxConfig,
+) string {
 	podID, err := c.RunPodSandbox(ctx, config, TestContext.RuntimeHandler)
 	ExpectNoError(err, "failed to create PodSandbox")
 
@@ -244,7 +255,11 @@ func RunPodSandbox(ctx context.Context, c internalapi.RuntimeService, config *ru
 }
 
 // RunPodSandboxError runs a PodSandbox and expects an error.
-func RunPodSandboxError(ctx context.Context, c internalapi.RuntimeService, config *runtimeapi.PodSandboxConfig) string {
+func RunPodSandboxError(
+	ctx context.Context,
+	c internalapi.RuntimeService,
+	config *runtimeapi.PodSandboxConfig,
+) string {
 	podID, err := c.RunPodSandbox(ctx, config, TestContext.RuntimeHandler)
 	Expect(err).To(HaveOccurred())
 
@@ -252,7 +267,10 @@ func RunPodSandboxError(ctx context.Context, c internalapi.RuntimeService, confi
 }
 
 // CreatePodSandboxForContainer creates a PodSandbox for creating containers.
-func CreatePodSandboxForContainer(ctx context.Context, c internalapi.RuntimeService) (string, *runtimeapi.PodSandboxConfig) {
+func CreatePodSandboxForContainer(
+	ctx context.Context,
+	c internalapi.RuntimeService,
+) (string, *runtimeapi.PodSandboxConfig) {
 	podSandboxName := "create-PodSandbox-for-container-" + NewUUID()
 	uid := DefaultUIDPrefix + NewUUID()
 	namespace := DefaultNamespacePrefix + NewUUID()
@@ -278,12 +296,27 @@ func BuildContainerMetadata(containerName string, attempt uint32) *runtimeapi.Co
 }
 
 // CreateDefaultContainer creates a default container with default options.
-func CreateDefaultContainer(ctx context.Context, rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
+func CreateDefaultContainer(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	ic internalapi.ImageManagerService,
+	podID string,
+	podConfig *runtimeapi.PodSandboxConfig,
+	prefix string,
+) string {
 	return CreateDefaultContainerWithLabels(ctx, rc, ic, podID, podConfig, prefix, nil)
 }
 
 // CreateDefaultContainerWithLabels creates a default container with default options.
-func CreateDefaultContainerWithLabels(ctx context.Context, rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string, labels map[string]string) string {
+func CreateDefaultContainerWithLabels(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	ic internalapi.ImageManagerService,
+	podID string,
+	podConfig *runtimeapi.PodSandboxConfig,
+	prefix string,
+	labels map[string]string,
+) string {
 	containerName := prefix + NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: BuildContainerMetadata(containerName, DefaultAttempt),
@@ -297,7 +330,14 @@ func CreateDefaultContainerWithLabels(ctx context.Context, rc internalapi.Runtim
 }
 
 // CreatePauseContainer creates a container with default pause options.
-func CreatePauseContainer(ctx context.Context, rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
+func CreatePauseContainer(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	ic internalapi.ImageManagerService,
+	podID string,
+	podConfig *runtimeapi.PodSandboxConfig,
+	prefix string,
+) string {
 	containerName := prefix + NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: BuildContainerMetadata(containerName, DefaultAttempt),
@@ -310,7 +350,14 @@ func CreatePauseContainer(ctx context.Context, rc internalapi.RuntimeService, ic
 }
 
 // CreateContainerWithError creates a container but leave error check to caller.
-func CreateContainerWithError(ctx context.Context, rc internalapi.RuntimeService, ic internalapi.ImageManagerService, config *runtimeapi.ContainerConfig, podID string, podConfig *runtimeapi.PodSandboxConfig) (string, error) {
+func CreateContainerWithError(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	ic internalapi.ImageManagerService,
+	config *runtimeapi.ContainerConfig,
+	podID string,
+	podConfig *runtimeapi.PodSandboxConfig,
+) (string, error) {
 	// Pull the image if it does not exist.
 	imageName := config.GetImage().GetImage()
 	if !strings.Contains(imageName, ":") {
@@ -336,7 +383,14 @@ func CreateContainerWithError(ctx context.Context, rc internalapi.RuntimeService
 }
 
 // CreateContainer creates a container with the prefix of containerName.
-func CreateContainer(ctx context.Context, rc internalapi.RuntimeService, ic internalapi.ImageManagerService, config *runtimeapi.ContainerConfig, podID string, podConfig *runtimeapi.PodSandboxConfig) string {
+func CreateContainer(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	ic internalapi.ImageManagerService,
+	config *runtimeapi.ContainerConfig,
+	podID string,
+	podConfig *runtimeapi.PodSandboxConfig,
+) string {
 	containerID, err := CreateContainerWithError(ctx, rc, ic, config, podID, podConfig)
 	ExpectNoError(err, "failed to create container")
 	Logf("Created container %q\n", containerID)
@@ -345,7 +399,11 @@ func CreateContainer(ctx context.Context, rc internalapi.RuntimeService, ic inte
 }
 
 // ImageStatus gets the status of the image named imageName.
-func ImageStatus(ctx context.Context, c internalapi.ImageManagerService, imageName string) *runtimeapi.Image {
+func ImageStatus(
+	ctx context.Context,
+	c internalapi.ImageManagerService,
+	imageName string,
+) *runtimeapi.Image {
 	By("Get image status for image: " + imageName)
 	imageSpec := &runtimeapi.ImageSpec{
 		Image: imageName,
@@ -357,7 +415,11 @@ func ImageStatus(ctx context.Context, c internalapi.ImageManagerService, imageNa
 }
 
 // ListImage list the image filtered by the image filter.
-func ListImage(ctx context.Context, c internalapi.ImageManagerService, filter *runtimeapi.ImageFilter) []*runtimeapi.Image {
+func ListImage(
+	ctx context.Context,
+	c internalapi.ImageManagerService,
+	filter *runtimeapi.ImageFilter,
+) []*runtimeapi.Image {
 	images, err := c.ListImages(ctx, filter)
 	ExpectNoError(err, "Failed to get image list")
 
@@ -395,7 +457,12 @@ func PrepareImageName(imageName string) string {
 }
 
 // PullPublicImage pulls the public image named imageName.
-func PullPublicImage(ctx context.Context, c internalapi.ImageManagerService, imageName string, podConfig *runtimeapi.PodSandboxConfig) string {
+func PullPublicImage(
+	ctx context.Context,
+	c internalapi.ImageManagerService,
+	imageName string,
+	podConfig *runtimeapi.PodSandboxConfig,
+) string {
 	imageName = PrepareImageName(imageName)
 
 	By("Pull image : " + imageName)

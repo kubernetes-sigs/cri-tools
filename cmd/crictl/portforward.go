@@ -40,7 +40,11 @@ var runtimePortForwardCommand = &cli.Command{
 			Name:    transportFlag,
 			Aliases: []string{"r"},
 			Value:   common.TransportSpdy,
-			Usage:   fmt.Sprintf("Transport protocol to use, one of: %s|%s", common.TransportSpdy, common.TransportWebsocket),
+			Usage: fmt.Sprintf(
+				"Transport protocol to use, one of: %s|%s",
+				common.TransportSpdy,
+				common.TransportWebsocket,
+			),
 		},
 		&cli.StringFlag{
 			Name:    flagTLSSNI,
@@ -91,7 +95,11 @@ var runtimePortForwardCommand = &cli.Command{
 }
 
 // PortForward sends an PortForwardRequest to server, and parses the returned PortForwardResponse.
-func PortForward(ctx context.Context, client internalapi.RuntimeService, opts portforwardOptions) error {
+func PortForward(
+	ctx context.Context,
+	client internalapi.RuntimeService,
+	opts portforwardOptions,
+) error {
 	if opts.id == "" {
 		return errIDEmpty
 	}
@@ -134,7 +142,14 @@ func PortForward(ctx context.Context, client internalapi.RuntimeService, opts po
 
 	logrus.Debugf("Ports to forward: %v", opts.ports)
 
-	pf, err := portforward.NewForStreaming(dialer, opts.ports, SetupInterruptSignalHandler(), readyChan, os.Stdout, os.Stderr)
+	pf, err := portforward.NewForStreaming(
+		dialer,
+		opts.ports,
+		SetupInterruptSignalHandler(),
+		readyChan,
+		os.Stdout,
+		os.Stderr,
+	)
 	if err != nil {
 		return err
 	}

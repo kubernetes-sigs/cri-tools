@@ -108,7 +108,10 @@ func run() error {
 		updateRuntimeConfigCommand,
 	}
 
-	slices.SortFunc(app.Commands, func(a, b *cli.Command) int { return strings.Compare(a.Name, b.Name) })
+	slices.SortFunc(
+		app.Commands,
+		func(a, b *cli.Command) int { return strings.Compare(a.Name, b.Name) },
+	)
 
 	runtimeEndpointUsage := fmt.Sprintf("Endpoint of CRI container runtime "+
 		"service (default: uses in order the first successful one of %v). "+
@@ -214,7 +217,10 @@ func run() error {
 			return fmt.Errorf("get executable path: %w", err)
 		}
 
-		if config, err = common.GetServerConfigFromFile(context.String("config"), exePath); err != nil {
+		if config, err = common.GetServerConfigFromFile(
+			context.String("config"),
+			exePath,
+		); err != nil {
 			if context.IsSet("config") {
 				// crictl config can create a missing file; let it through.
 				isConfigCmd := context.Args().First() == "config"
@@ -245,7 +251,8 @@ func run() error {
 				spanName = context.Args().First()
 			}
 
-			ctx, span := cfg.TracerProvider.Tracer("sigs.k8s.io/cri-tools/cmd/crictl").Start(context.Context, spanName)
+			ctx, span := cfg.TracerProvider.Tracer("sigs.k8s.io/cri-tools/cmd/crictl").
+				Start(context.Context, spanName)
 			cfg.RootSpan = span
 			cfg.RootSpan.SetAttributes(attribute.String("command", spanName))
 

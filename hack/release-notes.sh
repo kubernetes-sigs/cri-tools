@@ -18,7 +18,7 @@ set -euo pipefail
 
 BUILD_DIR=build
 BINARY=$BUILD_DIR/release-notes
-VERSION=v0.18.0
+VERSION=v0.21.1
 
 mkdir -p $BUILD_DIR
 curl -sSfL --retry 5 --retry-delay 10 -o $BINARY \

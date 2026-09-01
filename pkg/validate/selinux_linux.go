@@ -56,7 +56,17 @@ var _ = framework.KubeDescribe("SELinux", func() {
 					options := &runtimeapi.SELinuxOption{
 						Level: "s0",
 					}
-					containerID := createContainerWithSelinux(ctx, rc, ic, sandboxID, sandboxConfig, options, privileged, true, true)
+					containerID := createContainerWithSelinux(
+						ctx,
+						rc,
+						ic,
+						sandboxID,
+						sandboxConfig,
+						options,
+						privileged,
+						true,
+						true,
+					)
 					checkContainerSelinux(ctx, rc, containerID, true)
 				})
 
@@ -67,7 +77,17 @@ var _ = framework.KubeDescribe("SELinux", func() {
 						Type:  "svirt_lxc_net_t",
 						Level: "s0:c4,c5",
 					}
-					containerID := createContainerWithSelinux(ctx, rc, ic, sandboxID, sandboxConfig, options, privileged, true, true)
+					containerID := createContainerWithSelinux(
+						ctx,
+						rc,
+						ic,
+						sandboxID,
+						sandboxConfig,
+						options,
+						privileged,
+						true,
+						true,
+					)
 					checkContainerSelinux(ctx, rc, containerID, true)
 				})
 
@@ -79,32 +99,102 @@ var _ = framework.KubeDescribe("SELinux", func() {
 						// s0,c4,c5 is wrong, should have been s0:c4,c5
 						Level: "s0,c4,c5",
 					}
-					createContainerWithSelinux(ctx, rc, ic, sandboxID, sandboxConfig, options, privileged, false, false)
+					createContainerWithSelinux(
+						ctx,
+						rc,
+						ic,
+						sandboxID,
+						sandboxConfig,
+						options,
+						privileged,
+						false,
+						false,
+					)
 				})
 
 				It("mount label should have correct role and type", func(ctx SpecContext) {
-					containerID := createContainerWithSelinux(ctx, rc, ic, sandboxID, sandboxConfig, nil, privileged, true, true)
+					containerID := createContainerWithSelinux(
+						ctx,
+						rc,
+						ic,
+						sandboxID,
+						sandboxConfig,
+						nil,
+						privileged,
+						true,
+						true,
+					)
 					checkMountLabelRoleType(ctx, rc, containerID)
 				})
 
 				It("mount label should have category", func(ctx SpecContext) {
-					containerID := createContainerWithSelinux(ctx, rc, ic, sandboxID, sandboxConfig, nil, privileged, true, true)
+					containerID := createContainerWithSelinux(
+						ctx,
+						rc,
+						ic,
+						sandboxID,
+						sandboxConfig,
+						nil,
+						privileged,
+						true,
+						true,
+					)
 					checkMountLabelMCS(ctx, rc, containerID)
 				})
 
 				It("process label should have correct role and type", func(ctx SpecContext) {
-					containerID := createContainerWithSelinux(ctx, rc, ic, sandboxID, sandboxConfig, nil, privileged, true, true)
+					containerID := createContainerWithSelinux(
+						ctx,
+						rc,
+						ic,
+						sandboxID,
+						sandboxConfig,
+						nil,
+						privileged,
+						true,
+						true,
+					)
 					checkProcessLabelRoleType(ctx, rc, containerID, privileged)
 				})
 
 				It("process label should have category", func(ctx SpecContext) {
-					containerID := createContainerWithSelinux(ctx, rc, ic, sandboxID, sandboxConfig, nil, privileged, true, true)
+					containerID := createContainerWithSelinux(
+						ctx,
+						rc,
+						ic,
+						sandboxID,
+						sandboxConfig,
+						nil,
+						privileged,
+						true,
+						true,
+					)
 					checkProcessLabelMCS(ctx, rc, containerID, privileged)
 				})
 
 				It("should create containers with the same process label", func(ctx SpecContext) {
-					containerID := createContainerWithSelinux(ctx, rc, ic, sandboxID, sandboxConfig, nil, privileged, true, true)
-					containerID2 := createContainerWithSelinux(ctx, rc, ic, sandboxID, sandboxConfig, nil, privileged, true, true)
+					containerID := createContainerWithSelinux(
+						ctx,
+						rc,
+						ic,
+						sandboxID,
+						sandboxConfig,
+						nil,
+						privileged,
+						true,
+						true,
+					)
+					containerID2 := createContainerWithSelinux(
+						ctx,
+						rc,
+						ic,
+						sandboxID,
+						sandboxConfig,
+						nil,
+						privileged,
+						true,
+						true,
+					)
 					label1 := checkProcessLabelMCS(ctx, rc, containerID, privileged)
 					label2 := checkProcessLabelMCS(ctx, rc, containerID2, privileged)
 					Expect(label1).To(Equal(label2))
@@ -152,8 +242,28 @@ var _ = framework.KubeDescribe("SELinux", func() {
 				})
 
 				It("should create containers with different process labels", func(ctx SpecContext) {
-					containerID := createContainerWithSelinux(ctx, rc, ic, sandboxID, sandboxConfig, nil, false, true, true)
-					containerID2 := createContainerWithSelinux(ctx, rc, ic, sandboxID2, sandboxConfig2, nil, false, true, true)
+					containerID := createContainerWithSelinux(
+						ctx,
+						rc,
+						ic,
+						sandboxID,
+						sandboxConfig,
+						nil,
+						false,
+						true,
+						true,
+					)
+					containerID2 := createContainerWithSelinux(
+						ctx,
+						rc,
+						ic,
+						sandboxID2,
+						sandboxConfig2,
+						nil,
+						false,
+						true,
+						true,
+					)
 					label1 := checkProcessLabelMCS(ctx, rc, containerID, false)
 					label2 := checkProcessLabelMCS(ctx, rc, containerID2, false)
 					Expect(label1).NotTo(Equal(label2))
@@ -163,14 +273,24 @@ var _ = framework.KubeDescribe("SELinux", func() {
 	}
 })
 
-func createContainerWithSelinux(ctx context.Context, rc internalapi.RuntimeService, ic internalapi.ImageManagerService, sandboxID string, sandboxConfig *runtimeapi.PodSandboxConfig, options *runtimeapi.SELinuxOption, privileged, shouldStart, shouldCreate bool) string {
+func createContainerWithSelinux(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	ic internalapi.ImageManagerService,
+	sandboxID string,
+	sandboxConfig *runtimeapi.PodSandboxConfig,
+	options *runtimeapi.SELinuxOption,
+	privileged, shouldStart, shouldCreate bool,
+) string {
 	By("create a container with selinux")
 
 	containerName := "selinux-test-" + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
-		Command:  pauseCmd,
+		Image: &runtimeapi.ImageSpec{
+			Image: framework.TestContext.TestImageList.DefaultTestContainerImage,
+		},
+		Command: pauseCmd,
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
 				SelinuxOptions: options,
@@ -179,7 +299,14 @@ func createContainerWithSelinux(ctx context.Context, rc internalapi.RuntimeServi
 		},
 	}
 
-	containerID, err := framework.CreateContainerWithError(ctx, rc, ic, containerConfig, sandboxID, sandboxConfig)
+	containerID, err := framework.CreateContainerWithError(
+		ctx,
+		rc,
+		ic,
+		containerConfig,
+		sandboxID,
+		sandboxConfig,
+	)
 	if !shouldCreate {
 		Expect(err).To(HaveOccurred())
 
@@ -205,7 +332,12 @@ func createContainerWithSelinux(ctx context.Context, rc internalapi.RuntimeServi
 	return containerID
 }
 
-func checkContainerSelinux(ctx context.Context, rc internalapi.RuntimeService, containerID string, shouldRun bool) {
+func checkContainerSelinux(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	containerID string,
+	shouldRun bool,
+) {
 	By("get container status")
 
 	status, err := rc.ContainerStatus(ctx, containerID, false)
@@ -220,24 +352,48 @@ func checkContainerSelinux(ctx context.Context, rc internalapi.RuntimeService, c
 	}
 
 	cmd := []string{"touch", "foo"}
-	stdout, stderr, err := rc.ExecSync(ctx, containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	stdout, stderr, err := rc.ExecSync(
+		ctx,
+		containerID,
+		cmd,
+		time.Duration(defaultExecSyncTimeout)*time.Second,
+	)
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
 	Expect(err).NotTo(HaveOccurred(), msg)
 }
 
-func checkMountLabelRoleType(ctx context.Context, rc internalapi.RuntimeService, containerID string) {
+func checkMountLabelRoleType(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	containerID string,
+) {
 	// Check that the mount label policy is correct
 	cmd := []string{"cat", "/proc/1/mountinfo"}
-	stdout, stderr, err := rc.ExecSync(ctx, containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	stdout, stderr, err := rc.ExecSync(
+		ctx,
+		containerID,
+		cmd,
+		time.Duration(defaultExecSyncTimeout)*time.Second,
+	)
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
 	Expect(err).NotTo(HaveOccurred(), msg)
 	Expect(string(stdout)).To(ContainSubstring(":object_r:container_file_t:"))
 }
 
-func checkProcessLabelRoleType(ctx context.Context, rc internalapi.RuntimeService, containerID string, privileged bool) {
+func checkProcessLabelRoleType(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	containerID string,
+	privileged bool,
+) {
 	// Check that the process label policy is correct
 	cmd := []string{"cat", "/proc/self/attr/current"}
-	stdout, stderr, err := rc.ExecSync(ctx, containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	stdout, stderr, err := rc.ExecSync(
+		ctx,
+		containerID,
+		cmd,
+		time.Duration(defaultExecSyncTimeout)*time.Second,
+	)
 	label := strings.Trim(string(stdout), "\x00")
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
 	Expect(err).NotTo(HaveOccurred(), msg)
@@ -252,17 +408,32 @@ func checkProcessLabelRoleType(ctx context.Context, rc internalapi.RuntimeServic
 func checkMountLabelMCS(ctx context.Context, rc internalapi.RuntimeService, containerID string) {
 	// Check that the mount label MCS is correct
 	cmd := []string{"cat", "/proc/1/mountinfo"}
-	stdout, stderr, err := rc.ExecSync(ctx, containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	stdout, stderr, err := rc.ExecSync(
+		ctx,
+		containerID,
+		cmd,
+		time.Duration(defaultExecSyncTimeout)*time.Second,
+	)
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
 	Expect(err).NotTo(HaveOccurred(), msg)
 	// check that a mount exists with MCS, where level is always s0 and there are two or more categories
 	Expect(string(stdout)).To(MatchRegexp(`,context="[^"]*:s0(-s0)?:c[0-9]+(,c[0-9]+)+",`))
 }
 
-func checkProcessLabelMCS(ctx context.Context, rc internalapi.RuntimeService, containerID string, privileged bool) string {
+func checkProcessLabelMCS(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	containerID string,
+	privileged bool,
+) string {
 	// Check that the process label MCS is correct
 	cmd := []string{"cat", "/proc/self/attr/current"}
-	stdout, stderr, err := rc.ExecSync(ctx, containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	stdout, stderr, err := rc.ExecSync(
+		ctx,
+		containerID,
+		cmd,
+		time.Duration(defaultExecSyncTimeout)*time.Second,
+	)
 	label := strings.Trim(string(stdout), "\x00")
 	msg := fmt.Sprintf("cmd %v, stdout %q, stderr %q", cmd, stdout, stderr)
 	Expect(err).NotTo(HaveOccurred(), msg)

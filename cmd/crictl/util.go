@@ -76,7 +76,7 @@ func SetupInterruptSignalHandler() <-chan struct{} {
 			<-c
 			close(signalIntStopCh)
 			<-c
-			os.Exit(1) //nolint:forbidigo // intentional exit on second interrupt signal for immediate shutdown
+			os.Exit(1) //nolint:forbidigo // intentional exit on second interrupt signal
 		}()
 	})
 
@@ -291,7 +291,9 @@ func loadPodSandboxConfig(path string) (*pb.PodSandboxConfig, error) {
 	}
 
 	if config.GetLinux() != nil && config.GetLinux().GetCgroupParent() == "" {
-		logrus.Warn("cgroup_parent is not set. Use `runtime-config` to get the runtime cgroup driver")
+		logrus.Warn(
+			"cgroup_parent is not set. Use `runtime-config` to get the runtime cgroup driver",
+		)
 	}
 
 	return &config, nil
@@ -300,7 +302,12 @@ func loadPodSandboxConfig(path string) (*pb.PodSandboxConfig, error) {
 func protobufObjectToJSON(obj protoiface.MessageV1) (string, error) {
 	msg := protoadapt.MessageV2Of(obj)
 
-	marshaledJSON, err := protojson.MarshalOptions{EmitDefaultValues: true, Indent: "  "}.Marshal(msg)
+	marshaledJSON, err := protojson.MarshalOptions{
+		EmitDefaultValues: true,
+		Indent:            "  ",
+	}.Marshal(
+		msg,
+	)
 	if err != nil {
 		return "", err
 	}
@@ -550,7 +557,7 @@ func marshalMapInOrder(m map[string]any, t any) (string, error) {
 
 // jsonFieldFromTag gets json field name from field tag.
 func jsonFieldFromTag(tag reflect.StructTag) string {
-	field := strings.Split(tag.Get(outputTypeJSON), ",")[0]
+	field, _, _ := strings.Cut(tag.Get(outputTypeJSON), ",")
 
 	for f := range strings.SplitSeq(tag.Get("protobuf"), ",") {
 		if !strings.HasPrefix(f, "json=") {
@@ -593,7 +600,11 @@ func matchesRegex(re *regexp.Regexp, target string) bool {
 	return re.MatchString(target)
 }
 
-func matchesImage(ctx context.Context, imageClient internalapi.ImageManagerService, image, containerImage string) (bool, error) {
+func matchesImage(
+	ctx context.Context,
+	imageClient internalapi.ImageManagerService,
+	image, containerImage string,
+) (bool, error) {
 	if image == "" || imageClient == nil {
 		return true, nil
 	}
@@ -616,7 +627,11 @@ func matchesImage(ctx context.Context, imageClient internalapi.ImageManagerServi
 	return r1.GetImage().GetId() == r2.GetImage().GetId(), nil
 }
 
-func getRepoImage(ctx context.Context, imageClient internalapi.ImageManagerService, image string) (string, error) {
+func getRepoImage(
+	ctx context.Context,
+	imageClient internalapi.ImageManagerService,
+	image string,
+) (string, error) {
 	r, err := ImageStatus(ctx, imageClient, image, false)
 	if err != nil {
 		return "", err

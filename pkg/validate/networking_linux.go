@@ -26,7 +26,14 @@ import (
 )
 
 // createHostNetWebServerContainer creates a web server container using hostNetWebServerImage.
-func createHostNetWebServerContainer(ctx context.Context, rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig, prefix string) string {
+func createHostNetWebServerContainer(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	ic internalapi.ImageManagerService,
+	podID string,
+	podConfig *runtimeapi.PodSandboxConfig,
+	prefix string,
+) string {
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),

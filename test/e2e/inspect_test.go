@@ -42,7 +42,10 @@ var _ = t.Describe("inspect", func() {
 
 		ctr, err := os.CreateTemp("", "container-")
 		Expect(err).NotTo(HaveOccurred())
-		_, err = fmt.Fprintf(ctr, `{ "metadata": { "name": "ctr" }, "image": { "image": "`+imageLatest+`" }, "args": [] }`)
+		_, err = fmt.Fprintf(
+			ctr,
+			`{ "metadata": { "name": "ctr" }, "image": { "image": "`+imageLatest+`" }, "args": [] }`,
+		)
 		Expect(err).NotTo(HaveOccurred())
 
 		res := t.Crictl(fmt.Sprintf("run %s %s", ctr.Name(), sb.Name()))

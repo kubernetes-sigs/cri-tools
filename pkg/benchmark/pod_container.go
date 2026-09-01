@@ -63,7 +63,12 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 			uid := framework.DefaultUIDPrefix + framework.NewUUID()
 			namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
 			config := &runtimeapi.PodSandboxConfig{
-				Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
+				Metadata: framework.BuildPodSandboxMetadata(
+					podSandboxName,
+					uid,
+					namespace,
+					framework.DefaultAttempt,
+				),
 				Linux: &runtimeapi.LinuxPodSandboxConfig{
 					CgroupParent: common.GetCgroupParent(ctx, rc),
 				},
@@ -77,7 +82,14 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 				By("create container in PodSandbox")
 
-				containerID := framework.CreateDefaultContainer(ctx, rc, ic, podID, config, "Pod-Container-for-creating-benchmark-")
+				containerID := framework.CreateDefaultContainer(
+					ctx,
+					rc,
+					ic,
+					podID,
+					config,
+					"Pod-Container-for-creating-benchmark-",
+				)
 
 				By("start container in PodSandbox")
 
@@ -96,7 +108,9 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 			// Do the benchmark
 			operation := experiment.MeasureDuration("create PodSandbox and container", benchmark)
 
-			Expect(operation.Seconds()).Should(BeNumerically("<", getPodContainerBenchmarkTimeoutSeconds()), "create PodSandbox shouldn't take too long.")
+			Expect(
+				operation.Seconds(),
+			).Should(BeNumerically("<", getPodContainerBenchmarkTimeoutSeconds()), "create PodSandbox shouldn't take too long.")
 		})
 	})
 })

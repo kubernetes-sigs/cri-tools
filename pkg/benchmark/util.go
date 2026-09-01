@@ -84,7 +84,10 @@ type LifecycleBenchmarksResultsManager struct {
 }
 
 // NewLifecycleBenchmarksResultsManager instantiates a new LifecycleBenchmarksResultsManager and its internal channels/structures.
-func NewLifecycleBenchmarksResultsManager(initialResultsSet LifecycleBenchmarksResultsSet, resultsChannelTimeoutSeconds int) *LifecycleBenchmarksResultsManager {
+func NewLifecycleBenchmarksResultsManager(
+	initialResultsSet LifecycleBenchmarksResultsSet,
+	resultsChannelTimeoutSeconds int,
+) *LifecycleBenchmarksResultsManager {
 	lbrm := LifecycleBenchmarksResultsManager{
 		resultsSet:                   initialResultsSet,
 		resultsChannelTimeoutSeconds: resultsChannelTimeoutSeconds,
@@ -123,7 +126,10 @@ func (lbrm *LifecycleBenchmarksResultsManager) AwaitAllResults(timeoutSeconds in
 
 		return nil
 	case <-timeout:
-		logrus.Warnf("Failed to await all results. Results registered so far were: %+v", lbrm.resultsSet)
+		logrus.Warnf(
+			"Failed to await all results. Results registered so far were: %+v",
+			lbrm.resultsSet,
+		)
 
 		return fmt.Errorf("benchmark results waiting timed out after %d seconds", timeoutSeconds)
 	}
@@ -171,14 +177,21 @@ func (lbrm *LifecycleBenchmarksResultsManager) awaitResult() {
 
 			// Warn if an improper number of results was received:
 			if len(res.OperationsDurationsNs) != numOperations {
-				logrus.Warnf("Received improper number of datapoints for operations %+v: %+v", lbrm.resultsSet.OperationsNames, res.OperationsDurationsNs)
+				logrus.Warnf(
+					"Received improper number of datapoints for operations %+v: %+v",
+					lbrm.resultsSet.OperationsNames,
+					res.OperationsDurationsNs,
+				)
 			}
 
 			// Register the result:
 			lbrm.resultsSet.Datapoints = append(lbrm.resultsSet.Datapoints, *res)
 
 		case <-timeout:
-			err := fmt.Errorf("timed out after waiting %d seconds for new results", lbrm.resultsChannelTimeoutSeconds)
+			err := fmt.Errorf(
+				"timed out after waiting %d seconds for new results",
+				lbrm.resultsChannelTimeoutSeconds,
+			)
 			logrus.Error(err.Error())
 			panic(err)
 		}

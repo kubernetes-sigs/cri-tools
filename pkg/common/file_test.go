@@ -25,7 +25,8 @@ import (
 	"sigs.k8s.io/cri-tools/pkg/common"
 )
 
-var _ = DescribeTable("ReadConfig",
+var _ = DescribeTable(
+	"ReadConfig",
 	func(content string, expectedConfig *common.Config, shouldFail bool) {
 		f, err := os.CreateTemp("", "crictl-read-config-")
 		defer os.RemoveAll(f.Name())
@@ -52,7 +53,6 @@ var _ = DescribeTable("ReadConfig",
 		Expect(readConfig.DisablePullOnRun).To(Equal(expectedConfig.DisablePullOnRun))
 		Expect(readConfig.MaxRetries).To(Equal(expectedConfig.MaxRetries))
 	},
-
 	Entry("should succeed with valid config", `
 runtime-endpoint: "foo"
 image-endpoint: "bar"
@@ -70,7 +70,6 @@ max-retries: 3
 		DisablePullOnRun:  true,
 		MaxRetries:        3,
 	}, false),
-
 	Entry("should succeed with comments", `
 # This is a comment
 runtime-endpoint: "foo" # Comment
@@ -83,7 +82,6 @@ runtime-endpoint: "foo" # Comment
 		PullImageOnCreate: false,
 		DisablePullOnRun:  false,
 	}, false),
-
 	Entry("should succeed with empty lines between entries", `
 runtime-endpoint: "foo"
 
@@ -98,7 +96,6 @@ image-endpoint: "bar"
 		PullImageOnCreate: false,
 		DisablePullOnRun:  false,
 	}, false),
-
 	Entry("should succeed with duplicate entries", `
 runtime-endpoint: "foo"
 runtime-endpoint: "bar"
@@ -114,7 +111,6 @@ timeout: 20
 		PullImageOnCreate: false,
 		DisablePullOnRun:  false,
 	}, false),
-
 	Entry("should succeed with an empty file", "", &common.Config{
 		RuntimeEndpoint:   "",
 		ImageEndpoint:     "",
@@ -123,12 +119,21 @@ timeout: 20
 		PullImageOnCreate: false,
 		DisablePullOnRun:  false,
 	}, false),
-
 	Entry("should fail with invalid config option", `runtime-endpoint-wrong: "foo"`, nil, true),
 	Entry("should fail with invalid 'timeout' value", `timeout: "foo"`, nil, true),
 	Entry("should fail with invalid 'debug' value", `debug: "foo"`, nil, true),
-	Entry("should fail with invalid 'pull-image-on-create' value", `pull-image-on-create: "foo"`, nil, true),
-	Entry("should fail with invalid 'disable-pull-on-run' value", `disable-pull-on-run: "foo"`, nil, true),
+	Entry(
+		"should fail with invalid 'pull-image-on-create' value",
+		`pull-image-on-create: "foo"`,
+		nil,
+		true,
+	),
+	Entry(
+		"should fail with invalid 'disable-pull-on-run' value",
+		`disable-pull-on-run: "foo"`,
+		nil,
+		true,
+	),
 	Entry("should fail with invalid 'max-retries' value", `max-retries: "foo"`, nil, true),
 )
 

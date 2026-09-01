@@ -81,7 +81,10 @@ func (c *OtelCollector) Stop() {
 }
 
 // Export implements the OTLP trace service.
-func (c *OtelCollector) Export(ctx context.Context, req *coltracepb.ExportTraceServiceRequest) (*coltracepb.ExportTraceServiceResponse, error) {
+func (c *OtelCollector) Export(
+	ctx context.Context,
+	req *coltracepb.ExportTraceServiceRequest,
+) (*coltracepb.ExportTraceServiceResponse, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 

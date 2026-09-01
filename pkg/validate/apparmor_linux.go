@@ -104,7 +104,15 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 			profile := &runtimeapi.LinuxContainerSecurityContext{
 				ApparmorProfile: apparmorProfileNamePrefix + "non-existent-profile",
 			}
-			containerID := createContainerWithAppArmor(ctx, rc, ic, sandboxID, sandboxConfig, profile, false)
+			containerID := createContainerWithAppArmor(
+				ctx,
+				rc,
+				ic,
+				sandboxID,
+				sandboxConfig,
+				profile,
+				false,
+			)
 			Expect(containerID).To(BeEmpty())
 		})
 
@@ -112,7 +120,15 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 			profile := &runtimeapi.LinuxContainerSecurityContext{
 				ApparmorProfile: apparmorProfileNamePrefix + "cri-validate-apparmor-test-deny-write",
 			}
-			containerID := createContainerWithAppArmor(ctx, rc, ic, sandboxID, sandboxConfig, profile, true)
+			containerID := createContainerWithAppArmor(
+				ctx,
+				rc,
+				ic,
+				sandboxID,
+				sandboxConfig,
+				profile,
+				true,
+			)
 			checkContainerApparmor(ctx, rc, containerID, false)
 		})
 
@@ -120,7 +136,15 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 			profile := &runtimeapi.LinuxContainerSecurityContext{
 				ApparmorProfile: apparmorProfileNamePrefix + "cri-validate-apparmor-test-audit-write",
 			}
-			containerID := createContainerWithAppArmor(ctx, rc, ic, sandboxID, sandboxConfig, profile, true)
+			containerID := createContainerWithAppArmor(
+				ctx,
+				rc,
+				ic,
+				sandboxID,
+				sandboxConfig,
+				profile,
+				true,
+			)
 			checkContainerApparmor(ctx, rc, containerID, true)
 		})
 	})
@@ -146,7 +170,15 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 					LocalhostRef: apparmorProfileNamePrefix + "non-existent-profile",
 				},
 			}
-			containerID := createContainerWithAppArmor(ctx, rc, ic, sandboxID, sandboxConfig, profile, false)
+			containerID := createContainerWithAppArmor(
+				ctx,
+				rc,
+				ic,
+				sandboxID,
+				sandboxConfig,
+				profile,
+				false,
+			)
 			Expect(containerID).To(BeEmpty())
 		})
 
@@ -157,7 +189,15 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 					LocalhostRef: apparmorProfileNamePrefix + "cri-validate-apparmor-test-deny-write",
 				},
 			}
-			containerID := createContainerWithAppArmor(ctx, rc, ic, sandboxID, sandboxConfig, profile, true)
+			containerID := createContainerWithAppArmor(
+				ctx,
+				rc,
+				ic,
+				sandboxID,
+				sandboxConfig,
+				profile,
+				true,
+			)
 			checkContainerApparmor(ctx, rc, containerID, false)
 		})
 
@@ -168,7 +208,15 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 					LocalhostRef: apparmorProfileNamePrefix + "cri-validate-apparmor-test-audit-write",
 				},
 			}
-			containerID := createContainerWithAppArmor(ctx, rc, ic, sandboxID, sandboxConfig, profile, true)
+			containerID := createContainerWithAppArmor(
+				ctx,
+				rc,
+				ic,
+				sandboxID,
+				sandboxConfig,
+				profile,
+				true,
+			)
 			checkContainerApparmor(ctx, rc, containerID, true)
 		})
 	})
@@ -195,7 +243,15 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 					LocalhostRef: apparmorProfileNamePrefix + "non-existent-profile",
 				},
 			}
-			containerID := createContainerWithAppArmor(ctx, rc, ic, sandboxID, sandboxConfig, profile, false)
+			containerID := createContainerWithAppArmor(
+				ctx,
+				rc,
+				ic,
+				sandboxID,
+				sandboxConfig,
+				profile,
+				false,
+			)
 			Expect(containerID).To(BeEmpty())
 		})
 
@@ -207,7 +263,15 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 					LocalhostRef: apparmorProfileNamePrefix + "cri-validate-apparmor-test-deny-write",
 				},
 			}
-			containerID := createContainerWithAppArmor(ctx, rc, ic, sandboxID, sandboxConfig, profile, true)
+			containerID := createContainerWithAppArmor(
+				ctx,
+				rc,
+				ic,
+				sandboxID,
+				sandboxConfig,
+				profile,
+				true,
+			)
 			checkContainerApparmor(ctx, rc, containerID, false)
 		})
 
@@ -219,26 +283,51 @@ var _ = framework.KubeDescribe("AppArmor", func() {
 					LocalhostRef: apparmorProfileNamePrefix + "cri-validate-apparmor-test-audit-write",
 				},
 			}
-			containerID := createContainerWithAppArmor(ctx, rc, ic, sandboxID, sandboxConfig, profile, true)
+			containerID := createContainerWithAppArmor(
+				ctx,
+				rc,
+				ic,
+				sandboxID,
+				sandboxConfig,
+				profile,
+				true,
+			)
 			checkContainerApparmor(ctx, rc, containerID, true)
 		})
 	})
 })
 
-func createContainerWithAppArmor(ctx context.Context, rc internalapi.RuntimeService, ic internalapi.ImageManagerService, sandboxID string, sandboxConfig *runtimeapi.PodSandboxConfig, profile *runtimeapi.LinuxContainerSecurityContext, shouldSucceed bool) string {
+func createContainerWithAppArmor(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	ic internalapi.ImageManagerService,
+	sandboxID string,
+	sandboxConfig *runtimeapi.PodSandboxConfig,
+	profile *runtimeapi.LinuxContainerSecurityContext,
+	shouldSucceed bool,
+) string {
 	By("create a container with apparmor")
 
 	containerName := "apparmor-test-" + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
-		Command:  []string{"touch", "/tmp/foo"},
+		Image: &runtimeapi.ImageSpec{
+			Image: framework.TestContext.TestImageList.DefaultTestContainerImage,
+		},
+		Command: []string{"touch", "/tmp/foo"},
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: profile,
 		},
 	}
 
-	containerID, err := framework.CreateContainerWithError(ctx, rc, ic, containerConfig, sandboxID, sandboxConfig)
+	containerID, err := framework.CreateContainerWithError(
+		ctx,
+		rc,
+		ic,
+		containerConfig,
+		sandboxID,
+		sandboxConfig,
+	)
 	if shouldSucceed {
 		Expect(err).ToNot(HaveOccurred())
 		By("start container with apparmor")
@@ -257,7 +346,12 @@ func createContainerWithAppArmor(ctx context.Context, rc internalapi.RuntimeServ
 	return containerID
 }
 
-func checkContainerApparmor(ctx context.Context, rc internalapi.RuntimeService, containerID string, shouldRun bool) {
+func checkContainerApparmor(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	containerID string,
+	shouldRun bool,
+) {
 	By("get container status")
 
 	resp, err := rc.ContainerStatus(ctx, containerID, false)

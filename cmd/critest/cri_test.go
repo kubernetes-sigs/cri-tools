@@ -63,7 +63,10 @@ func getConfigFromFile() {
 	var configFromFile *common.ServerConfiguration
 
 	currentPath, _ := os.Getwd()
-	configFromFile, _ = common.GetServerConfigFromFile(framework.TestContext.ConfigPath, currentPath)
+	configFromFile, _ = common.GetServerConfigFromFile(
+		framework.TestContext.ConfigPath,
+		currentPath,
+	)
 
 	if configFromFile != nil {
 		// Command line flags take precedence over config file.

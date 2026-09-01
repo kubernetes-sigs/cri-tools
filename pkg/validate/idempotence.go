@@ -84,7 +84,14 @@ var _ = framework.KubeDescribe("Idempotence", func() {
 
 			By("create container")
 
-			containerID := framework.CreatePauseContainer(ctx, rc, ic, podID, podConfig, "idempotence-container-")
+			containerID := framework.CreatePauseContainer(
+				ctx,
+				rc,
+				ic,
+				podID,
+				podConfig,
+				"idempotence-container-",
+			)
 
 			By("start container")
 			startContainer(ctx, rc, containerID)
@@ -120,10 +127,14 @@ var _ = framework.KubeDescribe("Idempotence", func() {
 			By("remove not existing image")
 
 			const fakeImageID = "0000000000000000000000000000000000000000000000000000000000000000"
-			Expect(ic.RemoveImage(ctx, &runtimeapi.ImageSpec{Image: fakeImageID})).NotTo(HaveOccurred())
+			Expect(
+				ic.RemoveImage(ctx, &runtimeapi.ImageSpec{Image: fakeImageID}),
+			).NotTo(HaveOccurred())
 
 			By("remove the image again")
-			Expect(ic.RemoveImage(ctx, &runtimeapi.ImageSpec{Image: fakeImageID})).NotTo(HaveOccurred())
+			Expect(
+				ic.RemoveImage(ctx, &runtimeapi.ImageSpec{Image: fakeImageID}),
+			).NotTo(HaveOccurred())
 		})
 	})
 })

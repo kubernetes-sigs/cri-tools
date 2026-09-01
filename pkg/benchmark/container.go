@@ -61,7 +61,9 @@ var _ = framework.KubeDescribe("Container", func() {
 				NumParallel: framework.TestContext.BenchmarkingParams.ContainersNumberParallel,
 			}
 			if samplingConfig.N <= 0 {
-				Skip("skipping container lifecycle benchmarks since container number option was not set")
+				Skip(
+					"skipping container lifecycle benchmarks since container number option was not set",
+				)
 			}
 
 			if samplingConfig.NumParallel < 1 {
@@ -70,9 +72,15 @@ var _ = framework.KubeDescribe("Container", func() {
 
 			// Setup results reporting channel:
 			resultsSet := LifecycleBenchmarksResultsSet{
-				OperationsNames: []string{"CreateContainer", "StartContainer", "StatusContainer", "StopContainer", "RemoveContainer"},
-				NumParallel:     samplingConfig.NumParallel,
-				Datapoints:      make([]LifecycleBenchmarkDatapoint, 0),
+				OperationsNames: []string{
+					"CreateContainer",
+					"StartContainer",
+					"StatusContainer",
+					"StopContainer",
+					"RemoveContainer",
+				},
+				NumParallel: samplingConfig.NumParallel,
+				Datapoints:  make([]LifecycleBenchmarkDatapoint, 0),
 			}
 			resultsManager := NewLifecycleBenchmarksResultsManager(
 				resultsSet,
@@ -98,7 +106,14 @@ var _ = framework.KubeDescribe("Container", func() {
 
 				startTime := time.Now().UnixNano()
 				lastStartTime = startTime
-				containerID = framework.CreateDefaultContainer(ctx, rc, ic, podID, podConfig, "Benchmark-container-")
+				containerID = framework.CreateDefaultContainer(
+					ctx,
+					rc,
+					ic,
+					podID,
+					podConfig,
+					"Benchmark-container-",
+				)
 				lastEndTime = time.Now().UnixNano()
 				durations[0] = lastEndTime - lastStartTime
 
@@ -143,7 +158,10 @@ var _ = framework.KubeDescribe("Container", func() {
 					StartTime:             startTime,
 					EndTime:               lastEndTime,
 					OperationsDurationsNs: durations,
-					MetaInfo:              map[string]string{"podId": podID, "containerId": containerID},
+					MetaInfo: map[string]string{
+						"podId":       podID,
+						"containerId": containerID,
+					},
 				}
 				resultsChannel <- &res
 
@@ -162,14 +180,23 @@ var _ = framework.KubeDescribe("Container", func() {
 			}
 
 			if framework.TestContext.BenchmarkingOutputDir != "" {
-				filepath := path.Join(framework.TestContext.BenchmarkingOutputDir, "container_benchmark_data.json")
+				filepath := path.Join(
+					framework.TestContext.BenchmarkingOutputDir,
+					"container_benchmark_data.json",
+				)
 
 				err = resultsManager.WriteResultsFile(filepath)
 				if err != nil {
-					logrus.Errorf("Error occurred while writing benchmark results to file %s: %v", filepath, err)
+					logrus.Errorf(
+						"Error occurred while writing benchmark results to file %s: %v",
+						filepath,
+						err,
+					)
 				}
 			} else {
-				logrus.Infof("No benchmarking output dir provided, skipping writing benchmarking results file")
+				logrus.Infof(
+					"No benchmarking output dir provided, skipping writing benchmarking results file",
+				)
 				logrus.Infof("Benchmark results were: %+v", resultsManager.resultsSet)
 			}
 		})

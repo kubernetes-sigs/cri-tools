@@ -91,7 +91,14 @@ func zshCompletion(c *cli.Context) error {
 		opts = append(opts, "--"+flag.Names()[0])
 	}
 
-	fmt.Fprintln(c.App.Writer, fmt.Sprintf(zshCompletionTemplate, strings.Join(subcommands, "' '"), strings.Join(opts, "' '")))
+	fmt.Fprintln(
+		c.App.Writer,
+		fmt.Sprintf(
+			zshCompletionTemplate,
+			strings.Join(subcommands, "' '"),
+			strings.Join(opts, "' '"),
+		),
+	)
 
 	return nil
 }

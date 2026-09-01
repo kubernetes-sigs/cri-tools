@@ -33,7 +33,11 @@ const (
 	TransportSpdy      = "spdy"
 )
 
-func GetExecutor(transport string, parsedURL *url.URL, tlsConfig *rest.TLSClientConfig) (exec remoteclient.Executor, err error) {
+func GetExecutor(
+	transport string,
+	parsedURL *url.URL,
+	tlsConfig *rest.TLSClientConfig,
+) (exec remoteclient.Executor, err error) {
 	config := &rest.Config{TLSClientConfig: *tlsConfig}
 
 	switch transport {
@@ -48,7 +52,11 @@ func GetExecutor(transport string, parsedURL *url.URL, tlsConfig *rest.TLSClient
 	}
 }
 
-func GetDialer(transport string, parsedURL *url.URL, tlsConfig *rest.TLSClientConfig) (exec httpstream.Dialer, err error) {
+func GetDialer(
+	transport string,
+	parsedURL *url.URL,
+	tlsConfig *rest.TLSClientConfig,
+) (exec httpstream.Dialer, err error) {
 	config := &rest.Config{TLSClientConfig: *tlsConfig}
 
 	switch transport {
@@ -58,7 +66,12 @@ func GetDialer(transport string, parsedURL *url.URL, tlsConfig *rest.TLSClientCo
 			return nil, fmt.Errorf("get SPDY round tripper: %w", err)
 		}
 
-		return spdy.NewDialerForStreaming(upgrader, &http.Client{Transport: tr}, "POST", parsedURL), nil
+		return spdy.NewDialerForStreaming(
+			upgrader,
+			&http.Client{Transport: tr},
+			"POST",
+			parsedURL,
+		), nil
 
 	case TransportWebsocket:
 		return portforward.NewSPDYOverWebsocketDialerForStreaming(parsedURL, config)

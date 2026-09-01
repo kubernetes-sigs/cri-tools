@@ -47,11 +47,11 @@ define curl_to
 	chmod +x $(2)
 endef
 
-ZEITGEIST_VERSION = v0.5.3
-GOLANGCI_LINT_VERSION := v2.12.2
+ZEITGEIST_VERSION = v0.8.0
+GOLANGCI_LINT_VERSION := v2.13.2
 REPO_INFRA_VERSION = v0.2.6
-PRETTIER_VERSION = 3.8.3
-ZIZMOR_VERSION := v1.25.2
+PRETTIER_VERSION = 3.9.6
+ZIZMOR_VERSION := v1.30.0
 
 GINKGO := $(BUILD_BIN_PATH)/ginkgo
 GOLANGCI_LINT_DIR := $(BUILD_BIN_PATH)/golangci-lint-$(GOLANGCI_LINT_VERSION)
@@ -195,7 +195,7 @@ verify-dependencies: $(BUILD_BIN_PATH)/zeitgeist ## Verify third party dependenc
 	$(ZEITGEIST) validate --local-only --base-path . --config dependencies.yaml
 
 $(ZEITGEIST): $(BUILD_BIN_PATH)
-	$(call curl_to,https://storage.googleapis.com/k8s-artifacts-sig-release/kubernetes-sigs/zeitgeist/$(ZEITGEIST_VERSION)/zeitgeist-$(GOARCH)-$(GOOS),$(ZEITGEIST))
+	$(call curl_to,https://github.com/kubernetes-sigs/zeitgeist/releases/download/$(ZEITGEIST_VERSION)/zeitgeist-$(GOARCH)-$(GOOS),$(ZEITGEIST))
 
 .PHONY: verify-zizmor
 verify-zizmor: $(ZIZMOR) ## Run zizmor on .github/workflows/.
