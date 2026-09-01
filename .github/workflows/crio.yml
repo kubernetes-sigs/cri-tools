@@ -96,6 +96,17 @@ jobs:
         run: |
           sudo sed -i -E 's;(monitor_path = ).*;\1"/usr/libexec/crio/conmonrs"\nruntime_type = "pod";g' /etc/crio/crio.conf.d/10-crio.conf
 
+      - name: Install runc 1.4.3
+        if: ${{matrix.oci-runtime == 'runc'}}
+        run: |
+          # runc 1.5.x has a regression causing privileged and host-namespace
+          # pods to fail ("cannot start a container that has stopped"). Pin to
+          # 1.4.3 until the upstream issue is resolved.
+          sudo curl -o /usr/libexec/crio/runc -fsSL \
+            https://github.com/opencontainers/runc/releases/download/v1.4.3/runc.amd64
+          sudo chmod +x /usr/libexec/crio/runc
+          /usr/libexec/crio/runc --version
+
       - name: Configure CRI-O to use runc instead of the default crun
         if: ${{matrix.oci-runtime == 'runc'}}
         run: |
