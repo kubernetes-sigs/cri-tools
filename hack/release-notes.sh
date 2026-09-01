@@ -31,7 +31,6 @@ LATEST_TAG=$(git tag | tail -1)
 $BINARY \
     --org kubernetes-sigs \
     --repo cri-tools \
-    --required-author "" \
     --branch master \
     --start-rev "$PREVIOUS_TAG" \
     --end-rev "$LATEST_TAG" \
