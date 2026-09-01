@@ -30,7 +30,11 @@ import (
 )
 
 // Init initializes OpenTelemetry tracing.
-func Init(ctx context.Context, collectorAddress string, samplingRate int) (*trace.TracerProvider, error) {
+func Init(
+	ctx context.Context,
+	collectorAddress string,
+	samplingRate int,
+) (*trace.TracerProvider, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return nil, fmt.Errorf("get hostname: %w", err)
@@ -72,7 +76,10 @@ func Init(ctx context.Context, collectorAddress string, samplingRate int) (*trac
 		trace.WithResource(res),
 	)
 
-	tmp := propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{})
+	tmp := propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	)
 
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(tmp)

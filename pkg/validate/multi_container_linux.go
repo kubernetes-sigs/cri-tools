@@ -62,14 +62,28 @@ var _ = framework.KubeDescribe("Multiple Containers [Conformance]", func() {
 
 			By("create a httpd container")
 
-			httpdContainerID = createMultiContainerTestHttpdContainer(ctx, rc, ic, "httpd", podID, podConfig)
+			httpdContainerID = createMultiContainerTestHttpdContainer(
+				ctx,
+				rc,
+				ic,
+				"httpd",
+				podID,
+				podConfig,
+			)
 
 			By("start the httpd container")
 			testStartContainer(ctx, rc, httpdContainerID)
 
 			By("create a busybox container")
 
-			busyboxContainerID = createMultiContainerTestBusyboxContainer(ctx, rc, ic, "busybox", podID, podConfig)
+			busyboxContainerID = createMultiContainerTestBusyboxContainer(
+				ctx,
+				rc,
+				ic,
+				"busybox",
+				podID,
+				podConfig,
+			)
 
 			By("start the busybox container")
 			testStartContainer(ctx, rc, busyboxContainerID)
@@ -106,20 +120,32 @@ var _ = framework.KubeDescribe("Multiple Containers [Conformance]", func() {
 		})
 
 		It("should support container exec", func(ctx SpecContext) {
-			Expect(execSyncContainer(ctx, rc, httpdContainerID, []string{"echo", "httpd"})).To(Equal("httpd\n"))
-			Expect(execSyncContainer(ctx, rc, busyboxContainerID, []string{"echo", "busybox"})).To(Equal("busybox\n"))
+			Expect(
+				execSyncContainer(ctx, rc, httpdContainerID, []string{"echo", "httpd"}),
+			).To(Equal("httpd\n"))
+			Expect(
+				execSyncContainer(ctx, rc, busyboxContainerID, []string{"echo", "busybox"}),
+			).To(Equal("busybox\n"))
 		})
 	})
 })
 
 // createMultiContainerTestPodSandbox creates a sandbox with log directory and a container port for httpd container.
-func createMultiContainerTestPodSandbox(ctx context.Context, c internalapi.RuntimeService) (sandboxID string, podConfig *runtimeapi.PodSandboxConfig, logDir string) {
+func createMultiContainerTestPodSandbox(
+	ctx context.Context,
+	c internalapi.RuntimeService,
+) (sandboxID string, podConfig *runtimeapi.PodSandboxConfig, logDir string) {
 	podSandboxName := "PodSandbox-for-multi-container-test-" + framework.NewUUID()
 	uid := framework.DefaultUIDPrefix + framework.NewUUID()
 	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
 	logDir, podLogPath := createLogTempDir(podSandboxName)
 	podConfig = &runtimeapi.PodSandboxConfig{
-		Metadata:     framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
+		Metadata: framework.BuildPodSandboxMetadata(
+			podSandboxName,
+			uid,
+			namespace,
+			framework.DefaultAttempt,
+		),
 		LogDirectory: podLogPath,
 		PortMappings: []*runtimeapi.PortMapping{
 			{
@@ -136,8 +162,13 @@ func createMultiContainerTestPodSandbox(ctx context.Context, c internalapi.Runti
 }
 
 // createMultiContainerTestHttpdContainer creates an httpd container.
-func createMultiContainerTestHttpdContainer(ctx context.Context, rc internalapi.RuntimeService, ic internalapi.ImageManagerService, prefix string,
-	podID string, podConfig *runtimeapi.PodSandboxConfig,
+func createMultiContainerTestHttpdContainer(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	ic internalapi.ImageManagerService,
+	prefix string,
+	podID string,
+	podConfig *runtimeapi.PodSandboxConfig,
 ) string {
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
@@ -151,15 +182,22 @@ func createMultiContainerTestHttpdContainer(ctx context.Context, rc internalapi.
 }
 
 // createMultiContainerTestBusyboxContainer creates a busybox container.
-func createMultiContainerTestBusyboxContainer(ctx context.Context, rc internalapi.RuntimeService, ic internalapi.ImageManagerService,
-	prefix string, podID string, podConfig *runtimeapi.PodSandboxConfig,
+func createMultiContainerTestBusyboxContainer(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	ic internalapi.ImageManagerService,
+	prefix string,
+	podID string,
+	podConfig *runtimeapi.PodSandboxConfig,
 ) string {
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
-		Command:  []string{"sh", "-c", "echo " + defaultLog + "; sleep 1000"},
-		LogPath:  containerName + ".log",
+		Image: &runtimeapi.ImageSpec{
+			Image: framework.TestContext.TestImageList.DefaultTestContainerImage,
+		},
+		Command: []string{"sh", "-c", "echo " + defaultLog + "; sleep 1000"},
+		LogPath: containerName + ".log",
 	}
 
 	return framework.CreateContainer(ctx, rc, ic, containerConfig, podID, podConfig)

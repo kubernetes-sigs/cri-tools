@@ -39,7 +39,12 @@ var _ = t.Describe("inspectp", func() {
 		for i := range sandboxesLength {
 			f, err := os.CreateTemp("", "sandbox-")
 			Expect(err).NotTo(HaveOccurred())
-			_, err = fmt.Fprintf(f, `{ "metadata": { "name": "sb-%d", "uid": "uid-%d", "namespace": "ns" }}`, i, i)
+			_, err = fmt.Fprintf(
+				f,
+				`{ "metadata": { "name": "sb-%d", "uid": "uid-%d", "namespace": "ns" }}`,
+				i,
+				i,
+			)
 			Expect(err).NotTo(HaveOccurred())
 
 			res := t.Crictl("runp " + f.Name())

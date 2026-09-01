@@ -177,7 +177,11 @@ func setConfigOptions(config *Config) {
 	setConfigOption(ImageEndpoint, config.ImageEndpoint, config.yamlData)
 	setConfigOption(Timeout, strconv.Itoa(config.Timeout), config.yamlData)
 	setConfigOption(Debug, strconv.FormatBool(config.Debug), config.yamlData)
-	setConfigOption(PullImageOnCreate, strconv.FormatBool(config.PullImageOnCreate), config.yamlData)
+	setConfigOption(
+		PullImageOnCreate,
+		strconv.FormatBool(config.PullImageOnCreate),
+		config.yamlData,
+	)
 	setConfigOption(DisablePullOnRun, strconv.FormatBool(config.DisablePullOnRun), config.yamlData)
 	setConfigOption(MaxRetries, strconv.Itoa(config.MaxRetries), config.yamlData)
 }

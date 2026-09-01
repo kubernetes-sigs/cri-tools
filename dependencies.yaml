@@ -4,80 +4,86 @@ dependencies:
     version: v1.36.0
     refPaths:
       - path: README.md
-        match: VERSION
+        match: VERSION=
       - path: docs/benchmark.md
-        match: VERSION
+        match: VERSION=
       - path: docs/crictl.md
-        match: VERSION
+        match: VERSION=
       - path: docs/validation.md
-        match: VERSION
+        match: VERSION=
 
   - name: go
-    version: 1.26.6
+    version: 1.27.0
     refPaths:
       - path: go.mod
-        match: go
+        match: ^go
       - path: hack/tools/go.mod
-        match: go
+        match: ^go
       - path: images/containerd-local-test/Dockerfile
-        match: GO_VERSION
+        match: GO_VERSION=
 
   - name: zeitgeist
-    version: v0.5.3
+    version: v0.8.0
     refPaths:
       - path: Makefile
-        match: ZEITGEIST_VERSION
+        match: ZEITGEIST_VERSION =
 
   - name: zizmor
-    version: v1.25.2
+    version: v1.30.0
     refPaths:
       - path: Makefile
-        match: ZIZMOR_VERSION
+        match: ZIZMOR_VERSION :=
 
   - name: golangci-lint
-    version: v2.12.2
+    version: v2.13.2
     refPaths:
       - path: Makefile
-        match: GOLANGCI_LINT_VERSION
+        match: GOLANGCI_LINT_VERSION :=
 
   - name: repo-infra
     version: v0.2.6
     refPaths:
       - path: Makefile
-        match: REPO_INFRA_VERSION
+        match: REPO_INFRA_VERSION =
 
   - name: prettier
-    version: 3.8.3
+    version: 3.9.6
     refPaths:
       - path: Makefile
-        match: PRETTIER_VERSION
+        match: PRETTIER_VERSION =
       - path: .github/workflows/build.yml
-        match: prettier_version
+        match: "prettier_version:"
 
   - name: release-notes
-    version: v0.18.0
+    version: v0.21.1
     refPaths:
       - path: hack/release-notes.sh
-        match: VERSION
+        match: VERSION=
 
   - name: ubuntu
     version: "24.04"
     refPaths:
       - path: .github/workflows/build.yml
-        match: ubuntu-
+        match: "ubuntu-24"
       - path: .github/workflows/containerd.yml
-        match: ubuntu-
+        match: "ubuntu-24"
       - path: .github/workflows/crio.yml
-        match: ubuntu-
+        match: "ubuntu-24"
       - path: images/containerd-local-test/Dockerfile
-        match: ubuntu
+        match: "ubuntu:"
 
   - name: busybox
-    version: 1.37.0
+    version: 1.38.0
     refPaths:
       - path: images/image-test/Dockerfile
         match: FROM
       - path: images/image-user/Dockerfile
         match: FROM
       - path: images/image-predefined-group/Dockerfile
+        match: FROM
+
+  - name: nginx
+    version: 1.30.4
+    refPaths:
+      - path: images/hostnet-nginx/Dockerfile
         match: FROM

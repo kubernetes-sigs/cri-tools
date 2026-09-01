@@ -299,7 +299,14 @@ func TestOutputStatusData(t *testing.T) {
 			}
 
 			outStr, err := captureOutput(func() error {
-				data := []statusData{{json: tc.status, runtimeHandlers: tc.handlers, features: tc.features, info: tc.info}}
+				data := []statusData{
+					{
+						json:            tc.status,
+						runtimeHandlers: tc.handlers,
+						features:        tc.features,
+						info:            tc.info,
+					},
+				}
 
 				err := outputStatusData(data, tc.format, tc.tmplStr)
 				if err != nil {
@@ -376,7 +383,11 @@ image: { image: "busybox" }
 				}
 
 				if config.GetMetadata().GetName() != "test-container" {
-					t.Errorf("expected name %q, got %q", "test-container", config.GetMetadata().GetName())
+					t.Errorf(
+						"expected name %q, got %q",
+						"test-container",
+						config.GetMetadata().GetName(),
+					)
 				}
 
 				if config.GetImage().GetImage() != "busybox" {
@@ -451,7 +462,10 @@ func TestPrintJSONSchemaEnvValueIsPlainString(t *testing.T) {
 	// The CRI API encodes KeyValue values as plain strings, which is also what
 	// loadContainerConfig accepts. The schema must not advertise base64.
 	if value.ContentEncoding != "" {
-		t.Errorf("expected empty content encoding for KeyValue value, got %q", value.ContentEncoding)
+		t.Errorf(
+			"expected empty content encoding for KeyValue value, got %q",
+			value.ContentEncoding,
+		)
 	}
 }
 
@@ -526,7 +540,11 @@ metadata:
 				}
 
 				if config.GetMetadata().GetNamespace() != "default" {
-					t.Errorf("expected namespace %q, got %q", "default", config.GetMetadata().GetNamespace())
+					t.Errorf(
+						"expected namespace %q, got %q",
+						"default",
+						config.GetMetadata().GetNamespace(),
+					)
 				}
 
 				if config.GetMetadata().GetUid() == "" {

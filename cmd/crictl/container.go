@@ -301,7 +301,12 @@ var updateContainerCommand = &cli.Command{
 
 		for i := range c.NArg() {
 			containerID := c.Args().Get(i)
-			if err := UpdateContainerResources(c.Context, runtimeClient, containerID, options); err != nil {
+			if err := UpdateContainerResources(
+				c.Context,
+				runtimeClient,
+				containerID,
+				options,
+			); err != nil {
 				return fmt.Errorf("updating container resources for %q: %w", containerID, err)
 			}
 		}
@@ -368,7 +373,12 @@ var stopContainerCommand = &cli.Command{
 		}
 
 		for _, containerID := range containerIDs {
-			if err := StopContainer(c.Context, runtimeClient, containerID, c.Int64("timeout")); err != nil {
+			if err := StopContainer(
+				c.Context,
+				runtimeClient,
+				containerID,
+				c.Int64("timeout"),
+			); err != nil {
 				return fmt.Errorf("stopping the container %q: %w", containerID, err)
 			}
 		}
@@ -405,9 +415,14 @@ var removeContainerCommand = &cli.Command{
 			return err
 		}
 
-		ids, err := collectIDs(ctx.Context, ctx, func(ctx context.Context) ([]*pb.Container, error) {
-			return runtimeClient.ListContainers(ctx, nil)
-		}, "container")
+		ids, err := collectIDs(
+			ctx.Context,
+			ctx,
+			func(ctx context.Context) ([]*pb.Container, error) {
+				return runtimeClient.ListContainers(ctx, nil)
+			},
+			"container",
+		)
 		if err != nil || len(ids) == 0 {
 			return err
 		}
@@ -415,9 +430,12 @@ var removeContainerCommand = &cli.Command{
 		funcs := []func() error{}
 		for _, id := range ids {
 			funcs = append(funcs, func() error {
-				resp, err := InterruptableRPC(ctx.Context, func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
-					return runtimeClient.ContainerStatus(ctx, id, false)
-				})
+				resp, err := InterruptableRPC(
+					ctx.Context,
+					func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
+						return runtimeClient.ContainerStatus(ctx, id, false)
+					},
+				)
 				if err != nil {
 					return fmt.Errorf("getting container status %q: %w", id, err)
 				}
@@ -448,7 +466,12 @@ var removeContainerCommand = &cli.Command{
 						for _, logFile := range logRotations {
 							err = os.Remove(logFile)
 							if err != nil {
-								logrus.Errorf("removing log file %s for container %q failed: %v", logFile, id, err)
+								logrus.Errorf(
+									"removing log file %s for container %q failed: %v",
+									logFile,
+									id,
+									err,
+								)
 							}
 						}
 					}
@@ -753,7 +776,13 @@ var runContainerCommand = &cli.Command{
 			return err
 		}
 
-		if err = RunContainer(c.Context, imageClient, runtimeClient, opts, c.String("runtime")); err != nil {
+		if err = RunContainer(
+			c.Context,
+			imageClient,
+			runtimeClient,
+			opts,
+			c.String("runtime"),
+		); err != nil {
 			return fmt.Errorf("running container: %w", err)
 		}
 
@@ -889,13 +918,25 @@ func CreateContainer(
 		// Add possible OCI volume mounts
 		for _, m := range config.GetMounts() {
 			if m.GetImage() != nil && m.GetImage().GetImage() != "" {
-				logrus.Infof("Pulling image %s to be mounted to container path: %s", m.GetImage().GetImage(), m.GetContainerPath())
+				logrus.Infof(
+					"Pulling image %s to be mounted to container path: %s",
+					m.GetImage().GetImage(),
+					m.GetContainerPath(),
+				)
 				images = append(images, m.GetImage().GetImage())
 			}
 		}
 
 		for _, image := range images {
-			if _, err := PullImageWithSandbox(ctx, iClient, image, auth, podConfig, config.GetImage().GetAnnotations(), opts.pullOptions.timeout); err != nil {
+			if _, err := PullImageWithSandbox(
+				ctx,
+				iClient,
+				image,
+				auth,
+				podConfig,
+				config.GetImage().GetAnnotations(),
+				opts.pullOptions.timeout,
+			); err != nil {
 				return "", err
 			}
 		}
@@ -961,7 +1002,12 @@ type updateOptions struct {
 
 // UpdateContainerResources sends an UpdateContainerResourcesRequest to the server, and parses
 // the returned UpdateContainerResourcesResponse.
-func UpdateContainerResources(ctx context.Context, client internalapi.RuntimeService, id string, opts *updateOptions) error {
+func UpdateContainerResources(
+	ctx context.Context,
+	client internalapi.RuntimeService,
+	id string,
+	opts *updateOptions,
+) error {
 	if id == "" {
 		return errIDEmpty
 	}
@@ -1004,7 +1050,12 @@ func UpdateContainerResources(ctx context.Context, client internalapi.RuntimeSer
 
 // StopContainer sends a StopContainerRequest to the server, and parses
 // the returned StopContainerResponse.
-func StopContainer(ctx context.Context, client internalapi.RuntimeService, id string, timeout int64) error {
+func StopContainer(
+	ctx context.Context,
+	client internalapi.RuntimeService,
+	id string,
+	timeout int64,
+) error {
 	if id == "" {
 		return errIDEmpty
 	}
@@ -1110,13 +1161,22 @@ func marshalContainerStatus(cs *pb.ContainerStatus) (string, error) {
 
 // containerStatus sends a ContainerStatusRequest to the server, and parses
 // the returned ContainerStatusResponse.
-func containerStatus(ctx context.Context, client internalapi.RuntimeService, ids []string, output, tmplStr string, quiet bool) error {
+func containerStatus(
+	ctx context.Context,
+	client internalapi.RuntimeService,
+	ids []string,
+	output, tmplStr string,
+	quiet bool,
+) error {
 	return resourceStatus(
 		ctx, ids, output, tmplStr, quiet,
 		func(ctx context.Context, id string, verbose bool) (*pb.ContainerStatusResponse, error) {
-			r, err := InterruptableRPC(ctx, func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
-				return client.ContainerStatus(ctx, id, verbose)
-			})
+			r, err := InterruptableRPC(
+				ctx,
+				func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
+					return client.ContainerStatus(ctx, id, verbose)
+				},
+			)
 			if err != nil {
 				return nil, fmt.Errorf("get container status: %w", err)
 			}
@@ -1189,7 +1249,12 @@ func outputContainerStatusTable(r *pb.ContainerStatusResponse, verbose bool) {
 
 // ListContainers sends a ListContainerRequest to the server, and parses
 // the returned ListContainerResponse.
-func ListContainers(ctx context.Context, runtimeClient internalapi.RuntimeService, imageClient internalapi.ImageManagerService, opts *listOptions) ([]*pb.Container, error) {
+func ListContainers(
+	ctx context.Context,
+	runtimeClient internalapi.RuntimeService,
+	imageClient internalapi.ImageManagerService,
+	opts *listOptions,
+) ([]*pb.Container, error) {
 	filter := &pb.ContainerFilter{}
 	if opts.id != "" {
 		filter.Id = opts.id
@@ -1249,7 +1314,12 @@ func ListContainers(ctx context.Context, runtimeClient internalapi.RuntimeServic
 
 // OutputContainers sends a ListContainerRequest to the server, and parses
 // the returned ListContainerResponse for output.
-func OutputContainers(ctx context.Context, runtimeClient internalapi.RuntimeService, imageClient internalapi.ImageManagerService, opts *listOptions) error {
+func OutputContainers(
+	ctx context.Context,
+	runtimeClient internalapi.RuntimeService,
+	imageClient internalapi.ImageManagerService,
+	opts *listOptions,
+) error {
 	r, err := ListContainers(ctx, runtimeClient, imageClient, opts)
 	if err != nil {
 		return fmt.Errorf("list containers: %w", err)
@@ -1268,7 +1338,19 @@ func OutputContainers(ctx context.Context, runtimeClient internalapi.RuntimeServ
 
 	display := newDefaultTableDisplay()
 	if !opts.verbose && !opts.quiet {
-		display.AddRow([]string{columnContainer, columnImage, columnCreated, columnState, columnName, columnAttempt, columnPodID, columnPodName, columnNamespace})
+		display.AddRow(
+			[]string{
+				columnContainer,
+				columnImage,
+				columnCreated,
+				columnState,
+				columnName,
+				columnAttempt,
+				columnPodID,
+				columnPodName,
+				columnNamespace,
+			},
+		)
 	}
 
 	for _, c := range r {
@@ -1317,8 +1399,18 @@ func OutputContainers(ctx context.Context, runtimeClient internalapi.RuntimeServ
 			}
 
 			display.AddRow([]string{
-				id, image, ctm, containerState, c.GetMetadata().GetName(),
-				strconv.FormatUint(uint64(c.GetMetadata().GetAttempt()), 10), podID, podName, podNamespace,
+				id,
+				image,
+				ctm,
+				containerState,
+				c.GetMetadata().GetName(),
+				strconv.FormatUint(
+					uint64(c.GetMetadata().GetAttempt()),
+					10,
+				),
+				podID,
+				podName,
+				podNamespace,
 			})
 
 			continue
@@ -1405,7 +1497,12 @@ func getFromLabels(labels map[string]string, label string) string {
 	return "unknown"
 }
 
-func getContainersList(ctx context.Context, imageClient internalapi.ImageManagerService, containersList []*pb.Container, opts *listOptions) ([]*pb.Container, error) {
+func getContainersList(
+	ctx context.Context,
+	imageClient internalapi.ImageManagerService,
+	containersList []*pb.Container,
+	opts *listOptions,
+) ([]*pb.Container, error) {
 	nameRe, err := compileRegex(opts.nameRegexp)
 	if err != nil {
 		return nil, err
@@ -1419,7 +1516,12 @@ func getContainersList(ctx context.Context, imageClient internalapi.ImageManager
 	filtered := []*pb.Container{}
 
 	for _, c := range containersList {
-		if match, err := matchesImage(ctx, imageClient, opts.image, c.GetImage().GetImage()); err != nil {
+		if match, err := matchesImage(
+			ctx,
+			imageClient,
+			opts.image,
+			c.GetImage().GetImage(),
+		); err != nil {
 			return nil, fmt.Errorf("check image match: %w", err)
 		} else if !match {
 			continue

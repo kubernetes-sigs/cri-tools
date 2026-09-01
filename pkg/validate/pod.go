@@ -179,53 +179,61 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 			podID = "" // no need to cleanup pod
 		})
 
-		It("runtime should support preserving PodSandbox attributes [Conformance]", func(ctx SpecContext) {
-			By("test run a PodSandbox with attributes")
+		It(
+			"runtime should support preserving PodSandbox attributes [Conformance]",
+			func(ctx SpecContext) {
+				By("test run a PodSandbox with attributes")
 
-			podSandboxName := "PodSandbox-with-attributes-" + framework.NewUUID()
-			uid := framework.DefaultUIDPrefix + framework.NewUUID()
-			namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
-			metadata := framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt)
-			labels := map[string]string{
-				"foo":                             "bar",
-				types.KubernetesPodNameLabel:      podSandboxName,
-				types.KubernetesPodNamespaceLabel: namespace,
-				types.KubernetesPodUIDLabel:       uid,
-			}
-			annotations := map[string]string{"abc": "def"}
+				podSandboxName := "PodSandbox-with-attributes-" + framework.NewUUID()
+				uid := framework.DefaultUIDPrefix + framework.NewUUID()
+				namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
+				metadata := framework.BuildPodSandboxMetadata(
+					podSandboxName,
+					uid,
+					namespace,
+					framework.DefaultAttempt,
+				)
+				labels := map[string]string{
+					"foo":                             "bar",
+					types.KubernetesPodNameLabel:      podSandboxName,
+					types.KubernetesPodNamespaceLabel: namespace,
+					types.KubernetesPodUIDLabel:       uid,
+				}
+				annotations := map[string]string{"abc": "def"}
 
-			podConfig := &runtimeapi.PodSandboxConfig{
-				Metadata:    metadata,
-				Labels:      labels,
-				Annotations: annotations,
-				Linux: &runtimeapi.LinuxPodSandboxConfig{
-					CgroupParent: common.GetCgroupParent(ctx, rc),
-				},
-			}
-			podID = framework.RunPodSandbox(ctx, rc, podConfig)
+				podConfig := &runtimeapi.PodSandboxConfig{
+					Metadata:    metadata,
+					Labels:      labels,
+					Annotations: annotations,
+					Linux: &runtimeapi.LinuxPodSandboxConfig{
+						CgroupParent: common.GetCgroupParent(ctx, rc),
+					},
+				}
+				podID = framework.RunPodSandbox(ctx, rc, podConfig)
 
-			By("test get PodSandbox status")
+				By("test get PodSandbox status")
 
-			status := getPodSandboxStatus(ctx, rc, podID)
-			Expect(status.GetMetadata().GetName()).To(Equal(metadata.GetName()))
-			Expect(status.GetMetadata().GetUid()).To(Equal(metadata.GetUid()))
-			Expect(status.GetMetadata().GetNamespace()).To(Equal(metadata.GetNamespace()))
-			Expect(status.GetMetadata().GetAttempt()).To(Equal(metadata.GetAttempt()))
-			framework.ExpectSubset(status.GetLabels(), labels, "labels")
-			framework.ExpectSubset(status.GetAnnotations(), annotations, "annotations")
+				status := getPodSandboxStatus(ctx, rc, podID)
+				Expect(status.GetMetadata().GetName()).To(Equal(metadata.GetName()))
+				Expect(status.GetMetadata().GetUid()).To(Equal(metadata.GetUid()))
+				Expect(status.GetMetadata().GetNamespace()).To(Equal(metadata.GetNamespace()))
+				Expect(status.GetMetadata().GetAttempt()).To(Equal(metadata.GetAttempt()))
+				framework.ExpectSubset(status.GetLabels(), labels, "labels")
+				framework.ExpectSubset(status.GetAnnotations(), annotations, "annotations")
 
-			By("test list PodSandbox")
+				By("test list PodSandbox")
 
-			pods := listPodSandbox(ctx, rc, &runtimeapi.PodSandboxFilter{Id: podID})
-			Expect(pods).To(HaveLen(1))
-			pod := pods[0]
-			Expect(pod.GetMetadata().GetName()).To(Equal(metadata.GetName()))
-			Expect(pod.GetMetadata().GetUid()).To(Equal(metadata.GetUid()))
-			Expect(pod.GetMetadata().GetNamespace()).To(Equal(metadata.GetNamespace()))
-			Expect(pod.GetMetadata().GetAttempt()).To(Equal(metadata.GetAttempt()))
-			framework.ExpectSubset(pod.GetLabels(), labels, "labels")
-			framework.ExpectSubset(pod.GetAnnotations(), annotations, "annotations")
-		})
+				pods := listPodSandbox(ctx, rc, &runtimeapi.PodSandboxFilter{Id: podID})
+				Expect(pods).To(HaveLen(1))
+				pod := pods[0]
+				Expect(pod.GetMetadata().GetName()).To(Equal(metadata.GetName()))
+				Expect(pod.GetMetadata().GetUid()).To(Equal(metadata.GetUid()))
+				Expect(pod.GetMetadata().GetNamespace()).To(Equal(metadata.GetNamespace()))
+				Expect(pod.GetMetadata().GetAttempt()).To(Equal(metadata.GetAttempt()))
+				framework.ExpectSubset(pod.GetLabels(), labels, "labels")
+				framework.ExpectSubset(pod.GetAnnotations(), annotations, "annotations")
+			},
+		)
 	})
 	Context("runtime should support metrics operations", func() {
 		var (
@@ -256,45 +264,57 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 			}
 		})
 
-		It("runtime should support returning metrics descriptors [Conformance]", func(ctx SpecContext) {
-			By("list metric descriptors")
+		It(
+			"runtime should support returning metrics descriptors [Conformance]",
+			func(ctx SpecContext) {
+				By("list metric descriptors")
 
-			descs := listMetricDescriptors(ctx, rc)
+				descs := listMetricDescriptors(ctx, rc)
 
-			By("verify expected metric descriptors are present")
-			testMetricDescriptors(descs)
-		})
+				By("verify expected metric descriptors are present")
+				testMetricDescriptors(descs)
+			},
+		)
 
-		It("runtime should support listing pod sandbox metrics [Conformance]", func(ctx SpecContext) {
-			By("create pod sandbox")
+		It(
+			"runtime should support listing pod sandbox metrics [Conformance]",
+			func(ctx SpecContext) {
+				By("create pod sandbox")
 
-			podID, podConfig = framework.CreatePodSandboxForContainer(ctx, rc)
+				podID, podConfig = framework.CreatePodSandboxForContainer(ctx, rc)
 
-			By("create container in pod")
+				By("create container in pod")
 
-			ic := f.CRIClient.CRIImageClient
-			containerID := createContainerForMetrics(ctx, rc, ic, podID, podConfig)
+				ic := f.CRIClient.CRIImageClient
+				containerID := createContainerForMetrics(ctx, rc, ic, podID, podConfig)
 
-			By("start container")
-			startContainer(ctx, rc, containerID)
+				By("start container")
+				startContainer(ctx, rc, containerID)
 
-			_, _, err := rc.ExecSync(
-				ctx, containerID, []string{"/bin/sh", "-c", "mkdir -p /var/lib/mydisktest && for i in $(seq 1 10); do echo hi >> /var/lib/mydisktest/inode_test_file_$i; done; sync"},
-				time.Duration(defaultExecSyncTimeout)*time.Second,
-			)
-			Expect(err).ToNot(HaveOccurred())
+				_, _, err := rc.ExecSync(
+					ctx,
+					containerID,
+					[]string{
+						"/bin/sh",
+						"-c",
+						"mkdir -p /var/lib/mydisktest && for i in $(seq 1 10); do echo hi >> /var/lib/mydisktest/inode_test_file_$i; done; sync",
+					},
+					time.Duration(defaultExecSyncTimeout)*time.Second,
+				)
+				Expect(err).ToNot(HaveOccurred())
 
-			By("list metric descriptors")
+				By("list metric descriptors")
 
-			descs := listMetricDescriptors(ctx, rc)
+				descs := listMetricDescriptors(ctx, rc)
 
-			By("list pod sandbox metrics")
+				By("list pod sandbox metrics")
 
-			metrics := listPodSandboxMetrics(ctx, rc)
+				metrics := listPodSandboxMetrics(ctx, rc)
 
-			By("verify pod metrics are present")
-			testPodSandboxMetrics(metrics, descs, podID)
-		})
+				By("verify pod metrics are present")
+				testPodSandboxMetrics(metrics, descs, podID)
+			},
+		)
 	})
 })
 
@@ -310,7 +330,13 @@ func podSandboxFound(podSandboxs []*runtimeapi.PodSandbox, podID string) bool {
 }
 
 // verifyPodSandboxStatus verifies whether PodSandbox status for given podID matches.
-func verifyPodSandboxStatus(ctx context.Context, c internalapi.RuntimeService, podID string, expectedStatus runtimeapi.PodSandboxState, statusName string) {
+func verifyPodSandboxStatus(
+	ctx context.Context,
+	c internalapi.RuntimeService,
+	podID string,
+	expectedStatus runtimeapi.PodSandboxState,
+	statusName string,
+) {
 	status := getPodSandboxStatus(ctx, c, podID)
 	Expect(status.GetState()).To(Equal(expectedStatus), "PodSandbox state should be "+statusName)
 }
@@ -324,7 +350,11 @@ func testRunDefaultPodSandbox(ctx context.Context, c internalapi.RuntimeService)
 }
 
 // getPodSandboxStatus gets PodSandboxStatus for podID.
-func getPodSandboxStatus(ctx context.Context, c internalapi.RuntimeService, podID string) *runtimeapi.PodSandboxStatus {
+func getPodSandboxStatus(
+	ctx context.Context,
+	c internalapi.RuntimeService,
+	podID string,
+) *runtimeapi.PodSandboxStatus {
 	By("Get PodSandbox status for podID: " + podID)
 	status, err := c.PodSandboxStatus(ctx, podID, false)
 	framework.ExpectNoError(err, "failed to get PodSandbox %q status", podID)
@@ -362,7 +392,11 @@ func testRemovePodSandbox(ctx context.Context, c internalapi.RuntimeService, pod
 }
 
 // listPodSandboxForID lists PodSandbox for podID.
-func listPodSandboxForID(ctx context.Context, c internalapi.RuntimeService, podID string) []*runtimeapi.PodSandbox {
+func listPodSandboxForID(
+	ctx context.Context,
+	c internalapi.RuntimeService,
+	podID string,
+) []*runtimeapi.PodSandbox {
 	By("List PodSandbox for podID: " + podID)
 	filter := &runtimeapi.PodSandboxFilter{
 		Id: podID,
@@ -372,7 +406,11 @@ func listPodSandboxForID(ctx context.Context, c internalapi.RuntimeService, podI
 }
 
 // listPodSandbox lists PodSandbox.
-func listPodSandbox(ctx context.Context, c internalapi.RuntimeService, filter *runtimeapi.PodSandboxFilter) []*runtimeapi.PodSandbox {
+func listPodSandbox(
+	ctx context.Context,
+	c internalapi.RuntimeService,
+	filter *runtimeapi.PodSandboxFilter,
+) []*runtimeapi.PodSandbox {
 	By("List PodSandbox.")
 
 	pods, err := c.ListPodSandbox(ctx, filter)
@@ -383,7 +421,10 @@ func listPodSandbox(ctx context.Context, c internalapi.RuntimeService, filter *r
 }
 
 // listMetricDescriptors lists MetricDescriptors.
-func listMetricDescriptors(ctx context.Context, c internalapi.RuntimeService) []*runtimeapi.MetricDescriptor {
+func listMetricDescriptors(
+	ctx context.Context,
+	c internalapi.RuntimeService,
+) []*runtimeapi.MetricDescriptor {
 	By("List MetricDescriptors.")
 
 	descs, err := c.ListMetricDescriptors(ctx)
@@ -405,7 +446,10 @@ func createLogTempDir(podSandboxName string) (hostPath, podLogPath string) {
 }
 
 // createPodSandboxWithLogDirectory creates a PodSandbox with log directory.
-func createPodSandboxWithLogDirectory(ctx context.Context, c internalapi.RuntimeService) (sandboxID string, podConfig *runtimeapi.PodSandboxConfig, hostPath string) {
+func createPodSandboxWithLogDirectory(
+	ctx context.Context,
+	c internalapi.RuntimeService,
+) (sandboxID string, podConfig *runtimeapi.PodSandboxConfig, hostPath string) {
 	By("create a PodSandbox with log directory")
 
 	podSandboxName := "PodSandbox-with-log-directory-" + framework.NewUUID()
@@ -414,7 +458,12 @@ func createPodSandboxWithLogDirectory(ctx context.Context, c internalapi.Runtime
 
 	hostPath, podLogPath := createLogTempDir(podSandboxName)
 	podConfig = &runtimeapi.PodSandboxConfig{
-		Metadata:     framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
+		Metadata: framework.BuildPodSandboxMetadata(
+			podSandboxName,
+			uid,
+			namespace,
+			framework.DefaultAttempt,
+		),
 		LogDirectory: podLogPath,
 		Linux: &runtimeapi.LinuxPodSandboxConfig{
 			CgroupParent: common.GetCgroupParent(ctx, c),
@@ -429,8 +478,12 @@ func testMetricDescriptors(descs []*runtimeapi.MetricDescriptor) {
 	returnedDescriptors := make(map[string]*runtimeapi.MetricDescriptor)
 	for _, desc := range descs {
 		returnedDescriptors[desc.GetName()] = desc
-		Expect(desc.GetHelp()).NotTo(BeEmpty(), "Metric descriptor %q should have help text", desc.GetName())
-		Expect(desc.GetLabelKeys()).NotTo(BeEmpty(), "Metric descriptor %q should have label keys", desc.GetName())
+		Expect(
+			desc.GetHelp(),
+		).NotTo(BeEmpty(), "Metric descriptor %q should have help text", desc.GetName())
+		Expect(
+			desc.GetLabelKeys(),
+		).NotTo(BeEmpty(), "Metric descriptor %q should have label keys", desc.GetName())
 	}
 
 	missingMetrics := []string{}
@@ -446,11 +499,16 @@ func testMetricDescriptors(descs []*runtimeapi.MetricDescriptor) {
 		}
 	}
 
-	Expect(missingMetrics).To(BeEmpty(), "Expected %s metrics to be present and they were not", strings.Join(missingMetrics, " "))
+	Expect(
+		missingMetrics,
+	).To(BeEmpty(), "Expected %s metrics to be present and they were not", strings.Join(missingMetrics, " "))
 }
 
 // listPodSandboxMetrics lists PodSandboxMetrics.
-func listPodSandboxMetrics(ctx context.Context, c internalapi.RuntimeService) []*runtimeapi.PodSandboxMetrics {
+func listPodSandboxMetrics(
+	ctx context.Context,
+	c internalapi.RuntimeService,
+) []*runtimeapi.PodSandboxMetrics {
 	By("List PodSandboxMetrics.")
 
 	metrics, err := c.ListPodSandboxMetrics(ctx)
@@ -461,7 +519,11 @@ func listPodSandboxMetrics(ctx context.Context, c internalapi.RuntimeService) []
 }
 
 // testPodSandboxMetrics verifies that metrics are present for the specified pod.
-func testPodSandboxMetrics(allMetrics []*runtimeapi.PodSandboxMetrics, descs []*runtimeapi.MetricDescriptor, podID string) {
+func testPodSandboxMetrics(
+	allMetrics []*runtimeapi.PodSandboxMetrics,
+	descs []*runtimeapi.MetricDescriptor,
+	podID string,
+) {
 	var podMetrics *runtimeapi.PodSandboxMetrics
 
 	for _, m := range allMetrics {
@@ -502,7 +564,9 @@ func testPodSandboxMetrics(allMetrics []*runtimeapi.PodSandboxMetrics, descs []*
 		}
 	}
 
-	Expect(missingMetrics).To(BeEmpty(), "Expected %s metrics to be present and they were not", strings.Join(missingMetrics, " "))
+	Expect(
+		missingMetrics,
+	).To(BeEmpty(), "Expected %s metrics to be present and they were not", strings.Join(missingMetrics, " "))
 
 	mismatchedLabels := []string{}
 
@@ -524,16 +588,26 @@ func testPodSandboxMetrics(allMetrics []*runtimeapi.PodSandboxMetrics, descs []*
 		}
 	}
 
-	Expect(mismatchedLabels).To(BeEmpty(), "Expected %s metrics to have same set of labels in ListMetricDescriptors and ListPodSandboxMetrics", strings.Join(mismatchedLabels, ","))
+	Expect(
+		mismatchedLabels,
+	).To(BeEmpty(), "Expected %s metrics to have same set of labels in ListMetricDescriptors and ListPodSandboxMetrics", strings.Join(mismatchedLabels, ","))
 }
 
 // createContainerForMetrics creates a container for metrics.
-func createContainerForMetrics(ctx context.Context, rc internalapi.RuntimeService, ic internalapi.ImageManagerService, podID string, podConfig *runtimeapi.PodSandboxConfig) string {
+func createContainerForMetrics(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	ic internalapi.ImageManagerService,
+	podID string,
+	podConfig *runtimeapi.PodSandboxConfig,
+) string {
 	containerName := "container-for-metrics-" + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
-		Command:  framework.DefaultContainerCommand,
+		Image: &runtimeapi.ImageSpec{
+			Image: framework.TestContext.TestImageList.DefaultTestContainerImage,
+		},
+		Command: framework.DefaultContainerCommand,
 		Linux: &runtimeapi.LinuxContainerConfig{
 			Resources: &runtimeapi.LinuxContainerResources{
 				CpuPeriod:              100000,

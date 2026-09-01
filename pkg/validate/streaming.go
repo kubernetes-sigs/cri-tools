@@ -63,57 +63,84 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			framework.CleanupPodSandbox(ctx, rc, podID)
 		})
 
-		It("runtime should support exec with tty=false and stdin=false [Conformance]", func(ctx SpecContext) {
-			podID, podConfig = framework.CreatePodSandboxForContainer(ctx, rc)
+		It(
+			"runtime should support exec with tty=false and stdin=false [Conformance]",
+			func(ctx SpecContext) {
+				podID, podConfig = framework.CreatePodSandboxForContainer(ctx, rc)
 
-			By("create a default container")
+				By("create a default container")
 
-			containerID := framework.CreateDefaultContainer(ctx, rc, ic, podID, podConfig, "container-for-exec-test")
+				containerID := framework.CreateDefaultContainer(
+					ctx,
+					rc,
+					ic,
+					podID,
+					podConfig,
+					"container-for-exec-test",
+				)
 
-			By("start container")
-			startContainer(ctx, rc, containerID)
+				By("start container")
+				startContainer(ctx, rc, containerID)
 
-			execReq := &runtimeapi.ExecRequest{
-				ContainerId: containerID,
-				Cmd:         echoHelloCmd,
-				Stdout:      true,
-				Stderr:      true,
-			}
-			req := createExec(ctx, rc, execReq)
+				execReq := &runtimeapi.ExecRequest{
+					ContainerId: containerID,
+					Cmd:         echoHelloCmd,
+					Stdout:      true,
+					Stderr:      true,
+				}
+				req := createExec(ctx, rc, execReq)
 
-			By("check the output of exec")
-			checkExec(ctx, rc, req, echoHelloOutput, true, false)
-		})
+				By("check the output of exec")
+				checkExec(ctx, rc, req, echoHelloOutput, true, false)
+			},
+		)
 
-		It("runtime should support exec with tty=true and stdin=true [Conformance]", func(ctx SpecContext) {
-			podID, podConfig = framework.CreatePodSandboxForContainer(ctx, rc)
+		It(
+			"runtime should support exec with tty=true and stdin=true [Conformance]",
+			func(ctx SpecContext) {
+				podID, podConfig = framework.CreatePodSandboxForContainer(ctx, rc)
 
-			By("create a default container")
+				By("create a default container")
 
-			containerID := framework.CreateDefaultContainer(ctx, rc, ic, podID, podConfig, "container-for-exec-test")
+				containerID := framework.CreateDefaultContainer(
+					ctx,
+					rc,
+					ic,
+					podID,
+					podConfig,
+					"container-for-exec-test",
+				)
 
-			By("start container")
-			startContainer(ctx, rc, containerID)
+				By("start container")
+				startContainer(ctx, rc, containerID)
 
-			execReq := &runtimeapi.ExecRequest{
-				ContainerId: containerID,
-				Cmd:         echoHelloCmd,
-				Stdout:      true,
-				Tty:         true,
-				Stdin:       true,
-			}
-			req := createExec(ctx, rc, execReq)
+				execReq := &runtimeapi.ExecRequest{
+					ContainerId: containerID,
+					Cmd:         echoHelloCmd,
+					Stdout:      true,
+					Tty:         true,
+					Stdin:       true,
+				}
+				req := createExec(ctx, rc, execReq)
 
-			By("check the output of exec")
-			checkExec(ctx, rc, req, "hello", false, true)
-		})
+				By("check the output of exec")
+				checkExec(ctx, rc, req, "hello", false, true)
+			},
+		)
 
 		It("runtime should support attach [Conformance]", func(ctx SpecContext) {
 			podID, podConfig = framework.CreatePodSandboxForContainer(ctx, rc)
 
 			By("create a default container")
 
-			containerID := createShellContainer(ctx, rc, ic, podID, podConfig, "container-for-attach-test")
+			containerID := createShellContainer(
+				ctx,
+				rc,
+				ic,
+				podID,
+				podConfig,
+				"container-for-attach-test",
+			)
 
 			By("start container")
 			startContainer(ctx, rc, containerID)
@@ -138,7 +165,14 @@ var _ = framework.KubeDescribe("Streaming", func() {
 
 			By("create a web server container")
 
-			containerID := createWebServerContainer(ctx, rc, ic, podID, podConfig, "container-for-portforward-test")
+			containerID := createWebServerContainer(
+				ctx,
+				rc,
+				ic,
+				podID,
+				podConfig,
+				"container-for-portforward-test",
+			)
 
 			By("start the web server container")
 			startContainer(ctx, rc, containerID)
@@ -154,7 +188,11 @@ var _ = framework.KubeDescribe("Streaming", func() {
 	})
 })
 
-func createExec(ctx context.Context, c internalapi.RuntimeService, execReq *runtimeapi.ExecRequest) string {
+func createExec(
+	ctx context.Context,
+	c internalapi.RuntimeService,
+	execReq *runtimeapi.ExecRequest,
+) string {
 	By("exec given command in container: " + execReq.GetContainerId())
 	resp, err := c.Exec(ctx, execReq)
 	framework.ExpectNoError(err, "failed to exec in container %q", execReq.GetContainerId())
@@ -163,7 +201,12 @@ func createExec(ctx context.Context, c internalapi.RuntimeService, execReq *runt
 	return resp.GetUrl()
 }
 
-func checkExec(ctx context.Context, c internalapi.RuntimeService, execServerURL, stdout string, stdoutExactMatch, isTty bool) {
+func checkExec(
+	ctx context.Context,
+	c internalapi.RuntimeService,
+	execServerURL, stdout string,
+	stdoutExactMatch, isTty bool,
+) {
 	var (
 		localOut                  = &safeBuffer{buffer: bytes.Buffer{}}
 		localErr                  = &safeBuffer{buffer: bytes.Buffer{}}
@@ -219,7 +262,9 @@ func checkExec(ctx context.Context, c internalapi.RuntimeService, execServerURL,
 	if stdoutExactMatch {
 		Expect(localOut.String()).To(Equal(stdout), "The stdout of exec should be "+stdout)
 	} else {
-		Expect(localOut.String()).To(ContainSubstring(stdout), "The stdout of exec should contain "+stdout)
+		Expect(
+			localOut.String(),
+		).To(ContainSubstring(stdout), "The stdout of exec should contain "+stdout)
 	}
 
 	Expect(localErr.String()).To(BeEmpty(), "The stderr of exec should be empty")
@@ -247,7 +292,11 @@ func parseURL(ctx context.Context, c internalapi.RuntimeService, serverURL strin
 	return parsedURL
 }
 
-func createDefaultAttach(ctx context.Context, c internalapi.RuntimeService, containerID string) string {
+func createDefaultAttach(
+	ctx context.Context,
+	c internalapi.RuntimeService,
+	containerID string,
+) string {
 	By("attach container: " + containerID)
 	req := &runtimeapi.AttachRequest{
 		ContainerId: containerID,
@@ -344,7 +393,11 @@ func checkAttach(ctx context.Context, c internalapi.RuntimeService, attachServer
 	framework.Logf("Check attach URL %q succeed", attachServerURL)
 }
 
-func createDefaultPortForward(ctx context.Context, c internalapi.RuntimeService, podID string) string {
+func createDefaultPortForward(
+	ctx context.Context,
+	c internalapi.RuntimeService,
+	podID string,
+) string {
 	By("port forward PodSandbox: " + podID)
 	req := &runtimeapi.PortForwardRequest{
 		PodSandboxId: podID,
@@ -357,7 +410,12 @@ func createDefaultPortForward(ctx context.Context, c internalapi.RuntimeService,
 	return resp.GetUrl()
 }
 
-func checkPortForward(ctx context.Context, c internalapi.RuntimeService, portForwardSeverURL string, hostPort, containerPort int32) {
+func checkPortForward(
+	ctx context.Context,
+	c internalapi.RuntimeService,
+	portForwardSeverURL string,
+	hostPort, containerPort int32,
+) {
 	stopChan := make(chan struct{}, 1)
 	readyChan := make(chan struct{})
 
@@ -376,7 +434,14 @@ func checkPortForward(ctx context.Context, c internalapi.RuntimeService, portFor
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
 
-	pf, err := portforward.NewForStreaming(dialer, []string{fmt.Sprintf("%d:%d", hostPort, containerPort)}, stopChan, readyChan, stdout, stderr)
+	pf, err := portforward.NewForStreaming(
+		dialer,
+		[]string{fmt.Sprintf("%d:%d", hostPort, containerPort)},
+		stopChan,
+		readyChan,
+		stdout,
+		stderr,
+	)
 	framework.ExpectNoError(err, "failed to create port forward for %q", portForwardSeverURL)
 
 	go func() {
@@ -385,7 +450,13 @@ func checkPortForward(ctx context.Context, c internalapi.RuntimeService, portFor
 		By("start port forward")
 
 		err := pf.ForwardPorts()
-		framework.ExpectNoError(err, "failed to start port forward for %q, stdout: %s, stderr: %s", portForwardSeverURL, stdout.String(), stderr.String())
+		framework.ExpectNoError(
+			err,
+			"failed to start port forward for %q, stdout: %s, stderr: %s",
+			portForwardSeverURL,
+			stdout.String(),
+			stderr.String(),
+		)
 	}()
 
 	By(fmt.Sprintf("check if we can get nginx main page via localhost:%d", hostPort))

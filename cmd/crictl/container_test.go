@@ -60,7 +60,8 @@ var _ = DescribeTable("convertContainerState",
 	Entry("unknown", pb.ContainerState_CONTAINER_UNKNOWN, "Unknown"),
 )
 
-var _ = DescribeTable("getContainersList",
+var _ = DescribeTable(
+	"getContainersList",
 	func(input []*pb.Container, options *listOptions, indexes []int) {
 		actual, err := getContainersList(context.Background(), nil, input, options)
 		Expect(err).NotTo(HaveOccurred())
@@ -118,7 +119,8 @@ var _ = DescribeTable("getContainersList",
 		&listOptions{last: 2, latest: true},
 		[]int{0, 1},
 	),
-	Entry("returns all containers when the last is larger than the input length in order by createdAt desc",
+	Entry(
+		"returns all containers when the last is larger than the input length in order by createdAt desc",
 		fakeContainersWithCreatedAtDesc("v0", "v1", "v2"),
 		&listOptions{last: 5},
 		[]int{0, 1, 2},
@@ -130,7 +132,8 @@ var _ = DescribeTable("getContainersList",
 	),
 )
 
-var _ = DescribeTable("getPodNameFromLabels",
+var _ = DescribeTable(
+	"getPodNameFromLabels",
 	func(input map[string]string, expected string) {
 		actual := getPodNameFromLabels(input)
 		Expect(actual).To(Equal(expected))
@@ -139,7 +142,8 @@ var _ = DescribeTable("getPodNameFromLabels",
 		map[string]string{types.KubernetesPodNameLabel: "myPodName"},
 		"myPodName",
 	),
-	Entry("returns only the value of the `KubernetesPodNameLabel` when the label and the other labels in the input",
+	Entry(
+		"returns only the value of the `KubernetesPodNameLabel` when the label and the other labels in the input",
 		map[string]string{types.KubernetesPodNameLabel: "myPodName", "otherLabel": "otherValue"},
 		"myPodName",
 	),

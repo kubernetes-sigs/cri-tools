@@ -90,7 +90,12 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 				uid := framework.DefaultUIDPrefix + framework.NewUUID()
 				namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
 				config := &runtimeapi.PodSandboxConfig{
-					Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
+					Metadata: framework.BuildPodSandboxMetadata(
+						podSandboxName,
+						uid,
+						namespace,
+						framework.DefaultAttempt,
+					),
 					Linux: &runtimeapi.LinuxPodSandboxConfig{
 						CgroupParent: common.GetCgroupParent(ctx, c),
 					},
@@ -139,7 +144,10 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 					StartTime:             startTime,
 					EndTime:               lastEndTime,
 					OperationsDurationsNs: durations,
-					MetaInfo:              map[string]string{"podId": podID, "podSandboxName": podSandboxName},
+					MetaInfo: map[string]string{
+						"podId":          podID,
+						"podSandboxName": podSandboxName,
+					},
 				}
 				resultsChannel <- &res
 			}, samplingConfig)
@@ -153,14 +161,23 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 			}
 
 			if framework.TestContext.BenchmarkingOutputDir != "" {
-				filepath := path.Join(framework.TestContext.BenchmarkingOutputDir, "pod_benchmark_data.json")
+				filepath := path.Join(
+					framework.TestContext.BenchmarkingOutputDir,
+					"pod_benchmark_data.json",
+				)
 
 				err = resultsManager.WriteResultsFile(filepath)
 				if err != nil {
-					logrus.Errorf("Error occurred while writing benchmark results to file %s: %v", filepath, err)
+					logrus.Errorf(
+						"Error occurred while writing benchmark results to file %s: %v",
+						filepath,
+						err,
+					)
 				}
 			} else {
-				logrus.Info("No benchmarking out dir provided, skipping writing benchmarking results.")
+				logrus.Info(
+					"No benchmarking out dir provided, skipping writing benchmarking results.",
+				)
 				logrus.Infof("Benchmark results were: %+v", resultsManager.resultsSet)
 			}
 		})

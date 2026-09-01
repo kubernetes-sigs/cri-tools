@@ -82,15 +82,17 @@ var pullImageCommand = &cli.Command{
 			Usage:   "Annotation to be set on the pulled image",
 		},
 	}, pullFlags...),
-	Subcommands: []*cli.Command{{
-		Name:      "jsonschema",
-		Aliases:   []string{"js"},
-		Usage:     "Display the JSON schema for the pod-config.json, ",
-		UsageText: "The schema will be generated from the PodSandboxConfig of the CRI API compiled with this version of crictl",
-		Action: func(*cli.Context) error {
-			return printJSONSchema(&pb.PodSandboxConfig{})
+	Subcommands: []*cli.Command{
+		{
+			Name:      "jsonschema",
+			Aliases:   []string{"js"},
+			Usage:     "Display the JSON schema for the pod-config.json, ",
+			UsageText: "The schema will be generated from the PodSandboxConfig of the CRI API compiled with this version of crictl",
+			Action: func(*cli.Context) error {
+				return printJSONSchema(&pb.PodSandboxConfig{})
+			},
 		},
-	}},
+	},
 	ArgsUsage: "NAME[:TAG|@DIGEST]",
 	Action: func(c *cli.Context) error {
 		imageName := c.Args().First()
@@ -133,7 +135,15 @@ var pullImageCommand = &cli.Command{
 
 		timeout := c.Duration("pull-timeout")
 
-		r, err := PullImageWithSandbox(c.Context, imageClient, imageName, auth, sandbox, ann, timeout)
+		r, err := PullImageWithSandbox(
+			c.Context,
+			imageClient,
+			imageName,
+			auth,
+			sandbox,
+			ann,
+			timeout,
+		)
 		if err != nil {
 			return fmt.Errorf("pulling image: %w", err)
 		}
@@ -334,7 +344,7 @@ var imageStatusCommand = &cli.Command{
 			return err
 		}
 
-		verbose := !(c.Bool("quiet"))
+		verbose := !c.Bool("quiet")
 
 		output := c.String("output")
 		if output == "" { // default to json output
@@ -454,9 +464,12 @@ the specified tag. To remove only a specific tag, use the container runtime's na
 
 		// Add all available images to the ID selector
 		if all || prune {
-			r, err := InterruptableRPC(cliCtx.Context, func(ctx context.Context) ([]*pb.Image, error) {
-				return imageClient.ListImages(ctx, nil)
-			})
+			r, err := InterruptableRPC(
+				cliCtx.Context,
+				func(ctx context.Context) ([]*pb.Image, error) {
+					return imageClient.ListImages(ctx, nil)
+				},
+			)
 			if err != nil {
 				return err
 			}
@@ -482,9 +495,12 @@ the specified tag. To remove only a specific tag, use the container runtime's na
 			}
 
 			// Container images
-			containers, err := InterruptableRPC(cliCtx.Context, func(ctx context.Context) ([]*pb.Container, error) {
-				return runtimeClient.ListContainers(ctx, nil)
-			})
+			containers, err := InterruptableRPC(
+				cliCtx.Context,
+				func(ctx context.Context) ([]*pb.Container, error) {
+					return runtimeClient.ListContainers(ctx, nil)
+				},
+			)
 			if err != nil {
 				return err
 			}
@@ -540,9 +556,13 @@ the specified tag. To remove only a specific tag, use the container runtime's na
 				if len(repoTags) > 1 {
 					// Check if user specified a tag (contains ':' but doesn't start with 'sha256:')
 					// or a repo name (contains '/' or is a name like 'localhost')
-					isLikelyTag := !strings.HasPrefix(id, "sha256:") && (strings.Contains(id, ":") || strings.Contains(id, "/"))
+					isLikelyTag := !strings.HasPrefix(id, "sha256:") &&
+						(strings.Contains(id, ":") || strings.Contains(id, "/"))
 					if isLikelyTag {
-						logrus.Warnf("Image %q has multiple tags. Removing this image will delete all of the following tags:", id)
+						logrus.Warnf(
+							"Image %q has multiple tags. Removing this image will delete all of the following tags:",
+							id,
+						)
 
 						for _, tag := range repoTags {
 							logrus.Warnf("  %s", tag)
@@ -752,7 +772,15 @@ func normalizeRepoDigest(repoDigests []string) (repo, digest string) {
 
 // PullImageWithSandbox sends a PullImageRequest to the server, and parses
 // the returned PullImageResponse.
-func PullImageWithSandbox(ctx context.Context, client internalapi.ImageManagerService, image string, auth *pb.AuthConfig, sandbox *pb.PodSandboxConfig, ann map[string]string, timeout time.Duration) (*pb.PullImageResponse, error) {
+func PullImageWithSandbox(
+	ctx context.Context,
+	client internalapi.ImageManagerService,
+	image string,
+	auth *pb.AuthConfig,
+	sandbox *pb.PodSandboxConfig,
+	ann map[string]string,
+	timeout time.Duration,
+) (*pb.PullImageResponse, error) {
 	request := &pb.PullImageRequest{
 		Image: &pb.ImageSpec{
 			Image:       image,
@@ -778,7 +806,12 @@ func PullImageWithSandbox(ctx context.Context, client internalapi.ImageManagerSe
 	}
 
 	res, err := InterruptableRPC(ctx, func(ctx context.Context) (string, error) {
-		return client.PullImage(ctx, request.GetImage(), request.GetAuth(), request.GetSandboxConfig())
+		return client.PullImage(
+			ctx,
+			request.GetImage(),
+			request.GetAuth(),
+			request.GetSandboxConfig(),
+		)
 	})
 	if err != nil {
 		return nil, err
@@ -792,8 +825,15 @@ func PullImageWithSandbox(ctx context.Context, client internalapi.ImageManagerSe
 
 // ListImages sends a ListImagesRequest to the server, and parses
 // the returned ListImagesResponse.
-func ListImages(ctx context.Context, client internalapi.ImageManagerService, nameFilter string, conditionFilters []string) (*pb.ListImagesResponse, error) {
-	request := &pb.ListImagesRequest{Filter: &pb.ImageFilter{Image: &pb.ImageSpec{Image: nameFilter}}}
+func ListImages(
+	ctx context.Context,
+	client internalapi.ImageManagerService,
+	nameFilter string,
+	conditionFilters []string,
+) (*pb.ListImagesResponse, error) {
+	request := &pb.ListImagesRequest{
+		Filter: &pb.ImageFilter{Image: &pb.ImageSpec{Image: nameFilter}},
+	}
 	logrus.Debugf("ListImagesRequest: %v", request)
 
 	res, err := InterruptableRPC(ctx, func(ctx context.Context) ([]*pb.Image, error) {
@@ -844,7 +884,10 @@ func filterImagesList(imageList []*pb.Image, filters []string) ([]*pb.Image, err
 			filtered = filterByDangling(strings.TrimPrefix(filter, "dangling="), filtered)
 		case strings.HasPrefix(filter, "reference="):
 			var err error
-			if filtered, err = filterByReference(strings.TrimPrefix(filter, "reference="), filtered); err != nil {
+			if filtered, err = filterByReference(
+				strings.TrimPrefix(filter, "reference="),
+				filtered,
+			); err != nil {
 				return []*pb.Image{}, err
 			}
 		case strings.HasPrefix(filter, "since="):
@@ -931,7 +974,12 @@ func filterByDangling(filterValue string, imageList []*pb.Image) []*pb.Image {
 
 // ImageStatus sends an ImageStatusRequest to the server, and parses
 // the returned ImageStatusResponse.
-func ImageStatus(ctx context.Context, client internalapi.ImageManagerService, image string, verbose bool) (*pb.ImageStatusResponse, error) {
+func ImageStatus(
+	ctx context.Context,
+	client internalapi.ImageManagerService,
+	image string,
+	verbose bool,
+) (*pb.ImageStatusResponse, error) {
 	request := &pb.ImageStatusRequest{
 		Image:   &pb.ImageSpec{Image: image},
 		Verbose: verbose,
@@ -969,7 +1017,10 @@ func RemoveImage(ctx context.Context, client internalapi.ImageManagerService, im
 
 // ImageFsInfo sends an ImageStatusRequest to the server, and parses
 // the returned ImageFsInfoResponse.
-func ImageFsInfo(ctx context.Context, client internalapi.ImageManagerService) (*pb.ImageFsInfoResponse, error) {
+func ImageFsInfo(
+	ctx context.Context,
+	client internalapi.ImageManagerService,
+) (*pb.ImageFsInfoResponse, error) {
 	res, err := InterruptableRPC(ctx, func(ctx context.Context) (*pb.ImageFsInfoResponse, error) {
 		return client.ImageFsInfo(ctx)
 	})

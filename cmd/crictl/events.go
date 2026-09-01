@@ -56,7 +56,7 @@ var eventsCommand = &cli.Command{
 				return fmt.Errorf("template can't be used with %q format", format)
 			}
 		case outputTypeGoTemplate:
-			if err := validateTemplate(c.String(("template"))); err != nil {
+			if err := validateTemplate(c.String("template")); err != nil {
 				return fmt.Errorf("failed to parse go-template: %w", err)
 			}
 		default:

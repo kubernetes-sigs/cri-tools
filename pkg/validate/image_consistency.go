@@ -38,74 +38,86 @@ var _ = framework.KubeDescribe("Image Consistency", func() {
 	})
 
 	// Test: Immediate call to ListImages (and other methods like GetImage) after removing the image must not have this image information
-	It("should not list or get image status immediately after removal [Conformance]", Serial, func(ctx SpecContext) {
-		imageName := testImageWithTag
+	It(
+		"should not list or get image status immediately after removal [Conformance]",
+		Serial,
+		func(ctx SpecContext) {
+			imageName := testImageWithTag
 
-		// Ensure image is absent before test
-		removeImage(ctx, c, imageName)
+			// Ensure image is absent before test
+			removeImage(ctx, c, imageName)
 
-		By("Pulling image: " + imageName)
-		framework.PullPublicImage(ctx, c, imageName, testImagePodSandbox)
+			By("Pulling image: " + imageName)
+			framework.PullPublicImage(ctx, c, imageName, testImagePodSandbox)
 
-		By("Removing image: " + imageName)
-		removeImage(ctx, c, imageName)
+			By("Removing image: " + imageName)
+			removeImage(ctx, c, imageName)
 
-		By("Verifying image is not listed")
+			By("Verifying image is not listed")
 
-		images := framework.ListImage(ctx, c, &runtimeapi.ImageFilter{})
-		found := false
+			images := framework.ListImage(ctx, c, &runtimeapi.ImageFilter{})
+			found := false
 
-		for _, img := range images {
-			if slices.Contains(img.GetRepoTags(), imageName) {
-				found = true
+			for _, img := range images {
+				if slices.Contains(img.GetRepoTags(), imageName) {
+					found = true
+				}
+
+				if found {
+					break
+				}
 			}
 
-			if found {
-				break
+			Expect(found).To(BeFalse(), "Image %q should not be listed after removal", imageName)
+
+			By("Verifying image status is nil")
+
+			imageStatus := framework.ImageStatus(ctx, c, imageName)
+			Expect(
+				imageStatus,
+			).To(BeNil(), "Image status for %q should be nil after removal", imageName)
+		},
+	)
+
+	It(
+		"should list and get image status immediately after pulling [Conformance]",
+		Serial,
+		func(ctx SpecContext) {
+			imageName := testImageWithTag
+
+			// Ensure image is absent before test
+			removeImage(ctx, c, imageName)
+
+			By("Pulling image: " + imageName)
+			framework.PullPublicImage(ctx, c, imageName, testImagePodSandbox)
+			// Defer removal to ensure cleanup even if test fails
+			defer removeImage(ctx, c, imageName)
+
+			By("Verifying image is listed")
+
+			images := framework.ListImage(ctx, c, &runtimeapi.ImageFilter{})
+			found := false
+
+			for _, img := range images {
+				if slices.Contains(img.GetRepoTags(), imageName) {
+					found = true
+				}
+
+				if found {
+					break
+				}
 			}
-		}
 
-		Expect(found).To(BeFalse(), "Image %q should not be listed after removal", imageName)
+			Expect(found).To(BeTrue(), "Image %q should be listed after pulling", imageName)
 
-		By("Verifying image status is nil")
+			By("Verifying image status is not nil")
 
-		imageStatus := framework.ImageStatus(ctx, c, imageName)
-		Expect(imageStatus).To(BeNil(), "Image status for %q should be nil after removal", imageName)
-	})
-
-	It("should list and get image status immediately after pulling [Conformance]", Serial, func(ctx SpecContext) {
-		imageName := testImageWithTag
-
-		// Ensure image is absent before test
-		removeImage(ctx, c, imageName)
-
-		By("Pulling image: " + imageName)
-		framework.PullPublicImage(ctx, c, imageName, testImagePodSandbox)
-		// Defer removal to ensure cleanup even if test fails
-		defer removeImage(ctx, c, imageName)
-
-		By("Verifying image is listed")
-
-		images := framework.ListImage(ctx, c, &runtimeapi.ImageFilter{})
-		found := false
-
-		for _, img := range images {
-			if slices.Contains(img.GetRepoTags(), imageName) {
-				found = true
-			}
-
-			if found {
-				break
-			}
-		}
-
-		Expect(found).To(BeTrue(), "Image %q should be listed after pulling", imageName)
-
-		By("Verifying image status is not nil")
-
-		imageStatus := framework.ImageStatus(ctx, c, imageName)
-		Expect(imageStatus).NotTo(BeNil(), "Image status for %q should be available after pulling", imageName)
-	})
+			imageStatus := framework.ImageStatus(ctx, c, imageName)
+			Expect(
+				imageStatus,
+			).NotTo(BeNil(), "Image status for %q should be available after pulling", imageName)
+		},
+	)
 
 	// TODO: Implement ImageFsInfo tests
 	//
@@ -125,57 +137,67 @@ var _ = framework.KubeDescribe("Image Consistency", func() {
 	//   //    acknowledging that the cleanup might be asynchronous.
 	// })
 
-	It("should not fail on simultaneous RemoveImage calls [Conformance]", Serial, func(ctx SpecContext) {
-		imageName := testImageWithTag
-		removeImage(ctx, c, imageName) // Ensure image is not present
+	It(
+		"should not fail on simultaneous RemoveImage calls [Conformance]",
+		Serial,
+		func(ctx SpecContext) {
+			imageName := testImageWithTag
+			removeImage(ctx, c, imageName) // Ensure image is not present
 
-		By("Pulling an image to be removed")
-		framework.PullPublicImage(ctx, c, imageName, testImagePodSandbox)
+			By("Pulling an image to be removed")
+			framework.PullPublicImage(ctx, c, imageName, testImagePodSandbox)
 
-		// It is important to get the image ID after pulling, as CRI-O behavior may be different
-		// when removing by name vs by ID.
+			// It is important to get the image ID after pulling, as CRI-O behavior may be different
+			// when removing by name vs by ID.
 
-		img := framework.ImageStatus(ctx, c, imageName)
-		Expect(img).NotTo(BeNil(), "Image status for %q should be available after pulling", imageName)
-		imageID := img.GetId()
+			img := framework.ImageStatus(ctx, c, imageName)
+			Expect(
+				img,
+			).NotTo(BeNil(), "Image status for %q should be available after pulling", imageName)
+			imageID := img.GetId()
 
-		By("Concurrently removing the same image")
+			By("Concurrently removing the same image")
 
-		var wg sync.WaitGroup
-		// Channel to collect results from each goroutine
-		type removeResult struct {
-			err        error
-			imageFound bool
-		}
+			var wg sync.WaitGroup
+			// Channel to collect results from each goroutine
+			type removeResult struct {
+				err        error
+				imageFound bool
+			}
 
-		results := make(chan removeResult, 5)
+			results := make(chan removeResult, 5)
 
-		for range 5 {
-			wg.Go(func() {
-				// Use the specific image ID for removal to avoid ambiguity
-				remErr := c.RemoveImage(ctx, &runtimeapi.ImageSpec{Image: imageID})
+			for range 5 {
+				wg.Go(func() {
+					// Use the specific image ID for removal to avoid ambiguity
+					remErr := c.RemoveImage(ctx, &runtimeapi.ImageSpec{Image: imageID})
 
-				// Immediately check image status after removal attempt
-				status := framework.ImageStatus(ctx, c, imageID)
-				imageFound := (status != nil)
+					// Immediately check image status after removal attempt
+					status := framework.ImageStatus(ctx, c, imageID)
+					imageFound := (status != nil)
 
-				results <- removeResult{err: remErr, imageFound: imageFound}
-			})
-		}
+					results <- removeResult{err: remErr, imageFound: imageFound}
+				})
+			}
 
-		wg.Wait()
-		close(results)
+			wg.Wait()
+			close(results)
 
-		// Verify results: all calls should succeed, and image should be gone immediately after each call
-		for res := range results {
-			Expect(res.err).NotTo(HaveOccurred(), "Concurrent RemoveImage calls should not return an error")
-			// Assert immediate disappearance of the image
-			Expect(res.imageFound).To(BeFalse(), "Image should be missing immediately after RemoveImage call returns")
-		}
+			// Verify results: all calls should succeed, and image should be gone immediately after each call
+			for res := range results {
+				Expect(
+					res.err,
+				).NotTo(HaveOccurred(), "Concurrent RemoveImage calls should not return an error")
+				// Assert immediate disappearance of the image
+				Expect(
+					res.imageFound,
+				).To(BeFalse(), "Image should be missing immediately after RemoveImage call returns")
+			}
 
-		By("Verifying the image is completely removed (final check)")
+			By("Verifying the image is completely removed (final check)")
 
-		status := framework.ImageStatus(ctx, c, imageID)
-		Expect(status).To(BeNil(), "Image should be removed after all concurrent calls")
-	})
+			status := framework.ImageStatus(ctx, c, imageID)
+			Expect(status).To(BeNil(), "Image should be removed after all concurrent calls")
+		},
+	)
 })

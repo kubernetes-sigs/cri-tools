@@ -58,7 +58,14 @@ var _ = framework.KubeDescribe("Streaming", func() {
 
 			By("create a web server container")
 
-			containerID := createHostNetWebServerContainer(ctx, rc, ic, podID, podConfig, "container-for-host-net-portforward-test")
+			containerID := createHostNetWebServerContainer(
+				ctx,
+				rc,
+				ic,
+				podID,
+				podConfig,
+				"container-for-host-net-portforward-test",
+			)
 
 			By("start the web server container")
 			startContainer(ctx, rc, containerID)
@@ -69,7 +76,13 @@ var _ = framework.KubeDescribe("Streaming", func() {
 			req := createDefaultPortForward(ctx, rc, podID)
 
 			By("check the output of portforward")
-			checkPortForward(ctx, rc, req, webServerHostPortForHostNetPortForward, webServerHostNetContainerPort)
+			checkPortForward(
+				ctx,
+				rc,
+				req,
+				webServerHostPortForHostNetPortForward,
+				webServerHostNetContainerPort,
+			)
 		})
 	})
 })

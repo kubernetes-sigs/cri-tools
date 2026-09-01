@@ -93,7 +93,11 @@ type NRITestPlugin struct {
 // It captures the existing pods/containers the runtime reconciles the plugin
 // with, then signals readiness (registration/configuration complete) via the
 // ready channel.
-func (p *NRITestPlugin) Synchronize(ctx context.Context, pods []*nri.PodSandbox, containers []*nri.Container) ([]*nri.ContainerUpdate, error) {
+func (p *NRITestPlugin) Synchronize(
+	ctx context.Context,
+	pods []*nri.PodSandbox,
+	containers []*nri.Container,
+) ([]*nri.ContainerUpdate, error) {
 	p.mu.Lock()
 
 	p.syncPods = make([]string, 0, len(pods))
@@ -180,7 +184,11 @@ func (p *NRITestPlugin) RemovePodSandbox(ctx context.Context, pod *nri.PodSandbo
 }
 
 // CreateContainer implements stub.CreateContainerInterface.
-func (p *NRITestPlugin) CreateContainer(ctx context.Context, pod *nri.PodSandbox, container *nri.Container) (*nri.ContainerAdjustment, []*nri.ContainerUpdate, error) {
+func (p *NRITestPlugin) CreateContainer(
+	ctx context.Context,
+	pod *nri.PodSandbox,
+	container *nri.Container,
+) (*nri.ContainerAdjustment, []*nri.ContainerUpdate, error) {
 	p.recordContainerEvent(EventCreateContainer, pod, container)
 
 	if p.OnCreateContainer != nil {
@@ -193,7 +201,11 @@ func (p *NRITestPlugin) CreateContainer(ctx context.Context, pod *nri.PodSandbox
 }
 
 // StartContainer implements stub.StartContainerInterface.
-func (p *NRITestPlugin) StartContainer(ctx context.Context, pod *nri.PodSandbox, container *nri.Container) error {
+func (p *NRITestPlugin) StartContainer(
+	ctx context.Context,
+	pod *nri.PodSandbox,
+	container *nri.Container,
+) error {
 	p.recordContainerEvent(EventStartContainer, pod, container)
 
 	if p.OnStartContainer != nil {
@@ -204,7 +216,11 @@ func (p *NRITestPlugin) StartContainer(ctx context.Context, pod *nri.PodSandbox,
 }
 
 // StopContainer implements stub.StopContainerInterface.
-func (p *NRITestPlugin) StopContainer(ctx context.Context, pod *nri.PodSandbox, container *nri.Container) ([]*nri.ContainerUpdate, error) {
+func (p *NRITestPlugin) StopContainer(
+	ctx context.Context,
+	pod *nri.PodSandbox,
+	container *nri.Container,
+) ([]*nri.ContainerUpdate, error) {
 	p.recordContainerEvent(EventStopContainer, pod, container)
 
 	if p.OnStopContainer != nil {
@@ -217,7 +233,11 @@ func (p *NRITestPlugin) StopContainer(ctx context.Context, pod *nri.PodSandbox, 
 }
 
 // RemoveContainer implements stub.RemoveContainerInterface.
-func (p *NRITestPlugin) RemoveContainer(ctx context.Context, pod *nri.PodSandbox, container *nri.Container) error {
+func (p *NRITestPlugin) RemoveContainer(
+	ctx context.Context,
+	pod *nri.PodSandbox,
+	container *nri.Container,
+) error {
 	p.recordContainerEvent(EventRemoveContainer, pod, container)
 
 	if p.OnRemoveContainer != nil {
@@ -286,7 +306,12 @@ func (p *NRITestPlugin) WaitForEventCount(count int, timeout time.Duration) ([]N
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	return nil, fmt.Errorf("timed out waiting for %d NRI events after %v (got %d)", count, timeout, len(p.events))
+	return nil, fmt.Errorf(
+		"timed out waiting for %d NRI events after %v (got %d)",
+		count,
+		timeout,
+		len(p.events),
+	)
 }
 
 // FilterEventsByPodID returns events matching a specific pod sandbox ID.
@@ -316,7 +341,11 @@ func (p *NRITestPlugin) recordPodEvent(eventType NRIEventType, pod *nri.PodSandb
 	})
 }
 
-func (p *NRITestPlugin) recordContainerEvent(eventType NRIEventType, pod *nri.PodSandbox, container *nri.Container) {
+func (p *NRITestPlugin) recordContainerEvent(
+	eventType NRIEventType,
+	pod *nri.PodSandbox,
+	container *nri.Container,
+) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -346,7 +375,10 @@ type NRITestStub struct {
 // tests can install hooks that fire during the registration/Synchronize
 // handshake (e.g. OnSynchronize), which cannot be set after this call returns
 // because the handshake has already completed by then.
-func StartNRITestStub(pluginName, pluginIdx string, configure ...func(*NRITestPlugin)) (*NRITestStub, error) {
+func StartNRITestStub(
+	pluginName, pluginIdx string,
+	configure ...func(*NRITestPlugin),
+) (*NRITestStub, error) {
 	socketPath := framework.TestContext.NRISocketPath
 	if socketPath == "" {
 		return nil, errors.New("NRI socket path not configured")
@@ -438,12 +470,16 @@ func StartNRITestStub(pluginName, pluginIdx string, configure ...func(*NRITestPl
 				case <-time.After(30 * time.Second):
 					// Permanently stuck — attempt Stop() anyway to release resources,
 					// then accept the goroutine leak.
-					framework.Logf("NRI stub goroutine still running after 30s; calling Stop() and accepting leak")
+					framework.Logf(
+						"NRI stub goroutine still running after 30s; calling Stop() and accepting leak",
+					)
 					s.Stop()
 				}
 			}()
 
-			return nil, errors.New("NRI stub did not become ready within 10s and failed to stop within 5s")
+			return nil, errors.New(
+				"NRI stub did not become ready within 10s and failed to stop within 5s",
+			)
 		}
 	}
 

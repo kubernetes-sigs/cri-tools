@@ -155,7 +155,9 @@ var _ = framework.KubeDescribe("Image Volume [Feature:ImageVolume]", func() {
 				found = true
 				// Check if the new ImageSpec.image_ref (tag 20) field is populated (KEP-5365).
 				if m.GetImage() == nil || m.GetImage().GetImageRef() == "" {
-					Skip("Image Volume digest reporting (ImageSpec.image_ref tag 20) is not yet supported by the runtime.")
+					Skip(
+						"Image Volume digest reporting (ImageSpec.image_ref tag 20) is not yet supported by the runtime.",
+					)
 				}
 
 				framework.Logf("Found Image Volume mount: Image.Image=%q, Image.ImageRef=%q",
@@ -169,7 +171,9 @@ var _ = framework.KubeDescribe("Image Volume [Feature:ImageVolume]", func() {
 		}
 
 		if !found {
-			Skip("Image Volume mount not found in ContainerStatus; runtime might not support Image Volumes.")
+			Skip(
+				"Image Volume mount not found in ContainerStatus; runtime might not support Image Volumes.",
+			)
 		}
 	})
 
@@ -219,7 +223,9 @@ var _ = framework.KubeDescribe("Image Volume [Feature:ImageVolume]", func() {
 
 		defer func() {
 			By("stop Container")
-			Expect(rc.StopContainer(ctx, containerID, defaultStopContainerTimeout)).NotTo(HaveOccurred())
+			Expect(
+				rc.StopContainer(ctx, containerID, defaultStopContainerTimeout),
+			).NotTo(HaveOccurred())
 			By("delete Container")
 			Expect(rc.RemoveContainer(ctx, containerID)).NotTo(HaveOccurred())
 		}()
@@ -233,17 +239,29 @@ var _ = framework.KubeDescribe("Image Volume [Feature:ImageVolume]", func() {
 		// We use /bin/sh which is a standard binary present in the test image.
 		cmd := []string{"ls", "-A", containerPath + "/bin/sh"}
 
-		_, _, err = rc.ExecSync(ctx, containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+		_, _, err = rc.ExecSync(
+			ctx,
+			containerID,
+			cmd,
+			time.Duration(defaultExecSyncTimeout)*time.Second,
+		)
 		if err != nil {
 			// Log mount point contents for debugging before skipping.
 			debugCmd := []string{"ls", "-R", containerPath}
-			dStdout, _, _ := rc.ExecSync(ctx, containerID, debugCmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+			dStdout, _, _ := rc.ExecSync(
+				ctx,
+				containerID,
+				debugCmd,
+				time.Duration(defaultExecSyncTimeout)*time.Second,
+			)
 			framework.Logf("Debug: contents of %s:\n%s", containerPath, string(dStdout))
 
 			// The runtime accepted the container but the mount point has no image
 			// content. This happens when the runtime silently ignores the Image
 			// field in mounts (e.g. containerd 1.7).
-			Skip("Runtime created the container but did not mount the image volume; Image Volumes are not supported.")
+			Skip(
+				"Runtime created the container but did not mount the image volume; Image Volumes are not supported.",
+			)
 		}
 
 		// TODO: uncomment once Skip above is eliminated (1.7 of containerd is EOL)
@@ -255,7 +273,12 @@ var _ = framework.KubeDescribe("Image Volume [Feature:ImageVolume]", func() {
 
 		var stderr []byte
 
-		_, stderr, err = rc.ExecSync(ctx, containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+		_, stderr, err = rc.ExecSync(
+			ctx,
+			containerID,
+			cmd,
+			time.Duration(defaultExecSyncTimeout)*time.Second,
+		)
 		// We expect an error here because the mount is read-only
 		Expect(err).To(HaveOccurred(), "writing to image volume should fail")
 		framework.Logf("Write attempt to image volume failed as expected: %s", stderr)
@@ -263,8 +286,17 @@ var _ = framework.KubeDescribe("Image Volume [Feature:ImageVolume]", func() {
 		By("Verifying the image volume is NOT mounted with noexec")
 		// The test image is busybox-based, so /bin/ls should be executable.
 		cmd = []string{containerPath + "/bin/ls", containerPath}
-		_, stderr, err = rc.ExecSync(ctx, containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
-		framework.ExpectNoError(err, "failed to execute binary from image volume (might be noexec): stderr: %s", stderr)
+		_, stderr, err = rc.ExecSync(
+			ctx,
+			containerID,
+			cmd,
+			time.Duration(defaultExecSyncTimeout)*time.Second,
+		)
+		framework.ExpectNoError(
+			err,
+			"failed to execute binary from image volume (might be noexec): stderr: %s",
+			stderr,
+		)
 		framework.Logf("Binary execution from image volume succeeded as expected")
 	})
 
@@ -319,7 +351,9 @@ var _ = framework.KubeDescribe("Image Volume [Feature:ImageVolume]", func() {
 				Expect(rc.RemoveContainer(ctx, containerID)).NotTo(HaveOccurred())
 			}()
 
-			Skip("Runtime accepted Image Volume with Readonly=false; rejection is not yet enforced.")
+			Skip(
+				"Runtime accepted Image Volume with Readonly=false; rejection is not yet enforced.",
+			)
 		}
 
 		By("Verified that Runtime rejected invalid Readonly=false configuration: " + err.Error())
@@ -380,9 +414,19 @@ var _ = framework.KubeDescribe("Image Volume [Feature:ImageVolume]", func() {
 			// subpath mounts (unlinkat fails on the read-only filesystem).
 			defer func() {
 				By("stop Container")
-				rc.StopContainer(ctx, containerID, defaultStopContainerTimeout) //nolint:errcheck // best-effort, CRI-O subpath bug
+
+				_ = rc.StopContainer(
+					ctx,
+					containerID,
+					defaultStopContainerTimeout,
+				)
+
 				By("delete Container")
-				rc.RemoveContainer(ctx, containerID) //nolint:errcheck // best-effort, CRI-O subpath bug
+
+				_ = rc.RemoveContainer(
+					ctx,
+					containerID,
+				)
 			}()
 
 			By("Starting the container")
@@ -395,7 +439,12 @@ var _ = framework.KubeDescribe("Image Volume [Feature:ImageVolume]", func() {
 			// which predates image volume support), the mount point will not exist at all.
 			cmd := []string{"ls", containerPath}
 
-			_, _, err = rc.ExecSync(ctx, containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+			_, _, err = rc.ExecSync(
+				ctx,
+				containerID,
+				cmd,
+				time.Duration(defaultExecSyncTimeout)*time.Second,
+			)
 			if err != nil {
 				Skip("Image Volumes are not supported by the runtime (mount point does not exist).")
 			}
@@ -405,17 +454,34 @@ var _ = framework.KubeDescribe("Image Volume [Feature:ImageVolume]", func() {
 			// /etc/passwd would be at containerPath/etc/passwd instead of containerPath/passwd.
 			cmd = []string{"ls", containerPath + "/etc/passwd"}
 
-			_, _, err = rc.ExecSync(ctx, containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+			_, _, err = rc.ExecSync(
+				ctx,
+				containerID,
+				cmd,
+				time.Duration(defaultExecSyncTimeout)*time.Second,
+			)
 			if err == nil {
-				Skip("Runtime appears to have mounted the full image root, ignoring the subPath field; subPath support is not yet implemented.")
+				Skip(
+					"Runtime appears to have mounted the full image root, ignoring the subPath field; subPath support is not yet implemented.",
+				)
 			}
 
 			By("Verifying subPath content is visible at the mount point")
 			// With subPath="etc", /etc/passwd should appear directly at containerPath/passwd.
 			cmd = []string{"ls", containerPath + "/passwd"}
 
-			stdout, stderr, err := rc.ExecSync(ctx, containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
-			framework.ExpectNoError(err, "failed to find file in image volume subPath: stdout: %s, stderr: %s", stdout, stderr)
+			stdout, stderr, err := rc.ExecSync(
+				ctx,
+				containerID,
+				cmd,
+				time.Duration(defaultExecSyncTimeout)*time.Second,
+			)
+			framework.ExpectNoError(
+				err,
+				"failed to find file in image volume subPath: stdout: %s, stderr: %s",
+				stdout,
+				stderr,
+			)
 		})
 
 		It("should fail when subPath does not exist in the image", func(ctx SpecContext) {
@@ -470,7 +536,9 @@ var _ = framework.KubeDescribe("Image Volume [Feature:ImageVolume]", func() {
 					Expect(rc.RemoveContainer(ctx, containerID)).NotTo(HaveOccurred())
 				}()
 
-				Skip("Runtime accepted non-existing subPath without error; image volume subPath validation is not yet implemented.")
+				Skip(
+					"Runtime accepted non-existing subPath without error; image volume subPath validation is not yet implemented.",
+				)
 			}
 
 			framework.Logf("Container creation failed as expected: %v", err)

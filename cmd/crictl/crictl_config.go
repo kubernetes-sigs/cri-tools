@@ -156,7 +156,10 @@ func configFromContext(ctx *cli.Context) *CrictlConfig {
 // GetRuntimeService returns the runtime service client. If an override is set
 // (for testing), it is returned directly. Otherwise a new gRPC connection is
 // created using the configured endpoint and timeout.
-func (cfg *CrictlConfig) GetRuntimeService(ctx context.Context, timeout time.Duration) (internalapi.RuntimeService, error) {
+func (cfg *CrictlConfig) GetRuntimeService(
+	ctx context.Context,
+	timeout time.Duration,
+) (internalapi.RuntimeService, error) {
 	if cfg.runtimeServiceOverride != nil {
 		return cfg.runtimeServiceOverride, nil
 	}
@@ -226,7 +229,9 @@ func (cfg *CrictlConfig) GetRuntimeService(ctx context.Context, timeout time.Dur
 // GetImageService returns the image service client. If an override is set
 // (for testing), it is returned directly. Otherwise a new gRPC connection is
 // created using the configured endpoint and timeout.
-func (cfg *CrictlConfig) GetImageService(ctx context.Context) (internalapi.ImageManagerService, error) {
+func (cfg *CrictlConfig) GetImageService(
+	ctx context.Context,
+) (internalapi.ImageManagerService, error) {
 	if cfg.imageServiceOverride != nil {
 		return cfg.imageServiceOverride, nil
 	}
@@ -306,7 +311,13 @@ func connectWithRetry[T any](
 
 	for attempt := 0; maxRetries < 0 || attempt < maxRetries; attempt++ {
 		if maxRetries > 0 {
-			logrus.Debugf("Connection attempt %d/%d failed: %v, retrying in %v", attempt+1, maxRetries, err, delay)
+			logrus.Debugf(
+				"Connection attempt %d/%d failed: %v, retrying in %v",
+				attempt+1,
+				maxRetries,
+				err,
+				delay,
+			)
 		} else {
 			logrus.Debugf("Connection attempt %d failed: %v, retrying in %v", attempt+1, err, delay)
 		}

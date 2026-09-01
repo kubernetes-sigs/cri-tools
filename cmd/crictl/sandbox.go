@@ -40,15 +40,17 @@ var runPodCommand = &cli.Command{
 	Name:      "runp",
 	Usage:     "Run a new pod",
 	ArgsUsage: "pod-config.[json|yaml]",
-	Subcommands: []*cli.Command{{
-		Name:      "jsonschema",
-		Aliases:   []string{"js"},
-		Usage:     "Display the JSON schema for the pod-config.json",
-		UsageText: "The schema will be generated from the PodSandboxConfig of the CRI API compiled with this version of crictl",
-		Action: func(*cli.Context) error {
-			return printJSONSchema(&pb.PodSandboxConfig{})
+	Subcommands: []*cli.Command{
+		{
+			Name:      "jsonschema",
+			Aliases:   []string{"js"},
+			Usage:     "Display the JSON schema for the pod-config.json",
+			UsageText: "The schema will be generated from the PodSandboxConfig of the CRI API compiled with this version of crictl",
+			Action: func(*cli.Context) error {
+				return printJSONSchema(&pb.PodSandboxConfig{})
+			},
 		},
-	}},
+	},
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:    "runtime",
@@ -68,7 +70,9 @@ var runPodCommand = &cli.Command{
 			return cli.ShowSubcommandHelp(c)
 		}
 
-		runtimeClient, err := configFromContext(c).GetRuntimeService(c.Context, c.Duration("cancel-timeout"))
+		runtimeClient, err := configFromContext(
+			c,
+		).GetRuntimeService(c.Context, c.Duration("cancel-timeout"))
 		if err != nil {
 			return err
 		}
@@ -140,9 +144,14 @@ var removePodCommand = &cli.Command{
 			return err
 		}
 
-		ids, err := collectIDs(ctx.Context, ctx, func(ctx context.Context) ([]*pb.PodSandbox, error) {
-			return runtimeClient.ListPodSandbox(ctx, nil)
-		}, "pod")
+		ids, err := collectIDs(
+			ctx.Context,
+			ctx,
+			func(ctx context.Context) ([]*pb.PodSandbox, error) {
+				return runtimeClient.ListPodSandbox(ctx, nil)
+			},
+			"pod",
+		)
 		if err != nil || len(ids) == 0 {
 			return err
 		}
@@ -150,9 +159,12 @@ var removePodCommand = &cli.Command{
 		funcs := []func() error{}
 		for _, id := range ids {
 			funcs = append(funcs, func() error {
-				resp, err := InterruptableRPC(ctx.Context, func(ctx context.Context) (*pb.PodSandboxStatusResponse, error) {
-					return runtimeClient.PodSandboxStatus(ctx, id, false)
-				})
+				resp, err := InterruptableRPC(
+					ctx.Context,
+					func(ctx context.Context) (*pb.PodSandboxStatusResponse, error) {
+						return runtimeClient.PodSandboxStatus(ctx, id, false)
+					},
+				)
 				if err != nil {
 					return fmt.Errorf("getting sandbox status of pod %q: %w", id, err)
 				}
@@ -374,7 +386,12 @@ var listPodCommand = &cli.Command{
 
 // RunPodSandbox sends a RunPodSandboxRequest to the server, and parses
 // the returned RunPodSandboxResponse.
-func RunPodSandbox(ctx context.Context, client internalapi.RuntimeService, config *pb.PodSandboxConfig, runtime string) (string, error) {
+func RunPodSandbox(
+	ctx context.Context,
+	client internalapi.RuntimeService,
+	config *pb.PodSandboxConfig,
+	runtime string,
+) (string, error) {
 	request := &pb.RunPodSandboxRequest{
 		Config:         config,
 		RuntimeHandler: runtime,
@@ -455,13 +472,23 @@ func marshalPodSandboxStatus(ps *pb.PodSandboxStatus) (string, error) {
 
 // podSandboxStatus sends a PodSandboxStatusRequest to the server, and parses
 // the returned PodSandboxStatusResponse.
-func podSandboxStatus(ctx context.Context, client internalapi.RuntimeService, ids []string, output string, quiet bool, tmplStr string) error {
+func podSandboxStatus(
+	ctx context.Context,
+	client internalapi.RuntimeService,
+	ids []string,
+	output string,
+	quiet bool,
+	tmplStr string,
+) error {
 	return resourceStatus(
 		ctx, ids, output, tmplStr, quiet,
 		func(ctx context.Context, id string, verbose bool) (*pb.PodSandboxStatusResponse, error) {
-			r, err := InterruptableRPC(ctx, func(ctx context.Context) (*pb.PodSandboxStatusResponse, error) {
-				return client.PodSandboxStatus(ctx, id, verbose)
-			})
+			r, err := InterruptableRPC(
+				ctx,
+				func(ctx context.Context) (*pb.PodSandboxStatusResponse, error) {
+					return client.PodSandboxStatus(ctx, id, verbose)
+				},
+			)
 			if err != nil {
 				return nil, fmt.Errorf("get pod sandbox status: %w", err)
 			}
@@ -535,7 +562,11 @@ func outputPodSandboxStatusTable(r *pb.PodSandboxStatusResponse, verbose bool) {
 
 // ListPodSandboxes sends a ListPodSandboxRequest to the server, and parses
 // the returned ListPodSandboxResponse.
-func ListPodSandboxes(ctx context.Context, client internalapi.RuntimeService, opts *listOptions) ([]*pb.PodSandbox, error) {
+func ListPodSandboxes(
+	ctx context.Context,
+	client internalapi.RuntimeService,
+	opts *listOptions,
+) ([]*pb.PodSandbox, error) {
 	filter := &pb.PodSandboxFilter{}
 	if opts.id != "" {
 		filter.Id = opts.id
@@ -580,7 +611,11 @@ func ListPodSandboxes(ctx context.Context, client internalapi.RuntimeService, op
 
 // OutputPodSandboxes sends a ListPodSandboxRequest to the server, and parses
 // the returned ListPodSandboxResponse for output.
-func OutputPodSandboxes(ctx context.Context, client internalapi.RuntimeService, opts *listOptions) error {
+func OutputPodSandboxes(
+	ctx context.Context,
+	client internalapi.RuntimeService,
+	opts *listOptions,
+) error {
 	r, err := ListPodSandboxes(ctx, client, opts)
 	if err != nil {
 		return fmt.Errorf("list pod sandboxes: %w", err)

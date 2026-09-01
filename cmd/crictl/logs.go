@@ -40,7 +40,11 @@ const (
 )
 
 // NewLogOptions converts PodLogOptions to LogOptions.
-func NewLogOptions(follow, timestamps bool, since time.Time, tailLines, limitBytes *int64) *logs.LogOptions {
+func NewLogOptions(
+	follow, timestamps bool,
+	since time.Time,
+	tailLines, limitBytes *int64,
+) *logs.LogOptions {
 	res := &logs.LogOptions{
 		Follow:    follow,
 		Timestamp: timestamps,
@@ -156,9 +160,12 @@ var logsCommand = &cli.Command{
 
 		logOptions := NewLogOptions(c.Bool("follow"), timestamp, since, &tailLines, &limitBytes)
 
-		status, err := InterruptableRPC(c.Context, func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
-			return runtimeService.ContainerStatus(ctx, containerID, false)
-		})
+		status, err := InterruptableRPC(
+			c.Context,
+			func(ctx context.Context) (*pb.ContainerStatusResponse, error) {
+				return runtimeService.ContainerStatus(ctx, containerID, false)
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -171,7 +178,10 @@ var logsCommand = &cli.Command{
 		if previous {
 			containerAttempt := status.GetStatus().GetMetadata().GetAttempt()
 			if containerAttempt == uint32(0) {
-				return fmt.Errorf("previous terminated container %s not found", status.GetStatus().GetMetadata().GetName())
+				return fmt.Errorf(
+					"previous terminated container %s not found",
+					status.GetStatus().GetMetadata().GetName(),
+				)
 			}
 
 			dotIdx := strings.LastIndex(logPath, ".")
@@ -181,7 +191,12 @@ var logsCommand = &cli.Command{
 				ext = logPath[dotIdx:]
 			}
 
-			logPath = fmt.Sprintf("%s%s%s", logPath[:strings.LastIndex(logPath, "/")+1], strconv.FormatUint(uint64(containerAttempt-1), 10), ext)
+			logPath = fmt.Sprintf(
+				"%s%s%s",
+				logPath[:strings.LastIndex(logPath, "/")+1],
+				strconv.FormatUint(uint64(containerAttempt-1), 10),
+				ext,
+			)
 		}
 		// build a WithCancel context based on cli.context
 		readLogCtx, cancelFn := context.WithCancel(c.Context)
@@ -217,7 +232,15 @@ var logsCommand = &cli.Command{
 			stdoutStream = nil
 		}
 
-		return logs.ReadLogs(readLogCtx, logPath, status.GetStatus().GetId(), logOptions, runtimeService, stdoutStream, stderrStream)
+		return logs.ReadLogs(
+			readLogCtx,
+			logPath,
+			status.GetStatus().GetId(),
+			logOptions,
+			runtimeService,
+			stdoutStream,
+			stderrStream,
+		)
 	},
 }
 

@@ -57,7 +57,10 @@ var _ = t.Describe("config", func() {
 	})
 
 	It("should succeed to set config values", func() {
-		t.CrictlExpectSuccess("--config "+configFile.Name()+" config --set runtime-endpoint=foo,timeout=10", "")
+		t.CrictlExpectSuccess(
+			"--config "+configFile.Name()+" config --set runtime-endpoint=foo,timeout=10",
+			"",
+		)
 
 		cfg := listConfig()
 		Expect(cfg).To(MatchRegexp("runtime-endpoint .* foo"))
@@ -75,7 +78,10 @@ debug: true
 `)
 		Expect(err).NotTo(HaveOccurred())
 
-		t.CrictlExpectSuccess("--config "+configFile.Name()+" config --set runtime-endpoint=bar,image-endpoint=baz,timeout=10,debug=false", "")
+		t.CrictlExpectSuccess(
+			"--config "+configFile.Name()+" config --set runtime-endpoint=bar,image-endpoint=baz,timeout=10,debug=false",
+			"",
+		)
 
 		cfgContent, err := os.ReadFile(configFile.Name())
 		Expect(err).NotTo(HaveOccurred())

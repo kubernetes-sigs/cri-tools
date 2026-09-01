@@ -63,12 +63,24 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 		testMountPropagation := func(ctx context.Context, propagation runtimeapi.MountPropagation) {
 			By("create host path and flag file")
 
-			mntSource, propagationSrcDir, propagationMntPoint, clearHostPath := createHostPathForMountPropagation(podID, propagation)
+			mntSource, propagationSrcDir, propagationMntPoint, clearHostPath := createHostPathForMountPropagation(
+				podID,
+				propagation,
+			)
 			defer clearHostPath() // clean up the TempDir
 
 			By("create container with volume")
 
-			containerID := createMountPropagationContainer(ctx, rc, ic, "mount-propagation-test-", podID, podConfig, mntSource, propagation)
+			containerID := createMountPropagationContainer(
+				ctx,
+				rc,
+				ic,
+				"mount-propagation-test-",
+				podID,
+				podConfig,
+				mntSource,
+				propagation,
+			)
 
 			By("test start container with volume")
 			testStartContainer(ctx, rc, containerID)
@@ -84,7 +96,8 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 			switch propagation {
 			case runtimeapi.MountPropagation_PROPAGATION_PRIVATE:
 				Expect(output).To(BeEmpty(), "len(output) should be zero.")
-			case runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL, runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER:
+			case runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL,
+				runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER:
 				Expect(output).NotTo(BeEmpty(), "len(output) should not be zero.")
 			}
 
@@ -105,7 +118,8 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 			framework.ExpectNoError(err, "failed to ReadDir %q in Host", containerMntPoint)
 
 			switch propagation {
-			case runtimeapi.MountPropagation_PROPAGATION_PRIVATE, runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER:
+			case runtimeapi.MountPropagation_PROPAGATION_PRIVATE,
+				runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER:
 				Expect(fileInfo).To(BeEmpty(), "len(fileInfo) should be zero.")
 			case runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL:
 				Expect(fileInfo).NotTo(BeEmpty(), "len(fileInfo) should not be zero.")
@@ -116,13 +130,19 @@ var _ = framework.KubeDescribe("Container Mount Propagation", func() {
 			testMountPropagation(ctx, runtimeapi.MountPropagation_PROPAGATION_PRIVATE)
 		})
 
-		It("mount with 'rshared' should support propagation from host to container and vice versa", func(ctx SpecContext) {
-			testMountPropagation(ctx, runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL)
-		})
+		It(
+			"mount with 'rshared' should support propagation from host to container and vice versa",
+			func(ctx SpecContext) {
+				testMountPropagation(ctx, runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL)
+			},
+		)
 
-		It("mount with 'rslave' should support propagation from host to container", func(ctx SpecContext) {
-			testMountPropagation(ctx, runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER)
-		})
+		It(
+			"mount with 'rslave' should support propagation from host to container",
+			func(ctx SpecContext) {
+				testMountPropagation(ctx, runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER)
+			},
+		)
 	})
 })
 
@@ -179,7 +199,10 @@ var _ = framework.KubeDescribe("Container OOM", func() {
 })
 
 // createHostPath creates the hostPath for mount propagation test.
-func createHostPathForMountPropagation(podID string, propagationOpt runtimeapi.MountPropagation) (mntSource, propagationSrcDir, propagationMntPoint string, clearHostPath func()) {
+func createHostPathForMountPropagation(
+	podID string,
+	propagationOpt runtimeapi.MountPropagation,
+) (mntSource, propagationSrcDir, propagationMntPoint string, clearHostPath func()) {
 	hostPath, err := os.MkdirTemp("", "test"+podID)
 	framework.ExpectNoError(err, "failed to create TempDir %q", hostPath)
 
@@ -247,8 +270,10 @@ func createMountPropagationContainer(
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
-		Command:  pauseCmd,
+		Image: &runtimeapi.ImageSpec{
+			Image: framework.TestContext.TestImageList.DefaultTestContainerImage,
+		},
+		Command: pauseCmd,
 		// Set Privileged in order to executing mount command in container
 		Linux: &runtimeapi.LinuxContainerConfig{
 			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
@@ -302,7 +327,9 @@ func createOOMKilledContainer(
 	containerName := prefix + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
+		Image: &runtimeapi.ImageSpec{
+			Image: framework.TestContext.TestImageList.DefaultTestContainerImage,
+		},
 		Command: []string{
 			"sh",
 			"-c",
@@ -367,7 +394,16 @@ var _ = framework.KubeDescribe("Container Mount Readonly", func() {
 
 			By("create container with volume")
 
-			containerID := createRROMountContainer(ctx, rc, ic, podID, podConfig, hostPath, "/mnt", rro)
+			containerID := createRROMountContainer(
+				ctx,
+				rc,
+				ic,
+				podID,
+				podConfig,
+				hostPath,
+				"/mnt",
+				rro,
+			)
 
 			By("test start container with volume")
 			testStartContainer(ctx, rc, containerID)
@@ -376,7 +412,11 @@ var _ = framework.KubeDescribe("Container Mount Readonly", func() {
 
 			command := []string{"touch", "/mnt/tmpfs/file"}
 			if rro {
-				command = []string{"sh", "-c", `touch /mnt/tmpfs/foo 2>&1 | grep -q "Read-only file system"`}
+				command = []string{
+					"sh",
+					"-c",
+					`touch /mnt/tmpfs/foo 2>&1 | grep -q "Read-only file system"`,
+				}
 			}
 
 			execSyncContainer(ctx, rc, containerID, command)
@@ -414,12 +454,24 @@ var _ = framework.KubeDescribe("Container Mount Readonly", func() {
 			createMountContainer(ctx, rc, ic, podID, podConfig, mounts, expectErr)
 		}
 
-		It("should reject a recursive readonly mount with PROPAGATION_HOST_TO_CONTAINER", func(ctx SpecContext) {
-			testRROInvalidPropagation(ctx, runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER)
-		})
-		It("should reject a recursive readonly mount with PROPAGATION_BIDIRECTIONAL", func(ctx SpecContext) {
-			testRROInvalidPropagation(ctx, runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL)
-		})
+		It(
+			"should reject a recursive readonly mount with PROPAGATION_HOST_TO_CONTAINER",
+			func(ctx SpecContext) {
+				testRROInvalidPropagation(
+					ctx,
+					runtimeapi.MountPropagation_PROPAGATION_HOST_TO_CONTAINER,
+				)
+			},
+		)
+		It(
+			"should reject a recursive readonly mount with PROPAGATION_BIDIRECTIONAL",
+			func(ctx SpecContext) {
+				testRROInvalidPropagation(
+					ctx,
+					runtimeapi.MountPropagation_PROPAGATION_BIDIRECTIONAL,
+				)
+			},
+		)
 		It("should reject a recursive readonly mount with ReadOnly: false", func(ctx SpecContext) {
 			if !runtimeSupportsRRO(ctx, rc, framework.TestContext.RuntimeHandler) {
 				Skip("runtime does not implement recursive readonly mounts")
@@ -446,7 +498,11 @@ var _ = framework.KubeDescribe("Container Mount Readonly", func() {
 	})
 })
 
-func runtimeSupportsRRO(ctx context.Context, rc internalapi.RuntimeService, runtimeHandlerName string) bool {
+func runtimeSupportsRRO(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	runtimeHandlerName string,
+) bool {
 	status, err := rc.Status(ctx, false)
 	framework.ExpectNoError(err, "failed to check runtime status")
 
@@ -523,9 +579,11 @@ func createMountContainer(
 	containerName := "test-mount-" + framework.NewUUID()
 	containerConfig := &runtimeapi.ContainerConfig{
 		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
-		Image:    &runtimeapi.ImageSpec{Image: framework.TestContext.TestImageList.DefaultTestContainerImage},
-		Command:  pauseCmd,
-		Mounts:   mounts,
+		Image: &runtimeapi.ImageSpec{
+			Image: framework.TestContext.TestImageList.DefaultTestContainerImage,
+		},
+		Command: pauseCmd,
+		Mounts:  mounts,
 	}
 
 	if expectErr {
@@ -547,7 +605,12 @@ func createMountContainer(
 }
 
 // verifyLogContentsRe verifies the contents of container log using the provided regular expression pattern.
-func verifyLogContentsRe(ctx context.Context, podConfig *runtimeapi.PodSandboxConfig, logPath, pattern string, stream streamType) {
+func verifyLogContentsRe(
+	ctx context.Context,
+	podConfig *runtimeapi.PodSandboxConfig,
+	logPath, pattern string,
+	stream streamType,
+) {
 	By("verify log contents using regex pattern")
 
 	msgs := parseLogLine(ctx, podConfig, logPath)
@@ -565,5 +628,7 @@ func verifyLogContentsRe(ctx context.Context, podConfig *runtimeapi.PodSandboxCo
 		}
 	}
 
-	Expect(found).To(BeTrue(), "expected log pattern %q (stream=%q) to match logs %+v", pattern, stream, msgs)
+	Expect(
+		found,
+	).To(BeTrue(), "expected log pattern %q (stream=%q) to match logs %+v", pattern, stream, msgs)
 }

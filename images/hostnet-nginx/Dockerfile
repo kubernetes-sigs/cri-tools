@@ -12,5 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM nginx:1.25.0
+FROM nginx:1.30.4
 COPY default.conf /etc/nginx/conf.d/default.conf

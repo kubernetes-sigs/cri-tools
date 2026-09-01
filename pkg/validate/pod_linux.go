@@ -60,7 +60,14 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 			By("create a default container")
 
-			containerID := framework.CreateDefaultContainer(ctx, rc, ic, podID, podConfig, "container-shm-rmid-forced")
+			containerID := framework.CreateDefaultContainer(
+				ctx,
+				rc,
+				ic,
+				podID,
+				podConfig,
+				"container-shm-rmid-forced",
+			)
 
 			By("start container")
 			startContainer(ctx, rc, containerID)
@@ -76,7 +83,14 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 
 			By("create a default container")
 
-			containerID := framework.CreateDefaultContainer(ctx, rc, ic, podID, podConfig, "container-fs-mqueue-msg-max")
+			containerID := framework.CreateDefaultContainer(
+				ctx,
+				rc,
+				ic,
+				podID,
+				podConfig,
+				"container-fs-mqueue-msg-max",
+			)
 
 			By("start container")
 			startContainer(ctx, rc, containerID)
@@ -88,14 +102,23 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 })
 
 // createSandboxWithSysctls creates a PodSandbox with specified sysctls.
-func createSandboxWithSysctls(ctx context.Context, rc internalapi.RuntimeService, sysctls map[string]string) (string, *runtimeapi.PodSandboxConfig) {
+func createSandboxWithSysctls(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	sysctls map[string]string,
+) (string, *runtimeapi.PodSandboxConfig) {
 	By("create a PodSandbox with sysctls")
 
 	podSandboxName := "pod-sandbox-with-sysctls-" + framework.NewUUID()
 	uid := framework.DefaultUIDPrefix + framework.NewUUID()
 	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
 	podConfig := &runtimeapi.PodSandboxConfig{
-		Metadata: framework.BuildPodSandboxMetadata(podSandboxName, uid, namespace, framework.DefaultAttempt),
+		Metadata: framework.BuildPodSandboxMetadata(
+			podSandboxName,
+			uid,
+			namespace,
+			framework.DefaultAttempt,
+		),
 		Linux: &runtimeapi.LinuxPodSandboxConfig{
 			CgroupParent: common.GetCgroupParent(ctx, rc),
 			Sysctls:      sysctls,
@@ -106,9 +129,18 @@ func createSandboxWithSysctls(ctx context.Context, rc internalapi.RuntimeService
 }
 
 // checkSetSysctls checks whether sysctl settings is equal to expected string.
-func checkSetSysctls(ctx context.Context, rc internalapi.RuntimeService, containerID, sysctlPath, expected string) {
+func checkSetSysctls(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	containerID, sysctlPath, expected string,
+) {
 	cmd := []string{"cat", sysctlPath}
-	stdout, _, err := rc.ExecSync(ctx, containerID, cmd, time.Duration(defaultExecSyncTimeout)*time.Second)
+	stdout, _, err := rc.ExecSync(
+		ctx,
+		containerID,
+		cmd,
+		time.Duration(defaultExecSyncTimeout)*time.Second,
+	)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(strings.TrimSpace(string(stdout))).To(Equal(expected))
 }

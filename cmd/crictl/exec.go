@@ -76,7 +76,11 @@ var runtimeExecCommand = &cli.Command{
 			Name:    transportFlag,
 			Aliases: []string{"r"},
 			Value:   common.TransportSpdy,
-			Usage:   fmt.Sprintf("Transport protocol to use, one of: %s|%s", common.TransportSpdy, common.TransportWebsocket),
+			Usage: fmt.Sprintf(
+				"Transport protocol to use, one of: %s|%s",
+				common.TransportSpdy,
+				common.TransportWebsocket,
+			),
 		},
 		&cli.StringFlag{
 			Name:  "name",
@@ -168,7 +172,9 @@ var runtimeExecCommand = &cli.Command{
 		quiet := c.Bool("quiet")
 
 		if ignoreErrors && !quiet {
-			logrus.Warn("The `--ignore-errors` option has been set all errors returned by the command will be ignored.")
+			logrus.Warn(
+				"The `--ignore-errors` option has been set all errors returned by the command will be ignored.",
+			)
 		}
 
 		// If any of the filter flags are set, then we assume that no
@@ -249,7 +255,11 @@ var runtimeExecCommand = &cli.Command{
 				if c.Bool("sync") {
 					exitCode, err := ExecSync(c.Context, runtimeClient, optsCopy)
 					if err != nil {
-						return fmt.Errorf("execing command in container %s synchronously: %w", id, err)
+						return fmt.Errorf(
+							"execing command in container %s synchronously: %w",
+							id,
+							err,
+						)
 					}
 
 					if exitCode != 0 {
@@ -312,7 +322,11 @@ func tlsConfigFromFlags(ctx *cli.Context) (*rest.TLSClientConfig, error) {
 // ExecSync sends an ExecSyncRequest to the server, and parses
 // the returned ExecSyncResponse. The function returns the corresponding exit
 // code beside an general error.
-func ExecSync(ctx context.Context, client internalapi.RuntimeService, opts *execOptions) (int, error) {
+func ExecSync(
+	ctx context.Context,
+	client internalapi.RuntimeService,
+	opts *execOptions,
+) (int, error) {
 	request := &pb.ExecSyncRequest{
 		ContainerId: opts.id,
 		Cmd:         opts.cmd,
@@ -386,7 +400,13 @@ func Exec(ctx context.Context, client internalapi.RuntimeService, opts *execOpti
 	return stream(ctx, opts.stdin, opts.tty, opts.transport, URL, opts.tlsConfig)
 }
 
-func stream(ctx context.Context, in, tty bool, transport string, parsedURL *url.URL, tlsConfig *rest.TLSClientConfig) error {
+func stream(
+	ctx context.Context,
+	in, tty bool,
+	transport string,
+	parsedURL *url.URL,
+	tlsConfig *rest.TLSClientConfig,
+) error {
 	executor, err := common.GetExecutor(transport, parsedURL, tlsConfig)
 	if err != nil {
 		return fmt.Errorf("get executor: %w", err)

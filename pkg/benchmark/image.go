@@ -180,15 +180,27 @@ var _ = framework.KubeDescribe("Image", func() {
 			}
 
 			if framework.TestContext.BenchmarkingOutputDir != "" {
-				filepath := path.Join(framework.TestContext.BenchmarkingOutputDir, "image_lifecycle_benchmark_data.json")
+				filepath := path.Join(
+					framework.TestContext.BenchmarkingOutputDir,
+					"image_lifecycle_benchmark_data.json",
+				)
 
 				err = lifecycleResultsManager.WriteResultsFile(filepath)
 				if err != nil {
-					logrus.Errorf("Error occurred while writing benchmark results to file %s: %v", filepath, err)
+					logrus.Errorf(
+						"Error occurred while writing benchmark results to file %s: %v",
+						filepath,
+						err,
+					)
 				}
 			} else {
-				logrus.Info("No benchmarking out dir provided, skipping writing benchmarking results")
-				logrus.Infof("Image lifecycle results were: %+v", lifecycleResultsManager.resultsSet)
+				logrus.Info(
+					"No benchmarking out dir provided, skipping writing benchmarking results",
+				)
+				logrus.Infof(
+					"Image lifecycle results were: %+v",
+					lifecycleResultsManager.resultsSet,
+				)
 			}
 		})
 
@@ -206,7 +218,9 @@ var _ = framework.KubeDescribe("Image", func() {
 				NumParallel: framework.TestContext.BenchmarkingParams.ImagesNumberParallel,
 			}
 			if samplingConfig.N <= 0 {
-				Skip("skipping image listing benchmarks since image listing number option was not set")
+				Skip(
+					"skipping image listing benchmarks since image listing number option was not set",
+				)
 			}
 
 			if samplingConfig.NumParallel < 1 {
@@ -259,14 +273,23 @@ var _ = framework.KubeDescribe("Image", func() {
 			}
 
 			if framework.TestContext.BenchmarkingOutputDir != "" {
-				filepath := path.Join(framework.TestContext.BenchmarkingOutputDir, "image_listing_benchmark_data.json")
+				filepath := path.Join(
+					framework.TestContext.BenchmarkingOutputDir,
+					"image_listing_benchmark_data.json",
+				)
 
 				err = imageListResultsManager.WriteResultsFile(filepath)
 				if err != nil {
-					logrus.Errorf("Error occurred while writing benchmark results to file %s: %v", filepath, err)
+					logrus.Errorf(
+						"Error occurred while writing benchmark results to file %s: %v",
+						filepath,
+						err,
+					)
 				}
 			} else {
-				logrus.Info("No benchmarking out dir provided, skipping writing benchmarking results")
+				logrus.Info(
+					"No benchmarking out dir provided, skipping writing benchmarking results",
+				)
 				logrus.Infof("Image listing results were: %+v", imageListResultsManager.resultsSet)
 			}
 		})

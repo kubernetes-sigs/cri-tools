@@ -56,7 +56,11 @@ func GetServerConfigFromFile(configFileName, currentDir string) (*ServerConfigur
 		// directory as a fallback. This is to accommodate where the config file
 		// is placed with the cri tools binary.
 		nextConfigFileName := filepath.Join(filepath.Dir(currentDir), "crictl.yaml")
-		logrus.Warnf("Config %q does not exist, trying next: %q", configFileName, nextConfigFileName)
+		logrus.Warnf(
+			"Config %q does not exist, trying next: %q",
+			configFileName,
+			nextConfigFileName,
+		)
 
 		if _, err := os.Stat(nextConfigFileName); err != nil {
 			return nil, fmt.Errorf("load config file: %w", err)

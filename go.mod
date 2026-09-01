@@ -1,6 +1,6 @@
 module sigs.k8s.io/cri-tools
 
-go 1.26.6
+go 1.27.0
 
 require (
 	github.com/containerd/nri v0.12.2

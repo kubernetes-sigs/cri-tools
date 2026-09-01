@@ -72,9 +72,12 @@ func Info(cliContext *cli.Context, client internalapi.RuntimeService) error {
 	request := &pb.StatusRequest{Verbose: !cliContext.Bool("quiet")}
 	logrus.Debugf("StatusRequest: %v", request)
 
-	r, err := InterruptableRPC(cliContext.Context, func(ctx context.Context) (*pb.StatusResponse, error) {
-		return client.Status(ctx, request.GetVerbose())
-	})
+	r, err := InterruptableRPC(
+		cliContext.Context,
+		func(ctx context.Context) (*pb.StatusResponse, error) {
+			return client.Status(ctx, request.GetVerbose())
+		},
+	)
 	logrus.Debugf("StatusResponse: %v", r)
 
 	if err != nil {
@@ -96,7 +99,14 @@ func Info(cliContext *cli.Context, client internalapi.RuntimeService) error {
 		return err
 	}
 
-	data := []statusData{{json: statusJSON, runtimeHandlers: string(handlers), features: string(features), info: r.GetInfo()}}
+	data := []statusData{
+		{
+			json:            statusJSON,
+			runtimeHandlers: string(handlers),
+			features:        string(features),
+			info:            r.GetInfo(),
+		},
+	}
 
 	return outputStatusData(data, cliContext.String("output"), cliContext.String("template"))
 }

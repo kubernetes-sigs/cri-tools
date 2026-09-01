@@ -131,8 +131,12 @@ CRICTL OPTIONS:
 			display.AddRow([]string{common.ImageEndpoint, config.ImageEndpoint})
 			display.AddRow([]string{common.Timeout, strconv.Itoa(config.Timeout)})
 			display.AddRow([]string{common.Debug, strconv.FormatBool(config.Debug)})
-			display.AddRow([]string{common.PullImageOnCreate, strconv.FormatBool(config.PullImageOnCreate)})
-			display.AddRow([]string{common.DisablePullOnRun, strconv.FormatBool(config.DisablePullOnRun)})
+			display.AddRow(
+				[]string{common.PullImageOnCreate, strconv.FormatBool(config.PullImageOnCreate)},
+			)
+			display.AddRow(
+				[]string{common.DisablePullOnRun, strconv.FormatBool(config.DisablePullOnRun)},
+			)
 			display.AddRow([]string{common.MaxRetries, strconv.Itoa(config.MaxRetries)})
 			display.ClearScreen()
 			display.Flush()
