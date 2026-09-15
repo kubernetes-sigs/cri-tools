@@ -98,3 +98,5 @@ require (
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.2 // indirect
 )
+
+replace k8s.io/cri-api => github.com/chrishenzie/cri-api v0.0.0-20260930205728-f2fc2e02f886
