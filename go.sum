@@ -18,6 +18,8 @@ github.com/cenkalti/backoff/v5 v5.0.3 h1:ZN+IMa753KfX5hd8vVaMixjnqRZ3y8CuJKRKj1x
 github.com/cenkalti/backoff/v5 v5.0.3/go.mod h1:rkhZdG3JZukswDf7f0cwqPNk4K0sa+F97BxZthm/crw=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
+github.com/chrishenzie/cri-api v0.0.0-20260925160638-599ea22085a0 h1:ht3YUcXyIwm6e8IS88XjU4M1QW6UTgOiuD+Myps10UY=
+github.com/chrishenzie/cri-api v0.0.0-20260925160638-599ea22085a0/go.mod h1:6V8Gb6wznJYVPToj8CLxgbxsFeeGIswNZCE7cy+xT90=
 github.com/containerd/log v0.1.0 h1:TCJt7ioM2cr/tfR8GPbGf9/VRAX8D2B4PjzCpfX540I=
 github.com/containerd/log v0.1.0/go.mod h1:VRRf09a7mHDIRezVKTRCrOq78v577GXq3bSa3EhrzVo=
 github.com/containerd/nri v0.12.3 h1:pVZwZCe0Z+d2WmScp51VTO3OmeuOZFoDGInX2n04e70=
@@ -252,8 +254,6 @@ k8s.io/client-go v0.37.0 h1:nsN31fy8wBySuZ+QRnKmrjRSQLOG2rvoGN0tKd12zhQ=
 k8s.io/client-go v0.37.0/go.mod h1:FcGqw+Ll/gNQiq+nPGY1Oyt9y7SgDh1d3MW3RFDEbn0=
 k8s.io/component-base v0.37.0 h1:3SdSa4+itMdFTDFTeR8CxKGmSTSMXFlKL4ky8OqjguM=
 k8s.io/component-base v0.37.0/go.mod h1:LjOebp4R9y6LODWZQv102ZQxGheLcDO2ZJLAw6bbh4I=
-k8s.io/cri-api v0.37.0 h1:8a3Rpw5NNRivF+q8GO/ECK3BrWT06M4Er8ndzLvTF7k=
-k8s.io/cri-api v0.37.0/go.mod h1:6V8Gb6wznJYVPToj8CLxgbxsFeeGIswNZCE7cy+xT90=
 k8s.io/cri-client v0.37.0 h1:X1TEEx74zCwqDoVnJ4OIXtrQLHY21AOe8vXbBNSOb40=
 k8s.io/cri-client v0.37.0/go.mod h1:x/nROOizpdhU/VGcokYhxtWioDPMhqinRRCHWOoVL2c=
 k8s.io/klog/v2 v2.140.0 h1:Tf+J3AH7xnUzZyVVXhTgGhEKnFqye14aadWv7bzXdzc=
