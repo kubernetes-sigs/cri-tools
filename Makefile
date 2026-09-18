@@ -231,9 +231,8 @@ verify-go-modules: ## Verify vendored golang modules.
 ##@ Test targets:
 
 # Containerd git ref built into the local containerized test image. Mirrors
-# CI's primary matrix entry (main). NRI is only configured/tested for main,
-# matching .github/workflows/containerd.yml. Override to test other refs, e.g.
-# make test-critest-containerd CONTAINERD_VERSION=release/1.7
+# CI's primary matrix entry (main). Override to test other refs, e.g.
+# make test-critest-containerd CONTAINERD_VERSION=release/2.3
 CONTAINERD_VERSION ?= main
 
 # runc flavor built into the image (runc or crun) and the containerd runtime
@@ -242,19 +241,9 @@ CONTAINERD_VERSION ?= main
 RUNC_FLAVOR ?= runc
 RUNTIME ?= io.containerd.runc.v2
 
-# NRI is supported in containerd 2.x+ (all versions except the legacy 1.7
-# branch). The --nri-socket flag is critest-specific and must not be passed to
+# The --nri-socket flag is critest-specific and must not be passed to
 # other test binaries.
-ifeq ($(CONTAINERD_VERSION),release/1.7)
-ENABLE_NRI ?= false
-else
-ENABLE_NRI ?= true
-endif
-
-NRI_FLAGS :=
-ifeq ($(ENABLE_NRI),true)
 NRI_FLAGS := --nri-socket=/var/run/nri/nri.sock
-endif
 
 # critest parallelism, mirrors CI's --parallel=8. Override via PARALLEL=N.
 PARALLEL ?= 8
@@ -272,7 +261,7 @@ test-e2e: $(GINKGO) ## Run the e2e test suite.
 		$(TESTFLAGS)
 
 .PHONY: test-critest-containerd
-test-critest-containerd: ## Run the critest in a container with containerd (set CONTAINERD_VERSION=main|release/1.7, RUNC_FLAVOR, RUNTIME; images are cached per version).
+test-critest-containerd: ## Run the critest in a container with containerd (set CONTAINERD_VERSION=main|release/2.3, RUNC_FLAVOR, RUNTIME; images are cached per version).
 	# AppArmor tests must be skipped as the containerized environment does not support them.
 	CONTAINERD_VERSION=$(CONTAINERD_VERSION) \
 	RUNC_FLAVOR=$(RUNC_FLAVOR) \
@@ -286,7 +275,7 @@ test-critest-containerd: ## Run the critest in a container with containerd (set 
 		$(TESTFLAGS)
 
 .PHONY: test-crictl-e2e-containerd
-test-crictl-e2e-containerd: ## Run the crictl e2e tests in a container with containerd (set CONTAINERD_VERSION=main|release/1.7, RUNC_FLAVOR, RUNTIME; images are cached per version).
+test-crictl-e2e-containerd: ## Run the crictl e2e tests in a container with containerd (set CONTAINERD_VERSION=main|release/2.3, RUNC_FLAVOR, RUNTIME; images are cached per version).
 	# AppArmor tests must be skipped as the containerized environment does not support them.
 	CONTAINERD_VERSION=$(CONTAINERD_VERSION) \
 	RUNC_FLAVOR=$(RUNC_FLAVOR) \

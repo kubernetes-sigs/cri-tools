@@ -18,7 +18,6 @@ package validate
 
 import (
 	"runtime"
-	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -37,11 +36,7 @@ const (
 
 // skipIfImageVolumeUnsupported checks the error from CreateContainer and skips
 // the test if the runtime does not support image volumes yet.
-// Runtimes may signal lack of support in different ways:
-//   - gRPC Unimplemented: the runtime explicitly does not implement image volumes.
-//   - gRPC Unknown with "failed to mkdir" or similar: the runtime ignores the
-//     Image field in Mount and fails while processing an empty host path
-//     (observed with containerd 1.7).
+// Runtimes signal lack of support via gRPC Unimplemented.
 //
 // When expectError is true the caller expects CreateContainer to fail (negative
 // tests). In that case the function only checks for "unsupported" patterns and
@@ -54,17 +49,6 @@ func skipIfImageVolumeUnsupported(err error, expectError bool) {
 	if s, ok := status.FromError(err); ok {
 		if s.Code() == codes.Unimplemented {
 			Skip("Image Volumes are not yet supported by the runtime (Unimplemented).")
-		}
-
-		// containerd 1.7 does not recognise the Image field in Mount and
-		// produces errors like: failed to mkdir "": mkdir : no such file
-		// or directory. Treat these as "unsupported".
-		if s.Code() == codes.Unknown {
-			msg := s.Message()
-			if strings.Contains(msg, "failed to mkdir") ||
-				strings.Contains(msg, "failed to generate spec") {
-				Skip("Image Volumes are not yet supported by the runtime: " + msg)
-			}
 		}
 	}
 
@@ -245,27 +229,7 @@ var _ = framework.KubeDescribe("Image Volume [Feature:ImageVolume]", func() {
 			cmd,
 			time.Duration(defaultExecSyncTimeout)*time.Second,
 		)
-		if err != nil {
-			// Log mount point contents for debugging before skipping.
-			debugCmd := []string{"ls", "-R", containerPath}
-			dStdout, _, _ := rc.ExecSync(
-				ctx,
-				containerID,
-				debugCmd,
-				time.Duration(defaultExecSyncTimeout)*time.Second,
-			)
-			framework.Logf("Debug: contents of %s:\n%s", containerPath, string(dStdout))
-
-			// The runtime accepted the container but the mount point has no image
-			// content. This happens when the runtime silently ignores the Image
-			// field in mounts (e.g. containerd 1.7).
-			Skip(
-				"Runtime created the container but did not mount the image volume; Image Volumes are not supported.",
-			)
-		}
-
-		// TODO: uncomment once Skip above is eliminated (1.7 of containerd is EOL)
-		// framework.ExpectNoError(err, "failed to find file in image volume: stdout: %s, stderr: %s", stdout, stderr)
+		framework.ExpectNoError(err, "failed to find file in image volume")
 
 		By("Verifying the image volume is read-only")
 
@@ -373,7 +337,7 @@ var _ = framework.KubeDescribe("Image Volume [Feature:ImageVolume]", func() {
 			// Use best-effort cleanup because CRI-O cannot remove
 			// containers with read-only image volume subpath mounts.
 			// Placed before CreateContainer so it runs even when the
-			// test is skipped (e.g. containerd 1.7).
+			// test is skipped.
 			defer func() {
 				By("stop PodSandbox")
 				rc.StopPodSandbox(ctx, podID) //nolint:errcheck // best-effort cleanup
@@ -435,8 +399,6 @@ var _ = framework.KubeDescribe("Image Volume [Feature:ImageVolume]", func() {
 			framework.ExpectNoError(err, "failed to start container")
 
 			By("Checking whether the image volume mount point exists")
-			// If the runtime silently ignores the Image field in Mount (e.g. containerd 1.7
-			// which predates image volume support), the mount point will not exist at all.
 			cmd := []string{"ls", containerPath}
 
 			_, _, err = rc.ExecSync(
