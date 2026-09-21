@@ -605,7 +605,7 @@ k8s.io/client-go/util/workqueue
 # k8s.io/component-base v0.37.0
 ## explicit; go 1.26.0
 k8s.io/component-base/logs/logreduction
-# k8s.io/cri-api v0.37.0
+# k8s.io/cri-api v0.37.0 => github.com/chrishenzie/cri-api v0.0.0-20260916053336-07e4c67ef718
 ## explicit; go 1.26.0
 k8s.io/cri-api/pkg/apis
 k8s.io/cri-api/pkg/apis/runtime/v1
@@ -665,3 +665,4 @@ sigs.k8s.io/structured-merge-diff/v6/value
 sigs.k8s.io/yaml
 sigs.k8s.io/yaml/goyaml.v3
 sigs.k8s.io/yaml/kyaml
+# k8s.io/cri-api => github.com/chrishenzie/cri-api v0.0.0-20260916053336-07e4c67ef718
