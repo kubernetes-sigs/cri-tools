@@ -35,6 +35,7 @@ import (
 	"sigs.k8s.io/cri-tools/pkg/common"
 	"sigs.k8s.io/cri-tools/pkg/framework"
 	_ "sigs.k8s.io/cri-tools/pkg/validate"
+	_ "sigs.k8s.io/cri-tools/pkg/validate/nri"
 	versionconst "sigs.k8s.io/cri-tools/pkg/version"
 )
 
