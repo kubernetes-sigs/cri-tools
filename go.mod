@@ -26,11 +26,11 @@ require (
 	google.golang.org/grpc v1.84.0
 	google.golang.org/protobuf v1.36.12
 	k8s.io/client-go v0.37.0
-	k8s.io/cri-api v0.37.0
+	k8s.io/cri-api v0.37.1
 	k8s.io/cri-client v0.37.0
 	k8s.io/kubectl v0.37.0
 	k8s.io/kubelet v0.37.0
-	k8s.io/streaming v0.37.0
+	k8s.io/streaming v0.37.1
 	sigs.k8s.io/yaml v1.6.0
 )
 
