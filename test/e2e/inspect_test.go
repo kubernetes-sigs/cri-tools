@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -93,9 +94,12 @@ var _ = t.Describe("inspect", func() {
 		validateSingleResponse(res.Out.Contents())
 
 		// Not output without `--all` since container is exited
-		res = t.Crictl("inspect")
-		Expect(res).To(Exit(0))
-		expectNothingFound(res.Err.Contents())
+		Eventually(func() []byte {
+			res = t.Crictl("inspect")
+			Expect(res).To(Exit(0))
+
+			return res.Err.Contents()
+		}, time.Minute, time.Second).Should(ContainSubstring("nothing found per filter"))
 
 		// Should allow filter per image name
 		res = t.Crictl("inspect -a --image " + imageLatest)
