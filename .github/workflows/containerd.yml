@@ -32,7 +32,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         # not every command likes the slash in branch name.
         # So will use format command to replace to either `_` or '/'
-        version: [main, "release{0}2.3", "release{0}1.7"]
+        version: [main, "release{0}2.4", "release{0}2.3", "release{0}1.7"]
         runtime:
           [
             io.containerd.runtime.v1.linux,
