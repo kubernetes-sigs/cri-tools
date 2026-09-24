@@ -46,6 +46,11 @@ cri-tools provides them only if necessary. If a Kubernetes release goes [End of
 Life](https://kubernetes.io/releases/patch-releases/), then the corresponding
 cri-tools version can be considered in the same way.
 
+The CI test matrix validates against containerd `main` and `release/2.3`.
+containerd 1.7 is [EOL](https://containerd.io/releases/#support-horizon) and no
+longer tested since version 1.38; users on containerd 1.7
+should use an older cri-tools release.
+
 All new minor versions of cri-tools are being created from the `master` branch,
 whereas corresponding `release-1.x` branches will be created if a patch release
 is planned.
