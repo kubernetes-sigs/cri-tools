@@ -135,6 +135,7 @@ func LoadCRIClient() (*InternalAPIClient, error) {
 	rService, err := remote.NewRemoteRuntimeServiceBuilder().
 		WithEndpoint(TestContext.RuntimeServiceAddr).
 		WithConnectionTimeout(TestContext.RuntimeServiceTimeout).
+		WithUseStreaming(true).
 		Build(context.Background())
 	if err != nil {
 		return nil, err
@@ -149,6 +150,7 @@ func LoadCRIClient() (*InternalAPIClient, error) {
 	iService, err := remote.NewRemoteImageServiceBuilder().
 		WithEndpoint(imageServiceAddr).
 		WithConnectionTimeout(TestContext.ImageServiceTimeout).
+		WithUseStreaming(true).
 		Build(context.Background())
 	if err != nil {
 		return nil, err

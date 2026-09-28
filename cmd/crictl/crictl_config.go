@@ -202,6 +202,7 @@ func (cfg *CrictlConfig) GetRuntimeService(
 				WithEndpoint(endPoint).
 				WithConnectionTimeout(t).
 				WithTracerProvider(tp).
+				WithUseStreaming(true).
 				Build(ctx)
 			if err != nil {
 				logrus.Error(err)
@@ -222,6 +223,7 @@ func (cfg *CrictlConfig) GetRuntimeService(
 			WithEndpoint(cfg.RuntimeEndpoint).
 			WithConnectionTimeout(t).
 			WithTracerProvider(tp).
+			WithUseStreaming(true).
 			Build(ctx)
 	})
 }
@@ -272,6 +274,7 @@ func (cfg *CrictlConfig) GetImageService(
 				WithEndpoint(endPoint).
 				WithConnectionTimeout(cfg.Timeout).
 				WithTracerProvider(tp).
+				WithUseStreaming(true).
 				Build(ctx)
 			if err != nil {
 				logrus.Error(err)
@@ -292,6 +295,7 @@ func (cfg *CrictlConfig) GetImageService(
 			WithEndpoint(cfg.ImageEndpoint).
 			WithConnectionTimeout(cfg.Timeout).
 			WithTracerProvider(tp).
+			WithUseStreaming(true).
 			Build(ctx)
 	})
 }

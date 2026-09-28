@@ -70,9 +70,12 @@ var _ = t.Describe("tracing", func() {
 		spans, rootSpan := runTracedCommand("pods", true)
 
 		childSpan := findSpan(spans, func(name string) bool {
-			return strings.Contains(name, "ListPodSandbox")
+			return strings.Contains(name, "StreamPodSandboxes") ||
+				strings.Contains(name, "ListPodSandbox")
 		})
-		Expect(childSpan).NotTo(BeNil(), "Child span 'ListPodSandbox' not found")
+		Expect(
+			childSpan,
+		).NotTo(BeNil(), "Child span 'StreamPodSandboxes' or 'ListPodSandbox' not found")
 		Expect(bytes.Equal(rootSpan.GetTraceId(), childSpan.GetTraceId())).To(BeTrue(),
 			"Root span and child span should have the same trace ID")
 		Expect(bytes.Equal(childSpan.GetParentSpanId(), rootSpan.GetSpanId())).To(BeTrue(),
