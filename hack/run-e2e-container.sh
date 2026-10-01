@@ -46,11 +46,6 @@ if [ "${RUNC_FLAVOR}" != "runc" ]; then
 fi
 IMAGE_NAME="containerd-local-test:${IMAGE_TAG}"
 
-# Namespace the data volume per containerd version: different containerd
-# versions can use incompatible content/metadata stores, so sharing one volume
-# across versions risks corruption. The clean target removes all of them.
-DATA_VOLUME="containerd-local-test-data-${IMAGE_TAG}"
-
 # Build the runner image, tagged per containerd version so it is cached and
 # reused on subsequent runs. Skip the build when the tagged image already
 # exists locally unless FORCE_REBUILD is set. A changed CONTAINERD_VERSION /
@@ -86,6 +81,17 @@ fi
 if [ $# -eq 0 ]; then
     set -- /usr/local/bin/critest-tools/critest --runtime-endpoint=unix:///run/containerd/containerd.sock
 fi
+
+# Namespace the data volume per containerd version: different containerd
+# versions can use incompatible content/metadata stores, so sharing one volume
+# across versions risks corruption. Also namespace it per test suite so that
+# suites do not interfere with each other's runtime state (e.g. crictl e2e
+# removing all images cached by critest). The suffix defaults to the name of the
+# test binary and can be overridden with DATA_VOLUME_SUFFIX; it is sanitized
+# like the image tag, as volume names may only contain [a-zA-Z0-9_.-].
+# The clean target removes all of them.
+DATA_VOLUME_SUFFIX="${DATA_VOLUME_SUFFIX:-$(basename "$1")}"
+DATA_VOLUME="containerd-local-test-data-${IMAGE_TAG}-${DATA_VOLUME_SUFFIX//[^a-zA-Z0-9_.-]/-}"
 
 # Run the e2e tests in the container
 # We mount the local build directory to /usr/local/bin/critest-tools
