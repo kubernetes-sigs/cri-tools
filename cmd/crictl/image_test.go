@@ -17,6 +17,8 @@ limitations under the License.
 package main
 
 import (
+	"strings"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -162,6 +164,34 @@ func assertFilterByName(input []*pb.Image, nameFilter string, expectedIDs []stri
 }
 
 var _ = DescribeTable("filterByName", assertFilterByName,
+	Entry("matches a repository with a registry port",
+		[]*pb.Image{fakeImage("1", nil, []string{"localhost:5000/myimage:latest", "localhost:5000/myimage:v1"})},
+		"localhost:5000/myimage", []string{"1"},
+	),
+	Entry("matches a repository with only a digest",
+		[]*pb.Image{fakeImage("1", []string{"docker.io/library/busybox@sha256:" + strings.Repeat("a", 64)}, nil)},
+		"docker.io/library/busybox", []string{"1"},
+	),
+	Entry("matches a digest-only repository with a registry port",
+		[]*pb.Image{fakeImage("1", []string{"registry.example.com:8443/app@sha256:" + strings.Repeat("a", 64)}, nil)},
+		"registry.example.com:8443/app", []string{"1"},
+	),
+	Entry("does not match a different registry port",
+		[]*pb.Image{fakeImage("1", nil, []string{"localhost:5001/myimage:latest"})},
+		"localhost:5000/myimage", []string{},
+	),
+	Entry("does not ignore an explicit tag with a registry port",
+		[]*pb.Image{fakeImage("1", nil, []string{"localhost:5000/myimage:v1"})},
+		"localhost:5000/myimage:v2", []string{},
+	),
+	Entry("does not ignore an explicit digest",
+		[]*pb.Image{fakeImage("1", []string{"busybox@sha256:" + strings.Repeat("a", 64)}, nil)},
+		"busybox@sha256:"+strings.Repeat("b", 64), []string{},
+	),
+	Entry("does not match an invalid filter",
+		[]*pb.Image{fakeImage("1", nil, []string{"busybox:latest"})},
+		"busybox:", []string{},
+	),
 	Entry("filters by exact repo:tag",
 		[]*pb.Image{
 			fakeImage("1", []string{"docker.io/library/busybox@sha256:1"}, []string{"docker.io/library/busybox:latest"}),

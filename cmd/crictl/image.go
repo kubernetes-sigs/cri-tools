@@ -28,6 +28,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/distribution/reference"
 	"github.com/docker/go-units"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -909,12 +910,13 @@ func filterByBeforeSince(filterValue string, imageList []*pb.Image) []*pb.Image 
 func filterByName(nameFilter string, imageList []*pb.Image) []*pb.Image {
 	var filtered []*pb.Image
 
+outer:
 	for _, img := range imageList {
 		for _, repoTag := range img.GetRepoTags() {
 			if matchesNameFilter(repoTag, nameFilter) {
 				filtered = append(filtered, img)
 
-				goto next
+				continue outer
 			}
 		}
 
@@ -922,36 +924,43 @@ func filterByName(nameFilter string, imageList []*pb.Image) []*pb.Image {
 			if matchesNameFilter(repoDigest, nameFilter) {
 				filtered = append(filtered, img)
 
-				goto next
+				break
 			}
 		}
-	next:
 	}
 
 	return filtered
 }
 
 // matchesNameFilter checks if an image reference matches the name filter.
-// If the filter contains a tag (":") or digest ("@"), it must match exactly.
-// Otherwise, only the repository part is compared.
+// If the filter contains a tag or digest, it must match exactly.
+// Otherwise, only the repository part is compared, including any registry port.
 func matchesNameFilter(imageRef, nameFilter string) bool {
 	if imageRef == nameFilter {
 		return true
 	}
 
-	// If the filter has no tag/digest, match by repository name only.
-	if !strings.Contains(nameFilter, ":") && !strings.Contains(nameFilter, "@") {
-		repo := imageRef
-		if idx := strings.LastIndex(repo, ":"); idx != -1 {
-			repo = repo[:idx]
-		} else if idx := strings.LastIndex(repo, "@"); idx != -1 {
-			repo = repo[:idx]
-		}
-
-		return repo == nameFilter
+	filter, err := reference.Parse(nameFilter)
+	if err != nil {
+		return false
 	}
 
-	return false
+	if _, tagged := filter.(reference.Tagged); tagged {
+		return false
+	}
+
+	if _, digested := filter.(reference.Digested); digested {
+		return false
+	}
+
+	ref, err := reference.Parse(imageRef)
+	if err != nil {
+		return false
+	}
+
+	named, ok := ref.(reference.Named)
+
+	return ok && named.Name() == nameFilter
 }
 
 func filterByReference(filterValue string, imageList []*pb.Image) ([]*pb.Image, error) {
