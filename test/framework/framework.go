@@ -28,6 +28,7 @@ import (
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gbytes"
 	. "github.com/onsi/gomega/gexec"
+	"github.com/onsi/gomega/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -184,6 +185,21 @@ func (t *TestFramework) CrictlExpect(
 	} else {
 		Expect(res.Err).To(Say(expectedErr))
 	}
+}
+
+// CrictlExpectMatch runs crictl and expects exit, with stdout and stderr
+// satisfying outMatcher and errMatcher. Use it when the output cannot be
+// expressed as a single expected string, e.g. when it depends on runtime state.
+func (t *TestFramework) CrictlExpectMatch(
+	args string, exit int, outMatcher, errMatcher types.GomegaMatcher,
+) {
+	// When
+	res := t.Crictl(args)
+
+	// Then
+	Expect(res).To(Exit(exit))
+	Expect(string(res.Out.Contents())).To(outMatcher, "stdout")
+	Expect(string(res.Err.Contents())).To(errMatcher, "stderr")
 }
 
 // CrictlExpectSuccess runs crictl and expects success containing the specified output.

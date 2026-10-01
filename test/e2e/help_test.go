@@ -18,6 +18,7 @@ package e2e
 
 import (
 	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 // The actual test suite.
@@ -56,15 +57,25 @@ var _ = t.Describe("help subcommand", func() {
 		t.CrictlExpectSuccess("rmp", "crictl rmp")
 	})
 
+	// The runtime may still hold objects (e.g. images cached by a previous
+	// critest run), so stdout must be either empty (nothing to remove) or
+	// consist only of lines reporting removed objects. The subcommand help
+	// is also printed to stdout, but it fails both checks: it is not empty and
+	// its lines ("NAME:", "USAGE:", ...) do not match the removal line format.
+	noErrors := Not(ContainSubstring("level=error"))
+
 	It("should not show help running rm -a", func() {
-		t.CrictlExpect("rm -a", 0, "", "No containers to remove")
+		t.CrictlExpectMatch("rm -a", 0,
+			Or(BeEmpty(), MatchRegexp(`^(\S+\n)+$`)), noErrors)
 	})
 
 	It("should not show help running rmi -a", func() {
-		t.CrictlExpect("rmi -a", 0, "", "No images to remove")
+		t.CrictlExpectMatch("rmi -a", 0,
+			Or(BeEmpty(), MatchRegexp(`^(Deleted: \S+\n)+$`)), noErrors)
 	})
 
 	It("should not show help running rmp -a", func() {
-		t.CrictlExpect("rmp -a", 0, "", "No pods to remove")
+		t.CrictlExpectMatch("rmp -a", 0,
+			Or(BeEmpty(), MatchRegexp(`^(Removed sandbox \S+\n)+$`)), noErrors)
 	})
 })
