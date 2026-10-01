@@ -28,6 +28,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/distribution/reference"
 	"github.com/docker/go-units"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -846,6 +847,13 @@ func ListImages(
 	resp := &pb.ListImagesResponse{Images: res}
 	logrus.Debugf("ListImagesResponse: %v", resp)
 
+	// The CRI runtime may not honor the image name filter, so apply it
+	// client-side to ensure correct results. See
+	// https://github.com/kubernetes-sigs/cri-tools/issues/2008
+	if nameFilter != "" && len(resp.GetImages()) > 0 {
+		resp.Images = filterByName(nameFilter, resp.GetImages())
+	}
+
 	slices.SortFunc(resp.GetImages(), func(a, b *pb.Image) int {
 		if len(a.GetRepoTags()) > 0 && len(b.GetRepoTags()) > 0 {
 			return cmp.Compare(a.GetRepoTags()[0], b.GetRepoTags()[0])
@@ -936,6 +944,66 @@ func filterByBeforeSince(filterValue string, imageList []*pb.Image) []*pb.Image 
 	}
 
 	return filtered
+}
+
+// filterByName filters the image list to only include images matching the given
+// name filter. The filter can be "repo", "repo:tag", or "repo@digest".
+// This provides client-side filtering as a fallback when the CRI runtime does
+// not honor the ListImages filter.
+func filterByName(nameFilter string, imageList []*pb.Image) []*pb.Image {
+	var filtered []*pb.Image
+
+outer:
+	for _, img := range imageList {
+		for _, repoTag := range img.GetRepoTags() {
+			if matchesNameFilter(repoTag, nameFilter) {
+				filtered = append(filtered, img)
+
+				continue outer
+			}
+		}
+
+		for _, repoDigest := range img.GetRepoDigests() {
+			if matchesNameFilter(repoDigest, nameFilter) {
+				filtered = append(filtered, img)
+
+				break
+			}
+		}
+	}
+
+	return filtered
+}
+
+// matchesNameFilter checks if an image reference matches the name filter.
+// If the filter contains a tag or digest, it must match exactly.
+// Otherwise, only the repository part is compared, including any registry port.
+func matchesNameFilter(imageRef, nameFilter string) bool {
+	if imageRef == nameFilter {
+		return true
+	}
+
+	filter, err := reference.Parse(nameFilter)
+	if err != nil {
+		return false
+	}
+
+	if _, tagged := filter.(reference.Tagged); tagged {
+		return false
+	}
+
+	if _, digested := filter.(reference.Digested); digested {
+		return false
+	}
+
+	ref, err := reference.Parse(imageRef)
+	if err != nil {
+		return false
+	}
+
+	named, ok := ref.(reference.Named)
+
+	return ok && named.Name() == nameFilter
 }
 
 func filterByReference(filterValue string, imageList []*pb.Image) ([]*pb.Image, error) {
