@@ -185,9 +185,12 @@ critest runs with `--parallel=8` by default (mirroring CI); override with
 
 The built image is tagged per version (`containerd-local-test:<version>`, with
 `-<flavor>` appended for a non-default `RUNC_FLAVOR`, e.g.
-`containerd-local-test:main-crun`) and each version gets its own data volume,
-so images are cached and reused across runs — only a changed
-`CONTAINERD_VERSION`/`RUNC_FLAVOR` triggers a rebuild. Set `FORCE_REBUILD=1` to
+`containerd-local-test:main-crun`) and each version gets its own data volume
+per test suite, so images are cached and reused across runs — only a changed
+`CONTAINERD_VERSION`/`RUNC_FLAVOR` triggers a rebuild. The volume suffix
+defaults to the name of the test binary (`critest`, `crictl-e2e`) so that one
+suite does not drop images or runtime state cached by another; override it with
+`make test-critest-containerd DATA_VOLUME_SUFFIX=foo`. Set `FORCE_REBUILD=1` to
 force a fresh build that bypasses the Docker layer cache (`--no-cache --pull`),
 which is needed to refetch a moving ref such as `main`. To delete the cached
 images and volumes so they are regenerated:
