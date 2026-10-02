@@ -37,7 +37,7 @@ RUNC_FLAVOR="${RUNC_FLAVOR:-runc}"
 RUNTIME="${RUNTIME:-io.containerd.runc.v2}"
 
 # Sanitize the version for use in a Docker tag: tags may not contain "/", so
-# "release/1.7" becomes "release-1.7". Include the runc flavor in the tag when
+# "release/2.3" becomes "release-2.3". Include the runc flavor in the tag when
 # it is not the default so crun images do not collide with runc images.
 SANITIZED_VERSION="${CONTAINERD_VERSION//\//-}"
 IMAGE_TAG="${SANITIZED_VERSION}"
