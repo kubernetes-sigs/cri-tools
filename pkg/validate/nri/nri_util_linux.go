@@ -361,12 +361,19 @@ func (p *NRITestPlugin) recordContainerEvent(
 	})
 }
 
-// NRITestStub wraps an NRI stub instance for test lifecycle management.
-type NRITestStub struct {
-	Plugin *NRITestPlugin
+// nriStubConn holds a running NRI stub connection together with the handles
+// needed to shut it down.
+type nriStubConn struct {
 	Stub   stub.Stub
 	cancel context.CancelFunc
 	done   chan struct{}
+}
+
+// NRITestStub wraps an NRI stub instance for test lifecycle management.
+type NRITestStub struct {
+	*nriStubConn
+
+	Plugin *NRITestPlugin
 }
 
 // StartNRITestStub creates and starts an NRI test stub connected to the runtime.
@@ -379,11 +386,6 @@ func StartNRITestStub(
 	pluginName, pluginIdx string,
 	configure ...func(*NRITestPlugin),
 ) (*NRITestStub, error) {
-	socketPath := framework.TestContext.NRISocketPath
-	if socketPath == "" {
-		return nil, errors.New("NRI socket path not configured")
-	}
-
 	plugin := &NRITestPlugin{
 		ready: make(chan struct{}),
 	}
@@ -391,6 +393,34 @@ func StartNRITestStub(
 	for _, c := range configure {
 		c(plugin)
 	}
+
+	conn, err := startNRIStub(plugin, plugin.ready, pluginName, pluginIdx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &NRITestStub{nriStubConn: conn, Plugin: plugin}, nil
+}
+
+// startNRIStub creates an NRI stub for plugin, connects it to the runtime's NRI
+// socket and waits for the registration/configuration handshake to complete,
+// which the plugin signals by closing ready from its Synchronize handler.
+//
+// Tests whose plugin subscribes to a different set of NRI events than
+// NRITestPlugin call this directly instead of StartNRITestStub: the stub
+// derives its event subscription from the interfaces the plugin implements, so
+// adding handlers to NRITestPlugin would change which events every NRI spec
+// subscribes to.
+func startNRIStub(
+	plugin any,
+	ready <-chan struct{},
+	pluginName, pluginIdx string,
+) (*nriStubConn, error) {
+	socketPath := framework.TestContext.NRISocketPath
+	if socketPath == "" {
+		return nil, errors.New("NRI socket path not configured")
+	}
+
 	// Use a custom dialer to capture the underlying network connection.
 	// If Start() gets stuck (e.g., waiting for Configure that never arrives),
 	// we can force-close the connection to free network resources.
@@ -422,6 +452,11 @@ func StartNRITestStub(
 		return nil, fmt.Errorf("failed to create NRI stub: %w", err)
 	}
 
+	// The stub connection is deliberately not tied to the spec's context: a
+	// Ginkgo SpecContext is cancelled as soon as its own node body returns,
+	// which would disconnect the plugin before AfterEach can tear down the
+	// pods and containers the spec created. Cancellation is driven explicitly
+	// by Stop() instead.
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
 	errCh := make(chan error, 1)
@@ -433,13 +468,13 @@ func StartNRITestStub(
 	}()
 
 	// Wait for the stub to complete registration and configuration with the runtime.
-	// plugin.ready is closed when Synchronize is called (after register/configure handshake).
+	// ready is closed when Synchronize is called (after register/configure handshake).
 	select {
 	case <-done:
 		cancel()
 
 		return nil, fmt.Errorf("NRI stub exited early: %w", <-errCh)
-	case <-plugin.ready:
+	case <-ready:
 		// Registration and configuration complete
 	case <-time.After(10 * time.Second):
 		cancel()
@@ -483,8 +518,7 @@ func StartNRITestStub(
 		}
 	}
 
-	return &NRITestStub{
-		Plugin: plugin,
+	return &nriStubConn{
 		Stub:   s,
 		cancel: cancel,
 		done:   done,
@@ -492,7 +526,7 @@ func StartNRITestStub(
 }
 
 // Stop disconnects the NRI stub from the runtime.
-func (ts *NRITestStub) Stop() {
+func (ts *nriStubConn) Stop() {
 	// Cancel context first to unblock Run()'s select on ctx.Done().
 	// Run() will call stub.Stop() internally, which closes connections and
 	// waits for in-flight handlers. If a handler is blocked on a test channel,
