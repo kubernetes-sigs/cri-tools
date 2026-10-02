@@ -95,6 +95,9 @@ var _ = framework.KubeDescribe("Image Identifier Consistency", func() {
 			framework.ExpectNoError(err, "failed to create container")
 
 			defer func() {
+				// The image's default entrypoint may still be running, and
+				// runtimes reject removing a running container.
+				Expect(rc.StopContainer(ctx, containerID, 0)).NotTo(HaveOccurred())
 				Expect(rc.RemoveContainer(ctx, containerID)).NotTo(HaveOccurred())
 			}()
 
@@ -226,6 +229,9 @@ var _ = framework.KubeDescribe("Image Identifier Consistency", func() {
 			framework.ExpectNoError(err, "failed to create container")
 
 			defer func() {
+				// The image's default entrypoint may still be running, and
+				// runtimes reject removing a running container.
+				Expect(rc.StopContainer(ctx, containerID, 0)).NotTo(HaveOccurred())
 				Expect(rc.RemoveContainer(ctx, containerID)).NotTo(HaveOccurred())
 			}()
 

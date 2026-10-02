@@ -33,6 +33,12 @@ import (
 	"sigs.k8s.io/cri-tools/pkg/framework"
 )
 
+// syncHoldDuration is how long the plugin synchronization tests keep a
+// late-joining plugin's Synchronize call blocked. The runtime bounds
+// Synchronize by the NRI plugin request timeout (2s by default) and
+// disconnects the plugin when it expires, so the hold must stay well below it.
+const syncHoldDuration = nri.DefaultPluginRequestTimeout / 2
+
 var _ = framework.KubeDescribe("NRI", func() {
 	f := framework.NewDefaultCRIFramework()
 
@@ -472,7 +478,7 @@ var _ = framework.KubeDescribe("NRI", func() {
 				// request is in flight at the runtime while the second plugin is
 				// still synchronizing. This is coordination to widen the race
 				// window, not an assertion.
-				time.Sleep(2 * time.Second)
+				time.Sleep(syncHoldDuration)
 
 				By("releasing the second plugin's Synchronize")
 				release()
@@ -610,7 +616,7 @@ var _ = framework.KubeDescribe("NRI", func() {
 				// Hold Synchronize open briefly so the CreateContainer requests are in
 				// flight at the runtime while the second plugin is still
 				// synchronizing. Coordination to widen the race window, not an assertion.
-				time.Sleep(2 * time.Second)
+				time.Sleep(syncHoldDuration)
 
 				By("releasing the second plugin's Synchronize")
 				release()
