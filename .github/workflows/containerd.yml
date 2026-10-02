@@ -23,8 +23,6 @@ jobs:
         # ╔══════════════════╤═══════════╤═════════╗
         # ║ master / release │ ubuntu    │ windows ║
         # ╠══════════════════╪═══════════╪═════════╣
-        # ║ v1 shim          │ runc      │         ║
-        # ╟──────────────────┼───────────┼─────────╢
         # ║ v2 shim          │ runc/crun │         ║
         # ╟──────────────────┼───────────┼─────────╢
         # ║ hcshim           │           │ runhcs  ║
@@ -33,27 +31,14 @@ jobs:
         # not every command likes the slash in branch name.
         # So will use format command to replace to either `_` or '/'
         version: [main, "release{0}2.3", "release{0}1.7"]
-        runtime:
-          [
-            io.containerd.runtime.v1.linux,
-            io.containerd.runc.v1,
-            io.containerd.runc.v2,
-            containerd-shim-runhcs-v1,
-          ]
+        # Ubuntu 24.04 uses cgroup v2, which requires the v2 shim.
+        runtime: [io.containerd.runc.v2, containerd-shim-runhcs-v1]
         runc: [runc, crun]
         exclude:
-          - runtime: io.containerd.runc.v1
-            os: windows-2025
           - runtime: io.containerd.runc.v2
-            os: windows-2025
-          - runtime: io.containerd.runtime.v1.linux
             os: windows-2025
           - runtime: containerd-shim-runhcs-v1
             os: ubuntu-24.04
-          - runtime: io.containerd.runc.v1
-            runc: crun
-          - runtime: io.containerd.runtime.v1.linux
-            runc: crun
           - runc: crun
             os: windows-2025
     name: ${{ format(matrix.version, '/') }} / ${{ matrix.os }} / ${{matrix.runtime}} / ${{matrix.runc}}
