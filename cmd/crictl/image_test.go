@@ -17,6 +17,8 @@ limitations under the License.
 package main
 
 import (
+	"strings"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -148,6 +150,89 @@ var _ = DescribeTable("normalizeRepoDigest",
 	Entry("multiple digests uses first",
 		[]string{"docker.io/library/nginx@sha256:abc", "docker.io/library/nginx@sha256:def"},
 		"docker.io/library/nginx", "sha256:abc",
+	),
+)
+
+func assertFilterByName(input []*pb.Image, nameFilter string, expectedIDs []string) {
+	actual := filterByName(nameFilter, input)
+	ids := make([]string, 0, len(actual))
+
+	for _, img := range actual {
+		ids = append(ids, img.GetId())
+	}
+
+	Expect(expectedIDs).To(Equal(ids))
+}
+
+var _ = DescribeTable("filterByName", assertFilterByName,
+	Entry("matches a repository with a registry port",
+		[]*pb.Image{fakeImage("1", nil, []string{"localhost:5000/myimage:latest", "localhost:5000/myimage:v1"})},
+		"localhost:5000/myimage", []string{"1"},
+	),
+	Entry("matches a repository with only a digest",
+		[]*pb.Image{fakeImage("1", []string{"docker.io/library/busybox@sha256:" + strings.Repeat("a", 64)}, nil)},
+		"docker.io/library/busybox", []string{"1"},
+	),
+	Entry("matches a digest-only repository with a registry port",
+		[]*pb.Image{fakeImage("1", []string{"registry.example.com:8443/app@sha256:" + strings.Repeat("a", 64)}, nil)},
+		"registry.example.com:8443/app", []string{"1"},
+	),
+	Entry("does not match a different registry port",
+		[]*pb.Image{fakeImage("1", nil, []string{"localhost:5001/myimage:latest"})},
+		"localhost:5000/myimage", []string{},
+	),
+	Entry("does not ignore an explicit tag with a registry port",
+		[]*pb.Image{fakeImage("1", nil, []string{"localhost:5000/myimage:v1"})},
+		"localhost:5000/myimage:v2", []string{},
+	),
+	Entry("does not ignore an explicit digest",
+		[]*pb.Image{fakeImage("1", []string{"busybox@sha256:" + strings.Repeat("a", 64)}, nil)},
+		"busybox@sha256:"+strings.Repeat("b", 64), []string{},
+	),
+	Entry("does not match an invalid filter",
+		[]*pb.Image{fakeImage("1", nil, []string{"busybox:latest"})},
+		"busybox:", []string{},
+	),
+	Entry("filters by exact repo:tag",
+		[]*pb.Image{
+			fakeImage("1", []string{"docker.io/library/busybox@sha256:1"}, []string{"docker.io/library/busybox:latest"}),
+			fakeImage("2", []string{"docker.io/library/nginx@sha256:2"}, []string{"docker.io/library/nginx:latest"}),
+		},
+		"docker.io/library/busybox:latest",
+		[]string{"1"},
+	),
+	Entry("filters by repo name only (no tag)",
+		[]*pb.Image{
+			fakeImage("1", []string{"docker.io/library/busybox@sha256:1"}, []string{"docker.io/library/busybox:latest"}),
+			fakeImage("2", []string{"docker.io/library/nginx@sha256:2"}, []string{"docker.io/library/nginx:1.0"}),
+			fakeImage("3", []string{"docker.io/library/busybox@sha256:3"}, []string{"docker.io/library/busybox:1.36"}),
+		},
+		"docker.io/library/busybox",
+		[]string{"1", "3"},
+	),
+	Entry("returns empty when no match",
+		[]*pb.Image{
+			fakeImage("1", []string{"docker.io/library/busybox@sha256:1"}, []string{"docker.io/library/busybox:latest"}),
+			fakeImage("2", []string{"docker.io/library/nginx@sha256:2"}, []string{"docker.io/library/nginx:latest"}),
+		},
+		"docker.io/library/alpine:latest",
+		[]string{},
+	),
+	Entry("matches by repo digest",
+		[]*pb.Image{
+			fakeImage("1", []string{"docker.io/library/busybox@sha256:abc123"}, []string{"docker.io/library/busybox:latest"}),
+			fakeImage("2", []string{"docker.io/library/nginx@sha256:def456"}, []string{"docker.io/library/nginx:latest"}),
+		},
+		"docker.io/library/busybox@sha256:abc123",
+		[]string{"1"},
+	),
+	Entry("filters by repo:tag with non-matching tag",
+		[]*pb.Image{
+			fakeImage("1", []string{"docker.io/kindest/kindnetd@sha256:1"}, []string{"docker.io/kindest/kindnetd:v20250214"}),
+			fakeImage("2", []string{"docker.io/kindest/local-path-helper@sha256:2"}, []string{"docker.io/kindest/local-path-helper:v20241212"}),
+		},
+		"docker.io/kindest/kindnetd:v20250214",
+		[]string{"1"},
 	),
 )
 
