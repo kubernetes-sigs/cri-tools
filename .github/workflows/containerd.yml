@@ -380,13 +380,14 @@ jobs:
           SKIP="exec with tty=true and stdin=true"
           critest --runtime-endpoint=npipe:////./pipe/containerd-containerd --ginkgo.focus="${FOCUS}" --ginkgo.skip="${SKIP}" --report-dir="${REPORT_DIR}" --report-prefix="windows"
           TEST_RC=$?
-          test $TEST_RC -ne 0 && cat ${REPORT_DIR}/containerd.log
+          test $TEST_RC -ne 0 && cat ${REPORT_DIR}/containerd-cri.log
           set -o errexit
           kill -9 $pid
           echo "CONTD_CRI_DIR=$REPORT_DIR" >> $GITHUB_ENV
           exit ${TEST_RC}
 
       - name: Upload containerd ${{ format(matrix.version, '/') }} logs
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: containerd-${{ format(matrix.version, '_') }}-${{ matrix.os }}-${{matrix.runtime}}-${{matrix.runc}}-${{github.sha}}.log
