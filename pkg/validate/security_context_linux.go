@@ -30,6 +30,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/containerd/cgroups/v3"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"golang.org/x/sys/unix"
@@ -45,6 +46,7 @@ const (
 	noNewPrivsImage     string = framework.DefaultRegistryE2ETestImagesPrefix + "nonewprivs:1.3"
 	usernsSize          int    = 65536
 	usernsHostID        int    = 65536
+	cgroupnsPath        string = "/proc/self/ns/cgroup"
 )
 
 var _ = framework.KubeDescribe("Security Context", func() {
@@ -1566,6 +1568,123 @@ var _ = framework.KubeDescribe("Security Context", func() {
 			})
 		})
 	})
+
+	Context("CgroupNamespaces", func() {
+		var hostCgroupns string
+
+		BeforeEach(func() {
+			var err error
+
+			hostCgroupns, err = os.Readlink(cgroupnsPath)
+			framework.ExpectNoError(err, "failed to read the host cgroup namespace")
+		})
+
+		// The default mode does not depend on the CgroupNamespaces feature,
+		// so these tests are not skipped even when the feature is unsupported.
+		for _, privileged := range []bool{false, true} {
+			It(
+				fmt.Sprintf(
+					"runtime should use the default mode when CgroupnsOptions is nil (privileged=%v)",
+					privileged,
+				),
+				func(ctx SpecContext) {
+					var containerID string
+
+					podID, containerID = runCgroupNamespaceContainer(ctx, rc, ic, privileged, nil)
+
+					// CONTAINER for non-privileged containers on cgroup v2 nodes, NODE for other cases.
+					checkCgroupNamespace(
+						ctx,
+						rc,
+						containerID,
+						hostCgroupns,
+						!privileged && cgroups.Mode() == cgroups.Unified,
+					)
+				},
+			)
+		}
+
+		When("the runtime handler supports cgroup namespaces", func() {
+			BeforeEach(func(ctx SpecContext) {
+				By("checking whether the runtime handler supports cgroup namespaces")
+
+				statusResp, err := rc.Status(ctx, false)
+				framework.ExpectNoError(err, "failed to get runtime status")
+
+				var supportsCgroupNamespaces bool
+
+				for _, rh := range statusResp.GetRuntimeHandlers() {
+					if rh.GetName() == framework.TestContext.RuntimeHandler &&
+						rh.GetFeatures().GetCgroupNamespaces() {
+						supportsCgroupNamespaces = true
+
+						break
+					}
+				}
+
+				if !supportsCgroupNamespaces {
+					Skip("no runtime handler found which supports cgroup namespaces")
+				}
+			})
+
+			for _, privileged := range []bool{false, true} {
+				It(
+					fmt.Sprintf(
+						"runtime should support NamespaceMode_CONTAINER (privileged=%v)",
+						privileged,
+					),
+					func(ctx SpecContext) {
+						var containerID string
+
+						podID, containerID = runCgroupNamespaceContainer(ctx, rc, ic, privileged,
+							&runtimeapi.CgroupNamespace{Mode: runtimeapi.NamespaceMode_CONTAINER})
+
+						checkCgroupNamespace(ctx, rc, containerID, hostCgroupns, true)
+					},
+				)
+
+				It(
+					fmt.Sprintf(
+						"runtime should support NamespaceMode_NODE (privileged=%v)",
+						privileged,
+					),
+					func(ctx SpecContext) {
+						var containerID string
+
+						podID, containerID = runCgroupNamespaceContainer(ctx, rc, ic, privileged,
+							&runtimeapi.CgroupNamespace{Mode: runtimeapi.NamespaceMode_NODE})
+
+						checkCgroupNamespace(ctx, rc, containerID, hostCgroupns, false)
+					},
+				)
+			}
+
+			for _, mode := range []runtimeapi.NamespaceMode{
+				runtimeapi.NamespaceMode_POD,
+				runtimeapi.NamespaceMode_TARGET,
+			} {
+				It("runtime should fail with NamespaceMode_"+mode.String(), func(ctx SpecContext) {
+					podID = createCgroupNamespaceContainerWithError(ctx, rc, ic,
+						&runtimeapi.CgroupNamespace{Mode: mode})
+				})
+			}
+
+			for _, mode := range []runtimeapi.NamespaceMode{
+				runtimeapi.NamespaceMode_CONTAINER,
+				runtimeapi.NamespaceMode_NODE,
+			} {
+				It(
+					"runtime should fail if CgroupnsOptions is set in LinuxSandboxSecurityContext (NamespaceMode_"+
+						mode.String()+")",
+					func(ctx SpecContext) {
+						config := cgroupNamespacePodSandboxConfig(ctx, rc, false,
+							&runtimeapi.CgroupNamespace{Mode: mode})
+						framework.RunPodSandboxError(ctx, rc, config)
+					},
+				)
+			}
+		})
+	})
 })
 
 // matchContainerOutput matches log line in container logs.
@@ -2442,4 +2561,136 @@ func parseUsernsMappingLine(line string) []string {
 	})
 
 	return m
+}
+
+// cgroupNamespacePodSandboxConfig returns the config of a pod sandbox for the cgroup namespace tests.
+// The CRI API requires sandboxCgroupnsOptions to be nil; non-nil values are only used for negative tests.
+func cgroupNamespacePodSandboxConfig(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	privileged bool,
+	sandboxCgroupnsOptions *runtimeapi.CgroupNamespace,
+) *runtimeapi.PodSandboxConfig {
+	podName := "cgroup-namespaces-pod-" + framework.NewUUID()
+	uid := framework.DefaultUIDPrefix + framework.NewUUID()
+	namespace := framework.DefaultNamespacePrefix + framework.NewUUID()
+
+	return &runtimeapi.PodSandboxConfig{
+		Metadata: framework.BuildPodSandboxMetadata(
+			podName,
+			uid,
+			namespace,
+			framework.DefaultAttempt,
+		),
+		Linux: &runtimeapi.LinuxPodSandboxConfig{
+			SecurityContext: &runtimeapi.LinuxSandboxSecurityContext{
+				Privileged: privileged,
+				NamespaceOptions: &runtimeapi.NamespaceOption{
+					CgroupnsOptions: sandboxCgroupnsOptions,
+				},
+			},
+			CgroupParent: common.GetCgroupParent(ctx, rc),
+		},
+		Labels: framework.DefaultPodLabels,
+	}
+}
+
+// cgroupNamespaceContainerConfig returns the config of a container with the specified cgroup namespace options.
+func cgroupNamespaceContainerConfig(
+	privileged bool,
+	cgroupnsOptions *runtimeapi.CgroupNamespace,
+) *runtimeapi.ContainerConfig {
+	containerName := "cgroup-namespaces-container-" + framework.NewUUID()
+
+	return &runtimeapi.ContainerConfig{
+		Metadata: framework.BuildContainerMetadata(containerName, framework.DefaultAttempt),
+		Image: &runtimeapi.ImageSpec{
+			Image:              framework.TestContext.TestImageList.DefaultTestContainerImage,
+			UserSpecifiedImage: framework.TestContext.TestImageList.DefaultTestContainerImage,
+		},
+		Command: pauseCmd,
+		Linux: &runtimeapi.LinuxContainerConfig{
+			SecurityContext: &runtimeapi.LinuxContainerSecurityContext{
+				Privileged: privileged,
+				NamespaceOptions: &runtimeapi.NamespaceOption{
+					CgroupnsOptions: cgroupnsOptions,
+				},
+			},
+		},
+	}
+}
+
+// runCgroupNamespaceContainer creates a pod sandbox, and starts a container with the specified
+// cgroup namespace options in it.
+func runCgroupNamespaceContainer(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	ic internalapi.ImageManagerService,
+	privileged bool,
+	cgroupnsOptions *runtimeapi.CgroupNamespace,
+) (podID, containerID string) {
+	By("create cgroup namespaces podSandbox")
+
+	podConfig := cgroupNamespacePodSandboxConfig(ctx, rc, privileged, nil)
+	podID = framework.RunPodSandbox(ctx, rc, podConfig)
+
+	By("create cgroup namespaces container")
+
+	containerConfig := cgroupNamespaceContainerConfig(privileged, cgroupnsOptions)
+	containerID = framework.CreateContainer(ctx, rc, ic, containerConfig, podID, podConfig)
+	startContainer(ctx, rc, containerID)
+
+	return podID, containerID
+}
+
+// createCgroupNamespaceContainerWithError creates a pod sandbox, and expects the creation of a container
+// with the specified cgroup namespace options to fail.
+// The pod sandbox ID is returned for cleanup.
+func createCgroupNamespaceContainerWithError(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	ic internalapi.ImageManagerService,
+	cgroupnsOptions *runtimeapi.CgroupNamespace,
+) string {
+	By("create cgroup namespaces podSandbox")
+
+	podConfig := cgroupNamespacePodSandboxConfig(ctx, rc, false, nil)
+	podID := framework.RunPodSandbox(ctx, rc, podConfig)
+
+	By("create cgroup namespaces container with an invalid mode")
+
+	containerConfig := cgroupNamespaceContainerConfig(false, cgroupnsOptions)
+	_, err := framework.CreateContainerWithError(ctx, rc, ic, containerConfig, podID, podConfig)
+	Expect(err).To(HaveOccurred(), "create container should fail")
+
+	return podID
+}
+
+// checkCgroupNamespace checks whether the container has its own cgroup namespace or uses the host one.
+func checkCgroupNamespace(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	containerID, hostCgroupns string,
+	expectPrivateCgroupns bool,
+) {
+	By("check the cgroup namespace of the container")
+
+	containerCgroupns := strings.TrimSpace(
+		execSyncContainer(ctx, rc, containerID, []string{"readlink", cgroupnsPath}),
+	)
+
+	if !expectPrivateCgroupns {
+		Expect(containerCgroupns).To(Equal(hostCgroupns))
+
+		return
+	}
+
+	Expect(containerCgroupns).NotTo(Equal(hostCgroupns))
+
+	if cgroups.Mode() == cgroups.Unified {
+		By("check that the container sees its own cgroup as the root")
+
+		cgroup := execSyncContainer(ctx, rc, containerID, []string{"cat", "/proc/self/cgroup"})
+		Expect(cgroup).To(Equal("0::/\n"))
+	}
 }
