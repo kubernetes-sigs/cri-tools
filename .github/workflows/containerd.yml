@@ -32,7 +32,7 @@ jobs:
         os: [ubuntu-24.04, windows-2025]
         # not every command likes the slash in branch name.
         # So will use format command to replace to either `_` or '/'
-        version: [main, "release{0}2.3", "release{0}1.7"]
+        version: [main, "release{0}2.3"]
         runtime:
           [
             io.containerd.runtime.v1.linux,
@@ -135,16 +135,8 @@ jobs:
           mingw32-make.exe install
         working-directory: ${{ github.workspace }}/src/github.com/containerd/containerd
 
-      - name: Install cni on Linux (release-1.7)
-        # TODO: Remove this step once containerd release/1.7 is no longer supported.
-        if: startsWith(matrix.os, 'ubuntu') && matrix.version == 'release{0}1.7'
-        shell: bash
-        # See https://github.com/containerd/containerd/pull/12660
-        run: |
-          sudo -E PATH=$PATH script/setup/install-cni
-        working-directory: src/github.com/containerd/containerd
       - name: Install cni on Linux
-        if: startsWith(matrix.os, 'ubuntu') && matrix.version != 'release{0}1.7'
+        if: startsWith(matrix.os, 'ubuntu')
         shell: bash
         run: |
           sudo -E PATH=$PATH script/setup/install-cni $(grep 'github.com/containernetworking/plugins' go.mod | awk '{print $2}')
@@ -315,19 +307,15 @@ jobs:
           EOF'
 
           # Enable NRI explicitly to ensure the expected socket path is used.
-          # Containerd 1.7 is EOL soon so skip NRI on that branch only.
-          # TODO: Remove the condition once 1.7 is removed.
-          if [[ "${{ matrix.version }}" != "release{0}1.7" ]]; then
-            sudo bash -c 'cat >> ${BDIR}/config.toml <<EOF
-            [plugins."io.containerd.nri.v1.nri"]
-              disable = false
-              disable_connections = false
-              plugin_path = "/opt/nri/plugins"
-              socket_path = "/var/run/nri/nri.sock"
+          sudo bash -c 'cat >> ${BDIR}/config.toml <<EOF
+          [plugins."io.containerd.nri.v1.nri"]
+            disable = false
+            disable_connections = false
+            plugin_path = "/opt/nri/plugins"
+            socket_path = "/var/run/nri/nri.sock"
           EOF'
-            sudo mkdir -p /var/run/nri
-            sudo mkdir -p /opt/nri/plugins
-          fi
+          sudo mkdir -p /var/run/nri
+          sudo mkdir -p /opt/nri/plugins
 
           # Remove possibly existing containerd configuration
           sudo rm -rf /etc/containerd
@@ -342,11 +330,7 @@ jobs:
           sudo mount
 
           # Build critest flags
-          CRITEST_FLAGS="--ginkgo.v --runtime-endpoint=unix:///${BDIR}/c.sock --parallel=8"
-          # TODO: Remove the condition once 1.7 is removed.
-          if [[ "${{ matrix.version }}" != "release{0}1.7" ]]; then
-            CRITEST_FLAGS="${CRITEST_FLAGS} --nri-socket=/var/run/nri/nri.sock"
-          fi
+          CRITEST_FLAGS="--ginkgo.v --runtime-endpoint=unix:///${BDIR}/c.sock --parallel=8 --nri-socket=/var/run/nri/nri.sock"
 
           TEST_RC=0
           sudo -E PATH=$PATH critest ${CRITEST_FLAGS} || TEST_RC=$?
