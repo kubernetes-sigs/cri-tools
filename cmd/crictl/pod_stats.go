@@ -69,7 +69,7 @@ var podStatsCommand = &cli.Command{
 		&cli.IntFlag{
 			Name:    "seconds",
 			Aliases: []string{"s"},
-			Value:   1,
+			Value:   10,
 			Usage:   "Sample duration for CPU usage in seconds",
 		},
 		&cli.BoolFlag{
