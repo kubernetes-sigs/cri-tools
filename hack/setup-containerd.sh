@@ -24,21 +24,14 @@ CNI_CONFIG_DIR="${CNI_CONFIG_DIR:-/etc/cni/net.d}"
 RUNTIME="${RUNTIME:-io.containerd.runc.v2}"
 CONTAINERD_VERSION="${CONTAINERD_VERSION:-main}"
 
-# NRI is only configured for containerd main, mirroring CI which adds NRI
-# config only for the main branch (release/1.7 is EOL-soon and not exercised
-# with NRI). See .github/workflows/containerd.yml. ENABLE_NRI may be set
-# explicitly to override the version-derived default.
-if [ "${CONTAINERD_VERSION}" = "main" ]; then
-    ENABLE_NRI="${ENABLE_NRI:-true}"
-else
-    ENABLE_NRI="${ENABLE_NRI:-false}"
-fi
+# NRI is enabled by default for all supported containerd versions (2.x+).
+# ENABLE_NRI may be set explicitly to override.
+ENABLE_NRI="${ENABLE_NRI:-true}"
 
 echo "Setting up containerd configuration in ${CONTD_CONFIG_DIR}..."
 mkdir -p "${CONTD_CONFIG_DIR}"
-# The modern `io.containerd.grpc.v1.cri` schema (version = 2) is accepted by
-# both containerd 1.7 and 2.x, so a single config honors RUNTIME for both
-# refs; no per-version schema branch is needed here.
+# Config version 2 is not containerd 2.x's own config version (2.3 and main are
+# at version 4), but it is still accepted and migrated on load by containerd 2.x.
 cat <<EOF > "${CONTD_CONFIG_DIR}/config.toml"
 version = 2
 [plugins]

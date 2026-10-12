@@ -14,7 +14,7 @@
 
 # Build containerd (and runc/crun + CNI) from source so the local test image
 # matches what CI exercises. CI builds containerd from a checkout of
-# containerd/containerd at a branch ref (main, release/1.7) and installs the
+# containerd/containerd at a branch ref (main, release/2.3) and installs the
 # runtime engine and CNI plugins via containerd's own setup scripts. See
 # .github/workflows/containerd.yml.
 
@@ -25,7 +25,7 @@ ARG GO_VERSION=1.27.0
 FROM golang:${GO_VERSION} AS containerd-builder
 
 # CONTAINERD_VERSION is the containerd git ref to build (matches the CI matrix:
-# main, release/1.7). RUNC_FLAVOR selects the OCI runtime engine (runc or crun).
+# main, release/2.3). RUNC_FLAVOR selects the OCI runtime engine (runc or crun).
 ARG CONTAINERD_VERSION=main
 ARG RUNC_FLAVOR=runc
 
@@ -56,15 +56,11 @@ RUN make && make install
 RUN RUNC_FLAVOR="${RUNC_FLAVOR}" script/setup/install-runc
 
 # Install CNI plugins via containerd's own script, mirroring CI's install-cni
-# steps (.github/workflows/containerd.yml). release/1.7 must be invoked with no
-# argument; other refs pass the containernetworking/plugins version pinned in
-# containerd's go.mod so CNI matches the containerd ref under test.
-RUN if [ "${CONTAINERD_VERSION}" = "release/1.7" ]; then \
-        script/setup/install-cni; \
-    else \
-        script/setup/install-cni \
-            "$(grep 'github.com/containernetworking/plugins' go.mod | awk '{print $2}')"; \
-    fi
+# step (.github/workflows/containerd.yml). The containernetworking/plugins
+# version is pinned in containerd's go.mod so CNI matches the containerd ref
+# under test.
+RUN script/setup/install-cni \
+        "$(grep 'github.com/containernetworking/plugins' go.mod | awk '{print $2}')"
 
 # Runtime stage: ubuntu matching the CI runner (ubuntu-24.04), with only the
 # packages needed to run containerd and critest. The build toolchain stays in

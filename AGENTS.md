@@ -176,7 +176,7 @@ matching CI's primary matrix entry (NRI enabled, `--parallel=8`). Pass
 change the runtime:
 
 ```bash
-make test-critest-containerd CONTAINERD_VERSION=release/1.7
+make test-critest-containerd CONTAINERD_VERSION=release/2.3
 make test-critest-containerd CONTAINERD_VERSION=main RUNC_FLAVOR=crun
 ```
 
