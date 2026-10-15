@@ -359,6 +359,13 @@ vendor: ## Update vendored golang modules.
 		$(GO) mod vendor && \
 		$(GO) mod verify
 
+CRICTL_MAN ?= $(CURDIR)/docs/crictl.1
+
+.PHONY: docs
+docs: ## Regenerate the crictl man page.
+	$(GO) run -C hack/tools github.com/cpuguy83/go-md2man/v2 \
+		-in "$(CURDIR)/docs/crictl.md" -out "$(CRICTL_MAN)"
+
 .PHONY: release-notes
 release-notes: ## Build the release notes.
 	hack/release-notes.sh

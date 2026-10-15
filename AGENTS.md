@@ -27,6 +27,11 @@ Failure to run these checks may result in CI failures.
 If your patch depends on new packages, add that package to the `go.mod` file,
 run `make vendor` and commit the changes.
 
+### Updating the man page
+
+`docs/crictl.1` is generated from `docs/crictl.md`. After editing
+`docs/crictl.md`, run `make docs` and commit both files.
+
 ### Building
 
 To build the `critest` binary, run the following command:

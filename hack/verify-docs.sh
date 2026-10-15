@@ -16,23 +16,16 @@
 
 set -euo pipefail
 
-GO_MD2MAN="$(go env GOPATH)/bin/go-md2man"
+# Root of the repository
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${REPO_ROOT}"
 
-if [[ ! -x "$GO_MD2MAN" ]]; then
-    echo "Installing go-md2man"
-    HACK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-    MD2MAN=github.com/cpuguy83/go-md2man/v2
-    go install -C "${HACK_DIR}/tools" "$MD2MAN@$(go list -m -f \{\{.Version\}\} $MD2MAN)"
-fi
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
 
-"$GO_MD2MAN" -in docs/crictl.md -out docs/crictl.1
+make -s docs CRICTL_MAN="$TMP_DIR/crictl.1"
 
-STATUS=$(git status --porcelain)
-if [[ -z $STATUS ]]; then
-    echo "tree is clean"
-else
-    echo "tree is dirty, please commit all changes"
-    echo ""
-    echo "$STATUS"
+if ! diff -u docs/crictl.1 "$TMP_DIR/crictl.1"; then
+    echo "docs/crictl.1 is out of date, run 'make docs' and commit the result" >&2
     exit 1
 fi

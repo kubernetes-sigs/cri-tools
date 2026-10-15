@@ -14,20 +14,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -e
+set -euo pipefail
 
 export GO111MODULE=on
-go mod tidy && go mod vendor && go mod verify
+
+# Root of the repository
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${REPO_ROOT}"
+
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
+
+if ! go mod tidy -diff; then
+    echo "go.mod or go.sum is not tidy, run 'make vendor' and commit the result" >&2
+    exit 1
+fi
+
+go mod vendor -o "$TMP_DIR"
+if ! diff -rq vendor "$TMP_DIR"; then
+    echo "vendor is out of date, run 'make vendor' and commit the result" >&2
+    exit 1
+fi
+
+ignored="$(cd "$TMP_DIR" && find . -type f | sed 's|^\./|vendor/|' | git -C "$REPO_ROOT" check-ignore --no-index --stdin || true)"
+if [[ -n $ignored ]]; then
+    echo "vendored files are gitignored and would not be committed:" >&2
+    echo "$ignored" >&2
+    exit 1
+fi
+
+go mod verify
 
 # Test if we can resolve all go modules
 go list -mod=readonly -m all
-
-STATUS=$(git status --porcelain)
-if [[ -z $STATUS ]]; then
-    echo "tree is clean"
-else
-    echo "tree is dirty, please commit all changes"
-    echo ""
-    echo "$STATUS"
-    exit 1
-fi
