@@ -23,12 +23,24 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"golang.org/x/sys/unix"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	"sigs.k8s.io/cri-tools/pkg/common"
 	"sigs.k8s.io/cri-tools/pkg/framework"
 )
+
+// isCgroupV2Host reports whether the host uses the cgroup v2 unified hierarchy.
+// A statfs error is treated as cgroup v1 so cgroup v1-only metrics stay required.
+func isCgroupV2Host() bool {
+	var st unix.Statfs_t
+	if err := unix.Statfs("/sys/fs/cgroup", &st); err != nil {
+		return false
+	}
+
+	return st.Type == unix.CGROUP2_SUPER_MAGIC
+}
 
 var _ = framework.KubeDescribe("PodSandbox", func() {
 	f := framework.NewDefaultCRIFramework()
