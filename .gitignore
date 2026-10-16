@@ -36,7 +36,7 @@ release-notes.md
 test/e2e/e2e.test
 /crictl
 
-CLAUDE.md
+/CLAUDE.md
 /docs/plans
 
 # Ignore all dot-folders (for experiments with various tooling like .gemini, as well as for IDE config folders like .idea, .vscode, etc.)
