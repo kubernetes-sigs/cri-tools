@@ -18,10 +18,12 @@ package validate
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -235,6 +237,218 @@ var _ = framework.KubeDescribe("PodSandbox", func() {
 			},
 		)
 	})
+
+	// The kubelet derives the sandbox attempt number from what the runtime
+	// lists and retries RunPodSandbox with the same metadata until a sandbox
+	// shows up. It relies on the runtime never creating two sandboxes with the
+	// same (name, uid, namespace, attempt) between RunPodSandbox and
+	// RemovePodSandbox. A duplicate request must either fail or return the ID
+	// of the existing sandbox.
+	Context("runtime should enforce PodSandbox metadata uniqueness", func() {
+		var (
+			podSandboxName string
+			uid            string
+			namespace      string
+			testLabel      map[string]string
+		)
+
+		BeforeEach(func() {
+			podSandboxName = "PodSandbox-for-metadata-uniqueness-test-" + framework.NewUUID()
+			uid = framework.DefaultUIDPrefix + framework.NewUUID()
+			namespace = framework.DefaultNamespacePrefix + framework.NewUUID()
+			testLabel = map[string]string{
+				"cri-tools-metadata-uniqueness-test": framework.NewUUID(),
+			}
+		})
+
+		// Clean up by label so that sandboxes whose IDs the test never saw
+		// (timed out or concurrent requests) are removed too.
+		AfterEach(func(ctx SpecContext) {
+			for _, pod := range listTestPodSandboxes(ctx, rc, testLabel) {
+				framework.CleanupPodSandbox(ctx, rc, pod.GetId())
+			}
+		})
+
+		newConfig := func(ctx context.Context, sandboxUID string, attempt uint32) *runtimeapi.PodSandboxConfig {
+			return &runtimeapi.PodSandboxConfig{
+				Metadata: framework.BuildPodSandboxMetadata(
+					podSandboxName,
+					sandboxUID,
+					namespace,
+					attempt,
+				),
+				Labels: testLabel,
+				Linux: &runtimeapi.LinuxPodSandboxConfig{
+					CgroupParent: common.GetCgroupParent(ctx, rc),
+				},
+			}
+		}
+
+		// runWithSameMetadata runs a PodSandbox with the metadata shared by
+		// the tests below, using a dedicated timeout to avoid blocking on an
+		// in-flight request with the same metadata. A request that does not
+		// return in time simply did not succeed, which the contract allows.
+		const sameMetadataTimeout = 10 * time.Second
+
+		runWithSameMetadata := func(ctx context.Context) (string, error) {
+			config := newConfig(ctx, uid, 0)
+
+			ctx, cancel := context.WithTimeout(ctx, sameMetadataTimeout)
+			defer cancel()
+
+			return rc.RunPodSandbox(ctx, config, framework.TestContext.RuntimeHandler)
+		}
+
+		// runDuplicate runs a PodSandbox with metadata already used by
+		// existingID. It must fail or return existingID.
+		runDuplicate := func(ctx context.Context, existingID, explain string) {
+			id, err := runWithSameMetadata(ctx)
+			if err == nil {
+				Expect(id).To(Equal(existingID), explain)
+			}
+
+			Expect(listTestPodSandboxes(ctx, rc, testLabel)).To(HaveLen(1), explain)
+		}
+
+		It(
+			"runtime should not create a second PodSandbox with the same metadata [Conformance]",
+			func(ctx SpecContext) {
+				By("run the first PodSandbox with attempt 0")
+
+				firstID := framework.RunPodSandbox(ctx, rc, newConfig(ctx, uid, 0))
+
+				By("run a PodSandbox with the same metadata while the first one is ready")
+				runDuplicate(ctx, firstID, "metadata of a ready PodSandbox must not be reused")
+
+				By("run a PodSandbox with the same metadata while the first one is stopped")
+				stopPodSandbox(ctx, rc, firstID)
+				runDuplicate(ctx, firstID, "metadata of a stopped PodSandbox must not be reused")
+
+				By("run a PodSandbox with attempt 1")
+
+				nextID := framework.RunPodSandbox(ctx, rc, newConfig(ctx, uid, 1))
+				Expect(nextID).NotTo(Equal(firstID))
+				Expect(listTestPodSandboxes(ctx, rc, testLabel)).To(HaveLen(2))
+
+				By("run a PodSandbox with attempt 0 again after the first one is removed")
+				removePodSandbox(ctx, rc, firstID)
+
+				reusedID := framework.RunPodSandbox(ctx, rc, newConfig(ctx, uid, 0))
+				Expect(reusedID).NotTo(Equal(firstID))
+				Expect(listTestPodSandboxes(ctx, rc, testLabel)).To(HaveLen(2))
+			},
+		)
+
+		It(
+			"runtime should allow a PodSandbox with the same name and namespace but a new UID [Conformance]",
+			func(ctx SpecContext) {
+				By("run the first PodSandbox")
+
+				firstID := framework.RunPodSandbox(ctx, rc, newConfig(ctx, uid, 0))
+
+				// A pod deleted and recreated under the same name (for
+				// example by a StatefulSet) gets a new UID, while the old
+				// pod's sandbox may still exist.
+				By("run a PodSandbox for a recreated pod while the first one is ready")
+
+				newUID := framework.DefaultUIDPrefix + framework.NewUUID()
+				secondID := framework.RunPodSandbox(ctx, rc, newConfig(ctx, newUID, 0))
+				Expect(secondID).NotTo(Equal(firstID))
+				Expect(listTestPodSandboxes(ctx, rc, testLabel)).To(HaveLen(2))
+			},
+		)
+
+		It(
+			"runtime should create at most one PodSandbox for concurrent requests with the same metadata [Conformance]",
+			func(ctx SpecContext) {
+				const requests = 5
+
+				var (
+					wg   sync.WaitGroup
+					ids  = make([]string, requests)
+					errs = make([]error, requests)
+				)
+
+				By("run PodSandboxes with the same metadata concurrently")
+
+				for i := range requests {
+					wg.Go(func() {
+						defer GinkgoRecover()
+
+						ids[i], errs[i] = runWithSameMetadata(ctx)
+					})
+				}
+
+				wg.Wait()
+
+				By("verify that exactly one PodSandbox was created")
+
+				var succeeded []string
+
+				for i := range requests {
+					if errs[i] == nil {
+						succeeded = append(succeeded, ids[i])
+					} else {
+						framework.Logf("Concurrent RunPodSandbox %d failed: %v", i, errs[i])
+					}
+				}
+
+				Expect(succeeded).NotTo(BeEmpty(), "at least one request should succeed")
+				Expect(slices.Compact(slices.Sorted(slices.Values(succeeded)))).To(HaveLen(1),
+					"successful requests must all return the same PodSandbox ID")
+
+				pods := listTestPodSandboxes(ctx, rc, testLabel)
+				Expect(pods).To(HaveLen(1))
+				Expect(pods[0].GetId()).To(Equal(succeeded[0]))
+			},
+		)
+
+		It(
+			"runtime should create at most one PodSandbox when retrying a timed out request [Conformance]",
+			func(ctx SpecContext) {
+				By("run a PodSandbox with a client timeout shorter than sandbox creation")
+
+				shortCtx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
+				_, err := rc.RunPodSandbox(
+					shortCtx,
+					newConfig(ctx, uid, 0),
+					framework.TestContext.RuntimeHandler,
+				)
+
+				cancel()
+				framework.Logf("RunPodSandbox with a short timeout returned: %v", err)
+
+				// Mirror the kubelet: retry with the same metadata until the
+				// runtime lists a sandbox for the pod. Poll tightly, because
+				// the interesting window is the one where the cancelled
+				// request is still being served: a retry landing in it is what
+				// would make a duplicate appear.
+				By("retry with the same metadata until a PodSandbox is listed")
+				Eventually(ctx, func() error {
+					pods := listTestPodSandboxes(ctx, rc, testLabel)
+					if len(pods) > 1 {
+						return StopTrying("runtime created more than one PodSandbox").
+							Attach("PodSandboxes", pods)
+					}
+
+					if len(pods) == 1 {
+						return nil
+					}
+
+					_, err := runWithSameMetadata(ctx)
+					framework.Logf("Retried RunPodSandbox returned: %v", err)
+
+					return errors.New("no PodSandbox listed yet")
+				}).WithTimeout(time.Minute).WithPolling(100 * time.Millisecond).Should(Succeed())
+
+				By("verify that no second PodSandbox appears later")
+				Consistently(ctx, func() []*runtimeapi.PodSandbox {
+					return listTestPodSandboxes(ctx, rc, testLabel)
+				}).WithTimeout(5 * time.Second).WithPolling(500 * time.Millisecond).Should(HaveLen(1))
+			},
+		)
+	})
+
 	Context("runtime should support metrics operations", func() {
 		var (
 			podID     string
@@ -416,6 +630,18 @@ func listPodSandbox(
 	pods, err := c.ListPodSandbox(ctx, filter)
 	framework.ExpectNoError(err, "failed to list PodSandbox status")
 	framework.Logf("List PodSandbox succeed")
+
+	return pods
+}
+
+// listTestPodSandboxes lists the PodSandboxes that carry the given labels.
+func listTestPodSandboxes(
+	ctx context.Context,
+	c internalapi.RuntimeService,
+	labels map[string]string,
+) []*runtimeapi.PodSandbox {
+	pods, err := c.ListPodSandbox(ctx, &runtimeapi.PodSandboxFilter{LabelSelector: labels})
+	framework.ExpectNoError(err, "failed to list PodSandboxes")
 
 	return pods
 }
