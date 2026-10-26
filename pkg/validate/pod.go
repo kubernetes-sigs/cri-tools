@@ -115,6 +115,15 @@ var unimplementedMetricDescriptors = []string{
 	"container_ulimits_soft",
 }
 
+// cgroupsV1MetricDescriptors contains metric descriptors backed by cgroup v1
+// files (memory.failcnt, memory.kmem.usage_in_bytes) that have no cgroup v2
+// equivalent. Runtimes report them on cgroup v1 hosts but may omit them on
+// cgroup v2, so they are required on v1 and optional on v2.
+var cgroupsV1MetricDescriptors = []string{
+	"container_memory_failcnt",
+	"container_memory_kernel_usage",
+}
+
 // optionalValuesForMetricDescriptors contains the metric descriptors that have
 // optional values due to test environment limitations.
 var optionalValuesForMetricDescriptors = []string{
@@ -473,6 +482,14 @@ func createPodSandboxWithLogDirectory(
 	return framework.RunPodSandbox(ctx, c, podConfig), podConfig, hostPath
 }
 
+// metricMayBeAbsent reports whether an expected metric is allowed to be missing.
+// Metrics not yet implemented by all runtimes and cgroup v1-only metrics on
+// cgroup v2 hosts may be absent.
+func metricMayBeAbsent(name string, cgroupV2 bool) bool {
+	return slices.Contains(unimplementedMetricDescriptors, name) ||
+		(cgroupV2 && slices.Contains(cgroupsV1MetricDescriptors, name))
+}
+
 // testMetricDescriptors verifies that all expected metric descriptors are present.
 func testMetricDescriptors(descs []*runtimeapi.MetricDescriptor) {
 	returnedDescriptors := make(map[string]*runtimeapi.MetricDescriptor)
@@ -486,12 +503,13 @@ func testMetricDescriptors(descs []*runtimeapi.MetricDescriptor) {
 		).NotTo(BeEmpty(), "Metric descriptor %q should have label keys", desc.GetName())
 	}
 
+	cgroupV2 := isCgroupV2Host()
 	missingMetrics := []string{}
 
 	for _, expectedName := range expectedMetricDescriptorNames {
 		_, found := returnedDescriptors[expectedName]
 		if !found {
-			if slices.Contains(unimplementedMetricDescriptors, expectedName) {
+			if metricMayBeAbsent(expectedName, cgroupV2) {
 				continue
 			}
 
@@ -551,12 +569,13 @@ func testPodSandboxMetrics(
 		}
 	}
 
+	cgroupV2 := isCgroupV2Host()
 	missingMetrics := []string{}
 
 	for _, expectedName := range expectedMetricDescriptorNames {
 		if len(metricNamesFound[expectedName]) == 0 {
-			if slices.Contains(optionalValuesForMetricDescriptors, expectedName) ||
-				slices.Contains(unimplementedMetricDescriptors, expectedName) {
+			if metricMayBeAbsent(expectedName, cgroupV2) ||
+				slices.Contains(optionalValuesForMetricDescriptors, expectedName) {
 				continue
 			}
 
@@ -573,8 +592,8 @@ func testPodSandboxMetrics(
 	for _, desc := range descs {
 		values, found := metricNamesFound[desc.GetName()]
 		if !found {
-			if slices.Contains(optionalValuesForMetricDescriptors, desc.GetName()) ||
-				slices.Contains(unimplementedMetricDescriptors, desc.GetName()) {
+			if metricMayBeAbsent(desc.GetName(), cgroupV2) ||
+				slices.Contains(optionalValuesForMetricDescriptors, desc.GetName()) {
 				continue
 			}
 
