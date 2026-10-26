@@ -156,19 +156,8 @@ var _ = framework.KubeDescribe("NRI", func() {
 
 				By("verifying sandbox is NOT listed while hook is blocking")
 				// The sandbox should not appear in ListPodSandbox in any state
-				pods, listErr := rc.ListPodSandbox(ctx, nil)
+				sandboxFound, listErr := sandboxListed(ctx, rc, hookPodID)
 				Expect(listErr).NotTo(HaveOccurred())
-
-				sandboxFound := false
-
-				for _, pod := range pods {
-					if pod.GetId() == hookPodID {
-						sandboxFound = true
-
-						break
-					}
-				}
-
 				Expect(sandboxFound).To(BeFalse(),
 					"Sandbox %s MUST NOT be listed while RunPodSandbox hook is blocking", hookPodID)
 

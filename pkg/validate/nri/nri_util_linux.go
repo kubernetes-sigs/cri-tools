@@ -27,9 +27,31 @@ import (
 
 	nri "github.com/containerd/nri/pkg/api"
 	"github.com/containerd/nri/pkg/stub"
+	internalapi "k8s.io/cri-api/pkg/apis"
 
 	"sigs.k8s.io/cri-tools/pkg/framework"
 )
+
+// sandboxListed reports whether the sandbox with the given ID is returned by
+// ListPodSandbox.
+func sandboxListed(
+	ctx context.Context,
+	rc internalapi.RuntimeService,
+	podID string,
+) (bool, error) {
+	pods, err := rc.ListPodSandbox(ctx, nil)
+	if err != nil {
+		return false, err
+	}
+
+	for _, pod := range pods {
+		if pod.GetId() == podID {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
 
 // NRIEventType represents the type of NRI lifecycle event.
 type NRIEventType string
