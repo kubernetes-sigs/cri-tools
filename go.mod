@@ -3,7 +3,7 @@ module sigs.k8s.io/cri-tools
 go 1.27.0
 
 require (
-	github.com/containerd/nri v0.12.3
+	github.com/containerd/nri v0.12.4
 	github.com/distribution/reference v0.6.0
 	github.com/docker/go-units v0.5.0
 	github.com/google/uuid v1.6.0
