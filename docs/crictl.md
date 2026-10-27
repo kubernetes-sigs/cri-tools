@@ -70,6 +70,8 @@ COMMANDS:
 - `statsp`: List pod statistics. Stats represent a structured API that will fulfill the Kubelet's /stats/summary endpoint.
 - `completion`: Output bash shell completion code
 - `checkpoint`: Checkpoint one or more running containers
+- `checkpointp`: Checkpoint the running containers in a Pod sandbox
+- `restorep`: Prepare a Pod sandbox and containers from a checkpoint
 - `events, event`: Stream the events of containers
 - `runtime-config`: Retrieve the container runtime configuration
 - `update-runtime-config` Update the runtime configuration
@@ -551,6 +553,58 @@ $ crictl checkpoint --export=/path/to/checkpoint.tar 39fcdd7a4f1d4
 $ ls /path/to/checkpoint.tar
 /path/to/checkpoint.tar
 ```
+
+### Checkpoint and restore a Pod
+
+These commands require a runtime that implements the `CheckpointPod` and
+`RestorePod` CRI RPCs. `checkpointp` selects all running containers in the sandbox.
+The checkpoint path is on the runtime's host and must be an absolute path to an
+existing, empty directory. Restrict access to the directory because checkpoints
+contain process memory.
+
+```sh
+mkdir -p -m 0700 /var/lib/pod-checkpoints/example
+crictl --timeout=120s checkpointp --path=/var/lib/pod-checkpoints/example POD-ID
+```
+
+Before restoring, pull the container images with the credentials and image pull
+policy appropriate for the workload. `restorep` does not pull missing images.
+Provide a Pod sandbox configuration and one container configuration for each
+container in the checkpoint. Container metadata names must match the checkpoint.
+
+The Pod configuration must contain an explicit `metadata.uid`; `restorep` does
+not generate one. This keeps the destination identity explicit across invocations.
+
+Use the destination Pod identity, cgroup parent, log paths and mounts in these
+configurations; the runtime validates compatibility with the saved process state.
+For the containerd pause-container controller, the source Pod configuration must
+also specify its Pod cgroup parent.
+
+```sh
+crictl --timeout=120s restorep \
+  --pod-config=restored-pod.json \
+  --container-config=app.json \
+  --container-config=sidecar.json \
+  --output=json \
+  /var/lib/pod-checkpoints/example > restored.json
+jq -r '.podSandboxId, (.restoredContainers[] | "\(.name) \(.containerId)")' restored.json
+```
+
+Use `--runtime` to select a compatible runtime handler when the default handler
+is unsuitable. `--output=json` and `--output=yaml` include the new sandbox ID and
+all container names and IDs. Without `--output`, the command prints the sandbox
+summary.
+
+Restored containers remain in `CREATED` state. Their processes have not run;
+perform any required pre-start setup before starting them explicitly:
+
+```sh
+crictl start APP-CONTAINER-ID SIDECAR-CONTAINER-ID
+```
+
+`crictl` does not retry the restore RPC automatically. If the response is lost,
+inspect the runtime for resources created by that request before restoring again.
+Repeating the command is not guaranteed to return the original resource IDs.
 
 ## More information
 
