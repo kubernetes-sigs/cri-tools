@@ -307,12 +307,12 @@ func stripGitSuffix(version string) string {
 	if !ok || len(gsha1) == 0 || gsha1[0] != 'g' {
 		return version
 	}
-	if _, err := strconv.ParseInt(commits, 10, 64); err != nil {
+	if _, err := strconv.ParseUint(commits, 10, 64); err != nil {
 		return version
 	}
 
 	sha1, _, _ := strings.Cut(gsha1[1:], ".")
-	if _, err := strconv.ParseInt(sha1, 16, 64); err != nil {
+	if _, err := strconv.ParseUint(sha1, 16, 64); err != nil {
 		return version
 	}
 
