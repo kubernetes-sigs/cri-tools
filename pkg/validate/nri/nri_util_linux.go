@@ -105,10 +105,19 @@ type NRITestPlugin struct {
 	OnRunPodSandbox    func(ctx context.Context, pod *nri.PodSandbox) error
 	OnStopPodSandbox   func(ctx context.Context, pod *nri.PodSandbox) error
 	OnRemovePodSandbox func(ctx context.Context, pod *nri.PodSandbox) error
-	OnCreateContainer  func(ctx context.Context, pod *nri.PodSandbox, container *nri.Container) error
-	OnStartContainer   func(ctx context.Context, pod *nri.PodSandbox, container *nri.Container) error
-	OnStopContainer    func(ctx context.Context, pod *nri.PodSandbox, container *nri.Container) error
-	OnRemoveContainer  func(ctx context.Context, pod *nri.PodSandbox, container *nri.Container) error
+
+	// OnCreateContainer fires during the CreateContainer hook. The
+	// ContainerAdjustment it returns, if any, is passed back to the runtime, so
+	// tests can request adjustments and verify that they take effect.
+	OnCreateContainer func(
+		ctx context.Context,
+		pod *nri.PodSandbox,
+		container *nri.Container,
+	) (*nri.ContainerAdjustment, error)
+
+	OnStartContainer  func(ctx context.Context, pod *nri.PodSandbox, container *nri.Container) error
+	OnStopContainer   func(ctx context.Context, pod *nri.PodSandbox, container *nri.Container) error
+	OnRemoveContainer func(ctx context.Context, pod *nri.PodSandbox, container *nri.Container) error
 }
 
 // Synchronize implements stub.SynchronizeInterface.
@@ -214,9 +223,12 @@ func (p *NRITestPlugin) CreateContainer(
 	p.recordContainerEvent(EventCreateContainer, pod, container)
 
 	if p.OnCreateContainer != nil {
-		if err := p.OnCreateContainer(ctx, pod, container); err != nil {
+		adjust, err := p.OnCreateContainer(ctx, pod, container)
+		if err != nil {
 			return nil, nil, err
 		}
+
+		return adjust, nil, nil
 	}
 
 	return nil, nil, nil
