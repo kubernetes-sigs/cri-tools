@@ -145,10 +145,16 @@ If you don't have a local container runtime installed, you can run the tests in 
 
 ##### Running `critest` with containerd
 
-To run all `critest` validation tests:
+To run `critest` validation tests excluding `Slow` specs (the default):
 
 ```bash
 make test-critest-containerd
+```
+
+To include `Slow` specs, clear the default label filter:
+
+```bash
+make test-critest-containerd TESTFLAGS='--ginkgo.label-filter=""'
 ```
 
 ##### Running `crictl` e2e tests with containerd
