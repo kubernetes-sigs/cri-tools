@@ -94,6 +94,18 @@ critest connects to Unix: `unix:///run/containerd/containerd.sock` or Windows: `
 - `-websocket-attach`: Use websocket connections over SPDY for attach streaming tests.
 - `-websocket-portforward`: Use websocket connections over SPDY for portforward streaming tests.
 
+### CRI List Streaming
+
+The `CRI list streaming` conformance test retains 8,193 exited containers with
+2 KiB annotations. It verifies that `ListContainers` returns every container and
+its complete annotation when the combined response exceeds the normal 16 MiB
+unary message limit. The test runs serially using the standard CRI client.
+Listing errors fail the test, including size-limit errors during unary fallback.
+
+```sh
+critest --ginkgo.focus="CRI list streaming" --report-dir=./reports
+```
+
 ### Output and Verbosity
 
 - `-ginkgo.v`: Emit more output including GinkgoWriter contents.
