@@ -347,7 +347,8 @@ jobs:
 
           set +o errexit
           SKIP="exec with tty=true and stdin=true"
-          critest --runtime-endpoint=npipe:////./pipe/containerd-containerd --ginkgo.focus="${FOCUS}" --ginkgo.skip="${SKIP}" --report-dir="${REPORT_DIR}" --report-prefix="windows"
+          # The scale fixture exceeds Windows runner disk or time limits.
+          critest --runtime-endpoint=npipe:////./pipe/containerd-containerd --ginkgo.focus="${FOCUS}" --ginkgo.skip="${SKIP}" --ginkgo.label-filter="!Slow" --report-dir="${REPORT_DIR}" --report-prefix="windows"
           TEST_RC=$?
           test $TEST_RC -ne 0 && cat ${REPORT_DIR}/containerd-cri.log
           set -o errexit

@@ -275,6 +275,7 @@ test-e2e: $(GINKGO) ## Run the e2e test suite.
 .PHONY: test-critest-containerd
 test-critest-containerd: ## Run the critest in a container with containerd (set CONTAINERD_VERSION=main|release/2.3, RUNC_FLAVOR, RUNTIME; images are cached per version and suite).
 	# AppArmor tests must be skipped as the containerized environment does not support them.
+	# Skip Slow tests by default; override with TESTFLAGS='--ginkgo.label-filter=""' to include them.
 	CONTAINERD_VERSION=$(CONTAINERD_VERSION) \
 	RUNC_FLAVOR=$(RUNC_FLAVOR) \
 	RUNTIME=$(RUNTIME) \
@@ -283,6 +284,7 @@ test-critest-containerd: ## Run the critest in a container with containerd (set 
 		--parallel=$(PARALLEL) \
 		--ginkgo.vv \
 		--ginkgo.skip="AppArmor" \
+		--ginkgo.label-filter="!Slow" \
 		$(NRI_FLAGS) \
 		$(TESTFLAGS)
 

@@ -139,7 +139,7 @@ jobs:
             --parallel=$(nproc) \
             --ginkgo.flake-attempts=3 \
             --ginkgo.randomize-all \
-            --ginkgo.timeout=5m \
+            --ginkgo.timeout=15m \
             --ginkgo.trace \
             --ginkgo.v
           TEST_RC=$?

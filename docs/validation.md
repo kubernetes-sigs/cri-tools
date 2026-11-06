@@ -64,7 +64,7 @@ critest connects to Unix: `unix:///run/containerd/containerd.sock` or Windows: `
 
 - `-ginkgo.focus`: Only run the tests that match the regular expression.
 - `-ginkgo.skip`: Skip the tests that match the regular expression.
-- `-ginkgo.label-filter`: Filter specs by label expressions (e.g., `(cat || dog) && !fruit`).
+- `-ginkgo.label-filter`: Filter specs by label expressions (e.g., `(cat || dog) && !fruit`). Use `--ginkgo.label-filter="!Slow"` to exclude slow tests or `--ginkgo.label-filter="Slow"` to run only slow tests. No label filter is applied by default.
 - `-parallel`: The number of parallel test nodes to run (default 1). [ginkgo](https://github.com/onsi/ginkgo) must be installed to run parallel tests.
 - `-ginkgo.fail-fast`: Stop running tests after the first failure.
 - `-ginkgo.flake-attempts`: Make up to N attempts to run each spec. If any attempt succeeds, the spec passes.
