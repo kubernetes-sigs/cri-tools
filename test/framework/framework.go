@@ -211,5 +211,16 @@ func (t *TestFramework) CrictlRemovePauseImages() {
 }
 
 func (t *TestFramework) IsContainerd() bool {
-	return strings.Contains(crictlRuntimeEndpoint, "containerd")
+	result := t.Crictl("version")
+	Expect(result).To(Exit(0))
+
+	for line := range strings.SplitSeq(string(result.Out.Contents()), "\n") {
+		if name, found := strings.CutPrefix(line, "RuntimeName:"); found {
+			return strings.TrimSpace(name) == "containerd"
+		}
+	}
+
+	Fail("version did not report RuntimeName")
+
+	return false
 }
