@@ -100,6 +100,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             btrfs-progs \
+            criu \
             libbtrfs-dev \
             libseccomp2 \
             libseccomp-dev \

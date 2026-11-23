@@ -264,6 +264,20 @@ func printJSONSchema(value any) error {
 }
 
 func loadPodSandboxConfig(path string) (*pb.PodSandboxConfig, error) {
+	config, err := readPodSandboxConfig(path)
+	if err != nil {
+		return nil, err
+	}
+
+	if config.GetMetadata().GetUid() == "" {
+		config.Metadata.Uid = uuid.New().String()
+	}
+
+	return config, nil
+}
+
+// readPodSandboxConfig validates a config without generating a Pod identity.
+func readPodSandboxConfig(path string) (*pb.PodSandboxConfig, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -280,10 +294,6 @@ func loadPodSandboxConfig(path string) (*pb.PodSandboxConfig, error) {
 
 	if config.GetMetadata() == nil {
 		return nil, errors.New("metadata is not set")
-	}
-
-	if config.GetMetadata().GetUid() == "" {
-		config.Metadata.Uid = uuid.New().String()
 	}
 
 	if config.GetMetadata().GetName() == "" || config.GetMetadata().GetNamespace() == "" {
