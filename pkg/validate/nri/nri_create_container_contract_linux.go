@@ -134,7 +134,11 @@ var _ = framework.KubeDescribe("NRI", func() {
 
 				var hookContainerID string
 
-				testStub.Plugin.OnCreateContainer = func(hookCtx context.Context, _ *nri.PodSandbox, container *nri.Container) error {
+				testStub.Plugin.OnCreateContainer = func(
+					hookCtx context.Context,
+					_ *nri.PodSandbox,
+					container *nri.Container,
+				) (*nri.ContainerAdjustment, error) {
 					hookContainerID = container.GetId()
 
 					close(hookReached)
@@ -144,7 +148,7 @@ var _ = framework.KubeDescribe("NRI", func() {
 					case <-hookCtx.Done():
 					}
 
-					return nil
+					return nil, nil
 				}
 
 				By("triggering CreateContainer in a goroutine")
@@ -237,16 +241,20 @@ var _ = framework.KubeDescribe("NRI", func() {
 				// Fail only the first CreateContainer invocation so the retry passes.
 				var failOnce sync.Once
 
-				testStub.Plugin.OnCreateContainer = func(_ context.Context, _ *nri.PodSandbox, _ *nri.Container) error {
+				testStub.Plugin.OnCreateContainer = func(
+					_ context.Context,
+					_ *nri.PodSandbox,
+					_ *nri.Container,
+				) (*nri.ContainerAdjustment, error) {
 					shouldFail := false
 
 					failOnce.Do(func() { shouldFail = true })
 
 					if shouldFail {
-						return errors.New("induced NRI CreateContainer failure")
+						return nil, errors.New("induced NRI CreateContainer failure")
 					}
 
-					return nil
+					return nil, nil
 				}
 
 				// Reset events so we only observe container events from this point.
